@@ -38,28 +38,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts })
       <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card title="Total Revenue" value={`$${totalRevenue.toLocaleString()}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />
-        <Card title="New Leads" value={newLeadsCount.toString()} icon={<UsersIcon className="w-8 h-8 text-white" />} color="bg-green-500" />
-        <Card title="Deals Won" value={dealsWon.toString()} icon={<CheckCircleIcon className="w-8 h-8 text-white" />} color="bg-yellow-500" />
-        <Card title="Conversion Rate" value={`${conversionRate}%`} icon={<TrendingUpIcon className="w-8 h-8 text-white" />} color="bg-purple-500" />
+        <Card title="Fatturato Totale" value={`€${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />
+        <Card title="Nuovi Lead" value={newLeadsCount.toString()} icon={<UsersIcon className="w-8 h-8 text-white" />} color="bg-green-500" />
+        <Card title="Affari Vinti" value={dealsWon.toString()} icon={<CheckCircleIcon className="w-8 h-8 text-white" />} color="bg-yellow-500" />
+        <Card title="Tasso di Conversione" value={`${conversionRate}%`} icon={<TrendingUpIcon className="w-8 h-8 text-white" />} color="bg-purple-500" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Pipeline Value by Stage</h2>
+          <h2 className="text-xl font-semibold mb-4">Valore Pipeline per Fase</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={pipelineData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
-              <YAxis tickFormatter={(value) => `$${Number(value) / 1000}k`} />
-              <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+              <YAxis tickFormatter={(value) => `€${Number(value) / 1000}k`} />
+              <Tooltip formatter={(value) => `€${Number(value).toLocaleString('it-IT')}`} />
               <Legend />
               <Bar dataKey="value" fill="#4f46e5" />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-card p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Opportunities by Stage</h2>
+          <h2 className="text-xl font-semibold mb-4">Opportunità per Fase</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -77,7 +77,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts })
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => `${value} opportunities`} />
+              <Tooltip formatter={(value) => `${value} opportunità`} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Contact } from '../types';
 import { SearchIcon, SparklesIcon } from './ui/icons';
@@ -31,7 +32,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
 
   const handleGenerateEmail = async () => {
     if (!emailPrompt || !selectedContact) {
-      setError('Please provide a goal for the email.');
+      setError("Per favore, fornisci un obiettivo per l'email.");
       return;
     }
     setIsLoading(true);
@@ -42,14 +43,14 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
       // Dynamically import the library when the function is called
       const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-      const fullPrompt = `You are a professional sales/customer relationship assistant. Write a professional and concise email to a contact.
+      const fullPrompt = `Sei un assistente professionale per le relazioni con i clienti. Scrivi un'email professionale e concisa a un contatto.
       
-      Contact Name: ${selectedContact.name}
-      Contact Company: ${selectedContact.company}
+      Nome Contatto: ${selectedContact.name}
+      Azienda Contatto: ${selectedContact.company}
       
-      The goal of the email is: "${emailPrompt}"
+      L'obiettivo dell'email è: "${emailPrompt}"
       
-      Generate only the body of the email.`;
+      Genera solo il corpo del testo dell'email.`;
       
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -60,7 +61,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
 
     } catch (err) {
       console.error(err);
-      setError('Failed to generate email. Please check the API key and try again.');
+      setError("Impossibile generare l'email. Controlla la chiave API e riprova.");
     } finally {
       setIsLoading(false);
     }
@@ -108,12 +109,12 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
     <>
       <div className="bg-card p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-text-primary">Contacts</h1>
+          <h1 className="text-3xl font-bold text-text-primary">Contatti</h1>
           <div className="flex items-center space-x-2">
               <div className="relative">
                   <input 
                       type="text"
-                      placeholder="Search contacts..."
+                      placeholder="Cerca contatti..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -121,7 +122,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
             <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-              Add Contact
+              Aggiungi Contatto
             </button>
           </div>
         </div>
@@ -129,13 +130,13 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <SortableHeader column="name" title="Name" />
+                <SortableHeader column="name" title="Nome" />
                 <SortableHeader column="email" title="Email" />
-                <SortableHeader column="company" title="Company" />
-                <SortableHeader column="phone" title="Phone" />
-                <SortableHeader column="createdAt" title="Created At" />
+                <SortableHeader column="company" title="Azienda" />
+                <SortableHeader column="phone" title="Telefono" />
+                <SortableHeader column="createdAt" title="Creato il" />
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Azioni
                 </th>
               </tr>
             </thead>
@@ -146,11 +147,11 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.company}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(contact.createdAt).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(contact.createdAt).toLocaleDateString('it-IT')}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button onClick={() => handleOpenModal(contact)} className="text-indigo-600 hover:text-indigo-900 flex items-center space-x-1">
                         <SparklesIcon className="w-5 h-5" />
-                        <span>AI Email</span>
+                        <span>Email con AI</span>
                     </button>
                   </td>
                 </tr>
@@ -160,16 +161,16 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
         </div>
       </div>
       
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={`Generate AI Email for ${selectedContact?.name}`}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={`Genera Email con AI per ${selectedContact?.name}`}>
         <div className="space-y-4">
             <div>
-                <label htmlFor="email-prompt" className="block text-sm font-medium text-gray-700">Email Goal</label>
+                <label htmlFor="email-prompt" className="block text-sm font-medium text-gray-700">Obiettivo dell'Email</label>
                 <input
                     type="text"
                     id="email-prompt"
                     value={emailPrompt}
                     onChange={(e) => setEmailPrompt(e.target.value)}
-                    placeholder="e.g., Follow up on our last conversation"
+                    placeholder="Es: Follow-up sulla nostra ultima conversazione"
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 />
             </div>
@@ -186,9 +187,9 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            Generating...
+                            Generazione...
                         </>
-                    ) : 'Generate Email'}
+                    ) : 'Genera Email'}
                 </button>
             </div>
             
@@ -196,7 +197,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
             
             {generatedEmail && (
                 <div>
-                    <label htmlFor="generated-email" className="block text-sm font-medium text-gray-700">Generated Email</label>
+                    <label htmlFor="generated-email" className="block text-sm font-medium text-gray-700">Email Generata</label>
                     <textarea
                         id="generated-email"
                         rows={10}

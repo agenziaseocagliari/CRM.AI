@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const DashboardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -95,5 +94,47 @@ export const TrendingUpIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) =
 export const SparklesIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+);
+
+export const BrainCircuitIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 5a3 3 0 1 0-5.993.142"/>
+        <path d="M18 13a3 3 0 1 0-4.42 2.473"/>
+        <path d="M12 19a3 3 0 1 0-1.562-5.52"/>
+        <path d="M6 13a3 3 0 1 0-1.427-2.527"/>
+        <path d="M15.58 15.473a.999.999 0 0 1-.168-1.4"/>
+        <path d="m14 10.5 1.5-1.5"/>
+        <path d="M6.142 5.142A.999.999 0 0 1 7.4 6.312"/>
+        <path d="M4.573 10.473a.999.999 0 0 1 1.4-.168"/>
+        <path d="M10.438 13.48a.999.999 0 0 1 1.125-1.043"/>
+        <path d="M12 5a3 3 0 1 0-5.993.142"/>
+        <path d="M18 13a3 3 0 1 0-4.42 2.473"/>
+        <path d="M12 19a3 3 0 1 0-1.562-5.52"/>
+        <path d="M6 13a3 3 0 1 0-1.427-2.527"/>
+        <path d="m9.5 7.5 1 1"/>
+        <path d="M14 10.5l-1.5 1.5"/>
+        <path d="m6.5 11.5-1 1"/>
+        <path d="m10.5 16-1.5 1.5"/>
+    </svg>
+);
+
+export const MessageBotIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 6V4H8"/>
+        <path d="M16.5 6.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+        <path d="M12.5 13.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+        <path d="M18 14h-4.5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2H17"/>
+        <path d="M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9Z"/>
+    </svg>
+);
+
+export const ClipboardDataIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+        <path d="M12 12v5"/>
+        <path d="M16 10v7"/>
+        <path d="M8 14v3"/>
     </svg>
 );

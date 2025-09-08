@@ -44,25 +44,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView })
           />
           <NavItem
             icon={<PipelineIcon className="w-6 h-6" />}
-            label="Opportunities"
+            label="Opportunità"
             isActive={currentView === 'Opportunities'}
             onClick={() => setCurrentView('Opportunities')}
           />
           <NavItem
             icon={<ContactsIcon className="w-6 h-6" />}
-            label="Contacts"
+            label="Contatti"
             isActive={currentView === 'Contacts'}
             onClick={() => setCurrentView('Contacts')}
           />
           <NavItem
             icon={<FormsIcon className="w-6 h-6" />}
-            label="Forms"
+            label="Form"
             isActive={currentView === 'Forms'}
             onClick={() => setCurrentView('Forms')}
           />
           <NavItem
             icon={<AutomationIcon className="w-6 h-6" />}
-            label="Automations"
+            label="Automazioni"
             isActive={currentView === 'Automations'}
             onClick={() => setCurrentView('Automations')}
           />
@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView })
         <ul>
             <NavItem
                 icon={<SettingsIcon className="w-6 h-6" />}
-                label="Settings"
+                label="Impostazioni"
                 isActive={currentView === 'Settings'}
                 onClick={() => setCurrentView('Settings')}
             />

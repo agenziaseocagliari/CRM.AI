@@ -30,8 +30,8 @@ const KanbanCard: React.FC<{ opportunity: Opportunity }> = ({ opportunity }) => 
       className="bg-white p-4 mb-3 rounded-lg shadow cursor-grab active:cursor-grabbing border-l-4 border-primary"
     >
       <p className="font-semibold text-gray-800">{opportunity.contactName}</p>
-      <p className="text-sm text-gray-600">${opportunity.value.toLocaleString()}</p>
-      <p className="text-xs text-gray-400 mt-2">Assigned to: {opportunity.assignedTo}</p>
+      <p className="text-sm text-gray-600">€{opportunity.value.toLocaleString('it-IT')}</p>
+      <p className="text-xs text-gray-400 mt-2">Assegnato a: {opportunity.assignedTo}</p>
     </div>
   );
 };
@@ -60,7 +60,7 @@ const KanbanColumn: React.FC<{
         <span className={`font-bold text-sm px-2 py-1 rounded-full ${stageColors[stage]} ${stageTextColors[stage]}`}>{opportunities.length}</span>
       </div>
       <div className='text-sm font-bold text-gray-500 mb-3 px-2'>
-        ${totalValue.toLocaleString()}
+        €{totalValue.toLocaleString('it-IT')}
       </div>
       <div className="h-full">
         {opportunities.map((op) => (
@@ -123,7 +123,7 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, setDa
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-text-primary mb-6">Opportunities Pipeline</h1>
+      <h1 className="text-3xl font-bold text-text-primary mb-6">Pipeline Opportunità</h1>
       <div className="flex space-x-4 overflow-x-auto pb-4">
         {Object.keys(PipelineStage).map(key => {
             const stage = PipelineStage[key as keyof typeof PipelineStage];

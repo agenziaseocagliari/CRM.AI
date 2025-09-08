@@ -8,11 +8,14 @@ import { Contacts } from './components/Contacts';
 import { Automations } from './components/Automations';
 import { Forms } from './components/Forms';
 import { Login } from './components/Login';
+import { HomePage } from './components/HomePage';
 import { Tenant, View } from './types';
 import { useMockData } from './hooks/useMockData';
 
+type AppState = 'homepage' | 'login' | 'app';
+
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [appState, setAppState] = useState<AppState>('homepage');
   const [currentView, setCurrentView] = useState<View>('Dashboard');
   const [currentTenantId, setCurrentTenantId] = useState<number>(1);
   
@@ -24,8 +27,12 @@ const App: React.FC = () => {
     setCurrentTenantId(tenantId);
   }, []);
 
-  const handleLogin = useCallback(() => {
-    setIsAuthenticated(true);
+  const handleLoginSuccess = useCallback(() => {
+    setAppState('app');
+  }, []);
+
+  const handleShowLogin = useCallback(() => {
+    setAppState('login');
   }, []);
 
   const renderView = () => {
@@ -44,14 +51,18 @@ const App: React.FC = () => {
       case 'Automations':
         return <Automations />;
       case 'Settings':
-        return <div className="text-3xl font-bold text-text-primary">Settings</div>;
+        return <div className="text-3xl font-bold text-text-primary">Impostazioni</div>;
       default:
         return <Dashboard opportunities={tenantOpportunities} contacts={tenantContacts} />;
     }
   };
 
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
+  if (appState === 'homepage') {
+    return <HomePage onLoginClick={handleShowLogin} onSignUpClick={handleShowLogin} />;
+  }
+
+  if (appState === 'login') {
+    return <Login onLogin={handleLoginSuccess} />;
   }
 
   return (

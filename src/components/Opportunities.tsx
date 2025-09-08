@@ -73,10 +73,9 @@ const KanbanColumn: React.FC<{
 
 interface OpportunitiesProps {
   initialData: OpportunitiesData;
-  setData: React.Dispatch<React.SetStateAction<Record<number, OpportunitiesData>>>;
 }
 
-export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, setData }) => {
+export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData }) => {
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData);
 
   useEffect(() => {

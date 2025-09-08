@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Tenant, Contact, Opportunity, PipelineStage, OpportunitiesData } from '../types';
 
 const initialTenants: Tenant[] = [

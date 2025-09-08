@@ -2,17 +2,16 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Card } from './ui/Card';
-import { Opportunity, Contact, PipelineStage } from '../types';
+import { Opportunity, PipelineStage } from '../types';
 import { DollarSignIcon, UsersIcon, CheckCircleIcon, TrendingUpIcon } from './ui/icons';
 
 interface DashboardProps {
   opportunities: Record<PipelineStage, Opportunity[]>;
-  contacts: Contact[];
 }
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
-export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ opportunities }) => {
   // FIX: Explicitly type allOpportunities to Opportunity[] to help TypeScript with type inference in filter and reduce.
   const allOpportunities: Opportunity[] = Object.values(opportunities).flat();
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
@@ -71,9 +70,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts })
                 fill="#8884d8"
                 dataKey="count"
                 nameKey="name"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
               >
-                {salesByStageData.map((entry, index) => (
+                {salesByStageData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

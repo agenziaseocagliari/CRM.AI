@@ -57,7 +57,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
         contents: fullPrompt,
       });
       
-      setGeneratedEmail(response.text.trim());
+      setGeneratedEmail(response.text?.trim() ?? '');
 
     } catch (err) {
       console.error(err);

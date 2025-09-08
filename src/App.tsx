@@ -9,7 +9,7 @@ import { Automations } from './components/Automations';
 import { Forms } from './components/Forms';
 import { Login } from './components/Login';
 import { HomePage } from './components/HomePage';
-import { Tenant, View } from './types';
+import { View } from './types';
 import { useMockData } from './hooks/useMockData';
 
 type AppState = 'homepage' | 'login' | 'app';
@@ -19,7 +19,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('Dashboard');
   const [currentTenantId, setCurrentTenantId] = useState<number>(1);
   
-  const { tenants, contacts, opportunitiesData, setOpportunitiesData, getTenantContacts, getTenantOpportunities } = useMockData();
+  const { tenants, getTenantContacts, getTenantOpportunities } = useMockData();
 
   const currentTenant = useMemo(() => tenants.find(t => t.id === currentTenantId) || tenants[0], [tenants, currentTenantId]);
   
@@ -41,9 +41,9 @@ const App: React.FC = () => {
 
     switch (currentView) {
       case 'Dashboard':
-        return <Dashboard opportunities={tenantOpportunities} contacts={tenantContacts} />;
+        return <Dashboard opportunities={tenantOpportunities} />;
       case 'Opportunities':
-        return <Opportunities initialData={tenantOpportunities} setData={setOpportunitiesData} />;
+        return <Opportunities initialData={tenantOpportunities} />;
       case 'Contacts':
         return <Contacts contacts={tenantContacts} />;
       case 'Forms':
@@ -53,7 +53,7 @@ const App: React.FC = () => {
       case 'Settings':
         return <div className="text-3xl font-bold text-text-primary">Impostazioni</div>;
       default:
-        return <Dashboard opportunities={tenantOpportunities} contacts={tenantContacts} />;
+        return <Dashboard opportunities={tenantOpportunities} />;
     }
   };
 

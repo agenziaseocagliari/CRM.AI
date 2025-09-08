@@ -1,5 +1,5 @@
 
-export type View = 'Dashboard' | 'Opportunities' | 'Contacts' | 'Settings';
+export type View = 'Dashboard' | 'Opportunities' | 'Contacts' | 'Forms' | 'Automations' | 'Settings';
 
 export interface Tenant {
   id: number;

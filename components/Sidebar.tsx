@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { View } from '../types';
-import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon } from './ui/icons';
+import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon } from './ui/icons';
 
 interface SidebarProps {
   currentView: View;
@@ -53,6 +53,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView })
             label="Contacts"
             isActive={currentView === 'Contacts'}
             onClick={() => setCurrentView('Contacts')}
+          />
+          <NavItem
+            icon={<FormsIcon className="w-6 h-6" />}
+            label="Forms"
+            isActive={currentView === 'Forms'}
+            onClick={() => setCurrentView('Forms')}
+          />
+          <NavItem
+            icon={<AutomationIcon className="w-6 h-6" />}
+            label="Automations"
+            isActive={currentView === 'Automations'}
+            onClick={() => setCurrentView('Automations')}
           />
         </ul>
       </nav>

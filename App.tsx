@@ -5,10 +5,14 @@ import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { Opportunities } from './components/Opportunities';
 import { Contacts } from './components/Contacts';
+import { Automations } from './components/Automations';
+import { Forms } from './components/Forms';
+import { Login } from './components/Login';
 import { Tenant, View } from './types';
 import { useMockData } from './hooks/useMockData';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<View>('Dashboard');
   const [currentTenantId, setCurrentTenantId] = useState<number>(1);
   
@@ -18,6 +22,10 @@ const App: React.FC = () => {
   
   const handleTenantChange = useCallback((tenantId: number) => {
     setCurrentTenantId(tenantId);
+  }, []);
+
+  const handleLogin = useCallback(() => {
+    setIsAuthenticated(true);
   }, []);
 
   const renderView = () => {
@@ -31,10 +39,20 @@ const App: React.FC = () => {
         return <Opportunities initialData={tenantOpportunities} setData={setOpportunitiesData} />;
       case 'Contacts':
         return <Contacts contacts={tenantContacts} />;
+      case 'Forms':
+        return <Forms />;
+      case 'Automations':
+        return <Automations />;
+      case 'Settings':
+        return <div className="text-3xl font-bold text-text-primary">Settings</div>;
       default:
         return <Dashboard opportunities={tenantOpportunities} contacts={tenantContacts} />;
     }
   };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100 text-text-primary">

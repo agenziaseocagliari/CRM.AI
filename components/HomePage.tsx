@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GuardianIcon, BrainCircuitIcon, MessageBotIcon, ClipboardDataIcon } from './ui/icons';
 
@@ -103,8 +102,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onSignUpClick 
                         <p className="text-2xl md:text-3xl font-medium text-text-primary max-w-3xl mx-auto">
                             "Guardian AI ha trasformato il nostro processo di vendita. Abbiamo ridotto del 70% il tempo speso in attività amministrative e aumentato le conversioni del 30%. È una rivoluzione."
                         </p>
-                        <p className="mt-6 font-bold text-lg">Marco Rossi</p>
-                        <p className="text-text-secondary">CEO, InnovaTech Solutions</p>
+                        <p className="mt-6 font-bold text-lg">Silvestro Sanna</p>
+                        <p className="text-text-secondary">CEO, SEO Cagliari</p>
                     </div>
                 </section>
             </main>
@@ -113,6 +112,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onSignUpClick 
             <footer className="bg-sidebar text-white py-12 px-6">
                 <div className="container mx-auto text-center">
                     <p>&copy; {new Date().getFullYear()} Guardian AI CRM. Tutti i diritti riservati.</p>
+                    <p className="mt-2 text-sm text-gray-400">
+                        Un prodotto by <a href="https://seo-cagliari.it/" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline text-white">SEO Cagliari</a>
+                    </p>
                     <div className="mt-4 space-x-6">
                          <a href="#" className="hover:underline">Privacy Policy</a>
                          <a href="#" className="hover:underline">Termini di Servizio</a>

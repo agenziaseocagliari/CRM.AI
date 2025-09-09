@@ -69,7 +69,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ opportunities }) => {
                 nameKey="name"
                 label={(props: any) => `${props.name} ${props.percent ? (props.percent * 100).toFixed(0) : 0}%`}
               >
-                {salesByStageData.map((entry, index) => (
+                {salesByStageData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

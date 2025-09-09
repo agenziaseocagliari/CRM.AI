@@ -12,7 +12,6 @@ import { HomePage } from './components/HomePage';
 import { View } from './types';
 import { useMockData } from './hooks/useMockData';
 import { supabase } from './lib/supabaseClient';
-import type { Session } from '@supabase/supabase-js';
 
 type AppState = 'loading' | 'homepage' | 'login' | 'app';
 

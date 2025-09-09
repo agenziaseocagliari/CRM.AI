@@ -1,59 +1,21 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Tenant } from '../types';
-import { ChevronDownIcon, BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
+import React from 'react';
+import { Organization } from '../types';
+import { BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
 
 interface HeaderProps {
-  tenants: Tenant[];
-  currentTenant: Tenant;
-  onTenantChange: (tenantId: number) => void;
+  organization: Organization | null;
   onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ tenants, currentTenant, onTenantChange, onLogout }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
+export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
   return (
     <header className="bg-card shadow-sm p-4 flex justify-between items-center">
-      <div className="relative">
+      <div>
         <div 
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center cursor-pointer bg-gray-100 hover:bg-gray-200 p-2 rounded-lg"
+            className="flex items-center bg-gray-100 p-2 rounded-lg"
         >
-          <span className="font-semibold text-lg text-text-primary">{currentTenant.name}</span>
-          <ChevronDownIcon className="w-5 h-5 ml-2 text-gray-500" />
+          <span className="font-semibold text-lg text-text-primary">{organization?.name || 'Caricamento...'}</span>
         </div>
-        {isDropdownOpen && (
-          <div ref={dropdownRef} className="absolute mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-            <ul>
-              {tenants.map((tenant) => (
-                <li
-                  key={tenant.id}
-                  onClick={() => {
-                    onTenantChange(tenant.id);
-                    setIsDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                >
-                  {tenant.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
       
       <div className="flex items-center space-x-4">

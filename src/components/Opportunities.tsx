@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
 
@@ -29,9 +28,9 @@ const KanbanCard: React.FC<{ opportunity: Opportunity }> = ({ opportunity }) => 
       onDragStart={onDragStart}
       className="bg-white p-4 mb-3 rounded-lg shadow cursor-grab active:cursor-grabbing border-l-4 border-primary"
     >
-      <p className="font-semibold text-gray-800">{opportunity.contactName}</p>
+      <p className="font-semibold text-gray-800">{opportunity.contact_name}</p>
       <p className="text-sm text-gray-600">€{opportunity.value.toLocaleString('it-IT')}</p>
-      <p className="text-xs text-gray-400 mt-2">Assegnato a: {opportunity.assignedTo}</p>
+      <p className="text-xs text-gray-400 mt-2">Assegnato a: {opportunity.assigned_to}</p>
     </div>
   );
 };
@@ -83,7 +82,7 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData }) => 
   const onDrop = (targetStage: PipelineStage) => (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     
-    const opportunityId = parseInt(e.dataTransfer.getData('opportunityId'), 10);
+    const opportunityId = e.dataTransfer.getData('opportunityId');
     if (!opportunityId) return;
 
     let foundOpportunity: Opportunity | undefined;
@@ -101,7 +100,7 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData }) => 
     
     if (!foundOpportunity || !sourceStage || sourceStage === targetStage) return;
     
-    // Create new state
+    // Create new state for instant visual feedback
     const newData = { ...boardData };
     
     // Remove from source
@@ -112,8 +111,9 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData }) => 
     newData[targetStage] = [...newData[targetStage], foundOpportunity];
     
     setBoardData(newData);
-    // In Fase 2, qui chiameremo Supabase per aggiornare il database:
-    // await supabase.from('opportunities').update({ stage: targetStage }).eq('id', opportunityId);
+    // TODO: Chiamare Supabase per aggiornare il database in modo permanente.
+    // E.g.: await supabase.from('opportunities').update({ stage: targetStage }).eq('id', opportunityId);
+    // Questo richiederà di far ri-eseguire il fetch dei dati o aggiornare lo stato globale.
   };
 
   return (

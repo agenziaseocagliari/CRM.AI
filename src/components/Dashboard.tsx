@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Card } from './ui/Card';
@@ -14,8 +13,8 @@ const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 export const Dashboard: React.FC<DashboardProps> = ({ opportunities }) => {
   const allOpportunities: Opportunity[] = Object.values(opportunities).flat();
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
-  const newLeadsCount = opportunities['New Lead']?.length || 0;
-  const dealsWon = opportunities['Won']?.length || 0;
+  const newLeadsCount = opportunities[PipelineStage.NewLead]?.length || 0;
+  const dealsWon = opportunities[PipelineStage.Won]?.length || 0;
   const conversionRate = allOpportunities.length > 0 ? ((dealsWon / allOpportunities.length) * 100).toFixed(1) : 0;
 
   const pipelineData = (Object.keys(opportunities) as PipelineStage[]).map((stage) => ({

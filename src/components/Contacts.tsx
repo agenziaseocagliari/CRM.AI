@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Contact } from '../types';
 import { SearchIcon, SparklesIcon } from './ui/icons';
@@ -68,6 +67,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
   };
 
   const filteredAndSortedContacts = useMemo(() => {
+    if (!contacts) return [];
     return contacts
       .filter(contact =>
         contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,8 +75,11 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
         contact.company.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .sort((a, b) => {
-        if (a[sortColumn] < b[sortColumn]) return sortDirection === 'asc' ? -1 : 1;
-        if (a[sortColumn] > b[sortColumn]) return sortDirection === 'asc' ? 1 : -1;
+        const valA = a[sortColumn];
+        const valB = b[sortColumn];
+
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
   }, [contacts, searchTerm, sortColumn, sortDirection]);
@@ -134,7 +137,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
                 <SortableHeader column="email" title="Email" />
                 <SortableHeader column="company" title="Azienda" />
                 <SortableHeader column="phone" title="Telefono" />
-                <SortableHeader column="createdAt" title="Creato il" />
+                <SortableHeader column="created_at" title="Creato il" />
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Azioni
                 </th>
@@ -147,7 +150,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.company}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(contact.createdAt).toLocaleDateString('it-IT')}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(contact.created_at).toLocaleDateString('it-IT')}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button onClick={() => handleOpenModal(contact)} className="text-indigo-600 hover:text-indigo-900 flex items-center space-x-1">
                         <SparklesIcon className="w-5 h-5" />

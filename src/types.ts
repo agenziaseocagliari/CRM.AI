@@ -1,19 +1,25 @@
-
+// Allineato con lo schema del database Supabase
 export type View = 'Dashboard' | 'Opportunities' | 'Contacts' | 'Forms' | 'Automations' | 'Settings';
 
-export interface Tenant {
-  id: number;
+export interface Organization {
+  id: string; // UUID
   name: string;
+  created_at: string;
+}
+
+export interface Profile {
+  id: string; // User UUID from auth.users
+  organization_id: string; // Foreign key to Organization
 }
 
 export interface Contact {
-  id: number;
-  tenantId: number;
+  id: string; // UUID
+  organization_id: string; // Foreign key
   name: string;
   email: string;
   phone: string;
   company: string;
-  createdAt: string;
+  created_at: string;
 }
 
 export enum PipelineStage {
@@ -25,13 +31,14 @@ export enum PipelineStage {
 }
 
 export interface Opportunity {
-  id: number;
-  tenantId: number;
-  contactName: string;
+  id: string; // UUID
+  organization_id: string; // Foreign key
+  contact_name: string;
   value: number;
   stage: PipelineStage;
-  assignedTo: string;
-  closeDate: string;
+  assigned_to: string;
+  close_date: string;
+  created_at: string;
 }
 
 export type OpportunitiesData = Record<PipelineStage, Opportunity[]>;

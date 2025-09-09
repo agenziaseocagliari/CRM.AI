@@ -12,21 +12,18 @@ interface DashboardProps {
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ opportunities }) => {
-  // FIX: Explicitly type allOpportunities to Opportunity[] to help TypeScript with type inference in filter and reduce.
   const allOpportunities: Opportunity[] = Object.values(opportunities).flat();
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   const newLeadsCount = opportunities['New Lead']?.length || 0;
   const dealsWon = opportunities['Won']?.length || 0;
   const conversionRate = allOpportunities.length > 0 ? ((dealsWon / allOpportunities.length) * 100).toFixed(1) : 0;
 
-  // FIX: Use Object.keys with a type assertion for better type safety compared to Object.entries. This resolves errors on lines 24 and 25.
   const pipelineData = (Object.keys(opportunities) as PipelineStage[]).map((stage) => ({
     name: stage,
     value: opportunities[stage].reduce((sum, op) => sum + op.value, 0),
     count: opportunities[stage].length
   }));
 
-  // FIX: Use Object.keys with a type assertion for better type safety. This resolves the error on line 30.
   const salesByStageData = (Object.keys(opportunities) as PipelineStage[]).map((stage) => ({
     name: stage,
     count: opportunities[stage].length,
@@ -70,9 +67,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ opportunities }) => {
                 fill="#8884d8"
                 dataKey="count"
                 nameKey="name"
-                label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                label={(props: any) => `${props.name} ${props.percent ? (props.percent * 100).toFixed(0) : 0}%`}
               >
-                {salesByStageData.map((_, index) => (
+                {salesByStageData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

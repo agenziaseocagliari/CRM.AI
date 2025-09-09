@@ -12,37 +12,36 @@ import { HomePage } from './components/HomePage';
 import { View } from './types';
 import { useMockData } from './hooks/useMockData';
 import { supabase } from './lib/supabaseClient';
-import { Session } from '@supabase/supabase-js';
 
 type AppState = 'homepage' | 'login' | 'app';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('homepage');
-  const [session, setSession] = useState<Session | null>(null);
   const [currentView, setCurrentView] = useState<View>('Dashboard');
   const [currentTenantId, setCurrentTenantId] = useState<number>(1);
   
   const { tenants, getTenantContacts, getTenantOpportunities } = useMockData();
 
   useEffect(() => {
+    // FIX: Replaced deprecated `supabase.auth.session()` with an async call to `supabase.auth.getSession()`.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       if (session) {
         setAppState('app');
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
       if (session) {
         setAppState('app');
       } else {
-        // Se l'utente fa logout, torna alla pagina di login
-        setAppState('login');
+        // Vai al login solo se l'utente era già dentro l'app (es. logout)
+        // Questo previene il salto da homepage a login al primo caricamento.
+        setAppState(current => current === 'app' ? 'login' : current);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // FIX: Corrected the unsubscribe call for the auth listener.
+    return () => authListener?.subscription?.unsubscribe();
   }, []);
 
 

@@ -39,7 +39,6 @@ const KanbanCard: React.FC<{ opportunity: Opportunity }> = ({ opportunity }) => 
 const KanbanColumn: React.FC<{
   stage: PipelineStage;
   opportunities: Opportunity[];
-  // FIX: The onDrop prop should be a proper drag event handler.
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
 }> = ({ stage, opportunities, onDrop }) => {
   const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -51,7 +50,6 @@ const KanbanColumn: React.FC<{
   return (
     <div
       onDragOver={onDragOver}
-      // FIX: Pass the onDrop event handler directly.
       onDrop={onDrop}
       className="flex-1 bg-gray-100 rounded-lg p-3 min-w-[300px]"
     >
@@ -82,8 +80,6 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData }) => 
     setBoardData(initialData);
   }, [initialData]);
 
-  // FIX: Refactor onDrop handler for clarity and correctness.
-  // The outer function takes the target stage, and the inner function is the event handler.
   const onDrop = (targetStage: PipelineStage) => (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     

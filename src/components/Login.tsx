@@ -16,6 +16,7 @@ export const Login: React.FC = () => {
         event.preventDefault();
         setLoading(true);
         setError(null);
+        // FIX: Replaced `signIn` with `signInWithPassword` for Supabase v2.
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setError(error.message);
         setLoading(false);
@@ -25,6 +26,7 @@ export const Login: React.FC = () => {
         event.preventDefault();
         setLoading(true);
         setError(null);
+        // FIX: Updated `signUp` to pass a single object argument `{ email, password }` for Supabase v2.
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) {
             setError(error.message);

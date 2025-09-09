@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Contact, Organization } from '../types';
-import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon } from './ui/icons';
+import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon, UploadIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 // import { GoogleGenAI } from '@google/genai'; // Removed static import
@@ -21,6 +21,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isImportModalOpen, setImportModalOpen] = useState(false);
 
   // AI Email state
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -34,6 +35,13 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   
   // Edit/Delete Contact state
   const [contactToModify, setContactToModify] = useState<Contact | null>(null);
+
+  // Import CSV state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [importSuccess, setImportSuccess] = useState('');
   
   // Generic loading/error state for DB operations
   const [isSaving, setIsSaving] = useState(false);
@@ -66,11 +74,20 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
     setDeleteModalOpen(true);
   };
   
+  const handleOpenImportModal = () => {
+    setImportFile(null);
+    setImportError('');
+    setImportSuccess('');
+    setIsImporting(false);
+    setImportModalOpen(true);
+  }
+
   const handleCloseModals = () => {
     setIsEmailModalOpen(false);
     setAddModalOpen(false);
     setEditModalOpen(false);
     setDeleteModalOpen(false);
+    setImportModalOpen(false);
     setSelectedContact(null);
     setContactToModify(null);
   }
@@ -134,7 +151,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
         refetchData();
 
     } catch (err: any) {
-        setSaveError(`Errore nel salvataggio del contatto: ${err.message}`);
+        setSaveError(`Errore nel salvaggio del contatto: ${err.message}`);
         console.error(err);
     } finally {
         setIsSaving(false);
@@ -199,6 +216,72 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
     }
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+      setImportError('');
+      setImportSuccess('');
+    }
+  }
+
+  const handleImportCSV = async () => {
+    if (!importFile || !organization) {
+      setImportError("Seleziona un file CSV da importare.");
+      return;
+    }
+    setIsImporting(true);
+    setImportError('');
+    setImportSuccess('');
+
+    try {
+      const fileContent = await importFile.text();
+      const lines = fileContent.split('\n').filter(line => line.trim() !== '');
+      if (lines.length < 2) {
+        throw new Error("Il file CSV è vuoto o contiene solo l'intestazione.");
+      }
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const requiredHeaders = ['name', 'email', 'company', 'phone'];
+      const missingHeaders = requiredHeaders.filter(rh => !headers.includes(rh));
+      if(!headers.includes('name')) {
+          throw new Error(`L'intestazione 'name' è obbligatoria nel file CSV.`);
+      }
+
+      const contactsToInsert = lines.slice(1).map((line, index) => {
+        const values = line.split(',');
+        const contactData = headers.reduce((obj, header, i) => {
+          if (requiredHeaders.includes(header)) {
+              obj[header as keyof typeof obj] = values[i]?.trim() || '';
+          }
+          return obj;
+        }, { name: '', email: '', company: '', phone: '' });
+
+        if (!contactData.name) {
+          throw new Error(`Il nome è mancante alla riga ${index + 2}.`);
+        }
+
+        return {
+          ...contactData,
+          organization_id: organization.id,
+        };
+      });
+
+      const { error } = await supabase.from('contacts').insert(contactsToInsert);
+      if (error) throw error;
+
+      setImportSuccess(`${contactsToInsert.length} contatti importati con successo!`);
+      refetchData();
+      // Non chiudere subito la modale per mostrare il messaggio di successo
+      setTimeout(handleCloseModals, 2000);
+
+    } catch (err: any) {
+      setImportError(`Errore durante l'importazione: ${err.message}`);
+      console.error(err);
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
 
   const filteredAndSortedContacts = useMemo(() => {
     if (!contacts) return [];
@@ -258,6 +341,10 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
                   />
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
+              <button onClick={handleOpenImportModal} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 flex items-center space-x-2">
+                <UploadIcon className="w-5 h-5" />
+                <span>Importa CSV</span>
+              </button>
             <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
               <PlusIcon className="w-5 h-5" />
               <span>Aggiungi Contatto</span>
@@ -413,6 +500,50 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
               </button>
               <button onClick={handleDeleteContact} disabled={isSaving} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">
                   {isSaving ? 'Eliminazione...' : 'Elimina'}
+              </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal per Importazione CSV */}
+      <Modal isOpen={isImportModalOpen} onClose={handleCloseModals} title="Importa Contatti da CSV">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Carica un file CSV con le seguenti colonne: <strong>name, email, company, phone</strong>. La colonna 'name' è obbligatoria.
+          </p>
+          <div>
+            <input
+              type="file"
+              accept=".csv"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full bg-gray-100 border-2 border-dashed border-gray-300 p-6 rounded-lg text-center hover:bg-gray-200"
+            >
+              {importFile ? (
+                <span className="text-green-600 font-semibold">{importFile.name}</span>
+              ) : (
+                <span>Clicca per selezionare un file</span>
+              )}
+            </button>
+          </div>
+
+          {importError && <p className="text-red-500 text-sm">{importError}</p>}
+          {importSuccess && <p className="text-green-600 text-sm">{importSuccess}</p>}
+          
+          <div className="flex justify-end pt-4 border-t mt-4">
+              <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
+                  {importSuccess ? 'Chiudi' : 'Annulla'}
+              </button>
+              <button 
+                onClick={handleImportCSV} 
+                disabled={isImporting || !importFile || !!importSuccess} 
+                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400"
+              >
+                  {isImporting ? 'Importazione...' : 'Importa Contatti'}
               </button>
           </div>
         </div>

@@ -71,7 +71,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts })
                 fill="#8884d8"
                 dataKey="count"
                 nameKey="name"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                // FIX: Add `any` type to props argument to resolve typing issue where `percent` property is not found.
+                label={({ name, percent }: any) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
               >
                 {salesByStageData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

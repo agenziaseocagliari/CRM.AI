@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AutomationIcon, SparklesIcon } from './ui/icons';
+import { SparklesIcon } from './ui/icons';
 
 // Definiamo un tipo per la risposta parziale che ci aspettiamo da N8N dopo la creazione
 interface N8nWorkflowCreationResponse {

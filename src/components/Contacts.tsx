@@ -242,7 +242,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
       }
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
       const requiredHeaders = ['name', 'email', 'company', 'phone'];
-      const missingHeaders = requiredHeaders.filter(rh => !headers.includes(rh));
+      
       if(!headers.includes('name')) {
           throw new Error(`L'intestazione 'name' è obbligatoria nel file CSV.`);
       }

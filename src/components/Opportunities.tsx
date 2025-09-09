@@ -112,8 +112,8 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData }) => 
     newData[targetStage] = [...newData[targetStage], foundOpportunity];
     
     setBoardData(newData);
-    // Here you would also update the global state or call an API
-    // For now, we are just updating local state for visual feedback.
+    // In Fase 2, qui chiameremo Supabase per aggiornare il database:
+    // await supabase.from('opportunities').update({ stage: targetStage }).eq('id', opportunityId);
   };
 
   return (

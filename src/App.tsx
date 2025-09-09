@@ -12,36 +12,38 @@ import { HomePage } from './components/HomePage';
 import { View } from './types';
 import { useMockData } from './hooks/useMockData';
 import { supabase } from './lib/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
 
-type AppState = 'homepage' | 'login' | 'app';
+type AppState = 'loading' | 'homepage' | 'login' | 'app';
 
 const App: React.FC = () => {
-  const [appState, setAppState] = useState<AppState>('homepage');
+  const [appState, setAppState] = useState<AppState>('loading');
   const [currentView, setCurrentView] = useState<View>('Dashboard');
   const [currentTenantId, setCurrentTenantId] = useState<number>(1);
   
   const { tenants, getTenantContacts, getTenantOpportunities } = useMockData();
 
   useEffect(() => {
-    // FIX: Replaced deprecated `supabase.auth.session()` with an async call to `supabase.auth.getSession()`.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setAppState('app');
-      }
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session) {
-        setAppState('app');
       } else {
-        // Vai al login solo se l'utente era già dentro l'app (es. logout)
-        // Questo previene il salto da homepage a login al primo caricamento.
-        setAppState(current => current === 'app' ? 'login' : current);
+        setAppState('homepage');
       }
     });
 
-    // FIX: Corrected the unsubscribe call for the auth listener.
-    return () => authListener?.subscription?.unsubscribe();
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) {
+            setAppState('app');
+        } else {
+            // Se l'utente fa logout o la sessione scade, torna alla homepage
+            setAppState('homepage');
+        }
+      }
+    );
+
+    return () => authListener?.subscription.unsubscribe();
   }, []);
 
 
@@ -57,6 +59,7 @@ const App: React.FC = () => {
   
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    // Il listener onAuthStateChange gestirà il cambio di stato a 'homepage'
   };
 
   const renderView = () => {
@@ -80,13 +83,18 @@ const App: React.FC = () => {
         return <Dashboard opportunities={tenantOpportunities} />;
     }
   };
+  
+  if (appState === 'loading') {
+    return <div className="h-screen w-screen flex items-center justify-center">Caricamento...</div>;
+  }
 
   if (appState === 'homepage') {
     return <HomePage onLoginClick={handleShowLogin} onSignUpClick={handleShowLogin} />;
   }
 
   if (appState === 'login') {
-    return <Login />;
+    // Aggiungo un handler per tornare alla homepage
+    return <Login onBackToHome={() => setAppState('homepage')} />;
   }
 
   return (

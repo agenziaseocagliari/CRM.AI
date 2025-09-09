@@ -57,7 +57,7 @@ const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesD
 export const useMockData = () => {
   const [tenants] = useState<Tenant[]>(initialTenants);
   const [contacts] = useState<Contact[]>(initialContacts);
-  const [opportunities, setOpportunities] = useState<Record<number, OpportunitiesData>>({
+  const [opportunities] = useState<Record<number, OpportunitiesData>>({
       1: groupOpportunitiesByStage(initialOpportunities.filter(op => op.tenantId === 1)),
       2: groupOpportunitiesByStage(initialOpportunities.filter(op => op.tenantId === 2)),
   });
@@ -78,9 +78,6 @@ export const useMockData = () => {
 
   return {
     tenants,
-    contacts,
-    opportunitiesData: opportunities,
-    setOpportunitiesData: setOpportunities,
     getTenantContacts,
     getTenantOpportunities
   };

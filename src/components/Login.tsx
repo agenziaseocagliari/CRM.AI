@@ -3,37 +3,38 @@ import React, { useState } from 'react';
 import { GuardianIcon } from './ui/icons';
 import { supabase } from '../lib/supabaseClient';
 
+interface LoginProps {
+    onBackToHome: () => void;
+}
+
 type AuthMode = 'signIn' | 'signUp';
 
-export const Login: React.FC = () => {
+export const Login: React.FC<LoginProps> = ({ onBackToHome }) => {
     const [mode, setMode] = useState<AuthMode>('signIn');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [message, setMessage] = useState<string | null>(null);
 
-    const handleLogin = async (event: React.FormEvent) => {
+    const handleAuthAction = async (event: React.FormEvent) => {
         event.preventDefault();
         setLoading(true);
         setError(null);
-        // FIX: Replaced `signIn` with `signInWithPassword` for Supabase v2.
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) setError(error.message);
-        setLoading(false);
-    };
+        setMessage(null);
 
-    const handleSignUp = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setLoading(true);
-        setError(null);
-        // FIX: Updated `signUp` to pass a single object argument `{ email, password }` for Supabase v2.
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-            setError(error.message);
-        } else {
-            // Potresti mostrare un messaggio di "Controlla la tua email per confermare"
-            alert('Registrazione avvenuta! Controlla la tua email per il link di conferma.');
-            setMode('signIn'); // Torna al login dopo la registrazione
+        if (mode === 'signIn') {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) setError(error.message);
+            // Il successo del login viene gestito dal listener in App.tsx
+        } else { // signUp
+            const { error } = await supabase.auth.signUp({ email, password });
+            if (error) {
+                setError(error.message);
+            } else {
+                setMessage('Registrazione avvenuta! Controlla la tua email per il link di conferma.');
+                setMode('signIn'); // Torna al login dopo la registrazione
+            }
         }
         setLoading(false);
     };
@@ -41,6 +42,7 @@ export const Login: React.FC = () => {
     const toggleMode = () => {
         setMode(mode === 'signIn' ? 'signUp' : 'signIn');
         setError(null);
+        setMessage(null);
     }
 
     const title = mode === 'signIn' ? 'Accedi a Guardian AI CRM' : 'Crea un nuovo account';
@@ -56,11 +58,14 @@ export const Login: React.FC = () => {
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                     {title}
                 </h2>
+                <button onClick={onBackToHome} className="mt-2 text-center text-sm text-primary hover:text-indigo-500 w-full">
+                    &larr; Torna alla Home
+                </button>
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                    <form className="space-y-6" onSubmit={mode === 'signIn' ? handleLogin : handleSignUp}>
+                    <form className="space-y-6" onSubmit={handleAuthAction}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                                 Indirizzo email
@@ -96,7 +101,8 @@ export const Login: React.FC = () => {
                                 />
                             </div>
                         </div>
-
+                        
+                        {message && <p className="text-green-600 text-xs text-center">{message}</p>}
                         {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
                         <div>
@@ -109,21 +115,10 @@ export const Login: React.FC = () => {
                             </button>
                         </div>
                     </form>
-                    <div className="mt-6">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-gray-500">Oppure</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 text-center text-sm">
-                            <button onClick={toggleMode} className="font-medium text-primary hover:text-indigo-500">
-                                {switchText}
-                            </button>
-                        </div>
+                    <div className="mt-6 text-center text-sm">
+                        <button onClick={toggleMode} className="font-medium text-primary hover:text-indigo-500">
+                            {switchText}
+                        </button>
                     </div>
                 </div>
             </div>

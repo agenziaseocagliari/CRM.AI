@@ -14,9 +14,12 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // Expose Supabase env vars to the client
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
+      // IMPORTANT: API_KEY is sensitive and should not be exposed to the client directly in a production app.
+      // It's included here for development convenience. For production, use serverless functions.
+      'process.env.API_KEY': JSON.stringify(env.API_KEY),
     }
   }
 })

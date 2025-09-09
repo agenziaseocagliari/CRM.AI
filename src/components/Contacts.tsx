@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Contact, Organization } from '../types';
-import { SearchIcon, SparklesIcon, PlusIcon, EditIcon } from './ui/icons';
+import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 // import { GoogleGenAI } from '@google/genai'; // Removed static import
@@ -20,6 +20,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // AI Email state
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -31,8 +32,8 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   // Add Contact state
   const [newContact, setNewContact] = useState({ name: '', email: '', company: '', phone: '' });
   
-  // Edit Contact state
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  // Edit/Delete Contact state
+  const [contactToModify, setContactToModify] = useState<Contact | null>(null);
   
   // Generic loading/error state for DB operations
   const [isSaving, setIsSaving] = useState(false);
@@ -54,17 +55,24 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   }
 
   const handleOpenEditModal = (contact: Contact) => {
-    setEditingContact(contact);
+    setContactToModify(contact);
     setSaveError('');
     setEditModalOpen(true);
+  };
+
+  const handleOpenDeleteModal = (contact: Contact) => {
+    setContactToModify(contact);
+    setSaveError('');
+    setDeleteModalOpen(true);
   };
   
   const handleCloseModals = () => {
     setIsEmailModalOpen(false);
     setAddModalOpen(false);
     setEditModalOpen(false);
+    setDeleteModalOpen(false);
     setSelectedContact(null);
-    setEditingContact(null);
+    setContactToModify(null);
   }
 
   const handleGenerateEmail = async () => {
@@ -135,7 +143,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
 
   const handleUpdateContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingContact || !editingContact.name) {
+    if (!contactToModify || !contactToModify.name) {
         setSaveError("Il nome è obbligatorio.");
         return;
     }
@@ -146,12 +154,12 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
         const { error } = await supabase
             .from('contacts')
             .update({
-                name: editingContact.name,
-                email: editingContact.email,
-                company: editingContact.company,
-                phone: editingContact.phone
+                name: contactToModify.name,
+                email: contactToModify.email,
+                company: contactToModify.company,
+                phone: contactToModify.phone
             })
-            .eq('id', editingContact.id);
+            .eq('id', contactToModify.id);
 
         if (error) throw error;
 
@@ -160,6 +168,31 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
         
     } catch (err: any) {
         setSaveError(`Errore nell'aggiornamento del contatto: ${err.message}`);
+        console.error(err);
+    } finally {
+        setIsSaving(false);
+    }
+  }
+
+  const handleDeleteContact = async () => {
+    if (!contactToModify) return;
+
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+        const { error } = await supabase
+            .from('contacts')
+            .delete()
+            .eq('id', contactToModify.id);
+        
+        if (error) throw error;
+
+        handleCloseModals();
+        refetchData();
+
+    } catch (err: any) {
+        setSaveError(`Errore nell'eliminazione del contatto: ${err.message}`);
         console.error(err);
     } finally {
         setIsSaving(false);
@@ -258,6 +291,9 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
                         <button onClick={() => handleOpenEditModal(contact)} title="Modifica Contatto" className="text-gray-500 hover:text-primary">
                             <EditIcon className="w-5 h-5" />
                         </button>
+                        <button onClick={() => handleOpenDeleteModal(contact)} title="Elimina Contatto" className="text-gray-500 hover:text-red-600">
+                            <TrashIcon className="w-5 h-5" />
+                        </button>
                         <button onClick={() => handleOpenEmailModal(contact)} title="Email con AI" className="text-gray-500 hover:text-primary flex items-center">
                             <SparklesIcon className="w-5 h-5" />
                         </button>
@@ -336,23 +372,23 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
       </Modal>
 
        {/* Modal per Modificare Contatto */}
-      <Modal isOpen={isEditModalOpen} onClose={handleCloseModals} title={`Modifica ${editingContact?.name}`}>
+      <Modal isOpen={isEditModalOpen} onClose={handleCloseModals} title={`Modifica ${contactToModify?.name}`}>
         <form onSubmit={handleUpdateContact} className="space-y-4">
             <div>
                 <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Nome Completo *</label>
-                <input type="text" id="edit-name" required value={editingContact?.name || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, name: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <input type="text" id="edit-name" required value={contactToModify?.name || ''} onChange={(e) => setContactToModify(contact => contact ? {...contact, name: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             <div>
                 <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="edit-email" value={editingContact?.email || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, email: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <input type="email" id="edit-email" value={contactToModify?.email || ''} onChange={(e) => setContactToModify(contact => contact ? {...contact, email: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             <div>
                 <label htmlFor="edit-company" className="block text-sm font-medium text-gray-700">Azienda</label>
-                <input type="text" id="edit-company" value={editingContact?.company || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, company: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <input type="text" id="edit-company" value={contactToModify?.company || ''} onChange={(e) => setContactToModify(contact => contact ? {...contact, company: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             <div>
                 <label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700">Telefono</label>
-                <input type="tel" id="edit-phone" value={editingContact?.phone || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, phone: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <input type="tel" id="edit-phone" value={contactToModify?.phone || ''} onChange={(e) => setContactToModify(contact => contact ? {...contact, phone: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
             <div className="flex justify-end pt-4 border-t mt-4">
@@ -364,6 +400,22 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
                 </button>
             </div>
         </form>
+      </Modal>
+
+      {/* Modal di Conferma Eliminazione */}
+      <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
+        <div className="space-y-4">
+          <p>Sei sicuro di voler eliminare il contatto <strong>{contactToModify?.name}</strong>? Questa azione è irreversibile.</p>
+          {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
+          <div className="flex justify-end pt-4 border-t mt-4">
+              <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
+                  Annulla
+              </button>
+              <button onClick={handleDeleteContact} disabled={isSaving} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">
+                  {isSaving ? 'Eliminazione...' : 'Elimina'}
+              </button>
+          </div>
+        </div>
       </Modal>
     </>
   );

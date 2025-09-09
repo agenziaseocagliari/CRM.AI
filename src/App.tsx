@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -11,15 +11,40 @@ import { Login } from './components/Login';
 import { HomePage } from './components/HomePage';
 import { View } from './types';
 import { useMockData } from './hooks/useMockData';
+import { supabase } from './lib/supabaseClient';
+import { Session } from '@supabase/supabase-js';
 
 type AppState = 'homepage' | 'login' | 'app';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('homepage');
+  const [session, setSession] = useState<Session | null>(null);
   const [currentView, setCurrentView] = useState<View>('Dashboard');
   const [currentTenantId, setCurrentTenantId] = useState<number>(1);
   
   const { tenants, getTenantContacts, getTenantOpportunities } = useMockData();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        setAppState('app');
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        setAppState('app');
+      } else {
+        // Se l'utente fa logout, torna alla pagina di login
+        setAppState('login');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
 
   const currentTenant = useMemo(() => tenants.find(t => t.id === currentTenantId) || tenants[0], [tenants, currentTenantId]);
   
@@ -27,13 +52,13 @@ const App: React.FC = () => {
     setCurrentTenantId(tenantId);
   }, []);
 
-  const handleLoginSuccess = useCallback(() => {
-    setAppState('app');
-  }, []);
-
   const handleShowLogin = useCallback(() => {
     setAppState('login');
   }, []);
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const renderView = () => {
     const tenantContacts = getTenantContacts(currentTenantId);
@@ -62,7 +87,7 @@ const App: React.FC = () => {
   }
 
   if (appState === 'login') {
-    return <Login onLogin={handleLoginSuccess} />;
+    return <Login />;
   }
 
   return (
@@ -72,7 +97,8 @@ const App: React.FC = () => {
         <Header 
           tenants={tenants} 
           currentTenant={currentTenant} 
-          onTenantChange={handleTenantChange} 
+          onTenantChange={handleTenantChange}
+          onLogout={handleLogout}
         />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
           {renderView()}

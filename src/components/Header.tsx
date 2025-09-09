@@ -1,15 +1,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Tenant } from '../types';
-import { ChevronDownIcon, BellIcon, UserCircleIcon, SearchIcon } from './ui/icons';
+import { ChevronDownIcon, BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
 
 interface HeaderProps {
   tenants: Tenant[];
   currentTenant: Tenant;
   onTenantChange: (tenantId: number) => void;
+  onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ tenants, currentTenant, onTenantChange }) => {
+export const Header: React.FC<HeaderProps> = ({ tenants, currentTenant, onTenantChange, onLogout }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +70,9 @@ export const Header: React.FC<HeaderProps> = ({ tenants, currentTenant, onTenant
         </button>
         <button className="p-2 rounded-full hover:bg-gray-100">
           <UserCircleIcon className="w-8 h-8 text-gray-500" />
+        </button>
+        <button onClick={onLogout} title="Logout" className="p-2 rounded-full hover:bg-gray-100">
+          <LogoutIcon className="w-6 h-6 text-gray-500" />
         </button>
       </div>
     </header>

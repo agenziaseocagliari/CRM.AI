@@ -56,7 +56,7 @@ const App: React.FC = () => {
     // Passiamo i dati reali ai componenti
     switch (currentView) {
       case 'Dashboard':
-        return <Dashboard opportunities={opportunities} />;
+        return <Dashboard opportunities={opportunities} contacts={contacts} />;
       case 'Opportunities':
         return <Opportunities initialData={opportunities} />;
       case 'Contacts':
@@ -68,7 +68,7 @@ const App: React.FC = () => {
       case 'Settings':
         return <div className="text-3xl font-bold text-text-primary">Impostazioni</div>;
       default:
-        return <Dashboard opportunities={opportunities} />;
+        return <Dashboard opportunities={opportunities} contacts={contacts} />;
     }
   };
   

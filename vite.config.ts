@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => {
       // IMPORTANT: API_KEY is sensitive and should not be exposed to the client directly in a production app.
       // It's included here for development convenience. For production, use serverless functions.
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // Expose N8N env vars for automation integration
+      'process.env.VITE_N8N_URL': JSON.stringify(env.VITE_N8N_URL),
+      'process.env.VITE_N8N_API_KEY': JSON.stringify(env.VITE_N8N_API_KEY),
     }
   }
 })

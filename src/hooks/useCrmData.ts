@@ -39,6 +39,9 @@ export const useCrmData = () => {
         // Non è un errore se l'utente non è loggato, semplicemente non ci sono dati da caricare.
         // La logica in App.tsx gestirà la redirezione.
         setLoading(false);
+        setOrganization(null);
+        setContacts([]);
+        setOpportunities(groupOpportunitiesByStage([]));
         return;
       }
 
@@ -83,7 +86,7 @@ export const useCrmData = () => {
     // e quando lo stato di autenticazione cambia.
     fetchData();
     
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, _session) => {
         if(event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
             fetchData();
         }

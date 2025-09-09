@@ -3,7 +3,6 @@ import { Contact, Organization } from '../types';
 import { SearchIcon, SparklesIcon, PlusIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
-
 // import { GoogleGenAI } from '@google/genai'; // Removed static import
 
 interface ContactsProps {

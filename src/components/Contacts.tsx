@@ -1,45 +1,70 @@
 import React, { useState, useMemo } from 'react';
-import { Contact } from '../types';
-import { SearchIcon, SparklesIcon } from './ui/icons';
+import { Contact, Organization } from '../types';
+import { SearchIcon, SparklesIcon, PlusIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
+import { supabase } from '../lib/supabaseClient';
+
 // import { GoogleGenAI } from '@google/genai'; // Removed static import
 
-export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
+interface ContactsProps {
+  contacts: Contact[];
+  organization: Organization | null;
+  refetchData: () => void;
+}
+
+export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refetchData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortColumn, setSortColumn] = useState<keyof Contact>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Stato per il modal di generazione email AI
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [emailPrompt, setEmailPrompt] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState('');
+  
+  // Stato per il modal di aggiunta contatto
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [newContact, setNewContact] = useState({ name: '', email: '', company: '', phone: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const handleOpenModal = (contact: Contact) => {
+
+  const handleOpenEmailModal = (contact: Contact) => {
     setSelectedContact(contact);
-    setIsModalOpen(true);
+    setIsEmailModalOpen(true);
     setGeneratedEmail('');
     setEmailPrompt('');
-    setError('');
+    setGenerationError('');
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleCloseEmailModal = () => {
+    setIsEmailModalOpen(false);
     setSelectedContact(null);
   };
+  
+  const handleOpenAddModal = () => {
+    setNewContact({ name: '', email: '', company: '', phone: '' });
+    setSaveError('');
+    setAddModalOpen(true);
+  }
+  
+  const handleCloseAddModal = () => {
+    setAddModalOpen(false);
+  }
 
   const handleGenerateEmail = async () => {
     if (!emailPrompt || !selectedContact) {
-      setError("Per favore, fornisci un obiettivo per l'email.");
+      setGenerationError("Per favore, fornisci un obiettivo per l'email.");
       return;
     }
-    setIsLoading(true);
+    setIsGenerating(true);
     setGeneratedEmail('');
-    setError('');
+    setGenerationError('');
     
     try {
-      // Dynamically import the library when the function is called
       const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
       const fullPrompt = `Sei un assistente professionale per le relazioni con i clienti. Scrivi un'email professionale e concisa a un contatto.
@@ -60,23 +85,53 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
 
     } catch (err) {
       console.error(err);
-      setError("Impossibile generare l'email. Controlla la chiave API e riprova.");
+      setGenerationError("Impossibile generare l'email. Controlla la chiave API e riprova.");
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
+  
+  const handleAddNewContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newContact.name || !organization) {
+        setSaveError("Il nome è obbligatorio.");
+        return;
+    }
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+        const { error } = await supabase
+            .from('contacts')
+            .insert({
+                ...newContact,
+                organization_id: organization.id
+            });
+
+        if (error) throw error;
+        
+        handleCloseAddModal();
+        refetchData(); // Richiama il fetch dei dati per aggiornare la lista
+
+    } catch (err: any) {
+        setSaveError(`Errore nel salvataggio del contatto: ${err.message}`);
+        console.error(err);
+    } finally {
+        setIsSaving(false);
+    }
+  }
 
   const filteredAndSortedContacts = useMemo(() => {
     if (!contacts) return [];
     return contacts
       .filter(contact =>
         contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.company.toLowerCase().includes(searchTerm.toLowerCase())
+        (contact.email && contact.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (contact.company && contact.company.toLowerCase().includes(searchTerm.toLowerCase()))
       )
       .sort((a, b) => {
-        const valA = a[sortColumn];
-        const valB = b[sortColumn];
+        const valA = a[sortColumn] || '';
+        const valB = b[sortColumn] || '';
 
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
@@ -124,8 +179,9 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
                   />
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
-            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-              Aggiungi Contatto
+            <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
+              <PlusIcon className="w-5 h-5" />
+              <span>Aggiungi Contatto</span>
             </button>
           </div>
         </div>
@@ -152,7 +208,7 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(contact.created_at).toLocaleDateString('it-IT')}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button onClick={() => handleOpenModal(contact)} className="text-indigo-600 hover:text-indigo-900 flex items-center space-x-1">
+                    <button onClick={() => handleOpenEmailModal(contact)} className="text-indigo-600 hover:text-indigo-900 flex items-center space-x-1">
                         <SparklesIcon className="w-5 h-5" />
                         <span>Email con AI</span>
                     </button>
@@ -164,53 +220,69 @@ export const Contacts: React.FC<{ contacts: Contact[] }> = ({ contacts }) => {
         </div>
       </div>
       
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={`Genera Email con AI per ${selectedContact?.name}`}>
+      {/* Modal per Generazione Email */}
+      <Modal isOpen={isEmailModalOpen} onClose={handleCloseEmailModal} title={`Genera Email con AI per ${selectedContact?.name}`}>
         <div className="space-y-4">
             <div>
                 <label htmlFor="email-prompt" className="block text-sm font-medium text-gray-700">Obiettivo dell'Email</label>
                 <input
-                    type="text"
-                    id="email-prompt"
-                    value={emailPrompt}
+                    type="text" id="email-prompt" value={emailPrompt}
                     onChange={(e) => setEmailPrompt(e.target.value)}
                     placeholder="Es: Follow-up sulla nostra ultima conversazione"
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 />
             </div>
-
             <div className="flex justify-end">
                 <button
-                    onClick={handleGenerateEmail}
-                    disabled={isLoading}
+                    onClick={handleGenerateEmail} disabled={isGenerating}
                     className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 flex items-center"
                 >
-                    {isLoading ? (
-                        <>
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Generazione...
-                        </>
-                    ) : 'Genera Email'}
+                    {isGenerating ? 'Generazione...' : 'Genera Email'}
                 </button>
             </div>
-            
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            
+            {generationError && <p className="text-red-500 text-sm">{generationError}</p>}
             {generatedEmail && (
                 <div>
                     <label htmlFor="generated-email" className="block text-sm font-medium text-gray-700">Email Generata</label>
                     <textarea
-                        id="generated-email"
-                        rows={10}
-                        value={generatedEmail}
+                        id="generated-email" rows={10} value={generatedEmail}
                         onChange={(e) => setGeneratedEmail(e.target.value)}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                     />
                 </div>
             )}
         </div>
+      </Modal>
+
+      {/* Modal per Aggiungere Contatto */}
+      <Modal isOpen={isAddModalOpen} onClose={handleCloseAddModal} title="Aggiungi Nuovo Contatto">
+        <form onSubmit={handleAddNewContact} className="space-y-4">
+            <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome Completo *</label>
+                <input type="text" id="name" required value={newContact.name} onChange={(e) => setNewContact({...newContact, name: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" value={newContact.email} onChange={(e) => setNewContact({...newContact, email: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            <div>
+                <label htmlFor="company" className="block text-sm font-medium text-gray-700">Azienda</label>
+                <input type="text" id="company" value={newContact.company} onChange={(e) => setNewContact({...newContact, company: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Telefono</label>
+                <input type="tel" id="phone" value={newContact.phone} onChange={(e) => setNewContact({...newContact, phone: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
+            <div className="flex justify-end pt-4 border-t mt-4">
+                 <button type="button" onClick={handleCloseAddModal} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
+                    Annulla
+                </button>
+                <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
+                    {isSaving ? 'Salvataggio...' : 'Salva Contatto'}
+                </button>
+            </div>
+        </form>
       </Modal>
     </>
   );

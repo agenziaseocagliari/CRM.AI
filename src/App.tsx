@@ -18,7 +18,7 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('loading');
   const [currentView, setCurrentView] = useState<View>('Dashboard');
   
-  const { organization, contacts, opportunities, loading, error } = useCrmData();
+  const { organization, contacts, opportunities, loading, error, refetch } = useCrmData();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -60,7 +60,7 @@ const App: React.FC = () => {
       case 'Opportunities':
         return <Opportunities initialData={opportunities} />;
       case 'Contacts':
-        return <Contacts contacts={contacts} />;
+        return <Contacts contacts={contacts} organization={organization} refetchData={refetch} />;
       case 'Forms':
         return <Forms />;
       case 'Automations':

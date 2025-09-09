@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Contact, Organization } from '../types';
-import { SearchIcon, SparklesIcon, PlusIcon } from './ui/icons';
+import { SearchIcon, SparklesIcon, PlusIcon, EditIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 // import { GoogleGenAI } from '@google/genai'; // Removed static import
@@ -16,17 +16,25 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   const [sortColumn, setSortColumn] = useState<keyof Contact>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Stato per il modal di generazione email AI
+  // Modals state
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+
+  // AI Email state
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [emailPrompt, setEmailPrompt] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState('');
   
-  // Stato per il modal di aggiunta contatto
-  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  // Add Contact state
   const [newContact, setNewContact] = useState({ name: '', email: '', company: '', phone: '' });
+  
+  // Edit Contact state
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  
+  // Generic loading/error state for DB operations
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
@@ -39,19 +47,24 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
     setGenerationError('');
   };
 
-  const handleCloseEmailModal = () => {
-    setIsEmailModalOpen(false);
-    setSelectedContact(null);
-  };
-  
   const handleOpenAddModal = () => {
     setNewContact({ name: '', email: '', company: '', phone: '' });
     setSaveError('');
     setAddModalOpen(true);
   }
+
+  const handleOpenEditModal = (contact: Contact) => {
+    setEditingContact(contact);
+    setSaveError('');
+    setEditModalOpen(true);
+  };
   
-  const handleCloseAddModal = () => {
+  const handleCloseModals = () => {
+    setIsEmailModalOpen(false);
     setAddModalOpen(false);
+    setEditModalOpen(false);
+    setSelectedContact(null);
+    setEditingContact(null);
   }
 
   const handleGenerateEmail = async () => {
@@ -109,8 +122,8 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
 
         if (error) throw error;
         
-        handleCloseAddModal();
-        refetchData(); // Richiama il fetch dei dati per aggiornare la lista
+        handleCloseModals();
+        refetchData();
 
     } catch (err: any) {
         setSaveError(`Errore nel salvataggio del contatto: ${err.message}`);
@@ -119,6 +132,40 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
         setIsSaving(false);
     }
   }
+
+  const handleUpdateContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingContact || !editingContact.name) {
+        setSaveError("Il nome è obbligatorio.");
+        return;
+    }
+    setIsSaving(true);
+    setSaveError('');
+    
+    try {
+        const { error } = await supabase
+            .from('contacts')
+            .update({
+                name: editingContact.name,
+                email: editingContact.email,
+                company: editingContact.company,
+                phone: editingContact.phone
+            })
+            .eq('id', editingContact.id);
+
+        if (error) throw error;
+
+        handleCloseModals();
+        refetchData();
+        
+    } catch (err: any) {
+        setSaveError(`Errore nell'aggiornamento del contatto: ${err.message}`);
+        console.error(err);
+    } finally {
+        setIsSaving(false);
+    }
+  }
+
 
   const filteredAndSortedContacts = useMemo(() => {
     if (!contacts) return [];
@@ -207,10 +254,14 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(contact.created_at).toLocaleDateString('it-IT')}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button onClick={() => handleOpenEmailModal(contact)} className="text-indigo-600 hover:text-indigo-900 flex items-center space-x-1">
-                        <SparklesIcon className="w-5 h-5" />
-                        <span>Email con AI</span>
-                    </button>
+                    <div className="flex items-center space-x-4">
+                        <button onClick={() => handleOpenEditModal(contact)} title="Modifica Contatto" className="text-gray-500 hover:text-primary">
+                            <EditIcon className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => handleOpenEmailModal(contact)} title="Email con AI" className="text-gray-500 hover:text-primary flex items-center">
+                            <SparklesIcon className="w-5 h-5" />
+                        </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -220,7 +271,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
       </div>
       
       {/* Modal per Generazione Email */}
-      <Modal isOpen={isEmailModalOpen} onClose={handleCloseEmailModal} title={`Genera Email con AI per ${selectedContact?.name}`}>
+      <Modal isOpen={isEmailModalOpen} onClose={handleCloseModals} title={`Genera Email con AI per ${selectedContact?.name}`}>
         <div className="space-y-4">
             <div>
                 <label htmlFor="email-prompt" className="block text-sm font-medium text-gray-700">Obiettivo dell'Email</label>
@@ -254,31 +305,62 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
       </Modal>
 
       {/* Modal per Aggiungere Contatto */}
-      <Modal isOpen={isAddModalOpen} onClose={handleCloseAddModal} title="Aggiungi Nuovo Contatto">
+      <Modal isOpen={isAddModalOpen} onClose={handleCloseModals} title="Aggiungi Nuovo Contatto">
         <form onSubmit={handleAddNewContact} className="space-y-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome Completo *</label>
-                <input type="text" id="name" required value={newContact.name} onChange={(e) => setNewContact({...newContact, name: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <label htmlFor="add-name" className="block text-sm font-medium text-gray-700">Nome Completo *</label>
+                <input type="text" id="add-name" required value={newContact.name} onChange={(e) => setNewContact({...newContact, name: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" value={newContact.email} onChange={(e) => setNewContact({...newContact, email: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <label htmlFor="add-email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="add-email" value={newContact.email} onChange={(e) => setNewContact({...newContact, email: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             <div>
-                <label htmlFor="company" className="block text-sm font-medium text-gray-700">Azienda</label>
-                <input type="text" id="company" value={newContact.company} onChange={(e) => setNewContact({...newContact, company: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <label htmlFor="add-company" className="block text-sm font-medium text-gray-700">Azienda</label>
+                <input type="text" id="add-company" value={newContact.company} onChange={(e) => setNewContact({...newContact, company: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Telefono</label>
-                <input type="tel" id="phone" value={newContact.phone} onChange={(e) => setNewContact({...newContact, phone: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                <label htmlFor="add-phone" className="block text-sm font-medium text-gray-700">Telefono</label>
+                <input type="tel" id="add-phone" value={newContact.phone} onChange={(e) => setNewContact({...newContact, phone: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
             {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
             <div className="flex justify-end pt-4 border-t mt-4">
-                 <button type="button" onClick={handleCloseAddModal} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
+                 <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
                     Annulla
                 </button>
                 <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
                     {isSaving ? 'Salvataggio...' : 'Salva Contatto'}
+                </button>
+            </div>
+        </form>
+      </Modal>
+
+       {/* Modal per Modificare Contatto */}
+      <Modal isOpen={isEditModalOpen} onClose={handleCloseModals} title={`Modifica ${editingContact?.name}`}>
+        <form onSubmit={handleUpdateContact} className="space-y-4">
+            <div>
+                <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Nome Completo *</label>
+                <input type="text" id="edit-name" required value={editingContact?.name || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, name: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            <div>
+                <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="edit-email" value={editingContact?.email || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, email: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            <div>
+                <label htmlFor="edit-company" className="block text-sm font-medium text-gray-700">Azienda</label>
+                <input type="text" id="edit-company" value={editingContact?.company || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, company: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            <div>
+                <label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700">Telefono</label>
+                <input type="tel" id="edit-phone" value={editingContact?.phone || ''} onChange={(e) => setEditingContact(contact => contact ? {...contact, phone: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+            {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
+            <div className="flex justify-end pt-4 border-t mt-4">
+                 <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
+                    Annulla
+                </button>
+                <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
+                    {isSaving ? 'Salvataggio...' : 'Salva Modifiche'}
                 </button>
             </div>
         </form>

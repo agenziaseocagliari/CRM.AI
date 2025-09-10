@@ -1,5 +1,5 @@
-// FIX: Replaced the incorrect 'deno.ns' lib reference with the standard Supabase Edge Function types to make Deno's global types available.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Switched to unpkg CDN for Supabase type definitions to resolve type resolution errors.
+/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse, Type } from "https://esm.sh/@google/genai@1.19.0";

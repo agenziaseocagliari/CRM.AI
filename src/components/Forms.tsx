@@ -122,29 +122,44 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         setIsLoading(true); setError(null); setGeneratedFields(null);
 
         try {
-            const { GoogleGenAI, Type } = await import('@google/genai');
+            const { GoogleGenAI } = await import('@google/genai');
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-            const schema = {
-                type: Type.ARRAY, items: {
-                    type: Type.OBJECT, properties: {
-                        name: { type: Type.STRING, description: 'Un nome per il campo leggibile dalla macchina, preferibilmente in snake_case (es: "numero_targa").' },
-                        label: { type: Type.STRING, description: 'Un\'etichetta per il campo visibile all\'utente (es: "Numero di Targa").' },
-                        type: { 
-                            type: Type.STRING,
-                            description: 'Il tipo di input del campo.',
-                            enum: ['text', 'email', 'tel', 'textarea'] 
-                        },
-                        required: { type: Type.BOOLEAN, description: 'Indica se il campo è obbligatorio.' },
-                    }, required: ["name", "label", "type", "required"],
-                },
-            };
-            
-            const fullPrompt = `Sei un esperto costruttore di form AI. Il tuo compito è convertire la descrizione di un utente in un array JSON valido di campi per un form. La descrizione dell'utente è in italiano. L'output DEVE essere solo l'array JSON grezzo. Descrizione: "${prompt}"`;
+            const fullPrompt = `
+Sei un esperto costruttore di form AI. Il tuo compito è convertire la descrizione di un utente in un array JSON valido di campi per un form.
+La descrizione dell'utente è: "${prompt}"
 
+L'output DEVE essere un array JSON e NIENT'ALTRO. Non includere spiegazioni, commenti, testo introduttivo o blocchi di codice markdown. L'output deve iniziare con '[' e finire con ']'.
+
+L'array deve contenere oggetti con le seguenti chiavi: "name", "label", "type", "required".
+- "name": una stringa in formato snake_case (es. "numero_targa").
+- "label": una stringa leggibile dall'utente (es. "Numero di Targa").
+- "type": deve essere uno dei seguenti valori: "text", "email", "tel", "textarea".
+- "required": un valore booleano (true o false).
+
+Esempio di input: "un form con nome ed email"
+Esempio di output corrispondente:
+[
+  {
+    "name": "nome",
+    "label": "Nome",
+    "type": "text",
+    "required": true
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": true
+  }
+]
+
+Ora, genera l'array JSON per la descrizione dell'utente.
+`;
+            
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash', contents: fullPrompt,
-                config: { responseMimeType: "application/json", responseSchema: schema },
+                model: 'gemini-2.5-flash',
+                contents: fullPrompt,
             });
 
             const jsonText = response.text;

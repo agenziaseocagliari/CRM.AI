@@ -16,17 +16,18 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      // This configuration defines the entire `process.env` object, providing fallbacks
-      // to empty strings. This prevents a fatal error during initialization if an env var
-      // is missing in the build environment (like Vercel), ensuring that runtime checks
-      // can properly handle the missing variable instead of crashing with a white screen.
-      'process.env': {
-        VITE_SUPABASE_URL: JSON.stringify(env.VITE_SUPABASE_URL || ''),
-        VITE_SUPABASE_ANON_KEY: JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
-        API_KEY: JSON.stringify(env.API_KEY || ''),
-        VITE_N8N_URL: JSON.stringify(env.VITE_N8N_URL || ''),
-        VITE_N8N_API_KEY: JSON.stringify(env.VITE_N8N_API_KEY || ''),
-      }
+      // FIX: Replaced the full `process.env` object definition with individual
+      // definitions for each variable. This is a more robust and less intrusive
+      // method that avoids potential conflicts with polyfills or the build environment.
+      // It ensures that missing variables are correctly replaced with an empty string,
+      // allowing the application's own error handling (e.g., in supabaseClient.ts)
+      // to function as intended and display a user-friendly configuration error
+      // instead of causing a fatal crash.
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
+      'process.env.VITE_N8N_URL': JSON.stringify(env.VITE_N8N_URL || ''),
+      'process.env.VITE_N8N_API_KEY': JSON.stringify(env.VITE_N8N_API_KEY || ''),
     }
   }
 })

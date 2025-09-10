@@ -38,6 +38,7 @@ const KanbanCard: React.FC<{
       <p className="font-semibold text-gray-800">{opportunity.contact_name}</p>
       <p className="text-sm text-gray-600">€{opportunity.value.toLocaleString('it-IT')}</p>
       <p className="text-xs text-gray-400 mt-2">Assegnato a: {opportunity.assigned_to}</p>
+      <p className="text-xs text-gray-500 mt-1">Scadenza: {new Date(opportunity.close_date).toLocaleDateString('it-IT')}</p>
       
       <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 backdrop-blur-sm rounded">
         <button onClick={() => onEdit(opportunity)} title="Modifica" className="p-1 hover:bg-gray-200 rounded">

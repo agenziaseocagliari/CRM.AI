@@ -25,9 +25,6 @@ export default defineConfig(({ mode }) => {
       // instead of causing a fatal crash.
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
-      'process.env.VITE_N8N_URL': JSON.stringify(env.VITE_N8N_URL || ''),
-      'process.env.VITE_N8N_API_KEY': JSON.stringify(env.VITE_N8N_API_KEY || ''),
     }
   }
 })

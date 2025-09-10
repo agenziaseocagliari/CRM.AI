@@ -3,10 +3,6 @@ import { Form, FormField, Organization } from '../types';
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
-// FIX: Changed the import to a namespace import to prevent a runtime error with the CDN module,
-// which was causing the white screen crash. All references to the library's exports
-// are now prefixed with the 'GoogleGenerativeAI' namespace.
-import * as GoogleGenerativeAI from '@google/genai';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -80,14 +76,9 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Stati per il debug
-    const [rawAIResponse, setRawAIResponse] = useState<string | null>(null);
-    const [lastPrompt, setLastPrompt] = useState<string | null>(null);
-
     const handleOpenCreateModal = () => {
         setPrompt(''); setFormName(''); setFormTitle('');
         setGeneratedFields(null); setError(null); setIsLoading(false);
-        setRawAIResponse(null); setLastPrompt(null);
         setCreateModalOpen(true);
     };
 
@@ -108,62 +99,26 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
     
     const handleGenerateForm = async () => {
         if (!prompt) { setError("Per favore, inserisci una descrizione per il tuo form."); return; }
-        setIsLoading(true); setError(null); setGeneratedFields(null); setRawAIResponse(null);
-
-        const systemInstruction = `You are an expert system that translates Italian natural language descriptions into a structured JSON object for a form builder. Based on the user's request, generate an array of form fields. For the 'type' property, you must choose one of the following values: 'text', 'email', 'tel', 'textarea'. For the 'name' property, generate a value in snake_case format.`;
-        
-        const responseSchema = {
-            type: GoogleGenerativeAI.Type.ARRAY,
-            items: {
-                type: GoogleGenerativeAI.Type.OBJECT,
-                properties: {
-                    name: { type: GoogleGenerativeAI.Type.STRING, description: 'Unique identifier for the field in snake_case format (e.g., "nome_completo").' },
-                    label: { type: GoogleGenerativeAI.Type.STRING, description: 'User-friendly label for the field (e.g., "Nome Completo").' },
-                    type: { type: GoogleGenerativeAI.Type.STRING, description: "The type of the field. Must be one of: 'text', 'email', 'tel', 'textarea'." },
-                    required: { type: GoogleGenerativeAI.Type.BOOLEAN, description: 'Whether the field is required or not.' }
-                },
-                required: ['name', 'label', 'type', 'required']
-            }
-        };
-        
-        setLastPrompt(`System Instruction:\n${systemInstruction}\n\nUser Request:\n"${prompt}"`);
+        setIsLoading(true); setError(null); setGeneratedFields(null);
 
         try {
-            const ai = new GoogleGenerativeAI.GoogleGenAI({ apiKey: process.env.API_KEY! });
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    systemInstruction,
-                    responseMimeType: "application/json",
-                    responseSchema,
-                    safetySettings: [
-                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
-                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
-                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
-                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
-                    ],
-                }
+            const { data, error: invokeError } = await supabase.functions.invoke('generate-form-fields', {
+                body: { prompt },
             });
 
-            setRawAIResponse(JSON.stringify(response, null, 2));
-
-            const jsonText = response.text;
-            if (!jsonText) { throw new Error("La risposta dell'AI era vuota o è stata bloccata."); }
+            if (invokeError) throw new Error(`Errore di rete: ${invokeError.message}`);
+            if (data.error) throw new Error(data.error);
             
-            const fields = JSON.parse(jsonText) as FormField[];
+            const fields = data.fields as FormField[];
             if (!fields || !Array.isArray(fields) || fields.length === 0) {
-                throw new Error("L'AI ha restituito una struttura JSON non valida o vuota.");
+                throw new Error("L'AI ha restituito una struttura non valida o vuota.");
             }
             
             setGeneratedFields(fields);
 
         } catch (err: any) {
             console.error("Errore dettagliato generazione form:", err);
-            setError("Impossibile generare il form. Riprova con una descrizione diversa o controlla la tua chiave API.");
-            // Mostra l'errore effettivo nel pannello di debug per una diagnosi accurata.
-            setRawAIResponse(err.toString());
+            setError(`Impossibile generare il form: ${err.message}. Assicurati che le Edge Functions siano deployate e che la chiave API sia configurata.`);
         } finally {
             setIsLoading(false);
         }
@@ -260,29 +215,6 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
                     <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <p className="text-sm font-semibold text-red-800">Si è verificato un errore</p>
                         <p className="text-red-700 text-sm mt-1">{error}</p>
-                        
-                        {(rawAIResponse || lastPrompt) && (
-                            <div className="mt-3 pt-3 border-t border-red-200">
-                                <h4 className="text-xs font-bold text-gray-700 uppercase">Informazioni di Debug</h4>
-                                <p className="text-xs text-gray-600 mt-1">
-                                    Questa è la risposta esatta ricevuta dall'AI. Spesso, l'errore è dovuto a una risposta vuota o a un formato JSON non valido. Condividi queste informazioni per aiutarci a risolvere il problema.
-                                </p>
-                                
-                                {lastPrompt && <div className="mt-2">
-                                    <label className="block text-xs font-semibold text-gray-600">Prompt Inviato:</label>
-                                    <pre className="mt-1 p-2 bg-gray-100 text-gray-800 text-xs rounded-md overflow-x-auto whitespace-pre-wrap break-words">
-                                        <code>{lastPrompt}</code>
-                                    </pre>
-                                </div>}
-
-                                <div className="mt-2">
-                                    <label className="block text-xs font-semibold text-gray-600">Risposta Grezza dall'AI:</label>
-                                    <pre className="mt-1 p-2 bg-gray-100 text-gray-800 text-xs rounded-md overflow-x-auto whitespace-pre-wrap break-words">
-                                        <code>{rawAIResponse || '(Nessuna risposta ricevuta)'}</code>
-                                    </pre>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
             </div>

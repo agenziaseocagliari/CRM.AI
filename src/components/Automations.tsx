@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { SparklesIcon } from './ui/icons';
-import * as GoogleGenerativeAI from '@google/genai';
-
-// Definiamo un tipo per la risposta parziale che ci aspettiamo da N8N dopo la creazione
-interface N8nWorkflowCreationResponse {
-    id: string;
-}
+import { supabase } from '../lib/supabaseClient';
 
 export const Automations: React.FC = () => {
     const [prompt, setPrompt] = useState('');
@@ -23,81 +18,19 @@ export const Automations: React.FC = () => {
         setSuccessMessage(null);
 
         try {
-            // Step 1: Chiamare Gemini per generare il JSON del workflow N8N
-            const ai = new GoogleGenerativeAI.GoogleGenAI({ apiKey: process.env.API_KEY! });
-            
-            const generationPrompt = `
-                You are an expert n8n workflow designer. Your task is to convert the following user request into a valid n8n workflow JSON object.
-                Output ONLY the raw JSON object, without any markdown formatting or explanations. The user's language is Italian.
-
-                **User Request:** "${prompt}"
-
-                **Workflow Requirements:**
-                1. The workflow should start with a Webhook trigger ('n8n-nodes-base.webhook'). This webhook will be called by our CRM.
-                   - The webhook must listen for POST requests.
-                   - Generate a unique path for the webhook (e.g., a UUID).
-                   - Name the node "CRM Trigger".
-                2. Based on the user request, add subsequent nodes.
-                3. For actions like sending a Slack message, use the 'n8n-nodes-base.slack' node. Use a placeholder URL like 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL' for the 'webhookUrl' parameter. The message text can use expressions to get data from the trigger, for example: "New event: {{$json.body.name}}". The trigger will send a JSON body with relevant data.
-                4. Connect the nodes sequentially in the 'connections' object.
-                5. Set the workflow 'active' status to false. Name the workflow appropriately based on the user's prompt.
-                6. The response must be a valid JSON object.
-            `;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: generationPrompt,
-                config: { responseMimeType: 'application/json' },
-            });
-            
-            const workflowJsonString = response.text;
-            if (!workflowJsonString) {
-                throw new Error("L'AI non ha generato una risposta valida.");
-            }
-
-            const workflowData = JSON.parse(workflowJsonString);
-
-            // Step 2: Creare il workflow in N8N usando la sua API
-            const n8nUrl = process.env.VITE_N8N_URL;
-            const n8nApiKey = process.env.VITE_N8N_API_KEY;
-
-            if (!n8nUrl || !n8nApiKey) {
-                throw new Error("Le credenziali di N8N non sono configurate correttamente.");
-            }
-
-            const createResponse = await fetch(`${n8nUrl}api/v1/workflows`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-N8N-API-KEY': n8nApiKey,
-                },
-                body: JSON.stringify(workflowData),
+            const { data, error: invokeError } = await supabase.functions.invoke('generate-n8n-workflow', {
+                body: { prompt },
             });
 
-            if (!createResponse.ok) {
-                const errorBody = await createResponse.text();
-                throw new Error(`Errore nella creazione del workflow N8N: ${errorBody}`);
-            }
+            if (invokeError) throw new Error(`Errore di rete: ${invokeError.message}`);
+            if (data.error) throw new Error(data.error);
 
-            const newWorkflow = (await createResponse.json()) as N8nWorkflowCreationResponse;
-            const workflowId = newWorkflow.id;
-
-            // Step 3: Attivare il workflow appena creato
-            const activateResponse = await fetch(`${n8nUrl}api/v1/workflows/${workflowId}/activate`, {
-                method: 'POST',
-                headers: { 'X-N8N-API-KEY': n8nApiKey },
-            });
-
-            if (!activateResponse.ok) {
-                throw new Error("Workflow creato ma impossibile attivarlo.");
-            }
-            
-            setSuccessMessage(`Workflow "${workflowData.name}" creato e attivato con successo!`);
+            setSuccessMessage(data.message);
             setPrompt('');
 
         } catch (err: any) {
             console.error(err);
-            setError(`Si è verificato un errore: ${err.message}`);
+            setError(`Si è verificato un errore: ${err.message}. Assicurati che le Edge Functions siano deployate e che le chiavi API per Gemini e N8N siano configurate in Supabase.`);
         } finally {
             setIsLoading(false);
         }

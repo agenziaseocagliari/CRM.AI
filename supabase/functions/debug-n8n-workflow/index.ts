@@ -1,5 +1,6 @@
 import { serve } from "serve";
-import { corsHeaders } from "cors";
+// FIX: Corrected import path for `corsHeaders` to point to the local shared module.
+import { corsHeaders } from "../shared/cors.ts";
 
 // FIX: Add declaration for Deno to resolve TypeScript error.
 // The Deno global is available in the Supabase Edge Function runtime.

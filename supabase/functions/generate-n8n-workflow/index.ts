@@ -1,6 +1,7 @@
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "serve";
-import { corsHeaders } from "cors";
+// FIX: Corrected import path for `corsHeaders` to point to the local shared module.
+import { corsHeaders } from "../shared/cors.ts";
 import { GoogleGenAI, Type } from "@google/genai";
 
 // FIX: Add declaration for Deno to resolve TypeScript error.

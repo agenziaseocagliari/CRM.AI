@@ -1,5 +1,5 @@
-// FIX: Add Deno types reference to resolve "Cannot find name 'Deno'" error.
-/// <reference types="https://deno.land/x/deno/types/index.d.ts" />
+// FIX: Use the 'deno.ns' lib reference to make Deno's global types available.
+/// <reference lib="deno.ns" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";

@@ -95,9 +95,14 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Stati per il debug
+    const [rawAIResponse, setRawAIResponse] = useState<string | null>(null);
+    const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+
     const handleOpenCreateModal = () => {
         setPrompt(''); setFormName(''); setFormTitle('');
         setGeneratedFields(null); setError(null); setIsLoading(false);
+        setRawAIResponse(null); setLastPrompt(null);
         setCreateModalOpen(true);
     };
 
@@ -118,41 +123,43 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
     
     const handleGenerateForm = async () => {
         if (!prompt) { setError("Per favore, inserisci una descrizione per il tuo form."); return; }
-        setIsLoading(true); setError(null); setGeneratedFields(null);
+        setIsLoading(true); setError(null); setGeneratedFields(null); setRawAIResponse(null);
+
+        const masterPrompt = `
+            You are an expert system that translates natural language descriptions into a specific JSON array structure for a form builder.
+            The user will provide a description in Italian. Your task is to generate an array of field objects based on this description.
+
+            Each object in the array must have the following properties:
+            - "name": A string in snake_case format (e.g., "nome_completo", "numero_targa"). This is used as the field's unique identifier.
+            - "label": A user-friendly string for the field's label (e.g., "Nome Completo", "Numero di Targa").
+            - "type": A string that must be one of the following exact values: 'text', 'email', 'tel', 'textarea'.
+            - "required": A boolean value (true or false).
+
+            **EXAMPLE:**
+            User request: "un form per iscriversi alla newsletter con nome e email"
+            Your JSON output:
+            [
+              {"name": "nome_completo", "label": "Nome Completo", "type": "text", "required": true},
+              {"name": "indirizzo_email", "label": "Indirizzo Email", "type": "email", "required": true}
+            ]
+
+            Now, process the following user request. Respond ONLY with the JSON array, nothing else.
+
+            User request: "${prompt}"
+        `;
+        setLastPrompt(masterPrompt);
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
-            // "Master Prompt" con ruolo, istruzioni, vincoli ed esempio (Few-Shot)
-            const masterPrompt = `
-                You are an expert system that translates natural language descriptions into a specific JSON array structure for a form builder.
-                The user will provide a description in Italian. Your task is to generate an array of field objects based on this description.
-
-                Each object in the array must have the following properties:
-                - "name": A string in snake_case format (e.g., "nome_completo", "numero_targa"). This is used as the field's unique identifier.
-                - "label": A user-friendly string for the field's label (e.g., "Nome Completo", "Numero di Targa").
-                - "type": A string that must be one of the following exact values: 'text', 'email', 'tel', 'textarea'.
-                - "required": A boolean value (true or false).
-
-                **EXAMPLE:**
-                User request: "un form per iscriversi alla newsletter con nome e email"
-                Your JSON output:
-                [
-                  {"name": "nome_completo", "label": "Nome Completo", "type": "text", "required": true},
-                  {"name": "indirizzo_email", "label": "Indirizzo Email", "type": "email", "required": true}
-                ]
-
-                Now, process the following user request. Respond ONLY with the JSON array, nothing else.
-
-                User request: "${prompt}"
-            `;
-
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: masterPrompt,
             });
 
             const jsonText = response.text;
+            setRawAIResponse(jsonText); // Salva sempre la risposta grezza per il debug
+
             if (!jsonText) { throw new Error("La risposta dell'AI era vuota."); }
             
             const fields = extractAndParseJson(jsonText);
@@ -163,7 +170,7 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
             
             setGeneratedFields(fields);
 
-        } catch (err) {
+        } catch (err: any) {
             console.error("Errore dettagliato generazione form:", err);
             setError("Impossibile generare il form. Riprova con una descrizione diversa o controlla la tua chiave API.");
         } finally {
@@ -257,7 +264,36 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
                         </div>
                     </>
                 )}
-                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
+                {error && (
+                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm font-semibold text-red-800">Si è verificato un errore</p>
+                        <p className="text-red-700 text-sm mt-1">{error}</p>
+                        
+                        {(rawAIResponse || lastPrompt) && (
+                            <div className="mt-3 pt-3 border-t border-red-200">
+                                <h4 className="text-xs font-bold text-gray-700 uppercase">Informazioni di Debug</h4>
+                                <p className="text-xs text-gray-600 mt-1">
+                                    Questa è la risposta esatta ricevuta dall'AI. Spesso, l'errore è dovuto a una risposta vuota o a un formato JSON non valido. Condividi queste informazioni per aiutarci a risolvere il problema.
+                                </p>
+                                
+                                {lastPrompt && <div className="mt-2">
+                                    <label className="block text-xs font-semibold text-gray-600">Prompt Inviato:</label>
+                                    <pre className="mt-1 p-2 bg-gray-100 text-gray-800 text-xs rounded-md overflow-x-auto whitespace-pre-wrap break-words">
+                                        <code>{lastPrompt}</code>
+                                    </pre>
+                                </div>}
+
+                                <div className="mt-2">
+                                    <label className="block text-xs font-semibold text-gray-600">Risposta Grezza dall'AI:</label>
+                                    <pre className="mt-1 p-2 bg-gray-100 text-gray-800 text-xs rounded-md overflow-x-auto whitespace-pre-wrap break-words">
+                                        <code>{rawAIResponse || '(Nessuna risposta ricevuta)'}</code>
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </Modal>
         

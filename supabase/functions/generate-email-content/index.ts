@@ -1,5 +1,5 @@
-// FIX: Switched to unpkg CDN for Supabase type definitions to resolve type resolution errors.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Switched to esm.sh CDN for Supabase type definitions, as unpkg was causing resolution errors. This should also define the global Deno object.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";

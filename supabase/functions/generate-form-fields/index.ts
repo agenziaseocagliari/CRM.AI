@@ -1,9 +1,9 @@
-// FIX: Updated the triple-slash directive to use the 'npm:' specifier, which is a more robust method for loading Deno types in the Supabase Edge Function environment and resolves TypeScript errors for the 'Deno' global.
-/// <reference types="npm:@supabase/functions-js/src/edge-runtime.d.ts" />
+// FIX: Pin the version for Supabase functions-js types to resolve type definition errors.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
 // supabase/functions/generate-form-fields/index.ts
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.217.0/http/server.ts";
 import { GoogleGenAI, Type } from 'https://esm.sh/@google/genai@1.19.0';
 import { corsHeaders } from '../shared/cors.ts';
 

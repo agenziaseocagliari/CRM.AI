@@ -109,19 +109,19 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
             const schema = {
                 type: Type.ARRAY, items: {
                     type: Type.OBJECT, properties: {
-                        name: { type: Type.STRING, description: 'A lowercase, snake_case string for the input name attribute (e.g., "full_name", "license_plate").' },
-                        label: { type: Type.STRING, description: 'A user-friendly, capitalized string for the form label (e.g., "Full Name").' },
+                        name: { type: Type.STRING, description: 'Un nome per il campo leggibile dalla macchina, preferibilmente in snake_case (es: "numero_targa").' },
+                        label: { type: Type.STRING, description: 'Un\'etichetta per il campo visibile all\'utente (es: "Numero di Targa").' },
                         type: { 
                             type: Type.STRING,
-                            description: 'The input type.',
+                            description: 'Il tipo di input del campo.',
                             enum: ['text', 'email', 'tel', 'textarea'] 
                         },
-                        required: { type: Type.BOOLEAN },
+                        required: { type: Type.BOOLEAN, description: 'Indica se il campo è obbligatorio.' },
                     }, required: ["name", "label", "type", "required"],
                 },
             };
             
-            const fullPrompt = `You are an expert form builder AI. Your task is to convert a user's description into a valid JSON array of form fields. The user's description is in Italian. Output MUST be only the raw JSON array. Description: "${prompt}"`;
+            const fullPrompt = `Sei un esperto costruttore di form AI. Il tuo compito è convertire la descrizione di un utente in un array JSON valido di campi per un form. La descrizione dell'utente è in italiano. L'output DEVE essere solo l'array JSON grezzo. Descrizione: "${prompt}"`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash', contents: fullPrompt,
@@ -149,7 +149,7 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
             if (insertError) throw insertError;
             refetchData(); handleCloseModals();
         } catch (err: any) {
-            setError(`Errore durante il salvataggio: ${err.message}`);
+            setError(`Errore durante il salvaggio: ${err.message}`);
         } finally {
             setIsLoading(false);
         }

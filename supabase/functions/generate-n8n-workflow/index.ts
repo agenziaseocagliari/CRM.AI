@@ -1,38 +1,42 @@
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "serve";
-// FIX: Corrected import path for `corsHeaders` to point to the local shared module `../shared/cors.ts`.
 import { corsHeaders } from "../shared/cors.ts";
 import { GoogleGenAI, Type } from "@google/genai";
 
-// FIX: Add declaration for Deno to resolve TypeScript error.
-// The Deno global is available in the Supabase Edge Function runtime.
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
 };
 
-const workflowSchema = {
+const responseSchema = {
     type: Type.OBJECT,
     properties: {
-        name: { type: Type.STRING, description: "Un nome descrittivo per il workflow." },
+        name: { type: Type.STRING, description: "Un nome descrittivo per il workflow, basato sulla richiesta dell'utente." },
         nodes: {
             type: Type.ARRAY,
+            description: "Un array di nodi che rappresentano i passaggi del workflow.",
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    parameters: { type: Type.OBJECT },
-                    name: { type: Type.STRING },
-                    type: { type: Type.STRING },
-                    typeVersion: { type: Type.NUMBER },
-                    position: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                    name: { type: Type.STRING, description: "Il nome del servizio o dell'azione (es. 'Guardian Trigger', 'Slack', 'Filter')." },
+                    type: { type: Type.STRING, description: "Il tipo di nodo (es. 'trigger', 'action', 'condition')." },
+                    parameters: { 
+                        type: Type.OBJECT, 
+                        description: "Parametri di configurazione per il nodo. Ad esempio, per Slack, potrebbe includere 'channel' e 'message'." 
+                    },
                 },
+                required: ["name", "type", "parameters"],
             },
         },
-        connections: { type: Type.OBJECT },
-        active: { type: Type.BOOLEAN, description: "Imposta il workflow come attivo." },
+        connections: {
+            type: Type.OBJECT,
+            description: "Definisce come i nodi sono connessi. La chiave è il nome del nodo di output e il valore è un array di nomi di nodi di input.",
+        },
     },
+    required: ["name", "nodes", "connections"],
 };
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -42,25 +46,22 @@ serve(async (req) => {
   try {
     const { prompt } = await req.json();
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
-    const n8nApiKey = Deno.env.get('N8N_API_KEY');
-
-    if (!geminiApiKey || !n8nWebhookUrl || !n8nApiKey) {
-      throw new Error("Mancano le variabili d'ambiente necessarie (GEMINI, N8N).");
-    }
+    if (!geminiApiKey) throw new Error("La variabile d'ambiente GEMINI_API_KEY non è impostata.");
+    if (!prompt) throw new Error("Il 'prompt' è richiesto.");
 
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-    
-    const fullPrompt = `
-      Sei un esperto di N8N. Converti la seguente richiesta in un JSON valido per un workflow N8N.
-      Il workflow deve iniziare con un trigger 'When a contact is created in Guardian AI CRM'.
-      
-      Esempio di output per un nodo trigger:
-      { "name": "Guardian AI Trigger", "type": "n8n-nodes-base.webhook", "typeVersion": 1, "position": [ 800, 500 ], "parameters": { "httpMethod": "POST", "path": "guardian-ai-contact-created", "responseMode": "onReceived", "options": {} } }
 
-      Richiesta utente: "${prompt}"
+    const fullPrompt = `
+      Sei un esperto di automazione di workflow. Il tuo compito è convertire la descrizione in linguaggio naturale di un utente in un workflow JSON in stile n8n semplificato.
+
+      Servizi disponibili e loro funzionalità:
+      - "Guardian CRM": Può essere un 'trigger' per "Nuovo Contatto" o "Score Contatto Aggiornato". Può essere un''action' per "Crea Opportunità".
+      - "Slack": Può essere un''action' per "Invia Messaggio". I parametri includono 'channel' (es. '#vendite') e 'message'.
+      - "Filter": È un nodo di tipo 'condition' per creare rami nel workflow in base a condizioni sui dati (es. 'lead_score equals Hot').
       
-      Assicurati che la struttura JSON sia perfettamente valida e segua lo schema richiesto.
+      Richiesta utente: "${prompt}"
+
+      Genera un oggetto JSON che rappresenta il workflow basato su questa richiesta, seguendo lo schema fornito. Assicurati che le connessioni tra i nodi siano logiche.
     `;
 
     const response = await ai.models.generateContent({
@@ -68,31 +69,13 @@ serve(async (req) => {
         contents: fullPrompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: workflowSchema,
+            responseSchema: responseSchema,
         },
     });
-
-    const workflowJson = JSON.parse(response.text);
     
-    // Invia il workflow a N8N
-    const n8nBaseUrl = new URL(n8nWebhookUrl).origin;
-    const createWorkflowUrl = `${n8nBaseUrl}/api/v1/workflows`;
-    
-    const n8nResponse = await fetch(createWorkflowUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-N8N-API-KEY': n8nApiKey,
-        },
-        body: JSON.stringify(workflowJson),
-    });
+    const workflow = JSON.parse(response.text);
 
-    if (!n8nResponse.ok) {
-        const errorBody = await n8nResponse.text();
-        throw new Error(`Errore da N8N: ${n8nResponse.status} - ${errorBody}`);
-    }
-
-    return new Response(JSON.stringify({ message: "Workflow creato con successo in N8N!" }), {
+    return new Response(JSON.stringify({ workflow }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

@@ -1,10 +1,12 @@
-// FIX: Add Deno types reference to resolve "Cannot find name 'Deno'" error.
-/// <reference types="https://deno.land/x/deno/cli/types/deno.ns.d.ts" />
-
-// Import diretti e versionati per massima robustezza
+// supabase/functions/generate-email-content/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { GoogleGenAI } from "https://esm.sh/@google/genai@1.19.0";
-import { corsHeaders } from '../shared/cors.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+console.log("Funzione 'generate-email-content' inizializzata (versione semplificata).");
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,44 +14,14 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, contact } = await req.json();
-    const apiKey = Deno.env.get('API_KEY');
-    
-    if (!apiKey) {
-      throw new Error("La variabile d'ambiente API_KEY non è impostata nei secrets di Supabase.");
-    }
-    if (!prompt || !contact) {
-        return new Response(JSON.stringify({ error: "Il prompt e i dati del contatto sono obbligatori." }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-        });
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
-    
-    const fullPrompt = `Sei un assistente professionale per le relazioni con i clienti. Scrivi un'email professionale e concisa a un contatto.
-      
-      Nome Contatto: ${contact.name}
-      Azienda Contatto: ${contact.company}
-      
-      L'obiettivo dell'email è: "${prompt}"
-      
-      Genera solo il corpo del testo dell'email.`;
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: fullPrompt,
-    });
-    
-    const text = response.text.trim();
-
-    return new Response(JSON.stringify({ email: text }), {
+    // Restituisce una risposta fissa invece di chiamare l'AI
+    const mockEmail = "Questo è un corpo dell'email di prova generato dalla funzione semplificata.";
+    return new Response(JSON.stringify({ email: mockEmail }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
-    console.error(error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

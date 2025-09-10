@@ -42,7 +42,7 @@ export const Settings: React.FC = () => {
         setOrganizationName(organization?.name || '');
     }, [organization]);
 
-    const handleUpdateOrganization = async (e: React.FormEvent) => {
+    const handleUpdateOrganization = (e: React.FormEvent) => {
         e.preventDefault();
         if (!organization || !organizationName.trim()) {
             toast.error("Il nome dell'organizzazione non può essere vuoto.");
@@ -50,18 +50,18 @@ export const Settings: React.FC = () => {
         }
         setIsOrgSaving(true);
         
-        // FIX: The Supabase query builder is a "thenable," not a true Promise.
-        // We explicitly convert it to a Promise by calling .then() and handle
-        // the Supabase-specific error object to ensure react-hot-toast can
-        // correctly catch failures.
-        const updatePromise = supabase
-            .from('organizations')
-            .update({ name: organizationName.trim() })
-            .eq('id', organization.id)
-            .then(response => {
-                if (response.error) throw response.error;
-                return response;
-            });
+        // FIX: The Supabase query builder returns a "thenable," not a true Promise.
+        // Using an async IIFE to `await` the result correctly wraps it in a true Promise
+        // that react-hot-toast can handle, fixing the build error.
+        const updatePromise = (async () => {
+            const { error } = await supabase
+                .from('organizations')
+                .update({ name: organizationName.trim() })
+                .eq('id', organization.id);
+            if (error) {
+                throw error;
+            }
+        })();
 
         toast.promise(updatePromise, {
             loading: 'Salvataggio in corso...',

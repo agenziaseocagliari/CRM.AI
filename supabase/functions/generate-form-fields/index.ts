@@ -1,5 +1,5 @@
-// FIX: Updated the Deno types reference to use the npm: specifier for better type resolution, which fixes issues with the 'Deno' global object.
-/// <reference types="npm:@supabase/functions-js/src/edge-runtime.d.ts" />
+// FIX: Replaced the 'npm:' specifier with a direct URL from esm.sh for Deno type definitions. This resolves LSP errors where 'Deno' global was not found.
+/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
 // supabase/functions/generate-form-fields/index.ts
 

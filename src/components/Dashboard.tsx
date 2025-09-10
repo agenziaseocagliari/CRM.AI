@@ -1,7 +1,7 @@
 import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Card } from './ui/Card';
-import { Opportunity, Contact, PipelineStage } from '../types';
+import { Opportunity, PipelineStage } from '../types';
 import { DollarSignIcon, UsersIcon, CheckCircleIcon, TrendingUpIcon } from './ui/icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useCrmData } from '../hooks/useCrmData';

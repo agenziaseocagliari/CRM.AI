@@ -158,7 +158,7 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
             });
 
             const jsonText = response.text;
-            setRawAIResponse(jsonText); // Salva sempre la risposta grezza per il debug
+            setRawAIResponse(jsonText ?? null); // Salva sempre la risposta grezza per il debug
 
             if (!jsonText) { throw new Error("La risposta dell'AI era vuota."); }
             

@@ -1,16 +1,17 @@
 // supabase/functions/health-check/index.ts
-import { serve } from "serve";
 
-// **FIX RADICALE: Gli header sono ora definiti localmente.**
-// Questo elimina la dipendenza dal file `../shared/cors.ts`,
-// che era la causa più probabile del fallimento del bundler e del deployment.
-// La funzione è ora 100% autonoma e non può fallire per problemi di import locali.
+// **SOLUZIONE RADICALE**: Importiamo 'serve' direttamente dal suo URL completo.
+// Questo elimina la dipendenza dal file `import_map.json`, che è la causa
+// più probabile del fallimento silenzioso del processo di bundling.
+// La funzione è ora completamente autonoma e robusta contro errori di configurazione.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-console.log("Health check function initialized (v2 - self-contained)");
+console.log("Health check function initialized (v3 - direct URL import)");
 
 serve(async (req) => {
   // Gestione esplicita della richiesta preflight OPTIONS.

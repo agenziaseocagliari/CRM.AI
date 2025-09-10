@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+// FIX: Import useParams to get formId directly from the URL.
+import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Form, FormField } from '../types';
 import { GuardianIcon } from './ui/icons';
 
-interface PublicFormProps {
-    formId: string;
-}
+// FIX: Removed PublicFormProps interface as formId is now retrieved from URL params.
+// interface PublicFormProps {
+//     formId: string;
+// }
 
 // Componente riutilizzabile per renderizzare campi di form dinamici
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -29,7 +32,9 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
 };
 
 
-export const PublicForm: React.FC<PublicFormProps> = ({ formId }) => {
+// FIX: Updated component to use useParams hook instead of props to get formId.
+export const PublicForm: React.FC = () => {
+    const { formId } = useParams<{ formId: string }>();
     const [form, setForm] = useState<Form | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,6 +45,10 @@ export const PublicForm: React.FC<PublicFormProps> = ({ formId }) => {
         const fetchForm = async () => {
             setLoading(true);
             try {
+                if (!formId) {
+                    throw new Error("Form non trovato.");
+                }
+
                 const { data, error: fetchError } = await supabase
                     .from('forms')
                     .select('*')

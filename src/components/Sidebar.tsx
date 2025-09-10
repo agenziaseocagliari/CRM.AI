@@ -1,33 +1,31 @@
-
 import React from 'react';
-import { View } from '../types';
+import { NavLink } from 'react-router-dom';
 import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon } from './ui/icons';
 
-interface SidebarProps {
-  currentView: View;
-  setCurrentView: (view: View) => void;
-}
-
 const NavItem: React.FC<{
+  to: string;
   icon: React.ReactNode;
   label: string;
-  isActive: boolean;
-  onClick: () => void;
-}> = ({ icon, label, isActive, onClick }) => (
-  <li
-    onClick={onClick}
-    className={`flex items-center p-3 my-1 rounded-lg cursor-pointer transition-colors ${
-      isActive
-        ? 'bg-primary text-white'
-        : 'text-gray-300 hover:bg-sidebar-hover hover:text-white'
-    }`}
-  >
-    {icon}
-    <span className="ml-3 font-medium">{label}</span>
-  </li>
-);
+}> = ({ to, icon, label }) => {
+    const activeClass = 'bg-primary text-white';
+    const inactiveClass = 'text-gray-300 hover:bg-sidebar-hover hover:text-white';
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
+    return (
+        <li>
+            <NavLink
+                to={to}
+                className={({ isActive }) =>
+                    `flex items-center p-3 my-1 rounded-lg cursor-pointer transition-colors ${isActive ? activeClass : inactiveClass}`
+                }
+            >
+                {icon}
+                <span className="ml-3 font-medium">{label}</span>
+            </NavLink>
+        </li>
+    );
+};
+
+export const Sidebar: React.FC = () => {
   return (
     <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
       <div className="flex items-center mb-8 px-2">
@@ -37,44 +35,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView })
       <nav>
         <ul>
           <NavItem
+            to="/dashboard"
             icon={<DashboardIcon className="w-6 h-6" />}
             label="Dashboard"
-            isActive={currentView === 'Dashboard'}
-            onClick={() => setCurrentView('Dashboard')}
           />
           <NavItem
+            to="/opportunities"
             icon={<PipelineIcon className="w-6 h-6" />}
             label="Opportunità"
-            isActive={currentView === 'Opportunities'}
-            onClick={() => setCurrentView('Opportunities')}
           />
           <NavItem
+            to="/contacts"
             icon={<ContactsIcon className="w-6 h-6" />}
             label="Contatti"
-            isActive={currentView === 'Contacts'}
-            onClick={() => setCurrentView('Contacts')}
           />
           <NavItem
+            to="/forms"
             icon={<FormsIcon className="w-6 h-6" />}
             label="Form"
-            isActive={currentView === 'Forms'}
-            onClick={() => setCurrentView('Forms')}
           />
           <NavItem
+            to="/automations"
             icon={<AutomationIcon className="w-6 h-6" />}
             label="Automazioni"
-            isActive={currentView === 'Automations'}
-            onClick={() => setCurrentView('Automations')}
           />
         </ul>
       </nav>
       <div className="mt-auto">
         <ul>
             <NavItem
+                to="/settings"
                 icon={<SettingsIcon className="w-6 h-6" />}
                 label="Impostazioni"
-                isActive={currentView === 'Settings'}
-                onClick={() => setCurrentView('Settings')}
             />
         </ul>
       </div>

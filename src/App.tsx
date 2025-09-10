@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Sidebar } from './components/Sidebar';
-import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { Opportunities } from './components/Opportunities';
 import { Contacts } from './components/Contacts';
@@ -9,26 +8,21 @@ import { Automations } from './components/Automations';
 import { Forms } from './components/Forms';
 import { Login } from './components/Login';
 import { HomePage } from './components/HomePage';
-import { PublicForm } from './components/PublicForm'; // Importa il nuovo componente
-import { View } from './types';
+import { PublicForm } from './components/PublicForm';
+import { MainLayout } from './components/MainLayout';
 import { supabase } from './lib/supabaseClient';
 import { useCrmData } from './hooks/useCrmData';
+import { Session } from '@supabase/supabase-js';
 
-// *** START: Environment Variable Check & Error Component ***
-
-// Un componente dedicato per mostrare un errore di configurazione chiaro all'utente.
+// Componente per mostrare un errore di configurazione chiaro all'utente.
 const ConfigError: React.FC<{ missingVars: string[] }> = ({ missingVars }) => (
     <div className="min-h-screen bg-red-50 flex flex-col justify-center items-center p-4 text-center">
         <div className="max-w-2xl bg-white p-8 rounded-lg shadow-lg border-2 border-red-300">
             <h1 className="text-3xl font-bold text-red-700">Errore di Configurazione</h1>
-            <p className="mt-4 text-lg text-gray-700">
-                L'applicazione non può avviarsi perché mancano delle variabili d'ambiente essenziali.
-            </p>
+            <p className="mt-4 text-lg text-gray-700"> L'applicazione non può avviarsi perché mancano delle variabili d'ambiente essenziali. </p>
             <div className="mt-6 text-left bg-red-100 p-4 rounded-md">
                 <p className="font-semibold text-red-800">Variabili Mancanti o Non Corrette:</p>
-                <ul className="list-disc list-inside mt-2 font-mono text-red-900">
-                    {missingVars.map(v => <li key={v}>{v}</li>)}
-                </ul>
+                <ul className="list-disc list-inside mt-2 font-mono text-red-900"> {missingVars.map(v => <li key={v}>{v}</li>)} </ul>
             </div>
             <div className="mt-6 text-left text-gray-600">
                 <p className="font-bold">Come risolvere:</p>
@@ -43,161 +37,104 @@ const ConfigError: React.FC<{ missingVars: string[] }> = ({ missingVars }) => (
     </div>
 );
 
-// *** END: Environment Variable Check & Error Component ***
 
+// Wrapper per le rotte che richiedono autenticazione
+const ProtectedRoute: React.FC<{
+    isInitialized: boolean;
+    session: Session | null;
+    crmData: ReturnType<typeof useCrmData>;
+}> = ({ isInitialized, session, crmData }) => {
+    if (!isInitialized) {
+        return <div className="h-screen w-screen flex items-center justify-center">Caricamento sessione...</div>;
+    }
 
-type AppState = 'loading' | 'homepage' | 'login' | 'app' | 'public_form';
+    if (!session) {
+        return <Navigate to="/" replace />;
+    }
+
+    // Passiamo i dati caricati al layout principale, che a sua volta li passerà alle pagine figlie tramite Outlet context.
+    return <MainLayout crmData={crmData} />;
+};
+
 
 const App: React.FC = () => {
-    const [appState, setAppState] = useState<AppState>('loading');
-    const [currentView, setCurrentView] = useState<View>('Dashboard');
-    const [publicFormId, setPublicFormId] = useState<string | null>(null);
-    
-    const { organization, contacts, opportunities, forms, loading, error, refetch } = useCrmData();
+    const [session, setSession] = useState<Session | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false); // Flag per sapere se il check iniziale della sessione è completo
+    const crmData = useCrmData();
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    // Se il custom hook `useCrmData` rileva un errore di configurazione,
-    // lo mostriamo qui con una schermata dedicata invece della pagina bianca.
-    if (error && error.startsWith('Errore di Configurazione:')) {
-        const missingVars = error.match(/[A-Z_0-9]+/g) || ['Variabili Sconosciute'];
+    // Gestione della sessione
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                setSession(session);
+            } catch (e) {
+                console.error("Errore di configurazione durante il check della sessione.");
+            } finally {
+                setIsInitialized(true);
+            }
+        };
+
+        fetchSession();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(
+            (_event, session) => {
+                setSession(session);
+                // Se l'utente fa logout, lo reindirizziamo alla homepage
+                if (_event === 'SIGNED_OUT') {
+                    navigate('/');
+                }
+                 // Se l'utente fa login, lo portiamo alla dashboard
+                if (_event === 'SIGNED_IN' && location.pathname === '/login') {
+                     navigate('/dashboard');
+                }
+            }
+        );
+
+        return () => authListener?.subscription.unsubscribe();
+    }, [navigate, location.pathname]);
+
+
+    // Se c'è un errore di configurazione, lo mostriamo a schermo intero.
+    if (crmData.error && crmData.error.startsWith('Errore di Configurazione:')) {
+        const missingVars = crmData.error.match(/[A-Z_0-9]+/g) || ['Variabili Sconosciute'];
         return <ConfigError missingVars={missingVars} />;
     }
 
-    useEffect(() => {
-        // Routing basato sul path
-        const path = window.location.pathname;
-        const formMatch = path.match(/^\/form\/([a-fA-F0-9-]+)$/);
+    return (
+        <>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    success: { style: { background: '#dcfce7', color: '#166534', border: '1px solid #16a34a' }, iconTheme: { primary: '#16a34a', secondary: 'white' } },
+                    error: { style: { background: '#fee2e2', color: '#991b1b', border: '1px solid #dc2626' }, iconTheme: { primary: '#dc2626', secondary: 'white' } },
+                }}
+            />
+            <Routes>
+                {/* Rotte Pubbliche */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/form/:formId" element={<PublicForm />} />
 
-        if (formMatch) {
-            setPublicFormId(formMatch[1]);
-            setAppState('public_form');
-        } else {
-            const checkSession = async () => {
-                try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    setAppState(session ? 'app' : 'homepage');
-                } catch (e) {
-                    // Se supabase non è configurato, il proxy lancerà un errore.
-                    // L'hook useCrmData lo catturerà e mostrerà la schermata di errore.
-                    console.error("Errore di configurazione durante il check della sessione.");
-                    setAppState('homepage'); // Fallback sicuro
-                }
-            };
-            checkSession();
-
-            const { data: authListener } = supabase.auth.onAuthStateChange(
-                (_event, session) => {
-                    // Non cambiare lo stato se siamo su una pagina pubblica
-                    if (!window.location.pathname.startsWith('/form/')) {
-                        setAppState(session ? 'app' : 'homepage');
-                    }
-                }
-            );
-            return () => authListener?.subscription.unsubscribe();
-        }
-    }, []);
-
-
-    const handleShowLogin = useCallback(() => {
-        setAppState('login');
-    }, []);
-    
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        // Il listener onAuthStateChange gestirà il cambio di stato a 'homepage'
-        window.location.pathname = '/'; // Reindirizza alla homepage
-    };
-
-    const renderView = () => {
-        if (loading && appState === 'app') {
-            return <div className="flex items-center justify-center h-full">Caricamento dati...</div>;
-        }
-        // Mostra un errore generico per altri problemi non legati alla configurazione.
-        if (error) {
-            return <div className="flex items-center justify-center h-full text-red-500">{error}</div>;
-        }
-
-        // Passiamo i dati reali ai componenti
-        switch (currentView) {
-            case 'Dashboard':
-                return <Dashboard opportunities={opportunities} contacts={contacts} />;
-            case 'Opportunities':
-                return <Opportunities initialData={opportunities} contacts={contacts} organization={organization} refetchData={refetch} />;
-            case 'Contacts':
-                return <Contacts contacts={contacts} organization={organization} refetchData={refetch} />;
-            case 'Forms':
-                return <Forms forms={forms} organization={organization} refetchData={refetch} />;
-            case 'Automations':
-                return <Automations />;
-            case 'Settings':
-                return <div className="text-3xl font-bold text-text-primary">Impostazioni</div>;
-            default:
-                return <Dashboard opportunities={opportunities} contacts={contacts} />;
-        }
-    };
-    
-    if (appState === 'loading') {
-        return <div className="h-screen w-screen flex items-center justify-center">Caricamento...</div>;
-    }
-    
-    if (appState === 'public_form' && publicFormId) {
-        return <PublicForm formId={publicFormId} />;
-    }
-
-    if (appState === 'homepage') {
-        return <HomePage onLoginClick={handleShowLogin} onSignUpClick={handleShowLogin} />;
-    }
-
-    if (appState === 'login') {
-        return <Login onBackToHome={() => setAppState('homepage')} />;
-    }
-    
-    if (appState === 'app') {
-        return (
-            <>
-                <Toaster
-                    position="top-right"
-                    toastOptions={{
-                        success: {
-                            style: {
-                                background: '#dcfce7', // green-100
-                                color: '#166534',     // green-800
-                                border: '1px solid #16a34a', // green-600
-                            },
-                            iconTheme: {
-                                primary: '#16a34a',   // green-600
-                                secondary: 'white',
-                            },
-                        },
-                        error: {
-                            style: {
-                                background: '#fee2e2', // red-100
-                                color: '#991b1b',     // red-800
-                                border: '1px solid #dc2626', // red-600
-                            },
-                            iconTheme: {
-                                primary: '#dc2626',   // red-600
-                                secondary: 'white',
-                            },
-                        },
-                    }}
-                />
-                <div className="flex h-screen bg-gray-100 text-text-primary">
-                    <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                        <Header 
-                            organization={organization}
-                            onLogout={handleLogout}
-                        />
-                        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
-                            {renderView()}
-                        </main>
-                    </div>
-                </div>
-            </>
-        );
-    }
-
-    return null; // O un fallback nel caso in cui nessuno stato corrisponda
+                {/* Rotte Protette */}
+                <Route 
+                    path="/" 
+                    element={<ProtectedRoute isInitialized={isInitialized} session={session} crmData={crmData} />}
+                >
+                    <Route path="dashboard" element={<Dashboard opportunities={crmData.opportunities} contacts={crmData.contacts} />} />
+                    <Route path="opportunities" element={<Opportunities initialData={crmData.opportunities} contacts={crmData.contacts} organization={crmData.organization} refetchData={crmData.refetch} />} />
+                    <Route path="contacts" element={<Contacts contacts={crmData.contacts} organization={crmData.organization} refetchData={crmData.refetch} />} />
+                    <Route path="forms" element={<Forms forms={crmData.forms} organization={crmData.organization} refetchData={crmData.refetch} />} />
+                    <Route path="automations" element={<Automations />} />
+                    <Route path="settings" element={<div className="text-3xl font-bold text-text-primary">Impostazioni</div>} />
+                    {/* Redirect dalla radice protetta alla dashboard */}
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                </Route>
+            </Routes>
+        </>
+    );
 };
 
 export default App;

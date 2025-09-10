@@ -1,10 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GuardianIcon, BrainCircuitIcon, MessageBotIcon, ClipboardDataIcon } from './ui/icons';
-
-interface HomePageProps {
-    onLoginClick: () => void;
-    onSignUpClick: () => void;
-}
 
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
     <div className="bg-white p-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-2">
@@ -17,7 +13,13 @@ const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; children: Re
 );
 
 
-export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onSignUpClick }) => {
+export const HomePage: React.FC = () => {
+    const navigate = useNavigate();
+
+    const handleNavigateToLogin = () => {
+        navigate('/login');
+    };
+
     return (
         <div className="bg-background min-h-screen text-text-primary">
             {/* Header */}
@@ -33,10 +35,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onSignUpClick 
                         <a href="#" className="text-gray-600 hover:text-primary transition">Contatti</a>
                     </nav>
                     <div className="flex items-center space-x-2">
-                        <button onClick={onLoginClick} className="text-primary font-semibold px-4 py-2 rounded-md hover:bg-indigo-50 transition">
+                        <button onClick={handleNavigateToLogin} className="text-primary font-semibold px-4 py-2 rounded-md hover:bg-indigo-50 transition">
                             Accedi
                         </button>
-                        <button onClick={onSignUpClick} className="bg-primary text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-700 transition shadow">
+                        <button onClick={handleNavigateToLogin} className="bg-primary text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-700 transition shadow">
                             Inizia la Prova Gratuita
                         </button>
                     </div>
@@ -54,7 +56,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onSignUpClick 
                             Guardian AI CRM è la piattaforma intelligente che automatizza le vendite, personalizza il marketing e ti dà il tempo di concentrarti su ciò che conta davvero: i tuoi clienti.
                         </p>
                         <div className="flex justify-center space-x-4">
-                            <button onClick={onSignUpClick} className="bg-primary text-white font-bold px-8 py-3 rounded-lg text-lg hover:bg-indigo-700 transition shadow-lg">
+                            <button onClick={handleNavigateToLogin} className="bg-primary text-white font-bold px-8 py-3 rounded-lg text-lg hover:bg-indigo-700 transition shadow-lg">
                                 Provalo Gratis per 14 giorni
                             </button>
                             <button className="bg-gray-200 text-gray-800 font-bold px-8 py-3 rounded-lg text-lg hover:bg-gray-300 transition">

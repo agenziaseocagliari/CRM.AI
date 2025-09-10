@@ -1,21 +1,16 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GuardianIcon } from './ui/icons';
 import { supabase } from '../lib/supabaseClient';
 
-interface LoginProps {
-    onBackToHome: () => void;
-}
-
-type AuthMode = 'signIn' | 'signUp';
-
-export const Login: React.FC<LoginProps> = ({ onBackToHome }) => {
-    const [mode, setMode] = useState<AuthMode>('signIn');
+export const Login: React.FC = () => {
+    const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const handleAuthAction = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -26,7 +21,7 @@ export const Login: React.FC<LoginProps> = ({ onBackToHome }) => {
         if (mode === 'signIn') {
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) setError(error.message);
-            // Il successo del login viene gestito dal listener in App.tsx
+            // Il successo del login viene gestito dal listener in App.tsx che naviga alla dashboard
         } else { // signUp
             const { error } = await supabase.auth.signUp({ email, password });
             if (error) {
@@ -44,6 +39,10 @@ export const Login: React.FC<LoginProps> = ({ onBackToHome }) => {
         setError(null);
         setMessage(null);
     }
+    
+    const handleBackToHome = () => {
+        navigate('/');
+    };
 
     const title = mode === 'signIn' ? 'Accedi a Guardian AI CRM' : 'Crea un nuovo account';
     const buttonText = mode === 'signIn' ? 'Accedi' : 'Registrati';
@@ -58,7 +57,7 @@ export const Login: React.FC<LoginProps> = ({ onBackToHome }) => {
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                     {title}
                 </h2>
-                <button onClick={onBackToHome} className="mt-2 text-center text-sm text-primary hover:text-indigo-500 w-full">
+                <button onClick={handleBackToHome} className="mt-2 text-center text-sm text-primary hover:text-indigo-500 w-full">
                     &larr; Torna alla Home
                 </button>
             </div>

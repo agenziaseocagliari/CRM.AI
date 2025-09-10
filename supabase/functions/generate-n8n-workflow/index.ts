@@ -1,5 +1,5 @@
-// FIX: Use the 'deno.ns' lib reference to make Deno's global types available.
-/// <reference lib="deno.ns" />
+// FIX: Replaced the incorrect 'deno.ns' lib reference with the standard Supabase Edge Function types to make Deno's global types available.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
@@ -7,6 +7,8 @@ import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/gen
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
 };
 
 function safeParseJson(text?: string) {

@@ -25,6 +25,25 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
     );
 };
 
+// Funzione robusta per estrarre e parsare il JSON dalla risposta dell'AI
+function extractAndParseJson(text: string): FormField[] {
+    const startIndex = text.indexOf('[');
+    const endIndex = text.lastIndexOf(']');
+
+    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        throw new Error("Nessun array JSON valido trovato nella risposta dell'AI.");
+    }
+
+    const jsonString = text.substring(startIndex, endIndex + 1);
+    
+    try {
+        return JSON.parse(jsonString) as FormField[];
+    } catch (e) {
+        console.error("Errore di parsing del JSON estratto:", e);
+        throw new Error("La risposta dell'AI conteneva un JSON malformato.");
+    }
+}
+
 
 interface FormsProps {
     forms: Form[];
@@ -104,7 +123,7 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
 
         try {
             const { GoogleGenAI, Type } = await import('@google/genai');
-            const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
             const schema = {
                 type: Type.ARRAY, items: {
@@ -130,8 +149,11 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
 
             const jsonText = response.text;
             if (!jsonText) { throw new Error("La risposta dell'AI era vuota o non valida."); }
-            const fields = JSON.parse(jsonText) as FormField[];
+
+            // Usa la funzione di parsing robusta
+            const fields = extractAndParseJson(jsonText);
             setGeneratedFields(fields);
+
         } catch (err) {
             console.error(err);
             setError("Impossibile generare il form. Riprova con una descrizione diversa o controlla la tua chiave API.");

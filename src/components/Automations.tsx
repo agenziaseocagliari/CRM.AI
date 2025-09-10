@@ -24,7 +24,7 @@ export const Automations: React.FC = () => {
         try {
             // Step 1: Chiamare Gemini per generare il JSON del workflow N8N
             const { GoogleGenAI } = await import('@google/genai');
-            const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
             const generationPrompt = `
                 You are an expert n8n workflow designer. Your task is to convert the following user request into a valid n8n workflow JSON object.

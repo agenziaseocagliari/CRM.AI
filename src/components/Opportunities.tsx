@@ -208,20 +208,20 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
             const { error } = await supabase.from('opportunities').update(formData).eq('id', opportunityToModify.id);
             if (error) throw error;
         } else {
-            if (!organization) {
+             if (!organization) {
                 throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'opportunità.");
             }
-            const dataToInsert = {
-                ...formData,
-                organization_id: organization.id,
-            };
-            const { error } = await supabase.from('opportunities').insert(dataToInsert);
+            // Chiamata a una funzione RPC (Remote Procedure Call) nel database.
+            // Questo approccio è più sicuro perché l'ID dell'organizzazione viene
+            // determinato sul backend in base all'utente autenticato, eliminando
+            // la possibilità di errori RLS dovuti a dati non corretti inviati dal client.
+            const { error } = await supabase.rpc('create_opportunity', formData);
             if (error) throw error;
         }
         refetchData();
         handleCloseModals();
     } catch (err: any) {
-        setSaveError(`Errore nel salvataggio: ${err.message}`);
+        setSaveError(`Errore nel salvaggio: ${err.message}`);
     } finally {
         setIsSaving(false);
     }

@@ -93,23 +93,27 @@ interface OpportunitiesProps {
   refetchData: () => void;
 }
 
-const initialFormState = {
+// Definisce la struttura dei dati del form per maggiore sicurezza
+type OpportunityFormData = Omit<Opportunity, 'id' | 'organization_id' | 'created_at'>;
+
+// Stato iniziale completo e ben definito per il form
+const initialFormState: OpportunityFormData = {
     contact_name: '',
     value: 0,
     assigned_to: '',
     close_date: new Date().toISOString().split('T')[0],
+    stage: PipelineStage.NewLead, // Imposta uno stage predefinito
 };
 
 export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, contacts, organization, refetchData }) => {
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData);
   
-  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   
-  // Form and data states
-  const [formData, setFormData] = useState<Omit<Opportunity, 'id' | 'organization_id' | 'created_at'>>(initialFormState as any);
+  // Stato del form fortemente tipizzato, senza 'as any'
+  const [formData, setFormData] = useState<OpportunityFormData>(initialFormState);
   const [opportunityToModify, setOpportunityToModify] = useState<Opportunity | null>(null);
   
   const [isSaving, setIsSaving] = useState(false);
@@ -121,10 +125,10 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
 
   const handleOpenAddModal = () => {
     setModalMode('add');
+    // Reimposta lo stato del form al suo stato iniziale pulito
     setFormData({
         ...initialFormState,
-        stage: PipelineStage.NewLead,
-        contact_name: contacts?.[0]?.name || '' // Pre-select first contact if available
+        contact_name: contacts?.[0]?.name || '' // Pre-seleziona il primo contatto
     });
     setSaveError('');
     setIsModalOpen(true);
@@ -190,7 +194,7 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
         if (error) throw error;
     } catch (err) {
         console.error("Errore durante l'aggiornamento dell'opportunità:", err);
-        setBoardData(originalData); // Revert on failure
+        setBoardData(originalData); // Ripristina in caso di fallimento
     }
   };
   
@@ -232,7 +236,7 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
         refetchData();
         handleCloseModals();
     } catch (err: any) {
-        alert(`Errore: ${err.message}`); // Simple alert for delete error
+        alert(`Errore: ${err.message}`);
     } finally {
         setIsSaving(false);
     }

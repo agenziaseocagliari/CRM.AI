@@ -6,6 +6,11 @@ import toast from 'react-hot-toast';
 export const Automations: React.FC = () => {
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    
+    // State per lo strumento di diagnostica
+    const [debugResult, setDebugResult] = useState<string | null>(null);
+    const [isDebugging, setIsDebugging] = useState(false);
+
 
     const handleGenerateWorkflow = async () => {
         if (!prompt.trim()) {
@@ -31,6 +36,20 @@ export const Automations: React.FC = () => {
             toast.error(`Si è verificato un errore: ${err.message}`, { id: toastId });
         } finally {
             setIsLoading(false);
+        }
+    };
+    
+    const handleRunDiagnostics = async () => {
+        setIsDebugging(true);
+        setDebugResult('Diagnostica in corso...');
+        try {
+            const { data, error } = await supabase.functions.invoke('debug-n8n-workflow');
+            if (error) throw error;
+            setDebugResult(JSON.stringify(data, null, 2));
+        } catch (err: any) {
+            setDebugResult(`ERRORE DURANTE LA DIAGNOSTICA:\n${err.message}\n\nControlla i log della funzione 'debug-n8n-workflow' nella dashboard di Supabase per maggiori dettagli.`);
+        } finally {
+            setIsDebugging(false);
         }
     };
 
@@ -92,6 +111,34 @@ export const Automations: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Strumento di Diagnostica */}
+            <div className="bg-yellow-50 border border-yellow-300 p-6 rounded-lg shadow-sm">
+                 <h2 className="text-xl font-semibold text-yellow-800">
+                    Strumento di Diagnostica
+                </h2>
+                <p className="mt-1 text-sm text-yellow-700">
+                    Se riscontri un "Errore di rete", usa questo strumento per verificare la configurazione e le connessioni. Clicca il pulsante e condividi il risultato con il supporto.
+                </p>
+                <div className="mt-4">
+                    <button
+                        onClick={handleRunDiagnostics}
+                        disabled={isDebugging}
+                        className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 flex items-center space-x-2 disabled:bg-gray-400"
+                    >
+                         {isDebugging ? 'Esecuzione...' : 'Avvia Diagnostica'}
+                    </button>
+                </div>
+                {debugResult && (
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700">Risultato Diagnostica:</label>
+                        <pre className="bg-gray-800 text-white p-4 rounded-md text-xs whitespace-pre-wrap font-mono mt-1 max-h-96 overflow-auto">
+                            {debugResult}
+                        </pre>
+                    </div>
+                )}
+            </div>
+
         </div>
     );
 };

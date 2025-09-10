@@ -1,5 +1,5 @@
-// FIX: Added a triple-slash directive to load Deno types for the Supabase Edge Function environment, resolving 'Cannot find name 'Deno'' errors.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts" />
+// FIX: Updated the triple-slash directive to point to the correct type definitions for the Supabase Edge Function environment, resolving 'Cannot find name 'Deno'' errors.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
 // supabase/functions/generate-n8n-workflow/index.ts
 

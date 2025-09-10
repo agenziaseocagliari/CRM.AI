@@ -1,11 +1,11 @@
-// FIX: Pin the version for Supabase functions-js types to resolve type definition errors.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Switched to unpkg.com for type definitions to resolve issues where the Deno global object was not being recognized.
+/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
 // supabase/functions/generate-form-fields/index.ts
 
-import { serve } from "https://deno.land/std@0.217.0/http/server.ts";
-import { GoogleGenAI, Type } from 'https://esm.sh/@google/genai@1.19.0';
-import { corsHeaders } from '../shared/cors.ts';
+import { serve } from "std/http/server.ts";
+import { GoogleGenAI, Type } from '@google/genai';
+import { corsHeaders } from 'shared/cors.ts';
 
 serve(async (req) => {
   // Gestisce la richiesta preflight CORS

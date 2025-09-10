@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SparklesIcon } from './ui/icons';
-import { GoogleGenAI } from '@google/genai';
+import * as GoogleGenerativeAI from '@google/genai';
 
 // Definiamo un tipo per la risposta parziale che ci aspettiamo da N8N dopo la creazione
 interface N8nWorkflowCreationResponse {
@@ -24,7 +24,7 @@ export const Automations: React.FC = () => {
 
         try {
             // Step 1: Chiamare Gemini per generare il JSON del workflow N8N
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            const ai = new GoogleGenerativeAI.GoogleGenAI({ apiKey: process.env.API_KEY! });
             
             const generationPrompt = `
                 You are an expert n8n workflow designer. Your task is to convert the following user request into a valid n8n workflow JSON object.

@@ -3,7 +3,7 @@ import { Contact, Organization } from '../types';
 import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon, UploadIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
-import { GoogleGenAI } from '@google/genai';
+import * as GoogleGenerativeAI from '@google/genai';
 
 interface ContactsProps {
   contacts: Contact[];
@@ -102,7 +102,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
     setGenerationError('');
     
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+      const ai = new GoogleGenerativeAI.GoogleGenAI({ apiKey: process.env.API_KEY! });
       const fullPrompt = `Sei un assistente professionale per le relazioni con i clienti. Scrivi un'email professionale e concisa a un contatto.
       
       Nome Contatto: ${selectedContact.name}

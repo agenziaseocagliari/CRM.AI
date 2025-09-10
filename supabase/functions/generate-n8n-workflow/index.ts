@@ -1,5 +1,5 @@
-// FIX: Updated the Supabase edge-runtime type reference to a specific versioned URL. This resolves issues where the types were not found, which in turn caused errors about the 'Deno' global object not being defined.
-/// <reference types="https://esm.sh/v135/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: The Supabase edge-runtime type reference URL was invalid. Corrected to a valid URL to ensure Deno types are loaded.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
@@ -11,8 +11,20 @@ serve(async (req) => {
     return corsResponse;
   }
 
+  let step = "init"; // For diagnostics
+
   try {
-    // 1. Validazione delle variabili d'ambiente
+    // Payload guard
+    step = "payload";
+    const body = await req.json().catch(() => ({}));
+    const payload = typeof body === "string" ? (()=>{ try { return JSON.parse(body);} catch { return {}; } })() : body || {};
+    const prompt = payload?.prompt || payload?.instruction || payload?.command || payload?.query;
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      throw new Error("Richiesto 'prompt' (o 'instruction'/'command'/'query') non trovato nel payload.");
+    }
+    
+    // Env validation
+    step = "env";
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     const n8nUrl = Deno.env.get("N8N_INSTANCE_URL");
     const n8nApiKey = Deno.env.get("N8N_API_KEY");
@@ -25,14 +37,24 @@ serve(async (req) => {
       ].filter(Boolean).join(", ");
       throw new Error(`Configurazione Incompleta: Mancano le seguenti variabili d'ambiente: ${missing}.`);
     }
-
-    // 2. Validazione del body della richiesta
-    const { prompt } = await req.json();
-    if (!prompt) {
-      throw new Error("La descrizione dell'automazione non può essere vuota.");
+    
+    // URL normalization and reachability check
+    step = "reach";
+    const baseUrl = (n8nUrl || "").replace(/\/+$/, "");
+    if (!/^https?:\/\//i.test(baseUrl)) {
+      throw new Error("N8N_INSTANCE_URL deve includere il protocollo http(s). Valore attuale non valido.");
+    }
+    try {
+      await fetch(`${baseUrl}/api/v1/workflows`, {
+        method: "GET",
+        headers: { "X-N8N-API-KEY": n8nApiKey! }
+      });
+    } catch (e) {
+      throw new Error("Impossibile raggiungere N8N_INSTANCE_URL dal runtime Edge: " + String((e as Error).message || e));
     }
 
-    // 3. Generazione del workflow JSON con Gemini
+    // Gemini call
+    step = "gemini";
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const fullPrompt = `
       Agisci come un esperto di automazione e specialista di n8n.
@@ -64,52 +86,50 @@ serve(async (req) => {
       Richiesta utente: "${prompt}"
     `;
     
-    let workflowJson;
-    try {
-        const response: GenerateContentResponse = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: fullPrompt,
-            config: {
-                responseMimeType: "application/json",
-            }
-        });
-        const cleanedText = response.text.trim().replace(/^```json/, '').replace(/```$/, '').trim();
-        workflowJson = JSON.parse(cleanedText);
-    } catch (e) {
-        console.error("Gemini error:", e);
-        throw new Error(`Errore durante la generazione del workflow con l'AI. Riprova. Dettagli: ${e.message}`);
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: fullPrompt,
+        config: {
+            responseMimeType: "application/json",
+        }
+    });
+
+    // Harden JSON parsing
+    step = "parse";
+    const raw = (response.text || "").trim();
+    if (!raw) throw new Error("Gemini ha restituito testo vuoto o è stato bloccato dal safety system.");
+
+    let wf: any;
+    function extractJsonBlock(s: string) {
+      const m = s.match(/```json\s*([\s\S]*?)```/i) || s.match(/\{[\s\S]*\}/);
+      return m ? (m[1] || m[0]) : s;
+    }
+    try { wf = JSON.parse(raw); }
+    catch {
+      const justJson = extractJsonBlock(raw).trim();
+      try { wf = JSON.parse(justJson); }
+      catch (e) { throw new Error("Output AI non è JSON valido. Dettaglio: " + (e as Error).message); }
     }
     
-    // 4. Creazione del workflow su N8N
-    let workflowId;
-    try {
-        const createUrl = `${n8nUrl.replace(/\/$/, '')}/api/v1/workflows`;
-        const n8nResponse = await fetch(createUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-N8N-API-KEY': n8nApiKey },
-            body: JSON.stringify(workflowJson),
-        });
+    // N8N POST call with diagnostics
+    step = "n8n";
+    const createUrl = `${baseUrl}/api/v1/workflows`;
+    const n8nResponse = await fetch(createUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-N8N-API-KEY': n8nApiKey },
+        body: JSON.stringify(wf),
+    });
 
-        if (n8nResponse.status === 401) {
-            throw new Error("Autenticazione N8N fallita. Controlla che la N8N_API_KEY sia corretta.");
-        }
-        if (!n8nResponse.ok) {
-            const errorBody = await n8nResponse.text();
-            throw new Error(`N8N ha risposto con un errore (${n8nResponse.status}): ${errorBody}`);
-        }
-        const n8nData = await n8nResponse.json();
-        workflowId = n8nData.id;
-        if (!workflowId) throw new Error("N8N non ha restituito un ID per il workflow creato.");
-
-    } catch (e) {
-        if (e.message.includes('Failed to fetch')) {
-             throw new Error(`Impossibile connettersi a N8N. Controlla che N8N_INSTANCE_URL (${n8nUrl}) sia corretto e raggiungibile.`);
-        }
-        throw e;
+    const textBody = await n8nResponse.text().catch(()=> "");
+    if (!n8nResponse.ok) {
+      throw new Error(`Errore N8N ${n8nResponse.status}: ${textBody.substring(0, 800)}`);
     }
 
-    // 5. Attivazione del workflow
-    const activateUrl = `${n8nUrl.replace(/\/$/, '')}/api/v1/workflows/${workflowId}/activate`;
+    const n8nData = JSON.parse(textBody);
+    const workflowId = n8nData.id;
+    if (!workflowId) throw new Error("N8N non ha restituito un ID per il workflow creato.");
+    
+    const activateUrl = `${baseUrl}/api/v1/workflows/${workflowId}/activate`;
     const activationResponse = await fetch(activateUrl, {
         method: 'POST',
         headers: { 'X-N8N-API-KEY': n8nApiKey },
@@ -119,19 +139,33 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      message: `Workflow "${workflowJson.name}" creato e attivato con successo!`,
+      message: `Workflow "${wf.name}" creato e attivato con successo!`,
       workflowId: workflowId,
-      n8nLink: `${n8nUrl.replace(/\/$/, '')}/workflow/${workflowId}`
+      n8nLink: `${baseUrl}/workflow/${workflowId}`
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
   } catch (error) {
-    console.error("ERRORE in generate-n8n-workflow:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error(`ERRORE [${step}]:`, error);
+    const hints: Record<string, string> = {
+        payload: "Il body della richiesta non conteneva un prompt valido.",
+        env: "Controlla le variabili d'ambiente su Supabase (GEMINI_API_KEY, N8N_INSTANCE_URL, N8N_API_KEY).",
+        reach: "La funzione Edge non riesce a connettersi a N8N. Controlla DNS, firewall, o se l'istanza N8N è attiva.",
+        gemini: "L'API di Gemini ha restituito un errore. Controlla la tua API key e i safety settings.",
+        parse: "L'AI ha restituito un formato non-JSON. Prova a riformulare il prompt per essere più specifico.",
+        n8n: "N8N ha rifiutato la richiesta. Controlla la API key di N8N, e che il workflow generato sia valido."
+    };
+    return new Response(JSON.stringify({
+      error: error.message,
+      diag: {
+        step: step,
+        hint: hints[step] || "Errore non classificato.",
+      }
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200, 
+      status: 500, 
     });
   }
 });

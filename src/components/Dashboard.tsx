@@ -12,7 +12,8 @@ interface DashboardProps {
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
-  const allOpportunities: Opportunity[] = Object.values(opportunities).flat();
+  // FIX: Replaced .flat() with a more robust method (reduce) to avoid type inference issues that caused the array to be typed as `unknown[]`.
+  const allOpportunities: Opportunity[] = Object.values(opportunities).reduce((acc, val) => acc.concat(val), []);
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   
   // Calcolo dinamico basato sui contatti totali, non solo sui lead.

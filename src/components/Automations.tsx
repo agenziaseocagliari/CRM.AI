@@ -50,7 +50,12 @@ export const Automations: React.FC = () => {
 
         } catch (err: any) {
             console.error(err);
-            toast.error(`Impossibile attivare l'automazione: ${err.message}`);
+            // Forniamo un messaggio di errore più utile per il comune problema di configurazione di n8n.
+            if (err.message && err.message.includes('non-2xx status code')) {
+                 toast.error("Attivazione fallita. Controlla la connessione e le credenziali di N8N nella pagina Impostazioni.", { duration: 6000 });
+            } else {
+                toast.error(`Impossibile attivare l'automazione: ${err.message}`);
+            }
         } finally {
             setIsLoading(false);
         }

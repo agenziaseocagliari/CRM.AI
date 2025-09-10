@@ -111,7 +111,11 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
                     type: Type.OBJECT, properties: {
                         name: { type: Type.STRING, description: 'A lowercase, snake_case string for the input name attribute (e.g., "full_name", "license_plate").' },
                         label: { type: Type.STRING, description: 'A user-friendly, capitalized string for the form label (e.g., "Full Name").' },
-                        type: { type: Type.STRING, description: 'The input type. Must be one of: "text", "email", "tel", or "textarea".' },
+                        type: { 
+                            type: Type.STRING,
+                            description: 'The input type.',
+                            enum: ['text', 'email', 'tel', 'textarea'] 
+                        },
                         required: { type: Type.BOOLEAN },
                     }, required: ["name", "label", "type", "required"],
                 },

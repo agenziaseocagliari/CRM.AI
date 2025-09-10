@@ -103,7 +103,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
     
     try {
       const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+      const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY! });
       const fullPrompt = `Sei un assistente professionale per le relazioni con i clienti. Scrivi un'email professionale e concisa a un contatto.
       
       Nome Contatto: ${selectedContact.name}

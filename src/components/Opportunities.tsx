@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Opportunity, PipelineStage, OpportunitiesData, Contact } from '../types';
+import { Opportunity, PipelineStage, OpportunitiesData, Contact, Organization } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { Modal } from './ui/Modal';
 import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
@@ -89,6 +89,7 @@ const KanbanColumn: React.FC<{
 interface OpportunitiesProps {
   initialData: OpportunitiesData;
   contacts: Contact[];
+  organization: Organization | null;
   refetchData: () => void;
 }
 
@@ -99,7 +100,7 @@ const initialFormState = {
     close_date: new Date().toISOString().split('T')[0],
 };
 
-export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, contacts, refetchData }) => {
+export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, contacts, organization, refetchData }) => {
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData);
   
   // Modal states
@@ -203,7 +204,14 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
             const { error } = await supabase.from('opportunities').update(formData).eq('id', opportunityToModify.id);
             if (error) throw error;
         } else {
-            const { error } = await supabase.from('opportunities').insert(formData);
+            if (!organization) {
+                throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'opportunità.");
+            }
+            const dataToInsert = {
+                ...formData,
+                organization_id: organization.id,
+            };
+            const { error } = await supabase.from('opportunities').insert(dataToInsert);
             if (error) throw error;
         }
         refetchData();

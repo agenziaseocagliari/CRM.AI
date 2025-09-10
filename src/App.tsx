@@ -58,7 +58,7 @@ const App: React.FC = () => {
       case 'Dashboard':
         return <Dashboard opportunities={opportunities} contacts={contacts} />;
       case 'Opportunities':
-        return <Opportunities initialData={opportunities} contacts={contacts} refetchData={refetch} />;
+        return <Opportunities initialData={opportunities} contacts={contacts} organization={organization} refetchData={refetch} />;
       case 'Contacts':
         return <Contacts contacts={contacts} organization={organization} refetchData={refetch} />;
       case 'Forms':

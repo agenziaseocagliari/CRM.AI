@@ -23,7 +23,8 @@ export default defineConfig(({ mode }) => {
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
       // IMPORTANT: API_KEY is sensitive and should not be exposed to the client directly in a production app.
       // It's included here for development convenience. For production, use serverless functions.
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // Renamed to VITE_GEMINI_API_KEY to align with Vite's security conventions for exposing env vars.
+      'process.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
       // Expose N8N env vars for automation integration
       'process.env.VITE_N8N_URL': JSON.stringify(env.VITE_N8N_URL),
       'process.env.VITE_N8N_API_KEY': JSON.stringify(env.VITE_N8N_API_KEY),

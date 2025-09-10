@@ -42,3 +42,20 @@ export interface Opportunity {
 }
 
 export type OpportunitiesData = Record<PipelineStage, Opportunity[]>;
+
+// Tipi per la nuova funzionalità Form Builder AI
+export interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'email' | 'tel' | 'textarea';
+  required: boolean;
+}
+
+export interface Form {
+  id: string; // UUID
+  organization_id: string;
+  name: string;
+  title: string;
+  fields: FormField[];
+  created_at: string;
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Organization, Contact, Opportunity, OpportunitiesData, PipelineStage, Profile } from '../types';
+import { Organization, Contact, Opportunity, OpportunitiesData, PipelineStage, Profile, Form } from '../types';
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
   const emptyData: OpportunitiesData = {
@@ -26,6 +26,7 @@ export const useCrmData = () => {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [opportunities, setOpportunities] = useState<OpportunitiesData>(groupOpportunitiesByStage([]));
+  const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +43,7 @@ export const useCrmData = () => {
         setOrganization(null);
         setContacts([]);
         setOpportunities(groupOpportunitiesByStage([]));
+        setForms([]);
         return;
       }
 
@@ -58,20 +60,24 @@ export const useCrmData = () => {
 
       const { organization_id } = profileData;
 
-      // 2. Fetch organization, contacts, and opportunities in parallel
-      const [orgResponse, contactsResponse, opportunitiesResponse] = await Promise.all([
+      // 2. Fetch organization, contacts, opportunities, and forms in parallel
+      const [orgResponse, contactsResponse, opportunitiesResponse, formsResponse] = await Promise.all([
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
-        supabase.from('opportunities').select('*').eq('organization_id', organization_id)
+        supabase.from('opportunities').select('*').eq('organization_id', organization_id),
+        supabase.from('forms').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false })
       ]);
 
       if (orgResponse.error) throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);
       if (contactsResponse.error) throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);
       if (opportunitiesResponse.error) throw new Error(`Errore nel caricamento delle opportunità: ${opportunitiesResponse.error.message}`);
+      if (formsResponse.error) throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);
+
 
       setOrganization(orgResponse.data);
       setContacts(contactsResponse.data || []);
       setOpportunities(groupOpportunitiesByStage(opportunitiesResponse.data || []));
+      setForms(formsResponse.data || []);
 
     } catch (err: any) {
       setError(err.message);
@@ -96,5 +102,5 @@ export const useCrmData = () => {
 
   }, [fetchData]);
 
-  return { organization, contacts, opportunities, loading, error, refetch: fetchData };
+  return { organization, contacts, opportunities, forms, loading, error, refetch: fetchData };
 };

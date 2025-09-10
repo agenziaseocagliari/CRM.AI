@@ -1,24 +1,31 @@
 import React, { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { useCrmData } from '../hooks/useCrmData';
 import toast from 'react-hot-toast';
 import { Modal } from './ui/Modal';
 import { PlusIcon, SparklesIcon } from './ui/icons';
 
+// Definiamo una interfaccia per la risposta di successo dalla funzione
+interface ActivationSuccessResponse {
+    message: string;
+    workflowId: string;
+    n8nLink: string;
+}
+
 export const Automations: React.FC = () => {
-    const { organization } = useOutletContext<ReturnType<typeof useCrmData>>();
-    
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [prompt, setPrompt] = useState('');
-    const [automationName, setAutomationName] = useState('');
-    const [generatedWorkflow, setGeneratedWorkflow] = useState<any | null>(null);
+    
+    const [activationResult, setActivationResult] = useState<ActivationSuccessResponse | null>(null);
+
+    // Stato per la diagnostica
+    const [diagResult, setDiagResult] = useState<string | null>(null);
+    const [isDiagnosing, setIsDiagnosing] = useState(false);
 
     const handleOpenCreateModal = () => {
         setPrompt('');
-        setAutomationName('');
-        setGeneratedWorkflow(null);
+        setActivationResult(null);
+        setIsLoading(false);
         setCreateModalOpen(true);
     };
     
@@ -26,47 +33,54 @@ export const Automations: React.FC = () => {
         setCreateModalOpen(false);
     };
 
-    const handleGenerateWorkflow = async () => {
+    const handleActivateAutomation = async () => {
         if (!prompt) {
             toast.error("Descrivi l'automazione che vuoi creare.");
             return;
         }
         setIsLoading(true);
-        setGeneratedWorkflow(null);
-        const toastId = toast.loading('Generazione workflow in corso...');
-
+        setActivationResult(null);
+        
         try {
             const { data, error } = await supabase.functions.invoke('generate-n8n-workflow', {
                 body: { prompt },
             });
+
             if (error) throw new Error(`Errore di rete: ${error.message}`);
             if (data.error) throw new Error(data.error);
             
-            setGeneratedWorkflow(data.workflow);
-            toast.success('Workflow generato con successo!', { id: toastId });
+            setActivationResult(data as ActivationSuccessResponse);
+            toast.success('Workflow attivato con successo su N8N!');
+
         } catch (err: any) {
             console.error(err);
-            toast.error(`Impossibile generare il workflow: ${err.message}`, { id: toastId });
+            toast.error(`Impossibile attivare l'automazione: ${err.message}`);
         } finally {
             setIsLoading(false);
         }
     };
-
-    const handleSaveAutomation = async () => {
-        if (!automationName || !generatedWorkflow || !organization) {
-            toast.error("Il nome dell'automazione e un workflow generato sono necessari per salvare.");
-            return;
+    
+    const runDiagnostics = async () => {
+        setIsDiagnosing(true);
+        setDiagResult(null);
+        try {
+            const { data, error } = await supabase.functions.invoke('health-check');
+            if (error) {
+                throw error;
+            }
+            // Aggiungiamo un log per vedere la risposta completa
+            console.log('Risposta diagnostica:', data);
+            setDiagResult(`SUCCESSO: La connessione alle funzioni Supabase è attiva. Messaggio dal server: "${data.message}"`);
+            toast.success("Diagnostica completata: Connessione OK!");
+        } catch (err: any) {
+            const errorMessage = `ERRORE DURANTE LA DIAGNOSTICA: ${err.message}. Questo conferma che c'è un problema di deployment o di routing nel progetto Supabase.`;
+            setDiagResult(errorMessage);
+            toast.error("Diagnostica fallita: Impossibile raggiungere le funzioni.");
+        } finally {
+            setIsDiagnosing(false);
         }
-        setIsLoading(true);
-        
-        // In a real application, you would save the automation to the database.
-        // For this example, we'll just simulate the save.
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        toast.success(`Automazione "${automationName}" salvata! (Simulazione)`);
-        setIsLoading(false);
-        handleCloseModals();
     };
+
 
     return (
         <>
@@ -87,7 +101,7 @@ export const Automations: React.FC = () => {
                         Automatizza il tuo Business con l'AI
                     </h2>
                     <p className="mt-2 text-text-secondary max-w-2xl mx-auto">
-                        Descrivi i processi che vuoi automatizzare in linguaggio naturale. L'AI genererà un workflow pronto per essere eseguito, connettendo le tue app e risparmiando ore di lavoro manuale.
+                        Descrivi i processi che vuoi automatizzare in linguaggio naturale. L'AI genererà e attiverà un workflow nel tuo N8N, connettendo le tue app e risparmiando ore di lavoro manuale.
                     </p>
                     <div className="mt-6">
                         <button onClick={handleOpenCreateModal} className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-indigo-700 text-lg font-semibold flex items-center space-x-2 mx-auto">
@@ -96,11 +110,25 @@ export const Automations: React.FC = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Strumento di Diagnostica Avanzato */}
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg mt-8">
+                    <h3 className="text-lg font-bold text-yellow-800">Strumento di Diagnostica</h3>
+                    <p className="text-sm text-yellow-700 mt-1">Se riscontri un errore "404 Not Found" o "Failed to fetch", usa questo strumento per verificare la connessione di base alle funzioni Supabase.</p>
+                    <button onClick={runDiagnostics} disabled={isDiagnosing} className="mt-4 bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 disabled:bg-gray-400">
+                        {isDiagnosing ? 'Diagnostica in corso...' : 'Avvia Test di Connessione'}
+                    </button>
+                    {diagResult && (
+                        <div className="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-800 font-mono whitespace-pre-wrap">
+                           {diagResult}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <Modal isOpen={isCreateModalOpen} onClose={handleCloseModals} title="Crea Nuova Automazione con AI">
+            <Modal isOpen={isCreateModalOpen} onClose={handleCloseModals} title="Crea e Attiva una Nuova Automazione">
                 <div className="space-y-4">
-                    {!generatedWorkflow ? (
+                    {!activationResult ? (
                         <>
                             <div>
                                 <label htmlFor="automation-prompt" className="block text-sm font-medium text-gray-700">
@@ -115,52 +143,37 @@ export const Automations: React.FC = () => {
                                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                                 />
                             </div>
-                            <div className="flex justify-end">
+                            <div className="flex justify-end pt-4 border-t mt-4">
                                 <button
-                                    onClick={handleGenerateWorkflow}
+                                    onClick={handleActivateAutomation}
                                     disabled={isLoading || !prompt}
                                     className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 disabled:bg-gray-400"
                                 >
-                                    {isLoading ? 'Generazione...' : <><SparklesIcon className="w-5 h-5" /><span>Genera Workflow</span></>}
+                                    {isLoading ? 'Attivazione in corso...' : <><SparklesIcon className="w-5 h-5" /><span>Genera e Attiva su N8N</span></>}
                                 </button>
                             </div>
                         </>
                     ) : (
-                        <>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Anteprima Workflow (JSON)</label>
-                                <div className="mt-2 p-4 border rounded-md bg-gray-50 max-h-64 overflow-y-auto">
-                                    <pre className="text-xs whitespace-pre-wrap break-all">
-                                        <code>{JSON.stringify(generatedWorkflow, null, 2)}</code>
-                                    </pre>
-                                </div>
+                        <div className="text-center">
+                            <div className="mx-auto bg-green-100 rounded-full w-16 h-16 flex items-center justify-center">
+                                 <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
-                            <div>
-                                <label htmlFor="automation-name" className="block text-sm font-medium text-gray-700">
-                                    Nome dell'Automazione
-                                </label>
-                                <input
-                                    type="text"
-                                    id="automation-name"
-                                    value={automationName}
-                                    onChange={(e) => setAutomationName(e.target.value)}
-                                    placeholder="Es: Notifica Lead Caldi su Slack"
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                                />
+                            <h3 className="text-xl font-semibold text-gray-800 mt-4">Successo!</h3>
+                            <p className="text-gray-600 mt-2">{activationResult.message}</p>
+                            <a 
+                                href={activationResult.n8nLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="mt-6 inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                            >
+                                Vedi il Workflow su N8N
+                            </a>
+                            <div className="mt-6">
+                               <button onClick={handleCloseModals} className="text-sm text-gray-500 hover:text-gray-800">Chiudi</button>
                             </div>
-                            <div className="flex justify-between items-center pt-4 border-t mt-4">
-                                <button onClick={() => setGeneratedWorkflow(null)} className="text-sm text-gray-600 hover:text-primary">
-                                    Indietro
-                                </button>
-                                <button
-                                    onClick={handleSaveAutomation}
-                                    disabled={isLoading || !automationName}
-                                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400"
-                                >
-                                    {isLoading ? 'Salvataggio...' : 'Salva Automazione'}
-                                </button>
-                            </div>
-                        </>
+                        </div>
                     )}
                 </div>
             </Modal>

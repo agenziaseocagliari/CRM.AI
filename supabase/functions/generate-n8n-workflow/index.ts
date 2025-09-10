@@ -20,18 +20,20 @@ const responseSchema = {
                 type: Type.OBJECT,
                 properties: {
                     name: { type: Type.STRING, description: "Il nome del servizio o dell'azione (es. 'Guardian Trigger', 'Slack', 'Filter')." },
-                    type: { type: Type.STRING, description: "Il tipo di nodo (es. 'trigger', 'action', 'condition')." },
+                    type: { type: Type.STRING, description: "Il tipo di nodo secondo la nomenclatura n8n (es. 'n8n-nodes-base.if', 'n8n-nodes-base.slack')." },
+                    typeVersion: { type: Type.NUMBER, description: "La versione del tipo di nodo (es. 1)." },
+                    position: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "Le coordinate [x, y] per la posizione del nodo nell'editor di n8n." },
                     parameters: { 
                         type: Type.OBJECT, 
-                        description: "Parametri di configurazione per il nodo. Ad esempio, per Slack, potrebbe includere 'channel' e 'message'." 
+                        description: "Parametri di configurazione per il nodo. Ad esempio, per Slack, potrebbe includere 'channel' e 'text'." 
                     },
                 },
-                required: ["name", "type", "parameters"],
+                required: ["name", "type", "typeVersion", "position", "parameters"],
             },
         },
         connections: {
             type: Type.OBJECT,
-            description: "Definisce come i nodi sono connessi. La chiave è il nome del nodo di output e il valore è un array di nomi di nodi di input.",
+            description: "Definisce come i nodi sono connessi. La chiave è il nome del nodo di output, e il valore è un oggetto le cui chiavi sono gli output (es. 'main') e i valori sono array di connessioni di input.",
         },
     },
     required: ["name", "nodes", "connections"],
@@ -39,32 +41,36 @@ const responseSchema = {
 
 
 serve(async (req) => {
+  // Gestione della richiesta preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // 1. Estrazione e validazione degli input
     const { prompt } = await req.json();
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const n8nUrl = Deno.env.get('N8N_INSTANCE_URL');
+    const n8nApiKey = Deno.env.get('N8N_API_KEY');
+
     if (!geminiApiKey) throw new Error("La variabile d'ambiente GEMINI_API_KEY non è impostata.");
-    if (!prompt) throw new Error("Il 'prompt' è richiesto.");
+    if (!n8nUrl || !n8nApiKey) throw new Error("Le variabili d'ambiente N8N_INSTANCE_URL e N8N_API_KEY sono necessarie.");
+    if (!prompt) throw new Error("Il 'prompt' è richiesto per descrivere l'automazione.");
 
+    // 2. Generazione del workflow JSON con Gemini AI
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-
     const fullPrompt = `
-      Sei un esperto di automazione di workflow. Il tuo compito è convertire la descrizione in linguaggio naturale di un utente in un workflow JSON in stile n8n semplificato.
-
-      Servizi disponibili e loro funzionalità:
-      - "Guardian CRM": Può essere un 'trigger' per "Nuovo Contatto" o "Score Contatto Aggiornato". Può essere un''action' per "Crea Opportunità".
-      - "Slack": Può essere un''action' per "Invia Messaggio". I parametri includono 'channel' (es. '#vendite') e 'message'.
-      - "Filter": È un nodo di tipo 'condition' per creare rami nel workflow in base a condizioni sui dati (es. 'lead_score equals Hot').
-      
-      Richiesta utente: "${prompt}"
-
-      Genera un oggetto JSON che rappresenta il workflow basato su questa richiesta, seguendo lo schema fornito. Assicurati che le connessioni tra i nodi siano logiche.
+      Sei un esperto di n8n. Converti la richiesta dell'utente in un workflow JSON valido per n8n.
+      Servizi disponibili:
+      - "Guardian CRM Trigger": tipo 'guardian-crm-trigger.guardianCrmTrigger', trigger per "Nuovo Contatto" o "Score Contatto Aggiornato".
+      - "Slack": tipo 'n8n-nodes-base.slack', action per "Invia Messaggio". Parametri: 'channel', 'text'.
+      - "IF Node": tipo 'n8n-nodes-base.if', per condizioni.
+      - "Guardian CRM Action": tipo 'guardian-crm.guardianCrm', action per "Crea Opportunità".
+      Posiziona i nodi in modo ordinato da sinistra a destra, incrementando la coordinata x di circa 250 per ogni passo.
+      Richiesta: "${prompt}"
     `;
 
-    const response = await ai.models.generateContent({
+    const geminiResponse = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: fullPrompt,
         config: {
@@ -73,9 +79,32 @@ serve(async (req) => {
         },
     });
     
-    const workflow = JSON.parse(response.text);
+    const workflowJson = JSON.parse(geminiResponse.text);
 
-    return new Response(JSON.stringify({ workflow }), {
+    // 3. Creazione del workflow sull'istanza N8N
+    const n8nApiResponse = await fetch(`${n8nUrl}/api/v1/workflows`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-N8N-API-KEY': n8nApiKey,
+        },
+        body: JSON.stringify(workflowJson),
+    });
+
+    if (!n8nApiResponse.ok) {
+        const errorBody = await n8nApiResponse.text();
+        throw new Error(`Errore da N8N (${n8nApiResponse.status}): ${errorBody}`);
+    }
+
+    const n8nWorkflowData = await n8nApiResponse.json();
+    const workflowId = n8nWorkflowData.id;
+
+    // 4. Invio della risposta di successo al client
+    return new Response(JSON.stringify({ 
+        message: `Workflow "${workflowJson.name}" creato con successo su N8N!`,
+        workflowId: workflowId,
+        n8nLink: `${n8nUrl}/workflow/${workflowId}`
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

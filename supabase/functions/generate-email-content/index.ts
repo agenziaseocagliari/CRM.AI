@@ -1,5 +1,5 @@
 import { serve } from "serve";
-// FIX: Corrected import path for `corsHeaders` to point to the local shared module.
+// FIX: Corrected import path for `corsHeaders` to point to the local shared module `../shared/cors.ts`.
 import { corsHeaders } from "../shared/cors.ts";
 import { GoogleGenAI } from "@google/genai";
 

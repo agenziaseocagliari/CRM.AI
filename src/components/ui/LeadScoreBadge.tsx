@@ -24,8 +24,6 @@ export const LeadScoreBadge: React.FC<LeadScoreBadgeProps> = ({ score, category,
                 return 'bg-gray-100 text-gray-800 border border-gray-300';
         }
     };
-    
-    const categoryText = category || 'Unknown';
 
     return (
         <div className="relative group">

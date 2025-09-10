@@ -1,5 +1,5 @@
-// FIX: Updated the Deno types reference to point to the correct distribution file path ('dist' instead of 'src'). This resolves errors where the 'Deno' global type definitions were not found.
-/// <reference types="https://esm.sh/@supabase/functions-js/dist/edge-runtime.d.ts" />
+// FIX: Pinned the version for @supabase/functions-js to resolve issues with type definition discovery. This ensures the correct Deno and Supabase Edge Function types are loaded.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts" />
 
 // supabase/functions/generate-form-fields/index.ts
 

@@ -1,5 +1,5 @@
-// FIX: Updated the Deno types reference to point to the correct distribution file path ('dist' instead of 'src'). This resolves errors where the 'Deno' global type definitions were not found.
-/// <reference types="https://esm.sh/@supabase/functions-js/dist/edge-runtime.d.ts" />
+// FIX: Pinned the version for @supabase/functions-js to resolve issues with type definition discovery. This ensures the correct Deno and Supabase Edge Function types are loaded.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts" />
 
 // supabase/functions/generate-n8n-workflow/index.ts
 
@@ -10,6 +10,21 @@ import { corsHeaders } from '../shared/cors.ts';
 interface N8nWorkflowCreationResponse {
     id: string;
 }
+
+// Funzione helper per pulire e parsare in modo sicuro la stringa JSON dall'AI
+function cleanAndParseJson(jsonString: string): any {
+  // Rimuove i backtick e la parola "json" se presenti (comuni nei code block di markdown)
+  const cleanedString = jsonString.replace(/^```json\s*|```$/g, '').trim();
+  
+  try {
+    return JSON.parse(cleanedString);
+  } catch (parseError) {
+    console.error("Errore di parsing JSON:", parseError);
+    console.error("Stringa originale ricevuta dall'AI:", jsonString);
+    throw new Error("L'AI ha restituito un JSON non valido. Riprova con un prompt diverso o controlla i log della funzione.");
+  }
+}
+
 
 serve(async (req) => {
   // Gestisce la richiesta preflight CORS
@@ -57,7 +72,9 @@ serve(async (req) => {
     });
     const workflowJsonString = response.text;
     if (!workflowJsonString) throw new Error("L'AI non ha generato una risposta valida.");
-    const workflowData = JSON.parse(workflowJsonString);
+    
+    // Utilizziamo la funzione helper per un parsing sicuro
+    const workflowData = cleanAndParseJson(workflowJsonString);
 
     // Step 2: Creare il workflow in N8N
     const createResponse = await fetch(`${n8nUrl}/api/v1/workflows`, {
@@ -90,7 +107,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Errore completo nella funzione:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

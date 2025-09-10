@@ -1,36 +1,73 @@
-// supabase/functions/debug-n8n-workflow/index.ts
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { serve } from "serve";
+import { corsHeaders } from "cors";
 
-// Header CORS direttamente nel file per eliminare dipendenze esterne.
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// FIX: Add declaration for Deno to resolve TypeScript error.
+// The Deno global is available in the Supabase Edge Function runtime.
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
 };
 
-console.log("Funzione 'debug-n8n-workflow' inizializzata (versione semplificata).");
-
 serve(async (req) => {
-  console.log(`[debug-n8n-workflow] Richiesta ricevuta: ${req.method}`);
-
-  // Gestione della richiesta preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const responseData = {
-      message: "Risposta di base dalla funzione di diagnostica. Il deployment ha avuto successo!",
-      timestamp: new Date().toISOString(),
-      status: "OK",
+    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+    const n8nApiKey = Deno.env.get('N8N_API_KEY');
+    
+    if (!n8nWebhookUrl || !n8nApiKey) {
+      throw new Error("Le variabili d'ambiente N8N_WEBHOOK_URL o N8N_API_KEY non sono impostate.");
+    }
+
+    // L'endpoint di health check si trova solitamente alla radice dell'URL dell'istanza N8N
+    const n8nBaseUrl = new URL(n8nWebhookUrl).origin;
+    const healthCheckUrl = `${n8nBaseUrl}/healthz`;
+    
+    let n8nStatus = {};
+    let connectionError = null;
+
+    try {
+        const response = await fetch(healthCheckUrl, {
+          method: 'GET',
+          headers: { 'X-N8N-API-KEY': n8nApiKey },
+        });
+        
+        if (!response.ok) {
+           throw new Error(`Connessione a N8N fallita. Status: ${response.status} ${response.statusText}. Dettagli: ${await response.text()}`);
+        }
+        n8nStatus = await response.json();
+
+    } catch(e) {
+        connectionError = e.message;
+    }
+
+
+    const responsePayload = {
+        message: "Diagnostica completata.",
+        checks: {
+            environmentVariables: {
+                N8N_WEBHOOK_URL: n8nWebhookUrl ? `Impostato (${n8nBaseUrl})` : "NON IMPOSTATO",
+                N8N_API_KEY: n8nApiKey ? "Impostato" : "NON IMPOSTATO",
+            },
+            n8nConnection: {
+                healthCheckUrl: healthCheckUrl,
+                status: connectionError ? "FALLITO" : "SUCCESSO",
+                details: connectionError || n8nStatus
+            }
+        }
     };
 
-    return new Response(JSON.stringify(responseData, null, 2), {
+
+    return new Response(JSON.stringify(responsePayload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
-    console.error("[debug-n8n-workflow] Errore:", error);
+    console.error("Errore nella funzione di diagnostica:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

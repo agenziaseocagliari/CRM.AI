@@ -18,10 +18,6 @@ export const Automations: React.FC = () => {
     
     const [activationResult, setActivationResult] = useState<ActivationSuccessResponse | null>(null);
 
-    // Stato per la diagnostica
-    const [diagResult, setDiagResult] = useState<string | null>(null);
-    const [isDiagnosing, setIsDiagnosing] = useState(false);
-
     const handleOpenCreateModal = () => {
         setPrompt('');
         setActivationResult(null);
@@ -60,27 +56,6 @@ export const Automations: React.FC = () => {
         }
     };
     
-    const runDiagnostics = async () => {
-        setIsDiagnosing(true);
-        setDiagResult(null);
-        try {
-            const { data, error } = await supabase.functions.invoke('health-check');
-            if (error) {
-                throw error;
-            }
-            // Aggiungiamo un log per vedere la risposta completa
-            console.log('Risposta diagnostica:', data);
-            setDiagResult(`SUCCESSO: La connessione alle funzioni Supabase è attiva. Messaggio dal server: "${data.message}"`);
-            toast.success("Diagnostica completata: Connessione OK!");
-        } catch (err: any) {
-            const errorMessage = `ERRORE DURANTE LA DIAGNOSTICA: ${err.message}. Questo conferma che c'è un problema di deployment o di routing nel progetto Supabase.`;
-            setDiagResult(errorMessage);
-            toast.error("Diagnostica fallita: Impossibile raggiungere le funzioni.");
-        } finally {
-            setIsDiagnosing(false);
-        }
-    };
-
 
     return (
         <>
@@ -109,20 +84,6 @@ export const Automations: React.FC = () => {
                             <span>Crea la tua Prima Automazione</span>
                         </button>
                     </div>
-                </div>
-
-                {/* Strumento di Diagnostica Avanzato */}
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg mt-8">
-                    <h3 className="text-lg font-bold text-yellow-800">Strumento di Diagnostica</h3>
-                    <p className="text-sm text-yellow-700 mt-1">Se riscontri un errore "404 Not Found" o "Failed to fetch", usa questo strumento per verificare la connessione di base alle funzioni Supabase.</p>
-                    <button onClick={runDiagnostics} disabled={isDiagnosing} className="mt-4 bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 disabled:bg-gray-400">
-                        {isDiagnosing ? 'Diagnostica in corso...' : 'Avvia Test di Connessione'}
-                    </button>
-                    {diagResult && (
-                        <div className="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-800 font-mono whitespace-pre-wrap">
-                           {diagResult}
-                        </div>
-                    )}
                 </div>
             </div>
 

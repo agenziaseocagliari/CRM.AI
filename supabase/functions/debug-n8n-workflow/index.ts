@@ -1,11 +1,12 @@
-// FIX: Switched to unpkg.com for type definitions to resolve issues where the Deno global object was not being recognized.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated reference path to use npm specifier for better tooling compatibility and to resolve Deno types.
+/// <reference types="npm:@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
-// supabase/functions/debug-n8n-workflow/index.ts
-
-import { serve } from "std/http/server.ts";
-import { GoogleGenAI } from '@google/genai';
-import { corsHeaders } from 'shared/cors.ts';
+// FIX: Using full URL for Deno standard library imports as no import_map is specified.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// FIX: Using npm specifier for imports to ensure they are resolved correctly in the Deno environment.
+import { GoogleGenAI } from 'npm:@google/genai';
+// FIX: Corrected relative path for shared module import.
+import { corsHeaders } from '../shared/cors.ts';
 
 interface CheckResult {
   name: string;
@@ -14,8 +15,8 @@ interface CheckResult {
   details?: any;
 }
 
-serve(async (_req) => {
-  if (_req.method === 'OPTIONS') {
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
@@ -62,7 +63,6 @@ serve(async (_req) => {
   // --- Test 3: Connessione a N8N ---
   if (n8nUrl && n8nApiKey) {
     try {
-        // Usiamo un endpoint semplice come /healthz o /workflows per testare la connessione
         const n8nTestUrl = `${n8nUrl.replace(/\/$/, '')}/api/v1/workflows?limit=1`;
         const response = await fetch(n8nTestUrl, {
             method: 'GET',
@@ -89,12 +89,10 @@ serve(async (_req) => {
     : 'Uno o più test sono falliti. Controlla i dettagli sopra per identificare e risolvere il problema di configurazione.';
 
   const reportData = {
-    report: {
       timestamp: new Date().toISOString(),
       overallStatus: overallSuccess ? 'SUCCESSO' : 'FALLITO',
       conclusion,
       checks: results,
-    }
   };
 
   return new Response(JSON.stringify(reportData, null, 2), {

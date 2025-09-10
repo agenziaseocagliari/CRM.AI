@@ -1,21 +1,19 @@
-// FIX: Switched to unpkg.com for type definitions to resolve issues where the Deno global object was not being recognized.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated reference path to use npm specifier for better tooling compatibility and to resolve Deno types.
+/// <reference types="npm:@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
-// supabase/functions/generate-n8n-workflow/index.ts
-
-import { serve } from "std/http/server.ts";
-import { GoogleGenAI } from '@google/genai';
-import { corsHeaders } from 'shared/cors.ts';
+// FIX: Using full URL for Deno standard library imports as no import_map is specified.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// FIX: Using npm specifier for imports to ensure they are resolved correctly in the Deno environment.
+import { GoogleGenAI } from 'npm:@google/genai';
+// FIX: Corrected relative path for shared module import.
+import { corsHeaders } from '../shared/cors.ts';
 
 interface N8nWorkflowCreationResponse {
     id: string;
 }
 
-// Funzione helper per pulire e parsare in modo sicuro la stringa JSON dall'AI
 function cleanAndParseJson(jsonString: string): any {
-  // Rimuove i backtick e la parola "json" se presenti (comuni nei code block di markdown)
   const cleanedString = jsonString.replace(/^```json\s*|```$/g, '').trim();
-  
   try {
     return JSON.parse(cleanedString);
   } catch (parseError) {
@@ -25,9 +23,7 @@ function cleanAndParseJson(jsonString: string): any {
   }
 }
 
-
 serve(async (req) => {
-  // Gestisce la richiesta preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -48,7 +44,6 @@ serve(async (req) => {
         });
     }
 
-    // Step 1: Chiamare Gemini per generare il JSON del workflow N8N
     console.log("Step 1: Invocazione di Gemini AI per generare il workflow...");
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const generationPrompt = `
@@ -72,19 +67,14 @@ serve(async (req) => {
         config: { responseMimeType: 'application/json' },
     });
     
-    // NUOVA GESTIONE ROBUSTA DELLA RISPOSTA
-    // 1. Controlla se la richiesta è stata bloccata per motivi di sicurezza/policy.
-    // L'accesso a `response.text` lancerebbe un errore, quindi lo controlliamo prima.
     if (response.promptFeedback?.blockReason) {
       const blockReason = response.promptFeedback.blockReason;
       console.error(`Richiesta a Gemini bloccata. Motivo: ${blockReason}`);
       throw new Error(`La tua richiesta non può essere processata per motivi di policy (${blockReason}). Prova a riformulare il prompt.`);
     }
 
-    // 2. Estrai il testo in modo sicuro.
     const workflowJsonString = response.text;
     
-    // 3. Controlla che il testo non sia vuoto.
     if (!workflowJsonString) {
         console.error("Risposta vuota da Gemini AI.");
         throw new Error("L'AI ha restituito una risposta vuota. Riprova con un prompt più specifico.");
@@ -94,7 +84,6 @@ serve(async (req) => {
     const workflowData = cleanAndParseJson(workflowJsonString);
     console.log(`Workflow "${workflowData.name}" parsato con successo.`);
 
-    // Step 2: Creare il workflow in N8N
     console.log("Step 2: Creazione del workflow in N8N...");
     const createResponse = await fetch(`${n8nUrl}/api/v1/workflows`, {
         method: 'POST',
@@ -113,7 +102,6 @@ serve(async (req) => {
     const workflowId = newWorkflow.id;
     console.log(`Workflow creato con ID: ${workflowId}`);
 
-    // Step 3: Attivare il workflow
     console.log("Step 3: Attivazione del workflow...");
     const activateResponse = await fetch(`${n8nUrl}/api/v1/workflows/${workflowId}/activate`, {
         method: 'POST',

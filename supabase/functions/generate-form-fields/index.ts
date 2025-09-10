@@ -1,14 +1,14 @@
-// FIX: Switched to unpkg.com for type definitions to resolve issues where the Deno global object was not being recognized.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated reference path to use npm specifier for better tooling compatibility and to resolve Deno types.
+/// <reference types="npm:@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
-// supabase/functions/generate-form-fields/index.ts
-
-import { serve } from "std/http/server.ts";
-import { GoogleGenAI, Type } from '@google/genai';
-import { corsHeaders } from 'shared/cors.ts';
+// FIX: Using full URL for Deno standard library imports as no import_map is specified.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// FIX: Using npm specifier for imports to ensure they are resolved correctly in the Deno environment.
+import { GoogleGenAI, Type } from 'npm:@google/genai';
+// FIX: Corrected relative path for shared module import.
+import { corsHeaders } from '../shared/cors.ts';
 
 serve(async (req) => {
-  // Gestisce la richiesta preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }

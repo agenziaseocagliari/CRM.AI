@@ -1,14 +1,14 @@
-// FIX: Switched to unpkg.com for type definitions to resolve issues where the Deno global object was not being recognized.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated reference path to use npm specifier for better tooling compatibility and to resolve Deno types.
+/// <reference types="npm:@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
-// supabase/functions/generate-email-content/index.ts
-
-import { serve } from "std/http/server.ts";
-import { GoogleGenAI } from '@google/genai';
-import { corsHeaders } from 'shared/cors.ts';
+// FIX: Using full URL for Deno standard library imports as no import_map is specified.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// FIX: Using npm specifier for imports to ensure they are resolved correctly in the Deno environment.
+import { GoogleGenAI } from 'npm:@google/genai';
+// FIX: Corrected relative path for shared module import.
+import { corsHeaders } from '../shared/cors.ts';
 
 serve(async (req) => {
-  // Gestisce la richiesta preflight CORS del browser
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -43,7 +43,6 @@ serve(async (req) => {
         contents: fullPrompt,
     });
     
-    // FIX: Simplified text extraction from the Gemini response to align with SDK guidelines. The 'text' property is a direct string, so optional chaining and nullish coalescing are not needed.
     const text = response.text.trim();
 
     return new Response(JSON.stringify({ email: text }), {

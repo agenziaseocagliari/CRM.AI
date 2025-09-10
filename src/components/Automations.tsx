@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SparklesIcon } from './ui/icons';
+import { GoogleGenAI } from '@google/genai';
 
 // Definiamo un tipo per la risposta parziale che ci aspettiamo da N8N dopo la creazione
 interface N8nWorkflowCreationResponse {
@@ -23,7 +24,6 @@ export const Automations: React.FC = () => {
 
         try {
             // Step 1: Chiamare Gemini per generare il JSON del workflow N8N
-            const { GoogleGenAI } = await import('@google/genai');
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
             const generationPrompt = `

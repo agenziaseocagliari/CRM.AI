@@ -3,8 +3,10 @@ import { Form, FormField, Organization } from '../types';
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
-// FIX: Import HarmCategory, HarmBlockThreshold, and Type for structured API calls.
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Type } from '@google/genai';
+// FIX: Changed the import to a namespace import to prevent a runtime error with the CDN module,
+// which was causing the white screen crash. All references to the library's exports
+// are now prefixed with the 'GoogleGenerativeAI' namespace.
+import * as GoogleGenerativeAI from '@google/genai';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -111,14 +113,14 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         const systemInstruction = `You are an expert system that translates Italian natural language descriptions into a structured JSON object for a form builder. Based on the user's request, generate an array of form fields. For the 'type' property, you must choose one of the following values: 'text', 'email', 'tel', 'textarea'. For the 'name' property, generate a value in snake_case format.`;
         
         const responseSchema = {
-            type: Type.ARRAY,
+            type: GoogleGenerativeAI.Type.ARRAY,
             items: {
-                type: Type.OBJECT,
+                type: GoogleGenerativeAI.Type.OBJECT,
                 properties: {
-                    name: { type: Type.STRING, description: 'Unique identifier for the field in snake_case format (e.g., "nome_completo").' },
-                    label: { type: Type.STRING, description: 'User-friendly label for the field (e.g., "Nome Completo").' },
-                    type: { type: Type.STRING, description: "The type of the field. Must be one of: 'text', 'email', 'tel', 'textarea'." },
-                    required: { type: Type.BOOLEAN, description: 'Whether the field is required or not.' }
+                    name: { type: GoogleGenerativeAI.Type.STRING, description: 'Unique identifier for the field in snake_case format (e.g., "nome_completo").' },
+                    label: { type: GoogleGenerativeAI.Type.STRING, description: 'User-friendly label for the field (e.g., "Nome Completo").' },
+                    type: { type: GoogleGenerativeAI.Type.STRING, description: "The type of the field. Must be one of: 'text', 'email', 'tel', 'textarea'." },
+                    required: { type: GoogleGenerativeAI.Type.BOOLEAN, description: 'Whether the field is required or not.' }
                 },
                 required: ['name', 'label', 'type', 'required']
             }
@@ -127,7 +129,7 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         setLastPrompt(`System Instruction:\n${systemInstruction}\n\nUser Request:\n"${prompt}"`);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            const ai = new GoogleGenerativeAI.GoogleGenAI({ apiKey: process.env.API_KEY! });
             
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -137,10 +139,10 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
                     responseMimeType: "application/json",
                     responseSchema,
                     safetySettings: [
-                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
+                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
+                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
+                        { category: GoogleGenerativeAI.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: GoogleGenerativeAI.HarmBlockThreshold.BLOCK_NONE },
                     ],
                 }
             });

@@ -5,12 +5,16 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+  // FIX: Replace process.cwd() with '.' to avoid TypeScript type errors where 'cwd' is not found on 'process'.
+  // This correctly refers to the project root directory for loading environment variables.
+  const env = loadEnv(mode, '.', '');
   return {
     plugins: [react()],
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        // FIX: Replace `__dirname` with `.` to resolve path from the project root.
+        // `__dirname` is not available in ES modules, which is the standard for modern Vite projects.
+        "@": path.resolve("./src"),
       },
     },
     define: {

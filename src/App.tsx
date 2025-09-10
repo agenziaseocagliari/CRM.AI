@@ -42,36 +42,24 @@ const ConfigError: React.FC<{ missingVars: string[] }> = ({ missingVars }) => (
     </div>
 );
 
-// Controlla se tutte le variabili d'ambiente necessarie sono presenti.
-const checkEnvVariables = (): string[] => {
-    const requiredVars = [
-        'VITE_SUPABASE_URL',
-        'VITE_SUPABASE_ANON_KEY',
-        'API_KEY',
-        'VITE_N8N_URL',
-        'VITE_N8N_API_KEY'
-    ];
-    return requiredVars.filter(varName => !process.env[varName]);
-};
-
 // *** END: Environment Variable Check & Error Component ***
 
 
 type AppState = 'loading' | 'homepage' | 'login' | 'app' | 'public_form';
 
 const App: React.FC = () => {
-    // Esegui il controllo delle variabili all'avvio.
-    const missingVars = checkEnvVariables();
-    if (missingVars.length > 0) {
-        // Se manca qualcosa, mostra la pagina di errore invece dell'app.
-        return <ConfigError missingVars={missingVars} />;
-    }
-
     const [appState, setAppState] = useState<AppState>('loading');
     const [currentView, setCurrentView] = useState<View>('Dashboard');
     const [publicFormId, setPublicFormId] = useState<string | null>(null);
     
     const { organization, contacts, opportunities, forms, loading, error, refetch } = useCrmData();
+
+    // Se il custom hook `useCrmData` rileva un errore di configurazione,
+    // lo mostriamo qui con una schermata dedicata invece della pagina bianca.
+    if (error && error.startsWith('Errore di Configurazione:')) {
+        const missingVars = error.match(/[A-Z_0-9]+/g) || ['Variabili Sconosciute'];
+        return <ConfigError missingVars={missingVars} />;
+    }
 
     useEffect(() => {
         // Routing basato sul path
@@ -83,8 +71,15 @@ const App: React.FC = () => {
             setAppState('public_form');
         } else {
             const checkSession = async () => {
-                const { data: { session } } = await supabase.auth.getSession();
-                setAppState(session ? 'app' : 'homepage');
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    setAppState(session ? 'app' : 'homepage');
+                } catch (e) {
+                    // Se supabase non è configurato, il proxy lancerà un errore.
+                    // L'hook useCrmData lo catturerà e mostrerà la schermata di errore.
+                    console.error("Errore di configurazione durante il check della sessione.");
+                    setAppState('homepage'); // Fallback sicuro
+                }
             };
             checkSession();
 
@@ -115,6 +110,7 @@ const App: React.FC = () => {
         if (loading && appState === 'app') {
             return <div className="flex items-center justify-center h-full">Caricamento dati...</div>;
         }
+        // Mostra un errore generico per altri problemi non legati alla configurazione.
         if (error) {
             return <div className="flex items-center justify-center h-full text-red-500">{error}</div>;
         }

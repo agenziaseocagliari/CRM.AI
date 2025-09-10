@@ -5,7 +5,7 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
+  const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react()],
     resolve: {
@@ -14,16 +14,16 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      // The previous configuration attempted to define individual properties on `process.env`,
-      // which can be unreliable. This new configuration defines the entire `process.env` object.
-      // Vite will replace any occurrence of `process.env` with this object, ensuring that
-      // `process.env.API_KEY` is correctly resolved in the browser, fixing the "API Key must be set" error.
+      // This configuration defines the entire `process.env` object, providing fallbacks
+      // to empty strings. This prevents a fatal error during initialization if an env var
+      // is missing in the build environment (like Vercel), ensuring that runtime checks
+      // can properly handle the missing variable instead of crashing with a white screen.
       'process.env': {
-        VITE_SUPABASE_URL: JSON.stringify(env.VITE_SUPABASE_URL),
-        VITE_SUPABASE_ANON_KEY: JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-        API_KEY: JSON.stringify(env.API_KEY),
-        VITE_N8N_URL: JSON.stringify(env.VITE_N8N_URL),
-        VITE_N8N_API_KEY: JSON.stringify(env.VITE_N8N_API_KEY),
+        VITE_SUPABASE_URL: JSON.stringify(env.VITE_SUPABASE_URL || ''),
+        VITE_SUPABASE_ANON_KEY: JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
+        API_KEY: JSON.stringify(env.API_KEY || ''),
+        VITE_N8N_URL: JSON.stringify(env.VITE_N8N_URL || ''),
+        VITE_N8N_API_KEY: JSON.stringify(env.VITE_N8N_API_KEY || ''),
       }
     }
   }

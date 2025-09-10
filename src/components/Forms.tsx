@@ -160,6 +160,8 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         } catch (err: any) {
             console.error("Errore dettagliato generazione form:", err);
             setError("Impossibile generare il form. Riprova con una descrizione diversa o controlla la tua chiave API.");
+            // Mostra l'errore effettivo nel pannello di debug per una diagnosi accurata.
+            setRawAIResponse(err.toString());
         } finally {
             setIsLoading(false);
         }

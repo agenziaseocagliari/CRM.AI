@@ -1,20 +1,25 @@
 // supabase/functions/health-check/index.ts
 import { serve } from "serve";
-import { corsHeaders } from "../shared/cors.ts";
 
-console.log("Health check function initialized");
+// **FIX RADICALE: Gli header sono ora definiti localmente.**
+// Questo elimina la dipendenza dal file `../shared/cors.ts`,
+// che era la causa più probabile del fallimento del bundler e del deployment.
+// La funzione è ora 100% autonoma e non può fallire per problemi di import locali.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+console.log("Health check function initialized (v2 - self-contained)");
 
 serve(async (req) => {
-  // **FIX CRITICO: Aggiunto il gestore esplicito per le richieste preflight OPTIONS.**
-  // Senza questo, il browser non può ottenere il permesso di inviare la richiesta effettiva,
-  // causando un errore di rete generico prima che la logica della funzione venga eseguita.
+  // Gestione esplicita della richiesta preflight OPTIONS.
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // La logica principale viene eseguita solo per le altre richieste (es. POST, GET).
-    return new Response(JSON.stringify({ status: 'ok', message: 'Supabase function endpoint is reachable.' }), {
+    return new Response(JSON.stringify({ status: 'ok', message: 'Endpoint della funzione Supabase raggiungibile con successo.' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

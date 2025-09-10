@@ -1,35 +1,29 @@
-// FIX: Switched to esm.sh CDN for Supabase type definitions, as unpkg was causing resolution errors. This should also define the global Deno object.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference from esm.sh to unpkg.com to fix type resolution errors for Deno environment.
+/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { GoogleGenAI, GenerateContentResponse, Type } from "https://esm.sh/@google/genai@1.19.0";
+import { GoogleGenAI, Type, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
 };
 
-function safeParseJson(text?: string) {
-  if (!text) throw new Error("Output AI vuoto.");
-  const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-  try { return JSON.parse(cleaned); }
-  catch (e) { throw new Error("Output AI non è JSON valido: " + (e as Error).message); }
-}
-
-async function withRetry<T>(fn: () => Promise<T>, tries = 3, base = 500): Promise<T> {
-  let last: unknown;
-  for (let i = 0; i < tries; i++) {
-    try { return await fn(); } catch (e) {
-      last = e;
-      const msg = String((e as Error).message || e);
-      if (!/429|503|timeout|unavailable|network/i.test(msg) || i === tries - 1) throw e;
-      const delay = base * (2 ** i) + Math.floor(Math.random() * 250);
-      await new Promise(r => setTimeout(r, delay));
+async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  let lastError: Error | undefined;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (i < retries - 1) {
+        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
   }
-  throw last;
+  throw lastError;
 }
 
 const responseSchema = {
@@ -37,13 +31,14 @@ const responseSchema = {
     properties: {
         fields: {
             type: Type.ARRAY,
+            description: "Un array di oggetti, dove ogni oggetto rappresenta un campo del form.",
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    name: { type: Type.STRING, description: 'Un nome univoco per il campo in formato snake_case (es. "nome_completo").' },
-                    label: { type: Type.STRING, description: 'L\'etichetta leggibile per l\'utente (es. "Nome Completo").' },
-                    type: { type: Type.STRING, description: 'Il tipo di input HTML (es. "text", "email", "tel", "textarea").' },
-                    required: { type: Type.BOOLEAN, description: 'Indica se il campo è obbligatorio.' },
+                    name: { type: Type.STRING, description: 'Un nome programmatico per il campo, in formato snake_case (es. "nome_completo").' },
+                    label: { type: Type.STRING, description: 'L\'etichetta visibile all\'utente (es. "Nome Completo").' },
+                    type: { type: Type.STRING, description: 'Il tipo di input HTML. Valori permessi: "text", "email", "tel", "textarea".' },
+                    required: { type: Type.BOOLEAN, description: 'Indica se il campo è obbligatorio (true) o facoltativo (false).' },
                 },
                 required: ["name", "label", "type", "required"],
             },
@@ -53,48 +48,63 @@ const responseSchema = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
-    const { prompt } = await req.json();
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiApiKey) throw new Error("Variabile mancante: GEMINI_API_KEY");
-    if (!prompt) throw new Error("Richiesto 'prompt'.");
+    if (!geminiApiKey) {
+      throw new Error("La variabile d'ambiente GEMINI_API_KEY non è stata impostata.");
+    }
+    
+    const { prompt } = await req.json();
+    if (!prompt) {
+      return new Response(JSON.stringify({ error: "Il parametro 'prompt' è obbligatorio." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const fullPrompt = `
-      Analizza la richiesta e genera la struttura dei campi modulo.
-      Rispondi SOLO in JSON conforme allo schema:
-      {"fields":[{"name":string,"label":string,"type":"text"|"email"|"tel"|"textarea","required":boolean}]}
-      Richiesta: "${prompt}"
+        Analizza la seguente richiesta per creare un form e genera la struttura dei campi corrispondente.
+        Rispetta rigorosamente lo schema JSON fornito.
+        Richiesta utente: "${prompt}"
     `;
-
-    const response = await withRetry<GenerateContentResponse>(() =>
-      ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: fullPrompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: responseSchema,
-        }
-      })
+    
+    const response: GenerateContentResponse = await withRetry(() => 
+        ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: fullPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+            }
+        })
     );
 
-    const out = safeParseJson(response.text);
-    const seen = new Set<string>();
-    out.fields = (out.fields ?? [])
-      .filter((f: any) => f && typeof f.name === "string" && f.name.trim() && !seen.has(f.name) && (seen.add(f.name), true))
-      .map((f: any) => ({
-        ...f,
-        type: ["text", "email", "tel", "textarea"].includes(f.type) ? f.type : "text",
-        required: Boolean(f.required),
-        label: f.label || f.name
-      }));
+    let parsedResponse;
+    try {
+        parsedResponse = JSON.parse(response.text);
+    } catch (e) {
+        throw new Error("L'output dell'AI non è un JSON valido.");
+    }
 
-    if (!out.fields.length) throw new Error("AI ha restituito nessun campo valido.");
+    if (!parsedResponse.fields || !Array.isArray(parsedResponse.fields)) {
+        throw new Error("La struttura JSON restituita dall'AI non è valida o manca la proprietà 'fields'.");
+    }
 
-    return new Response(JSON.stringify(out), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ fields: parsedResponse.fields }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
   } catch (error) {
-    console.error("generate-form-fields:", error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 });
+    console.error("Errore nella funzione generate-form-fields:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });

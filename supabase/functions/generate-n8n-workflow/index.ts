@@ -1,130 +1,156 @@
-// FIX: Switched to esm.sh CDN for Supabase type definitions, as unpkg was causing resolution errors. This should also define the global Deno object.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference from esm.sh to unpkg.com to fix type resolution errors for Deno environment.
+/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
 };
 
-function safeParseJson(text?: string) {
-  if (!text) throw new Error("Output AI vuoto.");
-  const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-  try { return JSON.parse(cleaned); }
-  catch (e) { throw new Error("JSON non valido dall'AI: " + (e as Error).message); }
-}
-
-function normalizeWorkflow(wf: any) {
-  wf.name ??= "AI Generated Workflow";
-  wf.active ??= false;
-  wf.version ??= 1;
-  wf.settings ??= {};
-  wf.connections ??= wf.connections ?? {};
-  wf.nodes = (wf.nodes ?? []).map((n: any, i: number) => ({
-    id: n.id ?? crypto.randomUUID?.() ?? String(i + 1),
-    position: (Array.isArray(n.position) && n.position.length === 2) ? n.position : [100 + i * 300, 200],
-    typeVersion: n.typeVersion ?? 1,
-    parameters: n.parameters ?? {},
-    ...n
-  }));
-  if (!Array.isArray(wf.nodes) || wf.nodes.length === 0) throw new Error("Workflow privo di 'nodes'.");
-  return wf;
-}
-
-async function withRetry<T>(fn: () => Promise<T>, tries = 3, base = 500): Promise<T> {
-  let last: unknown;
-  for (let i = 0; i < tries; i++) {
-    try { return await fn(); } catch (e) {
-      last = e;
-      const msg = String((e as Error).message || e);
-      if (!/429|503|timeout|unavailable|network/i.test(msg) || i === tries - 1) throw e;
-      const delay = base * (2 ** i) + Math.floor(Math.random() * 250);
-      await new Promise(r => setTimeout(r, delay));
+async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  let lastError: Error | undefined;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (i < retries - 1) {
+        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
   }
-  throw last;
+  throw lastError;
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
-    const body = await req.json();
-    const { prompt } = body;
+    // 1. Validazione delle variabili d'ambiente
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     const n8nUrl = Deno.env.get("N8N_INSTANCE_URL");
     const n8nApiKey = Deno.env.get("N8N_API_KEY");
-    const missing = [];
-    if (!geminiApiKey) missing.push("GEMINI_API_KEY");
-    if (!n8nUrl) missing.push("N8N_INSTANCE_URL");
-    if (!n8nApiKey) missing.push("N8N_API_KEY");
-    if (missing.length) throw new Error("Variabili mancanti: " + missing.join(", "));
-    if (!prompt) throw new Error("Richiesto 'prompt'.");
 
-    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-
-    // FEW-SHOT: esempio minimale di JSON valido per n8n
-    const fewShot = `{
-      "name": "Example",
-      "version": 1,
-      "active": false,
-      "nodes": [
-        { "id": "1", "name": "Start", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1, "position": [100,200], "parameters": {} },
-        { "id": "2", "name": "Set", "type": "n8n-nodes-base.set", "typeVersion": 1, "position": [400,200], "parameters": { "values": { "string": [{ "name": "msg", "value": "ok" }] } } }
-      ],
-      "connections": { "Start": { "main": [[{ "node":"Set", "type":"main", "index":0 }]] } },
-      "settings": {}
-    }`;
-
-    const fullPrompt = `
-      Sei un esperto di n8n. Converti la richiesta seguente in un workflow JSON valido.
-      Requisiti minimi: "name", "version", "active", "nodes[]", "connections", "settings".
-      Ogni node deve avere: id, name, type, typeVersion, position [x,y], parameters.
-      Restituisci SOLO JSON valido, senza testo extra.
-      Esempio (few-shot):
-      ${fewShot}
-      Richiesta: "${prompt}"
-    `;
-
-    const gemini = await withRetry<GenerateContentResponse>(() =>
-      ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: fullPrompt,
-        config: { responseMimeType: "application/json" }
-      })
-    );
-
-    let workflowJson = normalizeWorkflow(safeParseJson(gemini.text));
-
-    const res = await withRetry(() =>
-      fetch(`${n8nUrl}/api/v1/workflows`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-N8N-API-KEY": n8nApiKey!
-        },
-        body: JSON.stringify(workflowJson)
-      })
-    );
-
-    if (!res.ok) {
-      const errorBody = await res.text();
-      throw new Error(`Errore N8N ${res.status}: ${errorBody}`);
+    if (!geminiApiKey || !n8nUrl || !n8nApiKey) {
+      const missing = [
+        !geminiApiKey && "GEMINI_API_KEY",
+        !n8nUrl && "N8N_INSTANCE_URL",
+        !n8nApiKey && "N8N_API_KEY",
+      ].filter(Boolean).join(", ");
+      throw new Error(`Le seguenti variabili d'ambiente mancano: ${missing}`);
     }
 
-    const data = await res.json();
-    const workflowId = data.id ?? data.data?.[0]?.id;
+    // 2. Validazione del body della richiesta
+    const { prompt } = await req.json();
+    if (!prompt) {
+      return new Response(JSON.stringify({ error: "Il parametro 'prompt' è obbligatorio." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 3. Generazione del workflow JSON con Gemini
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+    const fullPrompt = `
+      Agisci come un esperto di automazione e specialista di n8n.
+      Il tuo compito è convertire la richiesta dell'utente in un workflow n8n JSON valido e completo.
+      Il JSON deve includere "name", "nodes", "connections", e "settings".
+      Ogni nodo deve avere "id", "name", "type", "typeVersion", "position", e "parameters".
+      Assicurati che le connessioni tra i nodi siano corrette.
+      **Rispondi solo ed esclusivamente con il codice JSON del workflow, senza commenti o testo aggiuntivo.**
+
+      Esempio di struttura di base:
+      {
+        "name": "Nome Workflow",
+        "nodes": [
+          {
+            "parameters": {},
+            "id": "e4585e4b-4f6c-4b5b-8f7b-6a1e2d9b3c5d",
+            "name": "Start",
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [240, 300]
+          }
+        ],
+        "connections": {},
+        "active": false,
+        "settings": {},
+        "versionId": "1"
+      }
+      
+      Richiesta utente: "${prompt}"
+    `;
+
+    const response: GenerateContentResponse = await withRetry(() => 
+        ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: fullPrompt,
+            config: {
+                responseMimeType: "application/json",
+            }
+        })
+    );
+    
+    let workflowJson;
+    try {
+        const cleanedText = response.text.trim().replace(/^```json/, '').replace(/```$/, '').trim();
+        workflowJson = JSON.parse(cleanedText);
+    } catch (e) {
+        throw new Error(`L'output dell'AI non è un JSON valido: ${e.message}`);
+    }
+    
+    // 4. Creazione del workflow su N8N
+    const n8nResponse = await withRetry(() => 
+        fetch(`${n8nUrl.replace(/\/$/, '')}/api/v1/workflows`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-N8N-API-KEY': n8nApiKey,
+            },
+            body: JSON.stringify(workflowJson),
+        })
+    );
+
+    if (!n8nResponse.ok) {
+        const errorBody = await n8nResponse.text();
+        throw new Error(`Errore da N8N (${n8nResponse.status}): ${errorBody}`);
+    }
+
+    const n8nData = await n8nResponse.json();
+    const workflowId = n8nData.id;
+    
+    if (!workflowId) {
+        throw new Error("N8N non ha restituito un ID per il workflow creato.");
+    }
+    
+    // 5. Attivazione del workflow
+    await withRetry(() => 
+        fetch(`${n8nUrl.replace(/\/$/, '')}/api/v1/workflows/${workflowId}/activate`, {
+            method: 'POST',
+            headers: { 'X-N8N-API-KEY': n8nApiKey },
+        })
+    );
 
     return new Response(JSON.stringify({
-      message: `Workflow "${workflowJson.name}" creato con successo su N8N!`,
-      workflowId,
-      n8nLink: `${n8nUrl}/workflow/${workflowId}`
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      message: `Workflow "${workflowJson.name}" creato e attivato con successo!`,
+      workflowId: workflowId,
+      n8nLink: `${n8nUrl.replace(/\/$/, '')}/workflow/${workflowId}`
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
   } catch (error) {
-    console.error("generate-n8n-workflow:", error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 });
+    console.error("Errore nella funzione generate-n8n-workflow:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });

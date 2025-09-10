@@ -1,5 +1,5 @@
-// FIX: Switched to esm.sh CDN for Supabase type definitions, as unpkg was causing resolution errors. This should also define the global Deno object.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference from esm.sh to unpkg.com to fix type resolution errors for Deno environment.
+/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
@@ -8,50 +8,81 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
 };
 
-async function withRetry<T>(fn: () => Promise<T>, tries = 3, base = 500): Promise<T> {
-  let last: unknown;
-  for (let i = 0; i < tries; i++) {
-    try { return await fn(); } catch (e) {
-      last = e;
-      const msg = String((e as Error).message || e);
-      if (!/429|503|timeout|unavailable|network/i.test(msg) || i === tries - 1) throw e;
-      const delay = base * (2 ** i) + Math.floor(Math.random() * 250);
-      await new Promise(r => setTimeout(r, delay));
+async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  let lastError: Error | undefined;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (i < retries - 1) {
+        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
   }
-  throw last;
+  throw lastError;
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiApiKey) throw new Error("Variabile mancante: GEMINI_API_KEY");
+    if (!geminiApiKey) {
+      throw new Error("La variabile d'ambiente GEMINI_API_KEY non è stata impostata.");
+    }
 
     const { prompt, contact } = await req.json();
-    if (!prompt || !contact) throw new Error("Richiesti 'prompt' e 'contact'.");
+    if (!prompt || !contact) {
+      return new Response(JSON.stringify({ error: "I parametri 'prompt' e 'contact' sono obbligatori." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const fullPrompt = `
-      Sei un assistente di vendita esperto per un CRM chiamato Guardian AI.
-      Scrivi SOLO il corpo email, tono professionale e conciso.
-      Obiettivo: "${prompt}"
-      Contatto: nome=${contact.name}, email=${contact.email}, azienda=${contact.company || 'N/D'}
+      Agisci come un esperto di vendite e marketing che scrive per un CRM chiamato Guardian AI.
+      Il tuo compito è scrivere un'email professionale, persuasiva e concisa.
+      **Non includere l'oggetto dell'email, solo il corpo del testo.**
+      
+      Obiettivo dell'email: "${prompt}"
+      
+      Informazioni sul contatto a cui ti rivolgi:
+      - Nome: ${contact.name}
+      - Email: ${contact.email}
+      - Azienda: ${contact.company || 'Non specificata'}
+      
+      Scrivi solo e unicamente il corpo dell'email.
     `;
 
-    const res = await withRetry<GenerateContentResponse>(() =>
-      ai.models.generateContent({ model: "gemini-2.5-flash", contents: fullPrompt })
+    const response: GenerateContentResponse = await withRetry(() => 
+        ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: fullPrompt,
+        })
     );
+    
+    const emailContent = response.text.trim();
 
-    const email = (res.text || "").trim();
-    if (!email) throw new Error("Output AI vuoto.");
-
-    return new Response(JSON.stringify({ email }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!emailContent) {
+        throw new Error("L'API di Gemini ha restituito un risultato vuoto.");
+    }
+    
+    return new Response(JSON.stringify({ email: emailContent }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error) {
-    console.error("generate-email-content:", error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 });
+    console.error("Errore nella funzione generate-email-content:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });

@@ -109,7 +109,7 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
             const schema = {
                 type: Type.ARRAY, items: {
                     type: Type.OBJECT, properties: {
-                        name: { type: Type.STRING, description: 'A lowercase, snake_case string for the input name attribute (e.g., "full_name", "email", "phone", "company"). MUST BE ONE OF: name, email, phone, company, or message.' },
+                        name: { type: Type.STRING, description: 'A lowercase, snake_case string for the input name attribute (e.g., "full_name", "license_plate").' },
                         label: { type: Type.STRING, description: 'A user-friendly, capitalized string for the form label (e.g., "Full Name").' },
                         type: { type: Type.STRING, description: 'The input type. Must be one of: "text", "email", "tel", or "textarea".' },
                         required: { type: Type.BOOLEAN },

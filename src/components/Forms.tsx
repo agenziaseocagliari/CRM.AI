@@ -3,7 +3,8 @@ import { Form, FormField, Organization } from '../types';
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
-import { GoogleGenAI } from '@google/genai';
+// FIX: Import HarmCategory and HarmBlockThreshold to use enums for safetySettings.
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -152,19 +153,30 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
-            const response = await ai.models.generateContent({
+            const fullResponse = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: masterPrompt,
+                // Disattiva i filtri di sicurezza che potrebbero causare risposte vuote per prompt innocui.
+                config: {
+                    safetySettings: [
+                        // FIX: Use enums for safety settings to fix TypeScript errors.
+                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    ],
+                }
             });
 
-            const jsonText = response.text;
-            setRawAIResponse(jsonText ?? null); // Salva sempre la risposta grezza per il debug
+            // Per un debug completo, salviamo l'intero oggetto di risposta.
+            setRawAIResponse(JSON.stringify(fullResponse, null, 2));
 
-            if (!jsonText) { throw new Error("La risposta dell'AI era vuota."); }
+            const jsonText = fullResponse.text;
+            if (!jsonText) { throw new Error("La risposta dell'AI era vuota o è stata bloccata."); }
             
             const fields = extractAndParseJson(jsonText);
             if (!fields || fields.length === 0) {
-                console.log("Raw AI response:", jsonText);
+                console.log("Raw AI response text:", jsonText);
                 throw new Error("L'AI ha restituito una struttura non valida o vuota.");
             }
             

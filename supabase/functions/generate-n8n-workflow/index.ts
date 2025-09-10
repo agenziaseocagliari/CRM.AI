@@ -1,5 +1,5 @@
-// FIX: Pinned the version for @supabase/functions-js to resolve issues with type definition discovery. This ensures the correct Deno and Supabase Edge Function types are loaded.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts" />
+// FIX: Replaced the triple-slash directive with a type-only import to correctly load Deno types for the Supabase Edge Function environment. This resolves errors where the 'Deno' global was not found.
+import type {} from "https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts";
 
 // supabase/functions/generate-n8n-workflow/index.ts
 
@@ -49,6 +49,7 @@ serve(async (req) => {
     }
 
     // Step 1: Chiamare Gemini per generare il JSON del workflow N8N
+    console.log("Step 1: Invocazione di Gemini AI per generare il workflow...");
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const generationPrompt = `
         You are an expert n8n workflow designer. Your task is to convert the following user request into a valid n8n workflow JSON object.
@@ -70,13 +71,21 @@ serve(async (req) => {
         contents: generationPrompt,
         config: { responseMimeType: 'application/json' },
     });
-    const workflowJsonString = response.text;
-    if (!workflowJsonString) throw new Error("L'AI non ha generato una risposta valida.");
     
-    // Utilizziamo la funzione helper per un parsing sicuro
+    const workflowJsonString = response.text;
+    
+    // VALIDAZIONE CRITICA: Controlla se la risposta è valida prima di procedere.
+    if (!workflowJsonString || !workflowJsonString.trim().startsWith('{')) {
+        console.error("Risposta non valida o non JSON da Gemini AI:", workflowJsonString);
+        throw new Error("L'AI ha restituito una risposta non valida o non in formato JSON. Controlla il prompt o i log della funzione.");
+    }
+    console.log("JSON grezzo ricevuto da Gemini. Tentativo di parsing...");
+    
     const workflowData = cleanAndParseJson(workflowJsonString);
+    console.log(`Workflow "${workflowData.name}" parsato con successo.`);
 
     // Step 2: Creare il workflow in N8N
+    console.log("Step 2: Creazione del workflow in N8N...");
     const createResponse = await fetch(`${n8nUrl}/api/v1/workflows`, {
         method: 'POST',
         headers: {
@@ -87,19 +96,25 @@ serve(async (req) => {
     });
     if (!createResponse.ok) {
         const errorBody = await createResponse.text();
-        throw new Error(`Errore nella creazione del workflow N8N: ${errorBody}`);
+        console.error(`Errore N8N (Creazione): Status ${createResponse.status}, Body: ${errorBody}`);
+        throw new Error(`Errore nella creazione del workflow N8N (Status: ${createResponse.status}). Controlla l'URL di N8N e la API Key.`);
     }
     const newWorkflow = (await createResponse.json()) as N8nWorkflowCreationResponse;
     const workflowId = newWorkflow.id;
+    console.log(`Workflow creato con ID: ${workflowId}`);
 
     // Step 3: Attivare il workflow
+    console.log("Step 3: Attivazione del workflow...");
     const activateResponse = await fetch(`${n8nUrl}/api/v1/workflows/${workflowId}/activate`, {
         method: 'POST',
         headers: { 'X-N8N-API-KEY': n8nApiKey },
     });
     if (!activateResponse.ok) {
-        throw new Error("Workflow creato ma impossibile attivarlo.");
+         const errorBody = await activateResponse.text();
+        console.error(`Errore N8N (Attivazione): Status ${activateResponse.status}, Body: ${errorBody}`);
+        throw new Error(`Workflow creato (ID: ${workflowId}) ma impossibile attivarlo.`);
     }
+    console.log("Workflow attivato con successo.");
     
     return new Response(JSON.stringify({ message: `Workflow "${workflowData.name}" creato e attivato con successo!` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -107,7 +122,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Errore completo nella funzione:", error);
+    console.error("Errore completo nella funzione:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

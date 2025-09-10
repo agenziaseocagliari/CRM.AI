@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
 import { SparklesIcon } from './ui/icons';
 import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
 
 export const Automations: React.FC = () => {
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const handleGenerateWorkflow = async () => {
         if (!prompt.trim()) {
-            setError("Per favore, descrivi l'automazione che vuoi creare.");
+            toast.error("Per favore, descrivi l'automazione che vuoi creare.");
             return;
         }
         setIsLoading(true);
-        setError(null);
-        setSuccessMessage(null);
+        const toastId = toast.loading('Creazione workflow in corso...');
 
         try {
             const { data, error: invokeError } = await supabase.functions.invoke('generate-n8n-workflow', {
@@ -25,12 +23,12 @@ export const Automations: React.FC = () => {
             if (invokeError) throw new Error(`Errore di rete: ${invokeError.message}`);
             if (data.error) throw new Error(data.error);
 
-            setSuccessMessage(data.message);
+            toast.success(data.message, { id: toastId, duration: 5000 });
             setPrompt('');
 
         } catch (err: any) {
             console.error(err);
-            setError(`Si è verificato un errore: ${err.message}. Assicurati che le Edge Functions siano deployate e che le chiavi API per Gemini e N8N siano configurate in Supabase.`);
+            toast.error(`Si è verificato un errore: ${err.message}`, { id: toastId });
         } finally {
             setIsLoading(false);
         }
@@ -91,10 +89,6 @@ export const Automations: React.FC = () => {
                                 </>
                             )}
                         </button>
-                    </div>
-                     <div className="mt-4 h-6 text-sm">
-                        {error && <p className="text-red-500">{error}</p>}
-                        {successMessage && <p className="text-green-600">{successMessage}</p>}
                     </div>
                 </div>
             </div>

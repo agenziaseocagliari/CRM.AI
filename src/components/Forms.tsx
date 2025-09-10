@@ -3,6 +3,7 @@ import { Form, FormField, Organization } from '../types';
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -74,11 +75,10 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
     
     // Stati di caricamento ed errore
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleOpenCreateModal = () => {
         setPrompt(''); setFormName(''); setFormTitle('');
-        setGeneratedFields(null); setError(null); setIsLoading(false);
+        setGeneratedFields(null); setIsLoading(false);
         setCreateModalOpen(true);
     };
 
@@ -98,9 +98,10 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
     };
     
     const handleGenerateForm = async () => {
-        if (!prompt) { setError("Per favore, inserisci una descrizione per il tuo form."); return; }
-        setIsLoading(true); setError(null); setGeneratedFields(null);
+        if (!prompt) { toast.error("Per favore, inserisci una descrizione per il tuo form."); return; }
+        setIsLoading(true); setGeneratedFields(null);
 
+        const toastId = toast.loading('Generazione campi in corso...');
         try {
             const { data, error: invokeError } = await supabase.functions.invoke('generate-form-fields', {
                 body: { prompt },
@@ -115,25 +116,31 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
             }
             
             setGeneratedFields(fields);
+            toast.success('Campi generati con successo!', { id: toastId });
 
         } catch (err: any) {
             console.error("Errore dettagliato generazione form:", err);
-            setError(`Impossibile generare il form: ${err.message}. Assicurati che le Edge Functions siano deployate e che la chiave API sia configurata.`);
+            toast.error(`Impossibile generare il form: ${err.message}`, { id: toastId });
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleSaveForm = async () => {
-        if (!formName || !formTitle || !generatedFields || !organization) { setError("Nome, titolo e campi generati sono necessari per salvare."); return; }
-        setIsLoading(true); setError(null);
+        if (!formName || !formTitle || !generatedFields || !organization) { 
+            toast.error("Nome, titolo e campi generati sono necessari per salvare."); 
+            return; 
+        }
+        setIsLoading(true);
 
         try {
             const { error: insertError } = await supabase.from('forms').insert({ name: formName, title: formTitle, fields: generatedFields, organization_id: organization.id });
             if (insertError) throw insertError;
-            refetchData(); handleCloseModals();
+            refetchData(); 
+            handleCloseModals();
+            toast.success('Form salvato con successo!');
         } catch (err: any) {
-            setError(`Errore durante il salvaggio: ${err.message}`);
+            toast.error(`Errore durante il salvataggio: ${err.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -145,9 +152,14 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         try {
             const { error } = await supabase.from('forms').delete().eq('id', formToModify.id);
             if(error) throw error;
-            refetchData(); handleCloseModals();
-        } catch (err: any) { alert(`Errore: ${err.message}`); }
-        finally { setIsLoading(false); }
+            refetchData(); 
+            handleCloseModals();
+            toast.success('Form eliminato!');
+        } catch (err: any) { 
+            toast.error(`Errore: ${err.message}`); 
+        } finally { 
+            setIsLoading(false); 
+        }
     };
 
     const renderFieldPreview = (field: FormField, index: number) => {
@@ -210,13 +222,6 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
                         </div>
                     </>
                 )}
-
-                {error && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm font-semibold text-red-800">Si è verificato un errore</p>
-                        <p className="text-red-700 text-sm mt-1">{error}</p>
-                    </div>
-                )}
             </div>
         </Modal>
         
@@ -239,7 +244,7 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
             <p className="text-sm text-gray-600">Condividi questo link per permettere a chiunque di compilare il tuo form.</p>
             <div className="mt-2 flex">
                 <input type="text" readOnly value={publicUrl} className="flex-grow bg-gray-100 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none"/>
-                <button onClick={() => navigator.clipboard.writeText(publicUrl)} className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-indigo-700">Copia</button>
+                <button onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Link copiato!'); }} className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-indigo-700">Copia</button>
             </div>
         </Modal>
     </>

@@ -1,4 +1,5 @@
-/// <reference types="https://esm.sh/v135/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Deno types reference to a more stable, version-agnostic URL to resolve type definition and 'Deno' global errors.
+/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
 // supabase/functions/generate-email-content/index.ts
 
@@ -14,7 +15,6 @@ serve(async (req) => {
 
   try {
     const { prompt, contact } = await req.json();
-    // FIX: Added a Deno types reference at the top of the file to resolve the 'Cannot find name 'Deno'' error.
     const apiKey = Deno.env.get('API_KEY');
     
     if (!apiKey) {
@@ -43,7 +43,8 @@ serve(async (req) => {
         contents: fullPrompt,
     });
     
-    const text = response.text?.trim() ?? '';
+    // FIX: Simplified text extraction from the Gemini response to align with SDK guidelines. The 'text' property is a direct string, so optional chaining and nullish coalescing are not needed.
+    const text = response.text.trim();
 
     return new Response(JSON.stringify({ email: text }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

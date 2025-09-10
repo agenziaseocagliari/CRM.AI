@@ -3,6 +3,7 @@ import { Contact, Organization } from '../types';
 import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon, UploadIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
 
 interface ContactsProps {
   contacts: Contact[];
@@ -27,7 +28,6 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   const [emailPrompt, setEmailPrompt] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationError, setGenerationError] = useState('');
   
   // Add Contact state
   const [newContact, setNewContact] = useState({ name: '', email: '', company: '', phone: '' });
@@ -39,12 +39,9 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState('');
-  const [importSuccess, setImportSuccess] = useState('');
   
   // Generic loading/error state for DB operations
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
 
 
   const handleOpenEmailModal = (contact: Contact) => {
@@ -52,32 +49,25 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
     setIsEmailModalOpen(true);
     setGeneratedEmail('');
     setEmailPrompt('');
-    setGenerationError('');
   };
 
   const handleOpenAddModal = () => {
     setNewContact({ name: '', email: '', company: '', phone: '' });
-    setSaveError('');
     setAddModalOpen(true);
   }
 
   const handleOpenEditModal = (contact: Contact) => {
     setContactToModify(contact);
-    setSaveError('');
     setEditModalOpen(true);
   };
 
   const handleOpenDeleteModal = (contact: Contact) => {
     setContactToModify(contact);
-    setSaveError('');
     setDeleteModalOpen(true);
   };
   
   const handleOpenImportModal = () => {
     setImportFile(null);
-    setImportError('');
-    setImportSuccess('');
-    setIsImporting(false);
     setImportModalOpen(true);
   }
 
@@ -93,13 +83,13 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
 
   const handleGenerateEmail = async () => {
     if (!emailPrompt || !selectedContact) {
-      setGenerationError("Per favore, fornisci un obiettivo per l'email.");
+      toast.error("Per favore, fornisci un obiettivo per l'email.");
       return;
     }
     setIsGenerating(true);
     setGeneratedEmail('');
-    setGenerationError('');
     
+    const toastId = toast.loading('Generazione email in corso...');
     try {
         const { data, error: invokeError } = await supabase.functions.invoke('generate-email-content', {
             body: { prompt: emailPrompt, contact: selectedContact },
@@ -109,10 +99,11 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
         if (data.error) throw new Error(data.error);
       
         setGeneratedEmail(data.email);
+        toast.success('Email generata con successo!', { id: toastId });
 
     } catch (err: any) {
       console.error(err);
-      setGenerationError(`Impossibile generare l'email: ${err.message}. Assicurati che le Edge Functions siano deployate e che la chiave API sia configurata correttamente in Supabase.`);
+      toast.error(`Impossibile generare l'email: ${err.message}.`, { id: toastId });
     } finally {
       setIsGenerating(false);
     }
@@ -121,11 +112,10 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   const handleAddNewContact = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newContact.name || !organization) {
-        setSaveError("Il nome è obbligatorio.");
+        toast.error("Il nome è obbligatorio.");
         return;
     }
     setIsSaving(true);
-    setSaveError('');
 
     try {
         const { error } = await supabase
@@ -139,9 +129,10 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
         
         handleCloseModals();
         refetchData();
+        toast.success('Contatto creato con successo!');
 
     } catch (err: any) {
-        setSaveError(`Errore nel salvaggio del contatto: ${err.message}`);
+        toast.error(`Errore nel salvataggio del contatto: ${err.message}`);
         console.error(err);
     } finally {
         setIsSaving(false);
@@ -151,11 +142,10 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
   const handleUpdateContact = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactToModify || !contactToModify.name) {
-        setSaveError("Il nome è obbligatorio.");
+        toast.error("Il nome è obbligatorio.");
         return;
     }
     setIsSaving(true);
-    setSaveError('');
     
     try {
         const { error } = await supabase
@@ -172,9 +162,10 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
 
         handleCloseModals();
         refetchData();
+        toast.success('Contatto aggiornato!');
         
     } catch (err: any) {
-        setSaveError(`Errore nell'aggiornamento del contatto: ${err.message}`);
+        toast.error(`Errore nell'aggiornamento del contatto: ${err.message}`);
         console.error(err);
     } finally {
         setIsSaving(false);
@@ -183,9 +174,7 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
 
   const handleDeleteContact = async () => {
     if (!contactToModify) return;
-
     setIsSaving(true);
-    setSaveError('');
 
     try {
         const { error } = await supabase
@@ -197,9 +186,10 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
 
         handleCloseModals();
         refetchData();
+        toast.success('Contatto eliminato.');
 
     } catch (err: any) {
-        setSaveError(`Errore nell'eliminazione del contatto: ${err.message}`);
+        toast.error(`Errore nell'eliminazione del contatto: ${err.message}`);
         console.error(err);
     } finally {
         setIsSaving(false);
@@ -210,19 +200,15 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
     const file = e.target.files?.[0];
     if (file) {
       setImportFile(file);
-      setImportError('');
-      setImportSuccess('');
     }
   }
 
   const handleImportCSV = async () => {
     if (!importFile || !organization) {
-      setImportError("Seleziona un file CSV da importare.");
+      toast.error("Seleziona un file CSV da importare.");
       return;
     }
     setIsImporting(true);
-    setImportError('');
-    setImportSuccess('');
 
     try {
       const fileContent = await importFile.text();
@@ -259,13 +245,12 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
       const { error } = await supabase.from('contacts').insert(contactsToInsert);
       if (error) throw error;
 
-      setImportSuccess(`${contactsToInsert.length} contatti importati con successo!`);
+      toast.success(`${contactsToInsert.length} contatti importati con successo!`);
       refetchData();
-      // Non chiudere subito la modale per mostrare il messaggio di successo
-      setTimeout(handleCloseModals, 2000);
+      handleCloseModals();
 
     } catch (err: any) {
-      setImportError(`Errore durante l'importazione: ${err.message}`);
+      toast.error(`Errore durante l'importazione: ${err.message}`);
       console.error(err);
     } finally {
       setIsImporting(false);
@@ -403,7 +388,6 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
                     {isGenerating ? 'Generazione...' : 'Genera Email'}
                 </button>
             </div>
-            {generationError && <p className="text-red-500 text-sm">{generationError}</p>}
             {generatedEmail && (
                 <div>
                     <label htmlFor="generated-email" className="block text-sm font-medium text-gray-700">Email Generata</label>
@@ -436,7 +420,6 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
                 <label htmlFor="add-phone" className="block text-sm font-medium text-gray-700">Telefono</label>
                 <input type="tel" id="add-phone" value={newContact.phone} onChange={(e) => setNewContact({...newContact, phone: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
-            {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
             <div className="flex justify-end pt-4 border-t mt-4">
                  <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
                     Annulla
@@ -467,7 +450,6 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
                 <label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700">Telefono</label>
                 <input type="tel" id="edit-phone" value={contactToModify?.phone || ''} onChange={(e) => setContactToModify(contact => contact ? {...contact, phone: e.target.value} : null)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
-            {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
             <div className="flex justify-end pt-4 border-t mt-4">
                  <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
                     Annulla
@@ -483,7 +465,6 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
       <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
         <div className="space-y-4">
           <p>Sei sicuro di voler eliminare il contatto <strong>{contactToModify?.name}</strong>? Questa azione è irreversibile.</p>
-          {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
           <div className="flex justify-end pt-4 border-t mt-4">
               <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
                   Annulla
@@ -520,17 +501,14 @@ export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refe
               )}
             </button>
           </div>
-
-          {importError && <p className="text-red-500 text-sm">{importError}</p>}
-          {importSuccess && <p className="text-green-600 text-sm">{importSuccess}</p>}
           
           <div className="flex justify-end pt-4 border-t mt-4">
               <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
-                  {importSuccess ? 'Chiudi' : 'Annulla'}
+                  Annulla
               </button>
               <button 
                 onClick={handleImportCSV} 
-                disabled={isImporting || !importFile || !!importSuccess} 
+                disabled={isImporting || !importFile} 
                 className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400"
               >
                   {isImporting ? 'Importazione...' : 'Importa Contatti'}

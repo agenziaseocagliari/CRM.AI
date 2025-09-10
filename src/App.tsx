@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -152,18 +153,47 @@ const App: React.FC = () => {
     
     if (appState === 'app') {
         return (
-            <div className="flex h-screen bg-gray-100 text-text-primary">
-            <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Header 
-                organization={organization}
-                onLogout={handleLogout}
+            <>
+                <Toaster
+                    position="top-right"
+                    toastOptions={{
+                        success: {
+                            style: {
+                                background: '#dcfce7', // green-100
+                                color: '#166534',     // green-800
+                                border: '1px solid #16a34a', // green-600
+                            },
+                            iconTheme: {
+                                primary: '#16a34a',   // green-600
+                                secondary: 'white',
+                            },
+                        },
+                        error: {
+                            style: {
+                                background: '#fee2e2', // red-100
+                                color: '#991b1b',     // red-800
+                                border: '1px solid #dc2626', // red-600
+                            },
+                            iconTheme: {
+                                primary: '#dc2626',   // red-600
+                                secondary: 'white',
+                            },
+                        },
+                    }}
                 />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
-                {renderView()}
-                </main>
-            </div>
-            </div>
+                <div className="flex h-screen bg-gray-100 text-text-primary">
+                    <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <Header 
+                            organization={organization}
+                            onLogout={handleLogout}
+                        />
+                        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
+                            {renderView()}
+                        </main>
+                    </div>
+                </div>
+            </>
         );
     }
 

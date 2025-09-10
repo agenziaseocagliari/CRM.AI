@@ -1,4 +1,5 @@
-/// <reference types="https://esm.sh/v135/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Deno types reference to a more stable, version-agnostic URL to resolve type definition and 'Deno' global errors.
+/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
 // supabase/functions/generate-form-fields/index.ts
 
@@ -14,7 +15,6 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json();
-    // FIX: Added a Deno types reference at the top of the file to resolve the 'Cannot find name 'Deno'' error.
     const apiKey = Deno.env.get('API_KEY');
 
     if (!apiKey) {

@@ -3,6 +3,7 @@ import { Opportunity, PipelineStage, OpportunitiesData, Contact, Organization } 
 import { supabase } from '../lib/supabaseClient';
 import { Modal } from './ui/Modal';
 import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
+import toast from 'react-hot-toast';
 
 const stageColors: Record<PipelineStage, string> = {
   [PipelineStage.NewLead]: 'bg-blue-100 border-blue-400',
@@ -118,7 +119,6 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
   const [opportunityToModify, setOpportunityToModify] = useState<Opportunity | null>(null);
   
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     setBoardData(initialData);
@@ -131,7 +131,6 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
         ...initialFormState,
         contact_name: contacts?.[0]?.name || '' // Pre-seleziona il primo contatto
     });
-    setSaveError('');
     setIsModalOpen(true);
   };
 
@@ -145,7 +144,6 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
         close_date: new Date(opportunity.close_date).toISOString().split('T')[0],
         stage: opportunity.stage,
     });
-    setSaveError('');
     setIsModalOpen(true);
   };
   
@@ -193,7 +191,9 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
             .update({ stage: targetStage })
             .eq('id', opportunityId);
         if (error) throw error;
+        toast.success(`Opportunità spostata in "${targetStage}"`);
     } catch (err) {
+        toast.error("Errore durante l'aggiornamento dell'opportunità.");
         console.error("Errore durante l'aggiornamento dell'opportunità:", err);
         setBoardData(originalData); // Ripristina in caso di fallimento
     }
@@ -202,27 +202,26 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setSaveError('');
 
     try {
+        let successMessage = '';
         if (modalMode === 'edit' && opportunityToModify) {
             const { error } = await supabase.from('opportunities').update(formData).eq('id', opportunityToModify.id);
             if (error) throw error;
+            successMessage = 'Opportunità aggiornata con successo!';
         } else {
              if (!organization) {
                 throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'opportunità.");
             }
-            // Chiamata a una funzione RPC (Remote Procedure Call) nel database.
-            // Questo approccio è più sicuro perché l'ID dell'organizzazione viene
-            // determinato sul backend in base all'utente autenticato, eliminando
-            // la possibilità di errori RLS dovuti a dati non corretti inviati dal client.
             const { error } = await supabase.rpc('create_opportunity', formData);
             if (error) throw error;
+            successMessage = 'Opportunità creata con successo!';
         }
         refetchData();
         handleCloseModals();
+        toast.success(successMessage);
     } catch (err: any) {
-        setSaveError(`Errore nel salvaggio: ${err.message}`);
+        toast.error(`Errore nel salvaggio: ${err.message}`);
     } finally {
         setIsSaving(false);
     }
@@ -236,8 +235,9 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
         if (error) throw error;
         refetchData();
         handleCloseModals();
+        toast.success('Opportunità eliminata!');
     } catch (err: any) {
-        alert(`Errore: ${err.message}`);
+        toast.error(`Errore: ${err.message}`);
     } finally {
         setIsSaving(false);
     }
@@ -294,7 +294,6 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
                 <input type="date" id="close_date" name="close_date" value={formData.close_date} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
 
-            {saveError && <p className="text-red-500 text-sm">{saveError}</p>}
             <div className="flex justify-end pt-4 border-t mt-4">
                  <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
                 <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">{isSaving ? 'Salvataggio...' : 'Salva'}</button>

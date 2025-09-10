@@ -1,5 +1,5 @@
-// FIX: Updated the Supabase edge-runtime type reference from esm.sh to unpkg.com to fix type resolution errors for Deno environment.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference to a more stable, version-pinned URL from esm.sh. This resolves type definition errors for the Deno environment, ensuring globals like 'Deno' are correctly recognized.
+/// <reference types="https://esm.sh/v135/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
@@ -147,10 +147,12 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Errore nella funzione generate-n8n-workflow:", error);
+    console.error("ERRORE DETTAGLIATO in generate-n8n-workflow:", error);
+    // Restituisce uno status 200 ma con un payload di errore
+    // Questo permette al client Supabase di leggere il messaggio di errore specifico
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 200,
     });
   }
 });

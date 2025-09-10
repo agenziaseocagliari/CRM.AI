@@ -29,6 +29,10 @@ export const Settings: React.FC = () => {
     // Organization state
     const [organizationName, setOrganizationName] = useState(organization?.name || '');
     const [isOrgSaving, setIsOrgSaving] = useState(false);
+
+    // Health check state
+    const [checkResults, setCheckResults] = useState<string | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
     
     useEffect(() => {
         const fetchUser = async () => {
@@ -50,9 +54,6 @@ export const Settings: React.FC = () => {
         }
         setIsOrgSaving(true);
         
-        // FIX: The Supabase query builder returns a "thenable," not a true Promise.
-        // Using an async IIFE to `await` the result correctly wraps it in a true Promise
-        // that react-hot-toast can handle, fixing the build error.
         const updatePromise = (async () => {
             const { error } = await supabase
                 .from('organizations')
@@ -66,7 +67,7 @@ export const Settings: React.FC = () => {
         toast.promise(updatePromise, {
             loading: 'Salvataggio in corso...',
             success: () => {
-                refetchData(); // Ricarica i dati globali per aggiornare l'header
+                refetchData();
                 setIsOrgSaving(false);
                 return 'Organizzazione aggiornata!';
             },
@@ -105,11 +106,47 @@ export const Settings: React.FC = () => {
             }
         });
     };
+    
+    const handleHealthCheck = async () => {
+        setIsChecking(true);
+        setCheckResults(null);
+        try {
+            const { data, error } = await supabase.functions.invoke('health-check');
+            if (error) throw error;
+            setCheckResults(JSON.stringify(data, null, 2));
+        } catch (err: any) {
+            setCheckResults(`Errore durante l'esecuzione del test: ${err.message}`);
+        } finally {
+            setIsChecking(false);
+        }
+    };
 
 
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary">Impostazioni</h1>
+
+            {/* Diagnostics Card */}
+            <SettingsCard
+                title="Diagnostica Connessioni"
+                description="Verifica che le tue chiavi API e i servizi esterni siano configurati correttamente."
+            >
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600">Esegui un test per controllare le variabili d'ambiente e la connessione a N8N.</p>
+                    <button 
+                        onClick={handleHealthCheck}
+                        disabled={isChecking}
+                        className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
+                    >
+                        {isChecking ? 'Verifica in corso...' : 'Esegui Test'}
+                    </button>
+                </div>
+                {checkResults && (
+                    <div className="mt-4 p-4 bg-gray-100 rounded-md">
+                        <pre className="text-xs whitespace-pre-wrap font-mono">{checkResults}</pre>
+                    </div>
+                )}
+            </SettingsCard>
 
             {/* Organization Settings */}
             <SettingsCard

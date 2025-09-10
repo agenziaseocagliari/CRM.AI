@@ -3,8 +3,8 @@ import { Form, FormField, Organization } from '../types';
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
-// FIX: Import HarmCategory and HarmBlockThreshold to use enums for safetySettings.
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+// FIX: Import HarmCategory, HarmBlockThreshold, and Type for structured API calls.
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Type } from '@google/genai';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -26,24 +26,6 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
         </div>
     );
 };
-
-// Funzione di parsing più robusta per estrarre il JSON dalla risposta dell'AI
-const extractAndParseJson = (text: string): FormField[] | null => {
-    // Cerca un blocco di codice JSON o un array JSON semplice
-    const match = text.match(/```json\s*([\s\S]*?)\s*```|(\[[\s\S]*\])/);
-    if (!match) {
-        return null;
-    }
-    // Prende il primo gruppo di cattura valido
-    const jsonString = match[1] || match[2];
-    try {
-        return JSON.parse(jsonString) as FormField[];
-    } catch (e) {
-        console.error("Failed to parse extracted JSON:", e);
-        return null;
-    }
-};
-
 
 interface FormsProps {
     forms: Form[];
@@ -126,40 +108,35 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         if (!prompt) { setError("Per favore, inserisci una descrizione per il tuo form."); return; }
         setIsLoading(true); setError(null); setGeneratedFields(null); setRawAIResponse(null);
 
-        const masterPrompt = `
-            You are an expert system that translates natural language descriptions into a specific JSON array structure for a form builder.
-            The user will provide a description in Italian. Your task is to generate an array of field objects based on this description.
-
-            Each object in the array must have the following properties:
-            - "name": A string in snake_case format (e.g., "nome_completo", "numero_targa"). This is used as the field's unique identifier.
-            - "label": A user-friendly string for the field's label (e.g., "Nome Completo", "Numero di Targa").
-            - "type": A string that must be one of the following exact values: 'text', 'email', 'tel', 'textarea'.
-            - "required": A boolean value (true or false).
-
-            **EXAMPLE:**
-            User request: "un form per iscriversi alla newsletter con nome e email"
-            Your JSON output:
-            [
-              {"name": "nome_completo", "label": "Nome Completo", "type": "text", "required": true},
-              {"name": "indirizzo_email", "label": "Indirizzo Email", "type": "email", "required": true}
-            ]
-
-            Now, process the following user request. Respond ONLY with the JSON array, nothing else.
-
-            User request: "${prompt}"
-        `;
-        setLastPrompt(masterPrompt);
+        const systemInstruction = `You are an expert system that translates Italian natural language descriptions into a structured JSON object for a form builder. Based on the user's request, generate an array of form fields. For the 'type' property, you must choose one of the following values: 'text', 'email', 'tel', 'textarea'. For the 'name' property, generate a value in snake_case format.`;
+        
+        const responseSchema = {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    name: { type: Type.STRING, description: 'Unique identifier for the field in snake_case format (e.g., "nome_completo").' },
+                    label: { type: Type.STRING, description: 'User-friendly label for the field (e.g., "Nome Completo").' },
+                    type: { type: Type.STRING, description: "The type of the field. Must be one of: 'text', 'email', 'tel', 'textarea'." },
+                    required: { type: Type.BOOLEAN, description: 'Whether the field is required or not.' }
+                },
+                required: ['name', 'label', 'type', 'required']
+            }
+        };
+        
+        setLastPrompt(`System Instruction:\n${systemInstruction}\n\nUser Request:\n"${prompt}"`);
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
-            const fullResponse = await ai.models.generateContent({
+            const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: masterPrompt,
-                // Disattiva i filtri di sicurezza che potrebbero causare risposte vuote per prompt innocui.
+                contents: prompt,
                 config: {
+                    systemInstruction,
+                    responseMimeType: "application/json",
+                    responseSchema,
                     safetySettings: [
-                        // FIX: Use enums for safety settings to fix TypeScript errors.
                         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
                         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
                         { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -168,16 +145,14 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
                 }
             });
 
-            // Per un debug completo, salviamo l'intero oggetto di risposta.
-            setRawAIResponse(JSON.stringify(fullResponse, null, 2));
+            setRawAIResponse(JSON.stringify(response, null, 2));
 
-            const jsonText = fullResponse.text;
+            const jsonText = response.text;
             if (!jsonText) { throw new Error("La risposta dell'AI era vuota o è stata bloccata."); }
             
-            const fields = extractAndParseJson(jsonText);
-            if (!fields || fields.length === 0) {
-                console.log("Raw AI response text:", jsonText);
-                throw new Error("L'AI ha restituito una struttura non valida o vuota.");
+            const fields = JSON.parse(jsonText) as FormField[];
+            if (!fields || !Array.isArray(fields) || fields.length === 0) {
+                throw new Error("L'AI ha restituito una struttura JSON non valida o vuota.");
             }
             
             setGeneratedFields(fields);

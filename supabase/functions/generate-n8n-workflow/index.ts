@@ -1,34 +1,14 @@
-// FIX: Replaced the version-pinned esm.sh URL with the unversioned one from the official Supabase documentation to resolve type definition loading issues and correctly define Deno globals.
-/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference to a specific versioned URL. This resolves issues where the types were not found, which in turn caused errors about the 'Deno' global object not being defined.
+/// <reference types="https://esm.sh/v135/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
-  let lastError: Error | undefined;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      if (i < retries - 1) {
-        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  throw lastError;
-}
+import { handleCors, corsHeaders } from "../shared/cors.ts";
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
   }
 
   try {
@@ -43,16 +23,13 @@ serve(async (req) => {
         !n8nUrl && "N8N_INSTANCE_URL",
         !n8nApiKey && "N8N_API_KEY",
       ].filter(Boolean).join(", ");
-      throw new Error(`Le seguenti variabili d'ambiente mancano: ${missing}`);
+      throw new Error(`Configurazione Incompleta: Mancano le seguenti variabili d'ambiente: ${missing}.`);
     }
 
     // 2. Validazione del body della richiesta
     const { prompt } = await req.json();
     if (!prompt) {
-      return new Response(JSON.stringify({ error: "Il parametro 'prompt' è obbligatorio." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      throw new Error("La descrizione dell'automazione non può essere vuota.");
     }
 
     // 3. Generazione del workflow JSON con Gemini
@@ -86,56 +63,60 @@ serve(async (req) => {
       
       Richiesta utente: "${prompt}"
     `;
-
-    const response: GenerateContentResponse = await withRetry(() => 
-        ai.models.generateContent({
+    
+    let workflowJson;
+    try {
+        const response: GenerateContentResponse = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: fullPrompt,
             config: {
                 responseMimeType: "application/json",
             }
-        })
-    );
-    
-    let workflowJson;
-    try {
+        });
         const cleanedText = response.text.trim().replace(/^```json/, '').replace(/```$/, '').trim();
         workflowJson = JSON.parse(cleanedText);
     } catch (e) {
-        throw new Error(`L'output dell'AI non è un JSON valido: ${e.message}`);
+        console.error("Gemini error:", e);
+        throw new Error(`Errore durante la generazione del workflow con l'AI. Riprova. Dettagli: ${e.message}`);
     }
     
     // 4. Creazione del workflow su N8N
-    const n8nResponse = await withRetry(() => 
-        fetch(`${n8nUrl.replace(/\/$/, '')}/api/v1/workflows`, {
+    let workflowId;
+    try {
+        const createUrl = `${n8nUrl.replace(/\/$/, '')}/api/v1/workflows`;
+        const n8nResponse = await fetch(createUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-N8N-API-KEY': n8nApiKey,
-            },
+            headers: { 'Content-Type': 'application/json', 'X-N8N-API-KEY': n8nApiKey },
             body: JSON.stringify(workflowJson),
-        })
-    );
+        });
 
-    if (!n8nResponse.ok) {
-        const errorBody = await n8nResponse.text();
-        throw new Error(`Errore da N8N (${n8nResponse.status}): ${errorBody}`);
+        if (n8nResponse.status === 401) {
+            throw new Error("Autenticazione N8N fallita. Controlla che la N8N_API_KEY sia corretta.");
+        }
+        if (!n8nResponse.ok) {
+            const errorBody = await n8nResponse.text();
+            throw new Error(`N8N ha risposto con un errore (${n8nResponse.status}): ${errorBody}`);
+        }
+        const n8nData = await n8nResponse.json();
+        workflowId = n8nData.id;
+        if (!workflowId) throw new Error("N8N non ha restituito un ID per il workflow creato.");
+
+    } catch (e) {
+        if (e.message.includes('Failed to fetch')) {
+             throw new Error(`Impossibile connettersi a N8N. Controlla che N8N_INSTANCE_URL (${n8nUrl}) sia corretto e raggiungibile.`);
+        }
+        throw e;
     }
 
-    const n8nData = await n8nResponse.json();
-    const workflowId = n8nData.id;
-    
-    if (!workflowId) {
-        throw new Error("N8N non ha restituito un ID per il workflow creato.");
-    }
-    
     // 5. Attivazione del workflow
-    await withRetry(() => 
-        fetch(`${n8nUrl.replace(/\/$/, '')}/api/v1/workflows/${workflowId}/activate`, {
-            method: 'POST',
-            headers: { 'X-N8N-API-KEY': n8nApiKey },
-        })
-    );
+    const activateUrl = `${n8nUrl.replace(/\/$/, '')}/api/v1/workflows/${workflowId}/activate`;
+    const activationResponse = await fetch(activateUrl, {
+        method: 'POST',
+        headers: { 'X-N8N-API-KEY': n8nApiKey },
+    });
+    if (!activationResponse.ok) {
+        throw new Error("Workflow creato ma impossibile attivarlo su N8N.");
+    }
 
     return new Response(JSON.stringify({
       message: `Workflow "${workflowJson.name}" creato e attivato con successo!`,
@@ -147,12 +128,10 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("ERRORE DETTAGLIATO in generate-n8n-workflow:", error);
-    // Restituisce uno status 200 ma con un payload di errore
-    // Questo permette al client Supabase di leggere il messaggio di errore specifico
+    console.error("ERRORE in generate-n8n-workflow:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      status: 200, 
     });
   }
 });

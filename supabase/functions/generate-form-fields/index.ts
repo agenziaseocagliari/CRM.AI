@@ -1,30 +1,9 @@
-// FIX: Replaced the version-pinned esm.sh URL with the unversioned one from the official Supabase documentation to resolve type definition loading issues and correctly define Deno globals.
-/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference to a specific versioned URL. This resolves issues where the types were not found, which in turn caused errors about the 'Deno' global object not being defined.
+/// <reference types="https://esm.sh/v135/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, Type, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
-  let lastError: Error | undefined;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      if (i < retries - 1) {
-        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  throw lastError;
-}
+import { handleCors, corsHeaders } from "../shared/cors.ts";
 
 const responseSchema = {
     type: Type.OBJECT,
@@ -48,8 +27,9 @@ const responseSchema = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
   }
 
   try {
@@ -73,16 +53,14 @@ serve(async (req) => {
         Richiesta utente: "${prompt}"
     `;
     
-    const response: GenerateContentResponse = await withRetry(() => 
-        ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: fullPrompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: responseSchema,
-            }
-        })
-    );
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: fullPrompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: responseSchema,
+        }
+    });
 
     let parsedResponse;
     try {
@@ -102,8 +80,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Errore nella funzione generate-form-fields:", error);
-    // Restituisce uno status 200 ma con un payload di errore
-    // Questo permette al client Supabase di leggere il messaggio di errore specifico
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

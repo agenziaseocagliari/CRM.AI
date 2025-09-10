@@ -42,7 +42,9 @@ export const Automations: React.FC = () => {
                 body: { prompt },
             });
 
-            if (error) throw new Error(`Errore di rete: ${error.message}`);
+            // 'error' intercetta problemi di rete o della funzione stessa (es. timeout).
+            if (error) throw error;
+            // 'data.error' intercetta gli errori applicativi che abbiamo definito nella funzione (es. API key mancante).
             if (data.error) throw new Error(data.error);
             
             setActivationResult(data as ActivationSuccessResponse);
@@ -50,12 +52,8 @@ export const Automations: React.FC = () => {
 
         } catch (err: any) {
             console.error(err);
-            // Forniamo un messaggio di errore più utile per il comune problema di configurazione di n8n.
-            if (err.message && err.message.includes('non-2xx status code')) {
-                 toast.error("Attivazione fallita. Controlla la connessione e le credenziali di N8N nella pagina Impostazioni.", { duration: 6000 });
-            } else {
-                toast.error(`Impossibile attivare l'automazione: ${err.message}`);
-            }
+            // Mostra l'errore esatto, che ora è user-friendly grazie alle modifiche nel backend.
+            toast.error(err.message, { duration: 8000 });
         } finally {
             setIsLoading(false);
         }

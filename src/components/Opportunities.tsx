@@ -160,7 +160,7 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
     const opportunityId = e.dataTransfer.getData('opportunityId');
     if (!opportunityId) return;
 
-    const originalData = JSON.parse(JSON.stringify(boardData));
+    const originalData: OpportunitiesData = JSON.parse(JSON.stringify(boardData));
     let foundOpportunity: Opportunity | undefined;
     let sourceStage: PipelineStage | undefined;
 
@@ -175,7 +175,7 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, conta
     
     if (!foundOpportunity || !sourceStage || sourceStage === targetStage) return;
     
-    const newData = JSON.parse(JSON.stringify(boardData));
+    const newData: OpportunitiesData = JSON.parse(JSON.stringify(boardData));
     newData[sourceStage] = newData[sourceStage].filter(op => op.id !== opportunityId);
     const updatedOpportunity = { ...foundOpportunity, stage: targetStage };
     newData[targetStage] = [...newData[targetStage], updatedOpportunity];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useCrmData } from '../hooks/useCrmData';
@@ -10,8 +10,7 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
-    const { organization, loading, error, refetch } = crmData;
-    const location = useLocation();
+    const { organization, loading, error } = crmData;
 
     const handleLogout = async () => {
         await supabase.auth.signOut();

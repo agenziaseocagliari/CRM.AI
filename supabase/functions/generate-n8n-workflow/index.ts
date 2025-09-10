@@ -1,5 +1,5 @@
-// FIX: Updated the Deno types reference to a more stable, versioned URL to resolve type definition and 'Deno' global errors.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Deno types reference to use esm.sh for better compatibility, resolving issues with 'Deno' global types.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
 // supabase/functions/generate-n8n-workflow/index.ts
 

@@ -71,6 +71,10 @@ export const PublicForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!formId) {
+            setError("Form non trovato.");
+            return;
+        }
         setIsSubmitting(true);
         setError(null);
         

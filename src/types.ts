@@ -20,6 +20,9 @@ export interface Contact {
   phone: string;
   company: string;
   created_at: string;
+  lead_score: number | null;
+  lead_category: 'Hot' | 'Warm' | 'Cold' | null;
+  lead_score_reasoning: string | null;
 }
 
 export enum PipelineStage {

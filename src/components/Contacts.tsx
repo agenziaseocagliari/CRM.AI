@@ -6,11 +6,12 @@ import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
+import { LeadScoreBadge } from './ui/LeadScoreBadge';
 
 export const Contacts: React.FC = () => {
   const { contacts, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortColumn, setSortColumn] = useState<keyof Contact>('name');
+  const [sortColumn, setSortColumn] = useState<keyof Contact | 'lead_score'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Modals state
@@ -115,20 +116,23 @@ export const Contacts: React.FC = () => {
     setIsSaving(true);
 
     try {
-        const { error } = await supabase
-            .from('contacts')
-            .insert({
-                ...newContact,
-                organization_id: organization.id
-            });
+        // La funzione create_contact gestirà l'inserimento e attiverà lo scoring
+        const { error } = await supabase.rpc('create_contact', {
+            p_name: newContact.name,
+            p_email: newContact.email,
+            p_company: newContact.company,
+            p_phone: newContact.phone
+        });
 
         if (error) throw error;
         
         handleCloseModals();
-        refetchData();
-        toast.success('Contatto creato con successo!');
+        // Un piccolo delay per dare tempo al trigger di scoring di completare
+        setTimeout(() => refetchData(), 1000); 
+        toast.success('Contatto creato con successo! Lo scoring è in corso...');
 
-    } catch (err: any) {
+    } catch (err: any)
+ {
         toast.error(`Errore nel salvataggio del contatto: ${err.message}`);
         console.error(err);
     } finally {
@@ -242,8 +246,8 @@ export const Contacts: React.FC = () => {
       const { error } = await supabase.from('contacts').insert(contactsToInsert);
       if (error) throw error;
 
-      toast.success(`${contactsToInsert.length} contatti importati con successo!`);
-      refetchData();
+      toast.success(`${contactsToInsert.length} contatti importati! Lo scoring inizierà a breve.`);
+      setTimeout(() => refetchData(), 1500);
       handleCloseModals();
 
     } catch (err: any) {
@@ -264,8 +268,8 @@ export const Contacts: React.FC = () => {
         (contact.company && contact.company.toLowerCase().includes(searchTerm.toLowerCase()))
       )
       .sort((a, b) => {
-        const valA = a[sortColumn] || '';
-        const valB = b[sortColumn] || '';
+        const valA = a[sortColumn as keyof Contact] ?? -1;
+        const valB = b[sortColumn as keyof Contact] ?? -1;
 
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
@@ -273,7 +277,7 @@ export const Contacts: React.FC = () => {
       });
   }, [contacts, searchTerm, sortColumn, sortDirection]);
 
-  const handleSort = (column: keyof Contact) => {
+  const handleSort = (column: keyof Contact | 'lead_score') => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -282,7 +286,7 @@ export const Contacts: React.FC = () => {
     }
   };
 
-  const SortableHeader: React.FC<{ column: keyof Contact, title: string }> = ({ column, title }) => (
+  const SortableHeader: React.FC<{ column: keyof Contact | 'lead_score', title: string }> = ({ column, title }) => (
     <th
       onClick={() => handleSort(column)}
       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -328,6 +332,7 @@ export const Contacts: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <SortableHeader column="name" title="Nome" />
+                <SortableHeader column="lead_score" title="Score" />
                 <SortableHeader column="email" title="Email" />
                 <SortableHeader column="company" title="Azienda" />
                 <SortableHeader column="phone" title="Telefono" />
@@ -341,6 +346,13 @@ export const Contacts: React.FC = () => {
               {filteredAndSortedContacts.map((contact) => (
                 <tr key={contact.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
+                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                     <LeadScoreBadge 
+                        score={contact.lead_score} 
+                        category={contact.lead_category} 
+                        reasoning={contact.lead_score_reasoning} 
+                     />
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.company}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone}</td>

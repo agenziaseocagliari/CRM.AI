@@ -1,7 +1,7 @@
 // supabase/functions/debug-n8n-workflow/index.ts
 
-// FIX: Updated the triple-slash directive to point to the correct type definitions for the Supabase Edge Function environment, resolving 'Cannot find name 'Deno'' errors.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the triple-slash directive to use the 'npm:' specifier, which is a more robust method for loading Deno types in the Supabase Edge Function environment and resolves TypeScript errors for the 'Deno' global.
+/// <reference types="npm:@supabase/functions-js/src/edge-runtime.d.ts" />
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenAI } from 'https://esm.sh/@google/genai@1.19.0';

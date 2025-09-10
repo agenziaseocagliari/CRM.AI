@@ -1,5 +1,5 @@
-// FIX: Replaced the triple-slash directive with a type-only import to correctly load Deno types for the Supabase Edge Function environment. This resolves errors where the 'Deno' global was not found.
-import type {} from "https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts";
+// FIX: Added a triple-slash directive to load Deno types for the Supabase Edge Function environment, resolving 'Cannot find name 'Deno'' errors.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts" />
 
 // supabase/functions/generate-n8n-workflow/index.ts
 
@@ -72,15 +72,25 @@ serve(async (req) => {
         config: { responseMimeType: 'application/json' },
     });
     
+    // NUOVA GESTIONE ROBUSTA DELLA RISPOSTA
+    // 1. Controlla se la richiesta è stata bloccata per motivi di sicurezza/policy.
+    // L'accesso a `response.text` lancerebbe un errore, quindi lo controlliamo prima.
+    if (response.promptFeedback?.blockReason) {
+      const blockReason = response.promptFeedback.blockReason;
+      console.error(`Richiesta a Gemini bloccata. Motivo: ${blockReason}`);
+      throw new Error(`La tua richiesta non può essere processata per motivi di policy (${blockReason}). Prova a riformulare il prompt.`);
+    }
+
+    // 2. Estrai il testo in modo sicuro.
     const workflowJsonString = response.text;
     
-    // VALIDAZIONE CRITICA: Controlla se la risposta è valida prima di procedere.
-    if (!workflowJsonString || !workflowJsonString.trim().startsWith('{')) {
-        console.error("Risposta non valida o non JSON da Gemini AI:", workflowJsonString);
-        throw new Error("L'AI ha restituito una risposta non valida o non in formato JSON. Controlla il prompt o i log della funzione.");
+    // 3. Controlla che il testo non sia vuoto.
+    if (!workflowJsonString) {
+        console.error("Risposta vuota da Gemini AI.");
+        throw new Error("L'AI ha restituito una risposta vuota. Riprova con un prompt più specifico.");
     }
+
     console.log("JSON grezzo ricevuto da Gemini. Tentativo di parsing...");
-    
     const workflowData = cleanAndParseJson(workflowJsonString);
     console.log(`Workflow "${workflowData.name}" parsato con successo.`);
 

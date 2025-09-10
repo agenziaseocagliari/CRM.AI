@@ -1,5 +1,5 @@
-// FIX: Replaced the triple-slash directive with a type-only import to correctly load Deno types for the Supabase Edge Function environment. This resolves errors where the 'Deno' global was not found.
-import type {} from "https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts";
+// FIX: Added a triple-slash directive to load Deno types for the Supabase Edge Function environment, resolving 'Cannot find name 'Deno'' errors.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts" />
 
 // supabase/functions/generate-email-content/index.ts
 

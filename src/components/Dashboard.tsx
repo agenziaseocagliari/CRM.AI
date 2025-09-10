@@ -83,7 +83,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts })
                         // seems to be incomplete, causing a compile-time error.
                         label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-                        {leadSourceData.map((entry, index) => (
+                        {leadSourceData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>

@@ -1,8 +1,6 @@
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
-import { serve } from "serve";
-// FIX: Corrected import path for `corsHeaders` to point to the local shared module `../shared/cors.ts`.
-import { corsHeaders } from "../shared/cors.ts";
-import { GoogleGenAI, Type } from "@google/genai";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
 
 // FIX: Add declaration for Deno to resolve TypeScript error.
 // The Deno global is available in the Supabase Edge Function runtime.
@@ -10,6 +8,13 @@ declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
+};
+
+// SOLUZIONE DEFINITIVA: Header CORS definiti localmente per rendere la funzione 100% autonoma
+// e immune a fallimenti di bundling dovuti a import locali.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const responseSchema = {

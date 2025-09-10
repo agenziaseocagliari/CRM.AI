@@ -1,12 +1,18 @@
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
-import { serve } from "serve";
-import { corsHeaders } from "../shared/cors.ts";
-import { GoogleGenAI, Type } from "@google/genai";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
 
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
+};
+
+// SOLUZIONE DEFINITIVA: Header CORS definiti localmente per rendere la funzione 100% autonoma
+// e immune a fallimenti di bundling dovuti a import locali.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const responseSchema = {

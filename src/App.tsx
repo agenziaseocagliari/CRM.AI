@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Dashboard } from './components/Dashboard';
 import { Opportunities } from './components/Opportunities';
 import { Contacts } from './components/Contacts';
 import { Automations } from './components/Automations';
 import { Forms } from './components/Forms';
+import { Settings } from './components/Settings';
 import { Login } from './components/Login';
 import { HomePage } from './components/HomePage';
 import { PublicForm } from './components/PublicForm';
@@ -123,12 +124,12 @@ const App: React.FC = () => {
                     path="/" 
                     element={<ProtectedRoute isInitialized={isInitialized} session={session} crmData={crmData} />}
                 >
-                    <Route path="dashboard" element={<Dashboard opportunities={crmData.opportunities} contacts={crmData.contacts} />} />
-                    <Route path="opportunities" element={<Opportunities initialData={crmData.opportunities} contacts={crmData.contacts} organization={crmData.organization} refetchData={crmData.refetch} />} />
-                    <Route path="contacts" element={<Contacts contacts={crmData.contacts} organization={crmData.organization} refetchData={crmData.refetch} />} />
-                    <Route path="forms" element={<Forms forms={crmData.forms} organization={crmData.organization} refetchData={crmData.refetch} />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="opportunities" element={<Opportunities />} />
+                    <Route path="contacts" element={<Contacts />} />
+                    <Route path="forms" element={<Forms />} />
                     <Route path="automations" element={<Automations />} />
-                    <Route path="settings" element={<div className="text-3xl font-bold text-text-primary">Impostazioni</div>} />
+                    <Route path="settings" element={<Settings />} />
                     {/* Redirect dalla radice protetta alla dashboard */}
                     <Route index element={<Navigate to="/dashboard" replace />} />
                 </Route>

@@ -1,17 +1,14 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Contact, Organization } from '../types';
+import { useOutletContext } from 'react-router-dom';
+import { Contact } from '../types';
 import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon, UploadIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
+import { useCrmData } from '../hooks/useCrmData';
 
-interface ContactsProps {
-  contacts: Contact[];
-  organization: Organization | null;
-  refetchData: () => void;
-}
-
-export const Contacts: React.FC<ContactsProps> = ({ contacts, organization, refetchData }) => {
+export const Contacts: React.FC = () => {
+  const { contacts, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortColumn, setSortColumn] = useState<keyof Contact>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');

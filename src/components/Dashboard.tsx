@@ -1,16 +1,15 @@
 import React from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Card } from './ui/Card';
 import { Opportunity, Contact, PipelineStage } from '../types';
 import { DollarSignIcon, UsersIcon, CheckCircleIcon, TrendingUpIcon } from './ui/icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useCrmData } from '../hooks/useCrmData';
 
 
-interface DashboardProps {
-  opportunities: Record<PipelineStage, Opportunity[]>;
-  contacts: Contact[];
-}
+export const Dashboard: React.FC = () => {
+  const { opportunities, contacts } = useOutletContext<ReturnType<typeof useCrmData>>();
 
-export const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
   // FIX: Replaced .flat() with a more robust method (reduce) to avoid type inference issues that caused the array to be typed as `unknown[]`.
   const allOpportunities: Opportunity[] = Object.values(opportunities).reduce((acc, val) => acc.concat(val), []);
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);

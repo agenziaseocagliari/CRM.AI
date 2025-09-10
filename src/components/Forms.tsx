@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Form, FormField, Organization } from '../types';
+import { useOutletContext } from 'react-router-dom';
+import { Form, FormField } from '../types';
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
+import { useCrmData } from '../hooks/useCrmData';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -26,18 +28,14 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
     );
 };
 
-interface FormsProps {
-    forms: Form[];
-    organization: Organization | null;
-    refetchData: () => void;
-}
-
-const FormCard: React.FC<{
+interface FormCardProps {
     form: Form;
     onDelete: (form: Form) => void;
     onPreview: (form: Form) => void;
     onGetCode: (form: Form) => void;
-}> = ({ form, onDelete, onPreview, onGetCode }) => (
+}
+
+const FormCard: React.FC<FormCardProps> = ({ form, onDelete, onPreview, onGetCode }) => (
     <div className="bg-white p-4 rounded-lg shadow border flex flex-col justify-between">
         <div>
             <h3 className="font-bold text-lg text-text-primary truncate">{form.name}</h3>
@@ -58,7 +56,9 @@ const FormCard: React.FC<{
 );
 
 
-export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }) => {
+export const Forms: React.FC = () => {
+    const { forms, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
+
     // Stati per le modali
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);

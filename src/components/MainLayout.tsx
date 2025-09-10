@@ -36,8 +36,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
                     onLogout={handleLogout}
                 />
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
-                    {/* L'Outlet renderizzerà il componente della rotta figlia (es. Dashboard, Contacts) */}
-                    <Outlet />
+                    {/* L'Outlet renderizzerà il componente della rotta figlia e passerà crmData tramite context */}
+                    <Outlet context={crmData} />
                 </main>
             </div>
         </div>

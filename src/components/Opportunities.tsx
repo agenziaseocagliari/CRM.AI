@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Opportunity, PipelineStage, OpportunitiesData, Contact, Organization } from '../types';
+import { useOutletContext } from 'react-router-dom';
+import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { Modal } from './ui/Modal';
 import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
 import toast from 'react-hot-toast';
+import { useCrmData } from '../hooks/useCrmData';
 
 const stageColors: Record<PipelineStage, string> = {
   [PipelineStage.NewLead]: 'bg-blue-100 border-blue-400',
@@ -88,13 +90,6 @@ const KanbanColumn: React.FC<{
   );
 };
 
-interface OpportunitiesProps {
-  initialData: OpportunitiesData;
-  contacts: Contact[];
-  organization: Organization | null;
-  refetchData: () => void;
-}
-
 // Definisce la struttura dei dati del form per maggiore sicurezza
 type OpportunityFormData = Omit<Opportunity, 'id' | 'organization_id' | 'created_at'>;
 
@@ -107,7 +102,8 @@ const initialFormState: OpportunityFormData = {
     stage: PipelineStage.NewLead, // Imposta uno stage predefinito
 };
 
-export const Opportunities: React.FC<OpportunitiesProps> = ({ initialData, contacts, organization, refetchData }) => {
+export const Opportunities: React.FC = () => {
+  const { opportunities: initialData, contacts, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData);
   
   const [isModalOpen, setIsModalOpen] = useState(false);

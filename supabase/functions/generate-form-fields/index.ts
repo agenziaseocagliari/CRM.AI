@@ -1,11 +1,9 @@
-// FIX: Updated reference path to use npm specifier for better tooling compatibility and to resolve Deno types.
-/// <reference types="npm:@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Add Deno types reference to resolve "Cannot find name 'Deno'" error.
+/// <reference types="https://deno.land/x/deno/cli/types/deno.ns.d.ts" />
 
-// FIX: Using full URL for Deno standard library imports as no import_map is specified.
+// Import diretti e versionati per massima robustezza
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-// FIX: Using npm specifier for imports to ensure they are resolved correctly in the Deno environment.
-import { GoogleGenAI, Type } from 'npm:@google/genai';
-// FIX: Corrected relative path for shared module import.
+import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
 import { corsHeaders } from '../shared/cors.ts';
 
 serve(async (req) => {

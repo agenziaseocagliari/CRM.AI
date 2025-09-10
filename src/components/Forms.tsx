@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, FormField, Organization } from '../types';
-import { FormsIcon, SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
+import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 
@@ -103,7 +103,11 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
                 },
             });
 
-            const fields = JSON.parse(response.text) as FormField[];
+            const jsonText = response.text;
+            if (!jsonText) {
+                throw new Error("La risposta dell'AI era vuota o non valida.");
+            }
+            const fields = JSON.parse(jsonText) as FormField[];
             setGeneratedFields(fields);
         } catch (err) {
             console.error(err);

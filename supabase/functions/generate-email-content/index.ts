@@ -1,21 +1,39 @@
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { GoogleGenAI } from "https://esm.sh/@google/genai@1.19.0";
+// FIX: Import GenerateContentResponse to correctly type the API call result.
+import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
 
-// FIX: Add declaration for Deno to resolve TypeScript error.
-// The Deno global is available in the Supabase Edge Function runtime.
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
 };
 
-// SOLUZIONE DEFINITIVA: Header CORS definiti localmente per rendere la funzione 100% autonoma
-// e immune a fallimenti di bundling dovuti a import locali.
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// HELPER: Retry con backoff esponenziale per chiamate di rete
+async function withRetry<T>(fn: () => Promise<T>, tries = 3, base = 500): Promise<T> {
+  let lastError: any;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e: any) {
+      lastError = e;
+      const msg = String(e.message || e);
+      // Riprova solo per errori transitori comuni
+      if (!/429|503|timeout|unavailable|network/i.test(msg) || i === tries - 1) {
+        throw e;
+      }
+      const delay = base * Math.pow(2, i) + Math.floor(Math.random() * 250);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -23,9 +41,13 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, contact } = await req.json();
+    // FIX C: Check variabili ambiente anticipato
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiApiKey) throw new Error("GEMINI_API_KEY non è impostata.");
+    if (!geminiApiKey) {
+        throw new Error("Variabile d'ambiente mancante: GEMINI_API_KEY");
+    }
+
+    const { prompt, contact } = await req.json();
     if (!prompt || !contact) throw new Error("I dati 'prompt' e 'contact' sono richiesti.");
 
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
@@ -45,12 +67,18 @@ serve(async (req) => {
       Mantieni un tono positivo e orientato all'azione.
     `;
 
-    const response = await ai.models.generateContent({
+    // FIX D: Applica retry alla chiamata AI
+    // FIX: Explicitly type the API response to resolve the type error on `response.text`.
+    const response = await withRetry<GenerateContentResponse>(() => ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: fullPrompt,
-    });
+    }));
     
-    const email = response.text;
+    // FIX A: Controlla che la risposta non sia vuota
+    const email = (response.text || '').trim();
+    if (!email) {
+        throw new Error("Nessun testo generato dal modello AI.");
+    }
 
     return new Response(JSON.stringify({ email }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -58,7 +86,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Errore in generate-email-content:", error);
+    console.error("Errore in generate-email-content:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

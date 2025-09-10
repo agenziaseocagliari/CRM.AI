@@ -1,5 +1,5 @@
 // FIX: Add Deno types reference to resolve "Cannot find name 'Deno'" error.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+/// <reference types="https://deno.land/x/deno/types/index.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse, Type } from "https://esm.sh/@google/genai@1.19.0";

@@ -3,7 +3,7 @@ import { Form, FormField, Organization } from '../types';
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -26,35 +26,21 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
     );
 };
 
-// Schema programmatico per forzare l'AI a generare un JSON valido e strutturato
-const formFieldSchema = {
-  type: Type.OBJECT,
-  properties: {
-    name: {
-      type: Type.STRING,
-      description: "Un nome per il campo in formato snake_case (es. 'numero_targa').",
-    },
-    label: {
-      type: Type.STRING,
-      description: "Un'etichetta leggibile per il campo (es. 'Numero di Targa').",
-    },
-    type: {
-      type: Type.STRING,
-      description: "Il tipo di campo.",
-      // L'enum forza l'AI a scegliere solo tra questi valori, eliminando errori.
-      enum: ['text', 'email', 'tel', 'textarea'],
-    },
-    required: {
-      type: Type.BOOLEAN,
-      description: "Indica se il campo è obbligatorio.",
-    },
-  },
-  required: ['name', 'label', 'type', 'required'],
-};
-
-const formBuilderSchema = {
-    type: Type.ARRAY,
-    items: formFieldSchema
+// Funzione di parsing più robusta per estrarre il JSON dalla risposta dell'AI
+const extractAndParseJson = (text: string): FormField[] | null => {
+    // Cerca un blocco di codice JSON o un array JSON semplice
+    const match = text.match(/```json\s*([\s\S]*?)\s*```|(\[[\s\S]*\])/);
+    if (!match) {
+        return null;
+    }
+    // Prende il primo gruppo di cattura valido
+    const jsonString = match[1] || match[2];
+    try {
+        return JSON.parse(jsonString) as FormField[];
+    } catch (e) {
+        console.error("Failed to parse extracted JSON:", e);
+        return null;
+    }
 };
 
 
@@ -137,19 +123,44 @@ export const Forms: React.FC<FormsProps> = ({ forms, organization, refetchData }
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
+            // "Master Prompt" con ruolo, istruzioni, vincoli ed esempio (Few-Shot)
+            const masterPrompt = `
+                You are an expert system that translates natural language descriptions into a specific JSON array structure for a form builder.
+                The user will provide a description in Italian. Your task is to generate an array of field objects based on this description.
+
+                Each object in the array must have the following properties:
+                - "name": A string in snake_case format (e.g., "nome_completo", "numero_targa"). This is used as the field's unique identifier.
+                - "label": A user-friendly string for the field's label (e.g., "Nome Completo", "Numero di Targa").
+                - "type": A string that must be one of the following exact values: 'text', 'email', 'tel', 'textarea'.
+                - "required": A boolean value (true or false).
+
+                **EXAMPLE:**
+                User request: "un form per iscriversi alla newsletter con nome e email"
+                Your JSON output:
+                [
+                  {"name": "nome_completo", "label": "Nome Completo", "type": "text", "required": true},
+                  {"name": "indirizzo_email", "label": "Indirizzo Email", "type": "email", "required": true}
+                ]
+
+                Now, process the following user request. Respond ONLY with the JSON array, nothing else.
+
+                User request: "${prompt}"
+            `;
+
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: `Genera una struttura di campi per un form basata sulla seguente richiesta: "${prompt}"`,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: formBuilderSchema,
-                },
+                contents: masterPrompt,
             });
 
             const jsonText = response.text;
-            if (!jsonText) { throw new Error("La risposta dell'AI era vuota o non valida."); }
-
-            const fields = JSON.parse(jsonText) as FormField[];
+            if (!jsonText) { throw new Error("La risposta dell'AI era vuota."); }
+            
+            const fields = extractAndParseJson(jsonText);
+            if (!fields || fields.length === 0) {
+                console.log("Raw AI response:", jsonText);
+                throw new Error("L'AI ha restituito una struttura non valida o vuota.");
+            }
+            
             setGeneratedFields(fields);
 
         } catch (err) {

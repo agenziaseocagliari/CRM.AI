@@ -15,7 +15,7 @@ interface Automation {
 
 export const Automations: React.FC = () => {
     // For now, we don't have automations in useCrmData, so we'll use a local state
-    const [automations, setAutomations] = useState<Automation[]>([]);
+    const [automations] = useState<Automation[]>([]);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);

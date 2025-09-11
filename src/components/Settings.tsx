@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
+import { GoogleIcon } from './ui/icons';
 
 const IntegrationCard: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => (
     <div className="bg-white p-6 rounded-lg shadow border">
@@ -20,15 +21,58 @@ export const Settings: React.FC = () => {
     const [twilioAuthToken, setTwilioAuthToken] = useState('');
     
     const [isSaving, setIsSaving] = useState(false);
+    const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
-    // Popola i campi del form quando i dati vengono caricati
+    // Popola i campi del form quando i dati vengono caricati e gestisce il redirect da Google
     useEffect(() => {
         if (organizationSettings) {
             setBrevoApiKey(organizationSettings.brevo_api_key || '');
             setTwilioAccountSid(organizationSettings.twilio_account_sid || '');
             setTwilioAuthToken(organizationSettings.twilio_auth_token || '');
+            
+            // Controlla se l'account Google è connesso
+            try {
+                const tokenData = organizationSettings.google_auth_token ? JSON.parse(organizationSettings.google_auth_token) : null;
+                setIsGoogleConnected(!!tokenData?.access_token);
+            } catch (e) {
+                console.error("Errore parsing token Google:", e);
+                setIsGoogleConnected(false);
+            }
+        } else {
+            setIsGoogleConnected(false);
         }
-    }, [organizationSettings]);
+
+        const handleGoogleRedirect = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+
+            if (code && state === localStorage.getItem('google_oauth_state')) {
+                localStorage.removeItem('google_oauth_state');
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                const toastId = toast.loading('Connessione a Google in corso...');
+                try {
+                    const { data, error } = await supabase.functions.invoke('google-token-exchange', {
+                        body: { code, organization_id: organization?.id },
+                    });
+
+                    if (error) throw new Error(error.message);
+                    if (data.error) throw new Error(data.error);
+
+                    toast.success('Account Google connesso!', { id: toastId });
+                    refetch();
+                } catch (err: any) {
+                    toast.error(`Errore: ${err.message}`, { id: toastId });
+                }
+            }
+        };
+
+        if (organization) {
+            handleGoogleRedirect();
+        }
+    }, [organizationSettings, organization, refetch]);
+
 
     const handleSaveSettings = async () => {
         setIsSaving(true);
@@ -40,8 +84,6 @@ export const Settings: React.FC = () => {
         }
 
         try {
-            // 'upsert' crea la riga se non esiste, o la aggiorna se esiste già.
-            // 'onConflict' dice a Supabase quale colonna usare per determinare un conflitto.
             const { error } = await supabase
                 .from('organization_settings')
                 .upsert({
@@ -53,10 +95,48 @@ export const Settings: React.FC = () => {
             
             if (error) throw error;
 
-            toast.success('Impostazioni salvate con successo!');
-            refetch(); // Ricarica i dati per assicurarsi che lo stato sia aggiornato
+            toast.success('Impostazioni API salvate con successo!');
+            refetch();
         } catch (err: any) {
             toast.error(`Errore nel salvataggio: ${err.message}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleGoogleConnect = async () => {
+        const toastId = toast.loading('Reindirizzamento a Google...');
+        try {
+            const state = Math.random().toString(36).substring(2);
+            localStorage.setItem('google_oauth_state', state);
+
+            const { data, error } = await supabase.functions.invoke('google-auth-url', {
+                body: { state }
+            });
+
+            if (error) throw new Error(error.message);
+            if (data.error) throw new Error(data.error);
+            
+            window.location.href = data.url;
+        } catch (err: any) {
+            toast.error(`Errore: ${err.message}`, { id: toastId });
+        }
+    };
+    
+    const handleGoogleDisconnect = async () => {
+        setIsSaving(true);
+        try {
+             const { error } = await supabase
+                .from('organization_settings')
+                .update({ google_auth_token: null })
+                .eq('organization_id', organization!.id);
+
+            if (error) throw error;
+            toast.success('Account Google disconnesso.');
+            refetch();
+
+        } catch(err: any) {
+            toast.error(`Errore: ${err.message}`);
         } finally {
             setIsSaving(false);
         }
@@ -125,20 +205,36 @@ export const Settings: React.FC = () => {
 
                 <IntegrationCard
                     title="Integrazione Calendario Google"
-                    description="Collega il tuo account Google per permettere agli agenti di leggere la tua disponibilità e creare eventi."
+                    description="Collega il tuo account Google per permettere al CRM di creare eventi e meeting per tuo conto."
                 >
                      <div>
-                        <label htmlFor="googleApiKey" className="block text-sm font-medium text-gray-700">Google API Key / OAuth</label>
-                         <div className="mt-1">
-                            <button
-                                disabled
-                                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            >
-                                Connetti a Google (Prossimamente)
-                            </button>
+                        <div className="mt-1">
+                            {!isGoogleConnected ? (
+                                <button
+                                    onClick={handleGoogleConnect}
+                                    className="bg-white border border-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
+                                >
+                                    <GoogleIcon className="w-5 h-5" />
+                                    <span>Connetti a Google</span>
+                                </button>
+                            ) : (
+                                <div className="flex items-center justify-between">
+                                    <p className="text-green-700 font-medium flex items-center">
+                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
+                                        Account Google Connesso
+                                    </p>
+                                    <button
+                                        onClick={handleGoogleDisconnect}
+                                        disabled={isSaving}
+                                        className="bg-red-50 text-red-700 px-4 py-2 rounded-lg hover:bg-red-100 text-sm disabled:opacity-50"
+                                    >
+                                        Disconnetti
+                                    </button>
+                                </div>
+                            )}
                         </div>
                          <p className="mt-2 text-xs text-gray-500">
-                           Questa integrazione richiederà l'autenticazione tramite Google OAuth.
+                           Questa integrazione richiederà l'autenticazione tramite Google per accedere e creare eventi sul tuo calendario primario.
                         </p>
                     </div>
                 </IntegrationCard>
@@ -149,7 +245,7 @@ export const Settings: React.FC = () => {
                         disabled={isSaving}
                         className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-indigo-700 text-base font-semibold disabled:bg-gray-400"
                     >
-                       {isSaving ? 'Salvataggio...' : 'Salva Tutte le Impostazioni'}
+                       {isSaving ? 'Salvataggio...' : 'Salva Impostazioni API'}
                     </button>
                 </div>
             </div>

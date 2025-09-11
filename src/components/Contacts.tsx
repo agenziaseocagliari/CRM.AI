@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Contact } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { Modal } from './ui/Modal';
-import { PlusIcon, EditIcon, TrashIcon, SparklesIcon, WhatsAppIcon } from './ui/icons';
+import { PlusIcon, EditIcon, TrashIcon, SparklesIcon, WhatsAppIcon, CalendarIcon } from './ui/icons';
 import toast from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
 import { LeadScoreBadge } from './ui/LeadScoreBadge';
@@ -65,6 +65,8 @@ export const Contacts: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+
 
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [formData, setFormData] = useState<ContactFormData>(initialFormState);
@@ -74,6 +76,15 @@ export const Contacts: React.FC = () => {
     const [aiPrompt, setAiPrompt] = useState('');
     const [generatedContent, setGeneratedContent] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+
+    const [eventFormData, setEventFormData] = useState({
+        title: '',
+        date: new Date().toISOString().split('T')[0],
+        time: '10:00',
+        duration: 30, // in minutes
+        addMeet: true,
+        description: ''
+    });
 
 
     const handleOpenAddModal = () => {
@@ -117,11 +128,25 @@ export const Contacts: React.FC = () => {
         setIsWhatsAppModalOpen(true);
     };
 
+    const handleOpenEventModal = (contact: Contact) => {
+        setSelectedContact(contact);
+        setEventFormData({
+            title: `Incontro con ${contact.name}`,
+            date: new Date().toISOString().split('T')[0],
+            time: '10:00',
+            duration: 30,
+            addMeet: true,
+            description: ''
+        });
+        setIsEventModalOpen(true);
+    };
+
     const handleCloseModals = () => {
         setIsModalOpen(false);
         setIsDeleteModalOpen(false);
         setIsEmailModalOpen(false);
         setIsWhatsAppModalOpen(false);
+        setIsEventModalOpen(false);
         setSelectedContact(null);
     };
     
@@ -257,6 +282,46 @@ export const Contacts: React.FC = () => {
         }
     };
 
+    const handleEventFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+            const checked = (e.target as HTMLInputElement).checked;
+            setEventFormData(prev => ({ ...prev, [name]: checked }));
+        } else {
+             setEventFormData(prev => ({ ...prev, [name]: name === 'duration' ? parseInt(value) : value }));
+        }
+    };
+    
+    const handleCreateEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedContact || !organization) return;
+        
+        setIsSaving(true);
+        const toastId = toast.loading('Creazione evento in corso...');
+
+        try {
+            const { data, error } = await supabase.functions.invoke('create-google-event', {
+                body: { 
+                    eventDetails: eventFormData,
+                    contact: selectedContact,
+                    organization_id: organization.id
+                },
+            });
+
+            if (error) throw new Error(error.message);
+            if (data.error) throw new Error(data.error);
+
+            toast.success('Evento creato con successo su Google Calendar!', { id: toastId });
+            handleCloseModals();
+
+        } catch (err: any) {
+            toast.error(`Errore: ${err.message}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+
     return (
         <>
             <div className="flex justify-between items-center mb-6">
@@ -296,6 +361,9 @@ export const Contacts: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex items-center justify-end space-x-2">
+                                        <button onClick={() => handleOpenEventModal(contact)} title="Crea Evento" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
+                                            <CalendarIcon className="w-5 h-5" />
+                                        </button>
                                         <button onClick={() => handleOpenEmailModal(contact)} title="Scrivi Email con AI" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
                                             <SparklesIcon className="w-5 h-5" />
                                         </button>
@@ -417,6 +485,52 @@ export const Contacts: React.FC = () => {
                         </div>
                     )}
                  </div>
+            </Modal>
+
+            {/* Modal Crea Evento Google Calendar */}
+            <Modal isOpen={isEventModalOpen} onClose={handleCloseModals} title={`Pianifica incontro con ${selectedContact?.name}`}>
+                <form onSubmit={handleCreateEvent} className="space-y-4">
+                    <div>
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-700">Titolo Evento</label>
+                        <input type="text" id="title" name="title" value={eventFormData.title} onChange={handleEventFormChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="date" className="block text-sm font-medium text-gray-700">Data</label>
+                            <input type="date" id="date" name="date" value={eventFormData.date} onChange={handleEventFormChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                        </div>
+                         <div>
+                            <label htmlFor="time" className="block text-sm font-medium text-gray-700">Ora</label>
+                            <input type="time" id="time" name="time" value={eventFormData.time} onChange={handleEventFormChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                        </div>
+                    </div>
+                     <div>
+                        <label htmlFor="duration" className="block text-sm font-medium text-gray-700">Durata</label>
+                        <select id="duration" name="duration" value={eventFormData.duration} onChange={handleEventFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            <option value={15}>15 minuti</option>
+                            <option value={30}>30 minuti</option>
+                            <option value={45}>45 minuti</option>
+                            <option value={60}>1 ora</option>
+                            <option value={90}>1 ora e 30 minuti</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrizione / Note</label>
+                        <textarea id="description" name="description" value={eventFormData.description} onChange={handleEventFormChange} rows={4} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="Agenda dell'incontro, link utili, ecc..."></textarea>
+                    </div>
+                     <div className="flex items-start">
+                        <div className="flex items-center h-5">
+                            <input id="addMeet" name="addMeet" type="checkbox" checked={eventFormData.addMeet} onChange={handleEventFormChange} className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"/>
+                        </div>
+                        <div className="ml-3 text-sm">
+                            <label htmlFor="addMeet" className="font-medium text-gray-700">Aggiungi videoconferenza Google Meet</label>
+                        </div>
+                    </div>
+                    <div className="flex justify-end pt-4 border-t mt-4">
+                        <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
+                        <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">{isSaving ? 'Creazione...' : 'Crea Evento'}</button>
+                    </div>
+                </form>
             </Modal>
 
         </>

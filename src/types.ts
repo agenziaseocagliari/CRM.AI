@@ -79,6 +79,7 @@ export interface OrganizationSettings {
     brevo_api_key: string | null;
     twilio_account_sid: string | null;
     twilio_auth_token: string | null;
+    google_auth_token: string | null; // Aggiunto per i token OAuth di Google
     created_at: string;
     updated_at: string;
 }

@@ -11,6 +11,16 @@ interface ActivationSuccessResponse {
     n8nLink: string;
 }
 
+// Interfaccia per la risposta di errore strutturata
+interface ActivationErrorResponse {
+    error: string;
+    diag?: {
+        step: string;
+        hint: string;
+    }
+}
+
+
 export const Automations: React.FC = () => {
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -42,17 +52,22 @@ export const Automations: React.FC = () => {
                 body: { prompt },
             });
 
-            // 'error' intercetta problemi di rete o della funzione stessa (es. timeout).
-            if (error) throw error;
-            // 'data.error' intercetta gli errori applicativi che abbiamo definito nella funzione (es. API key mancante).
-            if (data.error) throw new Error(data.error);
+            if (error) throw new Error(`Errore di rete o funzione: ${error.message}`);
             
-            setActivationResult(data as ActivationSuccessResponse);
+            const responseData = data as ActivationErrorResponse | ActivationSuccessResponse;
+
+            if ('error' in responseData) {
+                const errorMessage = responseData.diag?.hint 
+                    ? `${responseData.error} (Suggerimento: ${responseData.diag.hint})`
+                    : responseData.error;
+                throw new Error(errorMessage);
+            }
+            
+            setActivationResult(responseData as ActivationSuccessResponse);
             toast.success('Workflow attivato con successo su N8N!');
 
         } catch (err: any) {
             console.error(err);
-            // Mostra l'errore esatto, che ora è user-friendly grazie alle modifiche nel backend.
             toast.error(err.message, { duration: 8000 });
         } finally {
             setIsLoading(false);

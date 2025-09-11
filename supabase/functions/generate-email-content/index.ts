@@ -1,5 +1,5 @@
-// FIX: Replaced the 'npm:' specifier with a direct URL from esm.sh for the Supabase Edge Runtime type definitions. This resolves the "Cannot find type definition file" and "Cannot find name 'Deno'" errors by ensuring the Deno-specific globals and types are correctly loaded.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Replaced a failing remote type reference with a direct Deno library reference. This resolves "Cannot find type definition file" and "Cannot find name 'Deno'" errors by making the Deno namespace available to the TypeScript compiler.
+/// <reference lib="deno.ns" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";

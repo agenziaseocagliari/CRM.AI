@@ -71,3 +71,12 @@ export interface Automation {
   description: string;
   created_at: string;
 }
+
+// Tipi per le impostazioni dell'organizzazione (es. API Keys)
+export interface OrganizationSettings {
+    id: string; // UUID
+    organization_id: string;
+    brevo_api_key: string | null;
+    created_at: string;
+    updated_at: string;
+}

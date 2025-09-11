@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Organization, Contact, Opportunity, OpportunitiesData, PipelineStage, Profile, Form, Automation } from '../types';
+import { Organization, Contact, Opportunity, OpportunitiesData, PipelineStage, Profile, Form, Automation, OrganizationSettings } from '../types';
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
   const emptyData: OpportunitiesData = {
@@ -28,6 +28,7 @@ export const useCrmData = () => {
   const [opportunities, setOpportunities] = useState<OpportunitiesData>(groupOpportunitiesByStage([]));
   const [forms, setForms] = useState<Form[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
+  const [organizationSettings, setOrganizationSettings] = useState<OrganizationSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,18 +39,16 @@ export const useCrmData = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        // Non è un errore se l'utente non è loggato, semplicemente non ci sono dati da caricare.
-        // La logica in App.tsx gestirà la redirezione.
         setLoading(false);
         setOrganization(null);
         setContacts([]);
         setOpportunities(groupOpportunitiesByStage([]));
         setForms([]);
         setAutomations([]);
+        setOrganizationSettings(null);
         return;
       }
 
-      // 1. Fetch user profile to get organization_id
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
@@ -62,13 +61,13 @@ export const useCrmData = () => {
 
       const { organization_id } = profileData;
 
-      // 2. Fetch organization, contacts, opportunities, forms, and automations in parallel
-      const [orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse] = await Promise.all([
+      const [orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse, settingsResponse] = await Promise.all([
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         supabase.from('opportunities').select('*').eq('organization_id', organization_id),
         supabase.from('forms').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
-        supabase.from('automations').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false })
+        supabase.from('automations').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
+        supabase.from('organization_settings').select('*').eq('organization_id', organization_id).single<OrganizationSettings>()
       ]);
 
       if (orgResponse.error) throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);
@@ -76,6 +75,10 @@ export const useCrmData = () => {
       if (opportunitiesResponse.error) throw new Error(`Errore nel caricamento delle opportunità: ${opportunitiesResponse.error.message}`);
       if (formsResponse.error) throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);
       if (automationsResponse.error) throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`);
+      // Un errore nelle impostazioni non è fatale, potrebbe semplicemente non esistere un record
+      if (settingsResponse.error && settingsResponse.status !== 406) {
+         throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);
+      }
 
 
       setOrganization(orgResponse.data);
@@ -83,6 +86,7 @@ export const useCrmData = () => {
       setOpportunities(groupOpportunitiesByStage(opportunitiesResponse.data || []));
       setForms(formsResponse.data || []);
       setAutomations(automationsResponse.data || []);
+      setOrganizationSettings(settingsResponse.data);
 
     } catch (err: any) {
       setError(err.message);
@@ -93,8 +97,6 @@ export const useCrmData = () => {
   }, []);
 
   useEffect(() => {
-    // Carica i dati quando il componente che usa l'hook viene montato
-    // e quando lo stato di autenticazione cambia.
     fetchData();
     
     const { data: authListener } = supabase.auth.onAuthStateChange((event, _session) => {
@@ -107,5 +109,5 @@ export const useCrmData = () => {
 
   }, [fetchData]);
 
-  return { organization, contacts, opportunities, forms, automations, loading, error, refetch: fetchData };
+  return { organization, contacts, opportunities, forms, automations, organizationSettings, loading, error, refetch: fetchData };
 };

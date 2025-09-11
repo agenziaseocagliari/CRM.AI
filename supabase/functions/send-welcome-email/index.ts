@@ -41,9 +41,14 @@ serve(async (req) => {
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const brevoSenderEmail = Deno.env.get("BREVO_SENDER_EMAIL");
+    const brevoSenderName = Deno.env.get("BREVO_SENDER_NAME");
 
     if (!geminiApiKey || !supabaseUrl || !serviceRoleKey) {
       throw new Error("Mancano le variabili d'ambiente necessarie (GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY).");
+    }
+    if (!brevoSenderEmail || !brevoSenderName) {
+        throw new Error("Le variabili d'ambiente BREVO_SENDER_EMAIL e BREVO_SENDER_NAME sono necessarie per inviare email. Impostale nei Secrets della funzione.");
     }
 
     // 2. Estrae i dati del nuovo contatto dal corpo della richiesta (inviato dal trigger)
@@ -99,8 +104,7 @@ serve(async (req) => {
             "content-type": "application/json",
         },
         body: JSON.stringify({
-            // IMPORTANTE: Cambia l'email del mittente con una tua email verificata su Brevo
-            sender: { name: "Il Team di Guardian AI", email: "contatto@seo-cagliari.it" },
+            sender: { name: brevoSenderName, email: brevoSenderEmail },
             to: [{ email: newContact.email, name: newContact.name }],
             subject: `Benvenuto in Guardian AI, ${newContact.name}!`,
             htmlContent: `<p>${emailBody.replace(/\n/g, '<br>')}</p>`,

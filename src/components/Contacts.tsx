@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Contact } from '../types';
 import { supabase } from '../lib/supabaseClient';
@@ -7,41 +7,75 @@ import { PlusIcon, EditIcon, TrashIcon, SparklesIcon, WhatsAppIcon } from './ui/
 import toast from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
 import { LeadScoreBadge } from './ui/LeadScoreBadge';
+import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
 
 // Definiamo un tipo per i dati del form per maggiore chiarezza e sicurezza.
-type ContactFormData = Omit<Contact, 'id' | 'organization_id' | 'created_at' | 'lead_score' | 'lead_category' | 'lead_score_reasoning'>;
+// Ora include phonePrefix e phoneNumber invece di un unico campo 'phone'.
+type ContactFormData = {
+    name: string;
+    email: string;
+    company: string;
+    phonePrefix: string;
+    phoneNumber: string;
+};
 
 // Stato iniziale per il form di aggiunta/modifica contatto.
 const initialFormState: ContactFormData = {
     name: '',
     email: '',
-    phone: '',
     company: '',
+    phonePrefix: '+39', // Default su Italia
+    phoneNumber: '',
 };
+
+// Funzione helper per dividere un numero di telefono completo
+const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string } => {
+    if (!fullPhone) {
+        return { prefix: '+39', number: '' };
+    }
+    // Cerca il prefisso più lungo che corrisponde all'inizio del numero
+    const bestMatch = countryCodes.find(code => fullPhone.startsWith(code.dial_code));
+
+    if (bestMatch) {
+        return {
+            prefix: bestMatch.dial_code,
+            number: fullPhone.substring(bestMatch.dial_code.length),
+        };
+    }
+    
+    // Fallback se nessun prefisso noto viene trovato
+    if (fullPhone.startsWith('+')) {
+        // Supponiamo un prefisso di 2 cifre dopo il + come fallback generico
+        const prefix = fullPhone.substring(0, 3);
+        const number = fullPhone.substring(3);
+        // Controlla se il prefisso trovato è valido, altrimenti default
+        if (countryCodes.some(c => c.dial_code === prefix)) {
+            return { prefix, number };
+        }
+    }
+    
+    return { prefix: '+39', number: fullPhone }; // Default finale
+};
+
 
 export const Contacts: React.FC = () => {
     const { contacts, organization, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
 
-    // Stati per la gestione delle modali
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
-    // Stati per i dati e il caricamento
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [formData, setFormData] = useState<ContactFormData>(initialFormState);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     
-    // Stati per le funzionalità AI
     const [aiPrompt, setAiPrompt] = useState('');
     const [generatedContent, setGeneratedContent] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
 
-    // ---- GESTIONE MODALI ---- //
-    
     const handleOpenAddModal = () => {
         setModalMode('add');
         setFormData(initialFormState);
@@ -52,11 +86,14 @@ export const Contacts: React.FC = () => {
     const handleOpenEditModal = (contact: Contact) => {
         setModalMode('edit');
         setSelectedContact(contact);
+        // **FIX CRITICO**: Usiamo la funzione helper per dividere il numero
+        const { prefix, number } = splitPhoneNumber(contact.phone);
         setFormData({
             name: contact.name,
             email: contact.email,
-            phone: contact.phone,
             company: contact.company,
+            phonePrefix: prefix,
+            phoneNumber: number,
         });
         setIsModalOpen(true);
     };
@@ -88,9 +125,7 @@ export const Contacts: React.FC = () => {
         setSelectedContact(null);
     };
     
-    // ---- OPERAZIONI CRUD ---- //
-
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -106,7 +141,17 @@ export const Contacts: React.FC = () => {
 
         try {
             let successMessage = '';
-            const dataToSave = { ...formData, organization_id: organization.id };
+            // Ricostruiamo il numero di telefono completo prima di salvarlo
+            const fullPhoneNumber = `${formData.phonePrefix}${formData.phoneNumber}`;
+            
+            // Prepariamo i dati da salvare, escludendo i campi separati del telefono
+            const dataToSave = {
+                name: formData.name,
+                email: formData.email,
+                company: formData.company,
+                phone: fullPhoneNumber,
+                organization_id: organization.id,
+            };
 
             if (modalMode === 'edit' && selectedContact) {
                 const { error } = await supabase.from('contacts').update(dataToSave).eq('id', selectedContact.id);
@@ -116,7 +161,6 @@ export const Contacts: React.FC = () => {
                 const { error } = await supabase.from('contacts').insert(dataToSave);
                 if (error) throw error;
                 successMessage = 'Contatto creato!';
-                // Le funzioni score-contact-lead e send-welcome-email vengono attivate tramite trigger su Supabase
             }
             refetch();
             handleCloseModals();
@@ -144,8 +188,6 @@ export const Contacts: React.FC = () => {
         }
     };
     
-    // ---- FUNZIONALITÀ AI ---- //
-
     const handleGenerateEmail = async () => {
         if (!aiPrompt || !selectedContact) return;
         setIsGenerating(true);
@@ -214,7 +256,6 @@ export const Contacts: React.FC = () => {
             setIsSaving(false);
         }
     };
-
 
     return (
         <>
@@ -288,8 +329,30 @@ export const Contacts: React.FC = () => {
                         <input type="email" id="email" name="email" value={formData.email} onChange={handleFormChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
                     </div>
                     <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Telefono</label>
-                        <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+                         <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">Telefono</label>
+                        <div className="mt-1 flex rounded-md shadow-sm">
+                            <select
+                                id="phonePrefix"
+                                name="phonePrefix"
+                                value={formData.phonePrefix}
+                                onChange={handleFormChange}
+                                className="block w-40 rounded-none rounded-l-md border-r-0 border-gray-300 bg-gray-50 text-gray-700 focus:ring-primary focus:border-primary"
+                            >
+                                {countryCodes.map((c) => (
+                                    <option key={c.code} value={c.dial_code}>
+                                        {c.flag} {c.name} ({c.dial_code})
+                                    </option>
+                                ))}
+                            </select>
+                            <input
+                                type="tel"
+                                id="phoneNumber"
+                                name="phoneNumber"
+                                value={formData.phoneNumber}
+                                onChange={handleFormChange}
+                                className="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-primary focus:border-primary"
+                            />
+                        </div>
                     </div>
                     <div>
                         <label htmlFor="company" className="block text-sm font-medium text-gray-700">Azienda</label>

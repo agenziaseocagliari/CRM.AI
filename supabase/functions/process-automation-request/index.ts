@@ -1,5 +1,11 @@
-// FIX: Replaced a failing remote type reference with a direct Deno library reference. This resolves "Cannot find type definition file" and "Cannot find name 'Deno'" errors by making the Deno namespace available to the TypeScript compiler.
-/// <reference lib="deno.ns" />
+// FIX: Explicitly declare the Deno global type to resolve "Cannot find name 'Deno'"
+// and "Cannot find lib definition for 'deno.ns'" errors in environments
+// where Deno's standard libraries are not automatically recognized.
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";

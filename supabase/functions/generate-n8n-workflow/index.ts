@@ -1,5 +1,5 @@
-// FIX: The Supabase edge-runtime type reference URL was invalid. Corrected to a valid, version-agnostic URL to ensure Deno types are loaded properly.
-/// <reference types="https://esm.sh/@supabase/functions-js@2" />
+// FIX: Corrected the Supabase edge-runtime type reference to a valid URL to resolve Deno type errors.
+/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
@@ -59,12 +59,13 @@ serve(async (req) => {
     const fullPrompt = `
       Agisci come un esperto di automazione e specialista di n8n.
       Il tuo compito è convertire la richiesta dell'utente in un workflow n8n JSON valido e completo.
-      Il JSON deve includere "name", "nodes", "connections", e "settings".
-      Ogni nodo deve avere "id", "name", "type", "typeVersion", "position", e "parameters".
+      Il JSON deve includere solo le seguenti proprietà a livello radice: "name", "nodes", "connections", e "settings".
+      Non includere proprietà come "active", "id", "versionId", "createdAt", o "updatedAt" nell'oggetto JSON principale.
+      Ogni nodo all'interno dell'array "nodes" deve avere "id", "name", "type", "typeVersion", "position", e "parameters".
       Assicurati che le connessioni tra i nodi siano corrette.
       **Rispondi solo ed esclusivamente con il codice JSON del workflow, senza commenti o testo aggiuntivo.**
 
-      Esempio di struttura di base:
+      Esempio di struttura di base corretta:
       {
         "name": "Nome Workflow",
         "nodes": [
@@ -78,9 +79,7 @@ serve(async (req) => {
           }
         ],
         "connections": {},
-        "active": false,
-        "settings": {},
-        "versionId": "1"
+        "settings": {}
       }
       
       Richiesta utente: "${prompt}"
@@ -110,6 +109,14 @@ serve(async (req) => {
       try { wf = JSON.parse(justJson); }
       catch (e) { throw new Error("Output AI non è JSON valido. Dettaglio: " + (e as Error).message); }
     }
+
+    // Sanitize the workflow object to remove read-only/invalid properties for creation.
+    // This makes the function resilient to the AI including extra fields.
+    delete wf.active;
+    delete wf.id;
+    delete wf.createdAt;
+    delete wf.updatedAt;
+    delete wf.versionId;
     
     // N8N POST call with diagnostics
     step = "n8n";

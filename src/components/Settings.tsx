@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { supabase } from '../lib/supabaseClient'; // Importa per un uso futuro
-import { useOutletContext } from 'react-router-dom';
-import { useCrmData } from '../hooks/useCrmData';
-
 
 const IntegrationCard: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => (
     <div className="bg-white p-6 rounded-lg shadow border">
@@ -15,11 +11,9 @@ const IntegrationCard: React.FC<{ title: string; description: string; children: 
 
 export const Settings: React.FC = () => {
     // In un'app reale, questi valori verrebbero caricati e salvati da/in un database
-    const { organization, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
 
     // TODO: Caricare i valori salvati dal DB
     const [brevoApiKey, setBrevoApiKey] = useState('');
-    const [googleApiKey, setGoogleApiKey] = useState(''); // Placeholder
     const [whatsappApiKey, setWhatsappApiKey] = useState(''); // Placeholder
     
     const [isSaving, setIsSaving] = useState(false);
@@ -36,7 +30,6 @@ export const Settings: React.FC = () => {
                 .upsert({
                     organization_id: organization.id,
                     brevo_api_key: brevoApiKey,
-                    google_api_key: googleApiKey,
                     whatsapp_api_key: whatsappApiKey,
                 }, { onConflict: 'organization_id' });
             

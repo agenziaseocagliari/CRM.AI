@@ -77,6 +77,8 @@ export interface OrganizationSettings {
     id: string; // UUID
     organization_id: string;
     brevo_api_key: string | null;
+    twilio_account_sid: string | null;
+    twilio_auth_token: string | null;
     created_at: string;
     updated_at: string;
 }

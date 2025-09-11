@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Contact } from '../types';
-import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon, UploadIcon } from './ui/icons';
+import { SearchIcon, SparklesIcon, PlusIcon, EditIcon, TrashIcon, UploadIcon, WhatsAppIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
@@ -16,16 +16,21 @@ export const Contacts: React.FC = () => {
 
   // Modals state
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isImportModalOpen, setImportModalOpen] = useState(false);
 
-  // AI Email state
+  // AI Generation state
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [emailPrompt, setEmailPrompt] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [whatsAppPrompt, setWhatsAppPrompt] = useState('');
+  const [generatedWhatsAppMessage, setGeneratedWhatsAppMessage] = useState('');
+  const [isGeneratingWhatsApp, setIsGeneratingWhatsApp] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   
   // Add Contact state
   const [newContact, setNewContact] = useState({ name: '', email: '', company: '', phone: '' });
@@ -47,6 +52,13 @@ export const Contacts: React.FC = () => {
     setIsEmailModalOpen(true);
     setGeneratedEmail('');
     setEmailPrompt('');
+  };
+
+  const handleOpenWhatsAppModal = (contact: Contact) => {
+    setSelectedContact(contact);
+    setIsWhatsAppModalOpen(true);
+    setGeneratedWhatsAppMessage('');
+    setWhatsAppPrompt('');
   };
 
   const handleOpenAddModal = () => {
@@ -71,6 +83,7 @@ export const Contacts: React.FC = () => {
 
   const handleCloseModals = () => {
     setIsEmailModalOpen(false);
+    setIsWhatsAppModalOpen(false);
     setAddModalOpen(false);
     setEditModalOpen(false);
     setDeleteModalOpen(false);
@@ -106,6 +119,67 @@ export const Contacts: React.FC = () => {
       setIsGenerating(false);
     }
   };
+
+  const handleGenerateWhatsAppMessage = async () => {
+    if (!whatsAppPrompt || !selectedContact) {
+      toast.error("Per favore, fornisci un obiettivo per il messaggio.");
+      return;
+    }
+    setIsGeneratingWhatsApp(true);
+    setGeneratedWhatsAppMessage('');
+    
+    const toastId = toast.loading('Generazione messaggio in corso...');
+    try {
+        const { data, error: invokeError } = await supabase.functions.invoke('generate-whatsapp-message', {
+            body: { prompt: whatsAppPrompt, contact: selectedContact },
+        });
+
+        if (invokeError) throw new Error(`Errore di rete: ${invokeError.message}`);
+        if (data.error) throw new Error(data.error);
+      
+        setGeneratedWhatsAppMessage(data.message);
+        toast.success('Messaggio generato con successo!', { id: toastId });
+
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Impossibile generare il messaggio: ${err.message}.`, { id: toastId });
+    } finally {
+      setIsGeneratingWhatsApp(false);
+    }
+  };
+  
+  const handleSendWhatsAppMessage = async () => {
+    if (!selectedContact || !organization || !generatedWhatsAppMessage) return;
+
+    let targetPhone = selectedContact.phone.replace(/[\s-]/g, ''); // Rimuove spazi e trattini
+    if (!targetPhone.startsWith('+')) {
+        targetPhone = `+39${targetPhone}`;
+    }
+
+    setIsSending(true);
+    const toastId = toast.loading('Invio messaggio in corso...');
+
+    try {
+        const { data, error: invokeError } = await supabase.functions.invoke('send-whatsapp-message', {
+            body: {
+                contact_phone: targetPhone,
+                message: generatedWhatsAppMessage,
+                organization_id: organization.id
+            },
+        });
+
+        if (invokeError) throw new Error(`Errore di rete: ${invokeError.message}`);
+        if (data.error) throw new Error(data.error);
+
+        toast.success(`Messaggio inviato a ${selectedContact.name}!`, { id: toastId });
+        handleCloseModals();
+
+    } catch (err: any) {
+        toast.error(`Impossibile inviare: ${err.message}`, { id: toastId });
+    } finally {
+        setIsSending(false);
+    }
+};
   
   const handleAddNewContact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -365,7 +439,10 @@ export const Contacts: React.FC = () => {
                         <button onClick={() => handleOpenDeleteModal(contact)} title="Elimina Contatto" className="text-gray-500 hover:text-red-600">
                             <TrashIcon className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleOpenEmailModal(contact)} title="Email con AI" className="text-gray-500 hover:text-primary flex items-center">
+                        <button onClick={() => handleOpenWhatsAppModal(contact)} title="WhatsApp con AI" className="text-green-600 hover:text-green-800">
+                            <WhatsAppIcon className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => handleOpenEmailModal(contact)} title="Email con AI" className="text-gray-500 hover:text-primary">
                             <SparklesIcon className="w-5 h-5" />
                         </button>
                     </div>
@@ -409,6 +486,50 @@ export const Contacts: React.FC = () => {
             )}
         </div>
       </Modal>
+
+      {/* Modal per Generazione Messaggio WhatsApp */}
+        <Modal isOpen={isWhatsAppModalOpen} onClose={handleCloseModals} title={`Messaggio WhatsApp per ${selectedContact?.name}`}>
+            <div className="space-y-4">
+                <div>
+                    <label htmlFor="whatsapp-prompt" className="block text-sm font-medium text-gray-700">Obiettivo del Messaggio</label>
+                    <input
+                        type="text" id="whatsapp-prompt" value={whatsAppPrompt}
+                        onChange={(e) => setWhatsAppPrompt(e.target.value)}
+                        placeholder="Es: Ricorda appuntamento di domani alle 10"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                    />
+                </div>
+                <div className="flex justify-end">
+                    <button
+                        onClick={handleGenerateWhatsAppMessage} disabled={isGeneratingWhatsApp}
+                        className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 flex items-center"
+                    >
+                        {isGeneratingWhatsApp ? 'Generazione...' : 'Genera Messaggio'}
+                    </button>
+                </div>
+                {generatedWhatsAppMessage && (
+                    <>
+                        <div>
+                            <label htmlFor="generated-whatsapp" className="block text-sm font-medium text-gray-700">Messaggio Generato</label>
+                            <textarea
+                                id="generated-whatsapp" rows={5} value={generatedWhatsAppMessage}
+                                onChange={(e) => setGeneratedWhatsAppMessage(e.target.value)}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                            />
+                        </div>
+                        <div className="flex justify-end pt-4 border-t mt-4">
+                            <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
+                                Annulla
+                            </button>
+                            <button onClick={handleSendWhatsAppMessage} disabled={isSending} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2 disabled:bg-gray-400">
+                                <WhatsAppIcon className="w-5 h-5" />
+                                <span>{isSending ? 'Invio in corso...' : 'Invia Messaggio'}</span>
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </Modal>
 
       {/* Modal per Aggiungere Contatto */}
       <Modal isOpen={isAddModalOpen} onClose={handleCloseModals} title="Aggiungi Nuovo Contatto">

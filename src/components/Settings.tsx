@@ -16,7 +16,8 @@ export const Settings: React.FC = () => {
     const { organization, organizationSettings, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
     
     const [brevoApiKey, setBrevoApiKey] = useState('');
-    const [whatsappApiKey, setWhatsappApiKey] = useState(''); // Placeholder
+    const [twilioAccountSid, setTwilioAccountSid] = useState('');
+    const [twilioAuthToken, setTwilioAuthToken] = useState('');
     
     const [isSaving, setIsSaving] = useState(false);
 
@@ -24,7 +25,8 @@ export const Settings: React.FC = () => {
     useEffect(() => {
         if (organizationSettings) {
             setBrevoApiKey(organizationSettings.brevo_api_key || '');
-            // Imposta qui anche le altre chiavi API quando le aggiungeremo
+            setTwilioAccountSid(organizationSettings.twilio_account_sid || '');
+            setTwilioAuthToken(organizationSettings.twilio_auth_token || '');
         }
     }, [organizationSettings]);
 
@@ -45,7 +47,8 @@ export const Settings: React.FC = () => {
                 .upsert({
                     organization_id: organization.id,
                     brevo_api_key: brevoApiKey,
-                    // Aggiungi qui altre chiavi API quando necessario
+                    twilio_account_sid: twilioAccountSid,
+                    twilio_auth_token: twilioAuthToken,
                 }, { onConflict: 'organization_id' });
             
             if (error) throw error;
@@ -90,6 +93,37 @@ export const Settings: React.FC = () => {
                 </IntegrationCard>
 
                 <IntegrationCard
+                    title="Comunicazione WhatsApp con Twilio"
+                    description="Connetti il tuo account Twilio per inviare messaggi WhatsApp tramite la loro API. Inserisci il tuo Account SID e l'Auth Token."
+                >
+                     <div>
+                        <label htmlFor="twilioAccountSid" className="block text-sm font-medium text-gray-700">Twilio Account SID</label>
+                        <input 
+                            type="password" 
+                            id="twilioAccountSid" 
+                            value={twilioAccountSid}
+                            onChange={(e) => setTwilioAccountSid(e.target.value)}
+                            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="twilioAuthToken" className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
+                        <input 
+                            type="password" 
+                            id="twilioAuthToken" 
+                            value={twilioAuthToken}
+                            onChange={(e) => setTwilioAuthToken(e.target.value)}
+                            placeholder="Nascondi e salva in modo sicuro"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                        />
+                         <p className="mt-2 text-xs text-gray-500">
+                           Puoi trovare entrambi nella dashboard principale del tuo account Twilio.
+                        </p>
+                    </div>
+                </IntegrationCard>
+
+                <IntegrationCard
                     title="Integrazione Calendario Google"
                     description="Collega il tuo account Google per permettere agli agenti di leggere la tua disponibilità e creare eventi."
                 >
@@ -106,23 +140,6 @@ export const Settings: React.FC = () => {
                          <p className="mt-2 text-xs text-gray-500">
                            Questa integrazione richiederà l'autenticazione tramite Google OAuth.
                         </p>
-                    </div>
-                </IntegrationCard>
-
-                 <IntegrationCard
-                    title="Comunicazione con WhatsApp"
-                    description="Connetti la tua API di WhatsApp Business per inviare messaggi e notifiche direttamente ai tuoi contatti."
-                >
-                     <div>
-                        <label htmlFor="whatsappApiKey" className="block text-sm font-medium text-gray-700">WhatsApp API Key</label>
-                        <input 
-                            type="password" 
-                            id="whatsappApiKey" 
-                            value={whatsappApiKey}
-                            onChange={(e) => setWhatsappApiKey(e.target.value)}
-                            placeholder="••••••••••••••••••••••••••••••••"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                        />
                     </div>
                 </IntegrationCard>
 

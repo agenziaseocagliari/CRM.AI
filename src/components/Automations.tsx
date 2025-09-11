@@ -1,92 +1,103 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SparklesIcon, PlusIcon } from './ui/icons';
+import { SparklesIcon, UserCircleIcon } from './ui/icons';
 
-// Esempio di dati per un template di automazione
-const automationTemplates = [
-    {
-        title: "Benvenuto Nuovo Lead",
-        description: "Quando un contatto viene creato da un form, invia un'email di benvenuto e una notifica al team di vendita.",
-        tags: ["Onboarding", "Email", "Notifiche"],
-        comingSoon: false,
-    },
-    {
-        title: "Scoring Lead AI",
-        description: "Analizza automaticamente ogni nuovo contatto con l'AI per assegnare uno score e qualificarlo come Hot, Warm o Cold.",
-        tags: ["Lead Scoring", "AI", "Qualificazione"],
-        comingSoon: false,
-    },
-    {
-        title: "Sincronizzazione Calendario",
-        description: "Quando un'opportunità entra nello stadio 'Proposal Sent', crea un evento nel calendario per il follow-up.",
-        tags: ["Calendario", "Produttività"],
-        comingSoon: true,
-    },
-    {
-        title: "Notifica WhatsApp per Lead 'Hot'",
-        description: "Invia un messaggio WhatsApp istantaneo al team quando un lead viene qualificato come 'Hot' dall'AI.",
-        tags: ["WhatsApp", "Vendite", "Notifiche"],
-        comingSoon: true,
-    }
-];
-
-const AutomationCard: React.FC<{ title: string; description: string; tags: string[]; comingSoon: boolean }> = ({ title, description, tags, comingSoon }) => (
-    <div className="bg-white p-6 rounded-lg shadow border flex flex-col justify-between relative overflow-hidden">
-        {comingSoon && (
-            <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-bl-lg">
-                IN ARRIVO
-            </div>
-        )}
-        <div>
-            <h3 className="font-bold text-lg text-text-primary mb-2">{title}</h3>
-            <p className="text-sm text-text-secondary mb-4 h-20">{description}</p>
-            <div className="flex flex-wrap gap-2 mb-4">
-                {tags.map(tag => (
-                    <span key={tag} className="bg-indigo-100 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full">{tag}</span>
-                ))}
-            </div>
-        </div>
-        <div className="flex justify-end pt-4 border-t">
-            <button 
-                disabled={comingSoon}
-                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-                <PlusIcon className="w-5 h-5" />
-                <span>{comingSoon ? 'Prossimamente' : 'Attiva Automazione'}</span>
-            </button>
-        </div>
-    </div>
-);
-
+interface ChatMessage {
+    sender: 'user' | 'ai';
+    text: string;
+}
 
 export const Automations: React.FC = () => {
     const navigate = useNavigate();
+    const [messages, setMessages] = useState<ChatMessage[]>([
+        {
+            sender: 'ai',
+            text: "Ciao! Sono il tuo Agente AI. Descrivi l'automazione che vuoi creare. Ad esempio: 'Quando un nuovo lead si registra dal form Contatti, inviagli un'email di benvenuto'."
+        }
+    ]);
+    const [input, setInput] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleSendMessage = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || isProcessing) return;
+
+        const newMessages: ChatMessage[] = [...messages, { sender: 'user', text: input }];
+        setMessages(newMessages);
+        setInput('');
+        setIsProcessing(true);
+
+        // Simula la risposta dell'AI
+        setTimeout(() => {
+            setMessages([
+                ...newMessages,
+                { sender: 'ai', text: `Perfetto, ho capito. Sto impostando un'automazione per: "${input}". Potrebbe volerci un momento...` }
+            ]);
+            setIsProcessing(false);
+        }, 1500);
+    };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-text-primary">Catalogo Automazioni</h1>
-                 <button onClick={() => navigate('/settings')} className="text-primary hover:text-indigo-800 font-medium">
+        <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-3xl font-bold text-text-primary">Parla con il tuo Agente AI</h1>
+                <button onClick={() => navigate('/settings')} className="text-primary hover:text-indigo-800 font-medium">
                     Configura le tue integrazioni &rarr;
                 </button>
             </div>
-
-            <div className="bg-card p-6 rounded-lg shadow text-center border-2 border-dashed border-gray-200">
-                <div className="mx-auto bg-indigo-100 rounded-full w-16 h-16 flex items-center justify-center">
-                    <SparklesIcon className="w-8 h-8 text-primary" />
+            
+            <div className="flex-grow bg-white rounded-lg shadow p-4 flex flex-col">
+                {/* Chat history */}
+                <div className="flex-grow space-y-4 overflow-y-auto pr-2">
+                    {messages.map((msg, index) => (
+                        <div key={index} className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+                            {msg.sender === 'ai' && (
+                                <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                    <SparklesIcon className="w-5 h-5" />
+                                </div>
+                            )}
+                            <div className={`p-3 rounded-lg max-w-lg ${msg.sender === 'ai' ? 'bg-gray-100 text-text-primary' : 'bg-primary text-white'}`}>
+                                <p className="text-sm">{msg.text}</p>
+                            </div>
+                             {msg.sender === 'user' && (
+                                <div className="w-8 h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <UserCircleIcon className="w-6 h-6" />
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {isProcessing && (
+                         <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                <SparklesIcon className="w-5 h-5 animate-pulse" />
+                            </div>
+                            <div className="p-3 rounded-lg bg-gray-100 text-text-primary">
+                                <p className="text-sm italic">L'agente sta pensando...</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <h2 className="mt-4 text-2xl font-semibold text-text-primary">
-                    Il tuo CRM, con i superpoteri.
-                </h2>
-                <p className="mt-2 text-text-secondary max-w-3xl mx-auto">
-                   Scegli un'automazione dal nostro catalogo, attivala con un click e lascia che il CRM lavori per te. Per iniziare, assicurati di aver inserito le tue credenziali API nella pagina delle impostazioni.
-                </p>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {automationTemplates.map(template => (
-                    <AutomationCard key={template.title} {...template} />
-                ))}
+                {/* Chat input */}
+                <div className="mt-4 pt-4 border-t">
+                    <form onSubmit={handleSendMessage} className="relative">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Scrivi qui la tua richiesta..."
+                            className="w-full pl-4 pr-28 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            disabled={isProcessing}
+                        />
+                        <button
+                            type="submit"
+                            disabled={isProcessing || !input.trim()}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-gray-300"
+                        >
+                            Invia
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     );

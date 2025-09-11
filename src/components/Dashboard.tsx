@@ -10,8 +10,8 @@ import { useCrmData } from '../hooks/useCrmData';
 export const Dashboard: React.FC = () => {
   const { opportunities, contacts } = useOutletContext<ReturnType<typeof useCrmData>>();
 
-  // FIX: The initial value for `reduce` was `[]`, which TypeScript infers as `never[]`. This caused a type error for the accumulator. By casting the initial value to `Opportunity[]`, we ensure the type is correctly inferred.
-  const allOpportunities: Opportunity[] = Object.values(opportunities).reduce((acc, val) => acc.concat(val), [] as Opportunity[]);
+  // FIX: The `reduce` method with an initial value was causing type inference issues. Replaced with `flat()` for a more robust and readable way to flatten the nested opportunities array.
+  const allOpportunities: Opportunity[] = Object.values(opportunities).flat();
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   
   // Calcolo dinamico basato sui contatti totali, non solo sui lead.

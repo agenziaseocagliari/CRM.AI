@@ -52,18 +52,26 @@ export const Automations: React.FC = () => {
                 body: { prompt },
             });
 
-            if (error) throw new Error(`Errore di rete o funzione: ${error.message}`);
-            
-            const responseData = data as ActivationErrorResponse | ActivationSuccessResponse;
-
-            if ('error' in responseData) {
-                const errorMessage = responseData.diag?.hint 
-                    ? `${responseData.error} (Suggerimento: ${responseData.diag.hint})`
-                    : responseData.error;
-                throw new Error(errorMessage);
+            if (error) {
+                // L'oggetto errore potrebbe contenere una risposta più dettagliata.
+                // Supabase incapsula gli errori HTTP in un FunctionsHttpError con una proprietà `context`.
+                // Controlliamo la sua esistenza ed estraiamo il messaggio dettagliato.
+                const context = (error as any).context;
+                if (context && typeof context === 'object' && context.error) {
+                    const detailedError = context as ActivationErrorResponse;
+                    // FIX: Removed a stray "-" character that was causing a syntax error and a type error.
+                    const errorMessage = detailedError.diag?.hint 
+                        ? `${detailedError.error} (Suggerimento: ${detailedError.diag.hint})`
+                        : detailedError.error;
+                    throw new Error(errorMessage);
+                }
+                
+                // Fallback per altri tipi di errori (es. problemi di rete)
+                throw new Error(`Errore di rete o funzione: ${error.message}`);
             }
             
-            setActivationResult(responseData as ActivationSuccessResponse);
+            // In caso di successo, 'data' sarà popolato.
+            setActivationResult(data as ActivationSuccessResponse);
             toast.success('Workflow attivato con successo su N8N!');
 
         } catch (err: any) {

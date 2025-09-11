@@ -1,4 +1,4 @@
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1" />
+/// <reference types="https://esm.sh/@supabase/functions-js@2" />
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../shared/cors.ts";

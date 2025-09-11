@@ -1,5 +1,6 @@
 // FIX: Added a valid Supabase edge-runtime type reference to resolve Deno type errors.
-/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference URL to use a reliable CDN (esm.sh) to resolve Deno type errors.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../shared/cors.ts";

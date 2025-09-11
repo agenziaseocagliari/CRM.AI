@@ -1,5 +1,5 @@
-// FIX: Corrected the Supabase edge-runtime type reference to point to the 'dist' directory, resolving issues with finding type definitions and the 'Deno' global.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/dist/edge-runtime.d.ts" />
+// FIX: Corrected the Supabase edge-runtime type reference to point to the 'src' directory, which is the expected path for type definitions and resolves the missing 'Deno' global.
+/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, Type, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";

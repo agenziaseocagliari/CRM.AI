@@ -62,3 +62,12 @@ export interface Form {
   fields: FormField[];
   created_at: string;
 }
+
+// Tipi per la nuova funzionalità Automations
+export interface Automation {
+  id: string; // UUID
+  organization_id: string;
+  name: string;
+  description: string;
+  created_at: string;
+}

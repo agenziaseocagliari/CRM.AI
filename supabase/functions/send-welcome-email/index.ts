@@ -1,4 +1,5 @@
-// Rinominare questo file in "send-welcome-email/index.ts" o rinominare la funzione in Supabase
+// File: supabase/functions/send-welcome-email/index.ts
+
 // FIX: Explicitly declare the Deno global type to resolve "Cannot find name 'Deno'"
 // and "Cannot find lib definition for 'deno.ns'" errors in environments
 // where Deno's standard libraries are not automatically recognized.
@@ -12,17 +13,27 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
 
-// --- Gestione CORS Integrata ---
-export const corsHeaders = {
+// --- CORS Handling (inlined to fix deployment error) ---
+const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Max-Age": "86400"
 };
 
-serve(async (req) => {
-  // Gestione delle richieste preflight (OPTIONS)
+function handleCors(req: Request): Response | null {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+  return null;
+}
+// --- End of CORS Handling ---
+
+
+serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
   }
 
   try {
@@ -67,11 +78,11 @@ serve(async (req) => {
     // 5. Usa Gemini per generare un'email di benvenuto personalizzata
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const emailGenPrompt = `
-      Scrivi un corpo email di benvenuto caloroso e professionale per un nuovo contatto.
+      Scrivi un corpo email di benvenuto caloroso e professionale per un nuovo contatto che si è appena iscritto.
       Il nome del contatto è ${newContact.name}.
-      Sii conciso e amichevole.
+      Sii conciso, amichevole e concludi invitando a rispondere in caso di domande.
       Inizia direttamente con il saluto (es. "Ciao ${newContact.name},").
-      Non includere una riga per l'oggetto.
+      **Non includere assolutamente una riga per l'oggetto (tipo "Oggetto: ..."). Scrivi solo il corpo del testo.**
     `;
     const response: GenerateContentResponse = await ai.models.generateContent({
         model: "gemini-2.5-flash",
@@ -91,7 +102,7 @@ serve(async (req) => {
             // IMPORTANTE: Cambia l'email del mittente con una tua email verificata su Brevo
             sender: { name: "Il Team di Guardian AI", email: "contatto@seo-cagliari.it" },
             to: [{ email: newContact.email, name: newContact.name }],
-            subject: "Benvenuto a bordo!",
+            subject: `Benvenuto in Guardian AI, ${newContact.name}!`,
             htmlContent: `<p>${emailBody.replace(/\n/g, '<br>')}</p>`,
         }),
     });

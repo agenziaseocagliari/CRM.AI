@@ -6,7 +6,7 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-import { handleCors, corsHeaders } from "../shared/cors.ts";
+import { handleCors, corsHeaders } from "shared/cors.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -33,9 +33,50 @@ serve(async (req) => {
     }
 
     const tokenData = JSON.parse(settings.google_auth_token);
-    const accessToken = tokenData.access_token;
+    let accessToken = tokenData.access_token;
     
-    // 2. Prepara i dati dell'evento per l'API di Google Calendar
+    // 2. Controlla se il token è scaduto e usa il refresh token se necessario
+    const expiryDate = new Date(tokenData.expiry_date);
+    if (new Date() > expiryDate) {
+        console.log("Token di accesso scaduto. Richiesta di uno nuovo...");
+        const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
+        const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
+        if (!clientId || !clientSecret) throw new Error("Mancano le credenziali Google per il refresh del token.");
+
+        const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                refresh_token: tokenData.refresh_token,
+                grant_type: 'refresh_token'
+            })
+        });
+
+        if (!tokenResponse.ok) {
+            const errorBody = await tokenResponse.json();
+            console.error("Errore durante il refresh del token Google:", errorBody);
+            throw new Error("Impossibile aggiornare il token di accesso. Prova a disconnettere e riconnettere il tuo account Google.");
+        }
+
+        const newTokens = await tokenResponse.json();
+        accessToken = newTokens.access_token; // Aggiorna l'access token da usare
+        
+        // Aggiorna i nuovi token nel database
+        const newTokenData = {
+            ...tokenData,
+            access_token: accessToken,
+            expiry_date: new Date(Date.now() + newTokens.expires_in * 1000).toISOString(),
+        };
+
+        await supabaseAdmin
+            .from('organization_settings')
+            .update({ google_auth_token: JSON.stringify(newTokenData) })
+            .eq('organization_id', organization_id);
+    }
+    
+    // 3. Prepara i dati dell'evento per l'API di Google Calendar
     const startDateTime = new Date(`${eventDetails.date}T${eventDetails.time}:00`).toISOString();
     const endDateTime = new Date(new Date(startDateTime).getTime() + eventDetails.duration * 60000).toISOString();
 
@@ -60,13 +101,13 @@ serve(async (req) => {
                     type: 'hangoutsMeet'
                 }
             }
-        } : undefined, // Usa undefined invece di null
+        } : undefined,
         reminders: {
             useDefault: true,
         },
     };
 
-    // 3. Chiama l'API di Google Calendar
+    // 4. Chiama l'API di Google Calendar
     const googleApiUrl = "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all";
 
     const response = await fetch(googleApiUrl, {

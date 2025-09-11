@@ -1,5 +1,5 @@
-// FIX: Corrected the Supabase edge-runtime type reference to point to the 'src' directory, which is the expected path for type definitions and resolves the missing 'Deno' global.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Changed the type reference to use the 'npm:' specifier for better Deno compatibility, which should resolve the 'Deno' global type error.
+/// <reference types="npm:@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
@@ -54,10 +54,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Errore nella funzione process-automation-request:", error);
+    // FIX: Changed status code from 500 to 200.
+    // The Supabase client library treats non-200 responses as network-level
+    // errors, which prevents the frontend from receiving the actual error message
+    // in the JSON payload. By always returning 200 and including an `error`
+    // property in the body, we ensure the client-side logic can correctly
+    // parse and display the specific error.
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      // Return a 500 status code for server-side errors
-      status: 500, 
+      status: 200, 
     });
   }
 });

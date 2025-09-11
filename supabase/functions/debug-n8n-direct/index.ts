@@ -1,5 +1,5 @@
-// FIX: Updated the Supabase edge-runtime type reference to use esm.sh, which is more reliable for Deno type definitions, resolving errors where the type file could not be found and the 'Deno' global was unrecognized.
-/// <reference types="https://esm.sh/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
+// FIX: Updated the Supabase edge-runtime type reference to use unpkg.com, which can be more reliable for Deno type definitions, resolving errors where the type file could not be found and the 'Deno' global was unrecognized.
+/// <reference types="https://unpkg.com/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../shared/cors.ts";

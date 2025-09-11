@@ -93,8 +93,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Errore nella funzione score-contact-lead:", error);
+    // FIX: Changed status code from 500 to 200 for consistent error handling.
+    // This ensures the calling service can read the specific error message from the body.
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

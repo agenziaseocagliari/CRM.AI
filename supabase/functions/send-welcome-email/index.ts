@@ -124,9 +124,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Errore nella funzione send-welcome-email:", error);
+    // FIX: Changed status code from 500 to 200.
+    // The Supabase client library treats non-200 responses as network-level
+    // errors, which prevents the frontend from receiving the actual error message
+    // in the JSON payload. By always returning 200 and including an `error`
+    // property in the body, we ensure the client-side logic can correctly
+    // parse and display the specific error.
     return new Response(JSON.stringify({ error: error.message }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: 200,
     });
   }
 });

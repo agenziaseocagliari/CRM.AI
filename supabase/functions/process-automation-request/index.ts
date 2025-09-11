@@ -1,31 +1,15 @@
-// FIX: Explicitly declare the Deno global type to resolve "Cannot find name 'Deno'"
-// and "Cannot find lib definition for 'deno.ns'" errors in environments
-// where Deno's standard libraries are not automatically recognized.
+// File: supabase/functions/process-automation-request/index.ts
+
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
 };
+
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
-
-// --- CORS Handling (inlined to fix deployment error) ---
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Max-Age": "86400"
-};
-
-function handleCors(req: Request): Response | null {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-  return null;
-}
-// --- End of CORS Handling ---
-
+import { corsHeaders, handleCors } from '../shared/cors.ts';
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -76,12 +60,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Errore nella funzione process-automation-request:", error);
-    // FIX: Changed status code from 500 to 200.
-    // The Supabase client library treats non-200 responses as network-level
-    // errors, which prevents the frontend from receiving the actual error message
-    // in the JSON payload. By always returning 200 and including an `error`
-    // property in the body, we ensure the client-side logic can correctly
-    // parse and display the specific error.
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200, 

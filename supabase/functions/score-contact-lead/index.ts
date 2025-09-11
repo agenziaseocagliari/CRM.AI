@@ -1,28 +1,21 @@
 // File: supabase/functions/score-contact-lead/index.ts
 
-// FIX: Explicitly declare the Deno global type to resolve "Cannot find name 'Deno'"
-// and "Cannot find lib definition for 'deno.ns'" errors in environments
-// where Deno's standard libraries are not automatically recognized.
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
 };
+
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Max-Age": "86400"
-};
+import { corsHeaders, handleCors } from '../shared/cors.ts';
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
   }
 
   try {
@@ -91,12 +84,11 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true, message: `Contatto ${contact.id} valutato.` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
     });
 
   } catch (error) {
     console.error("Errore nella funzione score-contact-lead:", error);
-    // FIX: Changed status code from 500 to 200 for consistent error handling.
-    // This ensures the calling service can read the specific error message from the body.
     return new Response(JSON.stringify({ error: error.message }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

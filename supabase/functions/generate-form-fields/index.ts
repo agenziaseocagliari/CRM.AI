@@ -1,8 +1,5 @@
 // File: supabase/functions/generate-form-fields/index.ts
 
-// FIX: Explicitly declare the Deno global type to resolve "Cannot find name 'Deno'"
-// and "Cannot find lib definition for 'deno.ns'" errors in environments
-// where Deno's standard libraries are not automatically recognized.
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
@@ -11,22 +8,7 @@ declare const Deno: {
 // @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
-
-// --- CORS Handling (inlined to fix deployment error) ---
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Max-Age": "86400"
-};
-
-function handleCors(req: Request): Response | null {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-  return null;
-}
-// --- End of CORS Handling ---
+import { corsHeaders, handleCors } from '../shared/cors.ts';
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -50,7 +32,6 @@ serve(async (req) => {
 
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
-    // Definisce la struttura JSON che ci aspettiamo da Gemini
     const schema = {
         type: Type.OBJECT,
         properties: {
@@ -103,7 +84,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Errore nella funzione generate-form-fields:", error);
-    // Restituiamo 200 con un errore nel corpo per permettere al client Supabase di leggerlo
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

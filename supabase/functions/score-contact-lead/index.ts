@@ -93,7 +93,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Errore nella funzione score-contact-lead:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 200,
+      status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

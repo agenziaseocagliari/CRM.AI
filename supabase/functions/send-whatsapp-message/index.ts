@@ -82,7 +82,7 @@ serve(async (req) => {
     console.error("Errore nella funzione send-whatsapp-message:", error);
     return new Response(JSON.stringify({ error: error.message }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        status: 500,
     });
   }
 });

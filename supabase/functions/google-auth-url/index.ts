@@ -19,14 +19,16 @@ serve(async (req) => {
 
   try {
     const { state } = await req.json();
-    if (!state) throw new Error("Il parametro 'state' è obbligatorio per la protezione CSRF.");
+    if (!state) {
+      throw new Error("Il parametro 'state' è obbligatorio per la protezione CSRF.");
+    }
     
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
     const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
 
     if (!clientId || !clientSecret || !redirectUri) {
-        throw new Error("Mancano le variabili d'ambiente di Google (CLIENT_ID, CLIENT_SECRET, REDIRECT_URI).");
+        throw new Error("Mancano le variabili d'ambiente di Google (CLIENT_ID, CLIENT_SECRET, REDIRECT_URI). Controlla i secrets della funzione in Supabase.");
     }
 
     const oauth2Client = new OAuth2Client({
@@ -40,27 +42,32 @@ serve(async (req) => {
         },
     });
 
-    const authUrl = oauth2Client.code.getAuthorizationUri({
+    const authUri = oauth2Client.code.getAuthorizationUri({
       state,
       accessType: "offline",
       prompt: "consent", 
     });
     
-    // FIX: Replaced instanceof check with a more robust check on the .href property to prevent '[object Object]' errors.
-    if (!authUrl || typeof authUrl.href !== 'string') {
-        console.error("getAuthorizationUri non ha restituito un oggetto URL-like. Risposta ricevuta:", authUrl);
-        throw new Error("Impossibile generare l'URL di autorizzazione. Controlla che i secrets GOOGLE_CLIENT_ID e GOOGLE_REDIRECT_URI siano corretti e ri-distribuisci la funzione.");
+    // Correzione definitiva: Assicuriamoci che l'URL sia una stringa prima di inviarlo.
+    // Il metodo .href di un oggetto URL restituisce la stringa completa.
+    const urlString = authUri.href;
+
+    // Aggiungiamo un controllo di sicurezza per garantire che l'URL sia valido.
+    if (typeof urlString !== 'string' || !urlString.startsWith("https://accounts.google.com")) {
+        console.error("Generazione URL fallita. Risultato inatteso:", authUri);
+        throw new Error("Impossibile generare l'URL di autorizzazione. L'oggetto restituito dalla libreria non era un URL valido.");
     }
 
-    return new Response(JSON.stringify({ url: authUrl.href }), {
+    return new Response(JSON.stringify({ url: urlString }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Errore in google-auth-url:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Errore critico in google-auth-url:", error.message);
+    // Usiamo uno status 500 per gli errori, che è una pratica migliore.
+    return new Response(JSON.stringify({ error: `Errore interno del server: ${error.message}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      status: 500, 
     });
   }
 });

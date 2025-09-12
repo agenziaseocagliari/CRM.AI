@@ -9,7 +9,7 @@ export const GoogleAuthCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
-    const [message, setMessage] = useState('Autenticazione in corso...');
+    const [message] = useState('Autenticazione in corso...');
     const { organization } = useCrmData();
 
     useEffect(() => {

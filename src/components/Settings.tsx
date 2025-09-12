@@ -3,80 +3,150 @@ import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
-import { GoogleIcon } from './ui/icons';
+import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons'; // Aggiunta icona di successo
+
+// --- OTTIMIZZAZIONE: Componente Helper per UI di Stato ---
+// Questo componente gestisce la visualizzazione dello stato (caricamento, errore, successo)
+// per mantenere il componente GoogleAuthCallback più pulito e focalizzato sulla logica.
+const AuthStatusDisplay: React.FC<{
+    status: 'loading' | 'success' | 'error';
+    message: string;
+    onRetry?: () => void;
+}> = ({ status, message, onRetry }) => {
+    
+    const renderIcon = () => {
+        switch (status) {
+            case 'loading':
+                return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>;
+            case 'success':
+                return <CheckCircleIcon className="w-16 h-16 text-green-500" />;
+            case 'error':
+                 // Usiamo l'icona dell'app per gli errori, per coerenza del brand
+                return <GuardianIcon className="w-16 h-16 text-red-500" />;
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="flex items-center justify-center h-screen bg-gray-50">
+            <div className="text-center p-8 bg-white shadow-lg rounded-lg max-w-md w-full">
+                <div className="mx-auto flex items-center justify-center h-16 w-16">
+                   {renderIcon()}
+                </div>
+                <h2 className="mt-4 text-xl font-semibold text-gray-800">
+                    {status === 'loading' && 'Connessione in corso...'}
+                    {status === 'success' && 'Successo!'}
+                    {status === 'error' && 'Si è verificato un problema'}
+                </h2>
+                <p className={`mt-2 text-gray-600 ${status === 'error' ? 'text-red-600' : ''}`}>
+                    {message}
+                </p>
+                {status === 'error' && onRetry && (
+                    <button onClick={onRetry} className="mt-6 bg-primary text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo-700">
+                        Torna alle Impostazioni
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 export const GoogleAuthCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [error, setError] = useState<string | null>(null);
-    const [status, setStatus] = useState('Avvio dell\'autenticazione...');
     const { organization, loading: crmLoading } = useCrmData(); 
+    
+    // OTTIMIZZAZIONE: Stato strutturato per gestire UI e messaggi in modo pulito.
+    const [authState, setAuthState] = useState<{
+        status: 'loading' | 'success' | 'error';
+        message: string;
+    }>({
+        status: 'loading',
+        message: 'Caricamento delle informazioni dell\'account...',
+    });
+    
+    // OTTIMIZZAZIONE: useRef per prevenire esecuzioni multiple della logica di autenticazione.
     const exchangeAttempted = useRef(false);
 
     useEffect(() => {
+        // Log iniziale al montaggio del componente
         console.log('[GoogleAuthCallback] Componente montato.');
 
         if (crmLoading) {
-            console.log('[GoogleAuthCallback] In attesa del caricamento dei dati CRM...');
-            setStatus('Caricamento informazioni utente...');
-            return;
+            console.log('[GoogleAuthCallback] In attesa dei dati CRM...');
+            return; // Attende che i dati dell'organizzazione siano caricati
         }
 
         if (exchangeAttempted.current) {
-            console.log('[GoogleAuthCallback] Lo scambio è già stato tentato. Annullamento.');
-            return;
+            console.warn('[GoogleAuthCallback] Tentativo di scambio già eseguito. Annullamento.');
+            return; // Previene riesecuzioni
         }
-        exchangeAttempted.current = true;
+        exchangeAttempted.current = true; // Marca il tentativo come eseguito
 
         const exchangeCodeForToken = async () => {
             console.log('[GoogleAuthCallback] Avvio del processo di scambio del token.');
-            setStatus('Verifica dell\'autenticazione...');
+            setAuthState({ status: 'loading', message: 'Verifica dell\'autenticazione...' });
             
+            // --- OTTIMIZZAZIONE: Validazione robusta dello stato CSRF ---
             const code = searchParams.get('code');
             const state = searchParams.get('state');
             const storedState = localStorage.getItem('oauth_state');
             
-            console.log(`[GoogleAuthCallback] Codice recuperato: ${code ? 'OK' : 'MANCANTE'}, stato: ${state ? 'OK' : 'MANCANTE'}`);
+            console.log(`[GoogleAuthCallback] Parametri ricevuti - code: ${code ? 'OK' : 'MANCANTE'}, state: ${state ? `"${state}"` : 'MANCANTE'}`);
+            console.log(`[GoogleAuthCallback] Stato salvato in localStorage: "${storedState}"`);
             
             if (!code || !state || state !== storedState) {
-                const errorMsg = 'Richiesta di autenticazione non valida o scaduta. Riprova.';
-                console.error(`[GoogleAuthCallback] Discrepanza di stato o parametri mancanti. Stato ricevuto: ${state}, Stato memorizzato: ${storedState}`);
-                setError(errorMsg);
-                setStatus(errorMsg);
+                const errorMsg = 'Richiesta di autenticazione non valida o scaduta. Per favore, torna alle impostazioni e riprova.';
+                console.error(`[GoogleAuthCallback] ERRORE: Discrepanza di stato o parametri mancanti. Processo interrotto.`);
+                setAuthState({ status: 'error', message: errorMsg });
+                localStorage.removeItem('oauth_state'); // Pulisce comunque lo state vecchio
                 return;
             }
             
+            // La validazione è andata a buon fine, puliamo lo stato
             localStorage.removeItem('oauth_state');
-            console.log('[GoogleAuthCallback] Stato validato e rimosso.');
+            console.log('[GoogleAuthCallback] Stato CSRF validato con successo e rimosso.');
 
             if (!organization) {
-                const errorMsg = "Informazioni sull'organizzazione non disponibili. Impossibile completare l'autenticazione.";
-                console.error('[GoogleAuthCallback] Dati dell\'organizzazione mancanti.');
-                setError(errorMsg);
-                setStatus(errorMsg);
+                const errorMsg = "Impossibile identificare l'organizzazione. Autenticazione fallita.";
+                console.error('[GoogleAuthCallback] ERRORE: Dati dell\'organizzazione non disponibili.');
+                setAuthState({ status: 'error', message: errorMsg });
                 return;
             }
             
-            console.log(`[GoogleAuthCallback] Organizzazione caricata: ${organization.id}. Chiamata della funzione di scambio.`);
-            setStatus('Finalizzazione della connessione...');
+            const payload = { code, organization_id: organization.id };
+            console.log('[GoogleAuthCallback] Dati pronti per l\'invocazione della funzione Supabase:', payload);
+            setAuthState({ status: 'loading', message: 'Finalizzazione della connessione sicura...' });
             
             try {
-                const { data: invokeData, error: invokeError } = await supabase.functions.invoke('google-token-exchange', {
-                    body: { code, organization_id: organization.id },
-                });
+                // --- OTTIMIZZAZIONE: Gestione del timeout esplicito di 20 secondi ---
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Timeout della richiesta dopo 20 secondi. La connessione potrebbe essere lenta.')), 20000)
+                );
 
-                if (invokeError) throw new Error(`Errore di rete/invoke: ${invokeError.message}`);
-                if (invokeData && invokeData.error) throw new Error(`Errore dalla funzione: ${invokeData.error}`);
+                const invokePromise = supabase.functions.invoke('google-token-exchange', { body: payload });
+
+                // Fa competere la chiamata API con il timeout
+                const response: any = await Promise.race([invokePromise, timeoutPromise]);
                 
-                console.log('[GoogleAuthCallback] Scambio del token riuscito.');
-                toast.success('Account Google connesso con successo!');
-                navigate('/settings');
+                // --- OTTIMIZZAZIONE: Logging trasparente della risposta ---
+                console.log('[GoogleAuthCallback] Risposta ricevuta dalla funzione:', response);
+
+                if (response.error) throw new Error(response.error.message || 'Errore di rete/invoke sconosciuto.');
+                if (response.data && response.data.error) throw new Error(response.data.error);
+                
+                // --- OTTIMIZZAZIONE: Gestione del successo con feedback e redirect ---
+                console.log('[GoogleAuthCallback] Successo! Scambio del token completato.');
+                setAuthState({ status: 'success', message: 'Account Google connesso con successo! Sarai reindirizzato a breve...' });
+                toast.success('Integrazione Google Calendar attivata!');
+                setTimeout(() => navigate('/settings'), 2500); // Redirect dopo aver mostrato il messaggio
 
             } catch (err: any) {
-                console.error('[GoogleAuthCallback] Errore durante la chiamata della funzione:', err);
-                setError(`Errore durante la connessione: ${err.message}`);
-                setStatus(`Errore: ${err.message}`);
-                toast.error(`Errore: ${err.message}`);
+                console.error('[GoogleAuthCallback] ERRORE nel blocco catch finale:', err);
+                setAuthState({ status: 'error', message: `Si è verificato un errore: ${err.message}` });
+                toast.error(`Connessione fallita: ${err.message}`);
             }
         };
 
@@ -84,16 +154,12 @@ export const GoogleAuthCallback: React.FC = () => {
 
     }, [searchParams, navigate, organization, crmLoading]);
 
-    return (
-        <div className="flex items-center justify-center h-screen">
-            <div className="text-center p-4">
-                <p className={error ? "text-red-500" : ""}>{status}</p>
-                {error && (
-                    <button onClick={() => navigate('/settings')} className="mt-4 bg-primary text-white px-4 py-2 rounded-lg">Torna alle Impostazioni</button>
-                )}
-            </div>
-        </div>
-    );
+    // --- OTTIMIZZAZIONE: UI reattiva basata sullo stato ---
+    return <AuthStatusDisplay 
+        status={authState.status} 
+        message={authState.message}
+        onRetry={() => navigate('/settings')}
+    />;
 };
 
 
@@ -142,6 +208,7 @@ export const Settings: React.FC = () => {
     
     const handleGoogleConnect = async () => {
         try {
+            // Genera una stringa casuale per la protezione CSRF
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
 
@@ -149,13 +216,8 @@ export const Settings: React.FC = () => {
                 body: { state },
             });
             
-            if (error) {
-                throw new Error(error.message);
-            }
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
+            if (error) throw new Error(error.message);
+            if (data.error) throw new Error(data.error);
 
             if (data.url) {
                 window.location.href = data.url;
@@ -221,7 +283,9 @@ export const Settings: React.FC = () => {
                  <div className="mt-4">
                     {isGoogleConnected ? (
                         <div className="flex items-center justify-between">
-                            <p className="text-green-700 font-medium">✓ Connesso a Google Calendar</p>
+                            <p className="text-green-700 font-medium flex items-center">
+                                <CheckCircleIcon className="w-5 h-5 mr-2"/> Connesso a Google Calendar
+                            </p>
                             <button onClick={handleGoogleDisconnect} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Disconnetti</button>
                         </div>
                     ) : (

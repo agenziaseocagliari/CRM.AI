@@ -37,7 +37,11 @@ export const useCrmData = () => {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // FIX: Replaced `getUser` with `getSession` to resolve the type error and provide a more robust session check.
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if(sessionError) throw sessionError;
+      const user = session?.user;
+      
       if (!user) {
         setLoading(false);
         setOrganization(null);
@@ -99,6 +103,7 @@ export const useCrmData = () => {
   useEffect(() => {
     fetchData();
     
+    // FIX: Correctly call onAuthStateChange which is a valid Supabase auth method.
     const { data: authListener } = supabase.auth.onAuthStateChange((event, _session) => {
         if(event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
             fetchData();

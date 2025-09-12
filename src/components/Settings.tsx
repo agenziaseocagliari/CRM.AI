@@ -1,269 +1,197 @@
 import React, { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
 import { GoogleIcon } from './ui/icons';
 
-const IntegrationCard: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => (
-    <div className="bg-white p-6 rounded-lg shadow border">
-        <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
-        <p className="text-sm text-text-secondary mt-1 mb-4">{description}</p>
-        <div className="space-y-4">{children}</div>
-    </div>
-);
+export const GoogleAuthCallback: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const [error, setError] = useState<string | null>(null);
+    const [message, setMessage] = useState('Autenticazione in corso...');
+    const { organization } = useCrmData();
 
-export const Settings: React.FC = () => {
-    const { organization, organizationSettings, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
-    
-    const [brevoApiKey, setBrevoApiKey] = useState('');
-    const [twilioAccountSid, setTwilioAccountSid] = useState('');
-    const [twilioAuthToken, setTwilioAuthToken] = useState('');
-    
-    const [isSaving, setIsSaving] = useState(false);
-    const [isGoogleConnected, setIsGoogleConnected] = useState(false);
-
-    // Popola i campi del form quando i dati vengono caricati e gestisce il redirect da Google
     useEffect(() => {
-        if (organizationSettings) {
-            setBrevoApiKey(organizationSettings.brevo_api_key || '');
-            setTwilioAccountSid(organizationSettings.twilio_account_sid || '');
-            setTwilioAuthToken(organizationSettings.twilio_auth_token || '');
-            
-            // Controlla se l'account Google è connesso
-            try {
-                const tokenData = organizationSettings.google_auth_token ? JSON.parse(organizationSettings.google_auth_token) : null;
-                setIsGoogleConnected(!!tokenData?.access_token);
-            } catch (e) {
-                console.error("Errore parsing token Google:", e);
-                setIsGoogleConnected(false);
+        const exchangeCodeForToken = async () => {
+            const code = searchParams.get('code');
+            const state = searchParams.get('state');
+            const storedState = localStorage.getItem('oauth_state');
+
+            if (!code || !state || state !== storedState) {
+                setError('Richiesta di autenticazione non valida o scaduta. Riprova.');
+                return;
             }
-        } else {
-            setIsGoogleConnected(false);
-        }
+            
+            localStorage.removeItem('oauth_state');
 
-        const handleGoogleRedirect = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const state = urlParams.get('state');
+            if (!organization) {
+                setError("Informazioni sull'organizzazione non disponibili. Impossibile completare l'autenticazione.");
+                return;
+            }
 
-            if (code && state === localStorage.getItem('google_oauth_state')) {
-                localStorage.removeItem('google_oauth_state');
-                window.history.replaceState({}, document.title, window.location.pathname);
+            try {
+                const { error: invokeError } = await supabase.functions.invoke('google-token-exchange', {
+                    body: { code, organization_id: organization.id },
+                });
 
-                const toastId = toast.loading('Connessione a Google in corso...');
-                try {
-                    const { data, error } = await supabase.functions.invoke('google-token-exchange', {
-                        body: { code, organization_id: organization?.id },
-                    });
+                if (invokeError) throw new Error(invokeError.message);
+                
+                toast.success('Account Google connesso con successo!');
+                navigate('/settings');
 
-                    if (error) throw new Error(error.message);
-                    if (data.error) throw new Error(data.error);
-
-                    toast.success('Account Google connesso!', { id: toastId });
-                    refetch();
-                } catch (err: any) {
-                    toast.error(`Errore: ${err.message}`, { id: toastId });
-                }
+            } catch (err: any) {
+                setError(`Errore durante la connessione: ${err.message}`);
+                toast.error(`Errore: ${err.message}`);
             }
         };
 
-        if (organization) {
-            handleGoogleRedirect();
+        exchangeCodeForToken();
+    }, [searchParams, navigate, organization]);
+
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <div className="text-center">
+                {error ? (
+                    <>
+                        <p className="text-red-500">{error}</p>
+                        <button onClick={() => navigate('/settings')} className="mt-4 bg-primary text-white px-4 py-2 rounded-lg">Torna alle Impostazioni</button>
+                    </>
+                ) : (
+                    <p>{message}</p>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
+export const Settings: React.FC = () => {
+    const { organization, organizationSettings, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const [brevoApiKey, setBrevoApiKey] = useState('');
+    const [twilioSid, setTwilioSid] = useState('');
+    const [twilioToken, setTwilioToken] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    
+    const isGoogleConnected = !!organizationSettings?.google_auth_token;
+
+    useEffect(() => {
+        if (organizationSettings) {
+            setBrevoApiKey(organizationSettings.brevo_api_key || '');
+            setTwilioSid(organizationSettings.twilio_account_sid || '');
+            setTwilioToken(organizationSettings.twilio_auth_token || '');
         }
-    }, [organizationSettings, organization, refetch]);
+    }, [organizationSettings]);
 
-
-    const handleSaveSettings = async () => {
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!organization) return;
         setIsSaving(true);
         
-        if (!organization) {
-            toast.error("Impossibile trovare le informazioni sull'organizzazione. Riprova.");
-            setIsSaving(false);
-            return;
-        }
-
         try {
-            const { error } = await supabase
-                .from('organization_settings')
-                .upsert({
+            const { error } = await supabase.from('organization_settings').upsert(
+                {
                     organization_id: organization.id,
                     brevo_api_key: brevoApiKey,
-                    twilio_account_sid: twilioAccountSid,
-                    twilio_auth_token: twilioAuthToken,
-                }, { onConflict: 'organization_id' });
-            
-            if (error) throw error;
+                    twilio_account_sid: twilioSid,
+                    twilio_auth_token: twilioToken,
+                },
+                { onConflict: 'organization_id' }
+            );
 
-            toast.success('Impostazioni API salvate con successo!');
+            if (error) throw error;
+            toast.success('Impostazioni salvate con successo!');
             refetch();
         } catch (err: any) {
-            toast.error(`Errore nel salvaggio: ${err.message}`);
+            toast.error(`Errore nel salvataggio: ${err.message}`);
         } finally {
             setIsSaving(false);
         }
     };
-
+    
     const handleGoogleConnect = async () => {
-        const toastId = toast.loading('Reindirizzamento a Google...');
         try {
-            const state = Math.random().toString(36).substring(2);
-            localStorage.setItem('google_oauth_state', state);
+            const state = Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('oauth_state', state);
 
-            // La funzione ora restituisce un oggetto JSON: { url: "..." } o { error: "..." }
             const { data, error } = await supabase.functions.invoke('google-auth-url', {
-                body: { state }
+                body: { state },
             });
+            if (error) throw new Error(error.message);
+            if (data.error) throw new Error(data.error);
 
-            if (error) {
-                // Gestisce errori di rete o del client Supabase
-                throw new Error(error.message);
-            }
-            
-            if (data && data.error) {
-                // Gestisce errori applicativi restituiti dalla funzione
-                throw new Error(data.error);
-            }
-            
-            // Verifica che la risposta contenga un URL valido
-            if (!data || typeof data.url !== 'string' || !data.url.startsWith("https://accounts.google.com")) {
-                console.error("La funzione 'google-auth-url' ha restituito una risposta non valida:", data);
-                throw new Error("Impossibile ottenere l'URL di autenticazione. Risposta non valida dal server.");
-            }
-            
-            // Reindirizza all'URL di autenticazione Google
             window.location.href = data.url;
-
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            toast.error(`Impossibile avviare la connessione: ${err.message}`);
         }
     };
     
     const handleGoogleDisconnect = async () => {
-        setIsSaving(true);
+        if (!organization) return;
+        const confirmation = window.confirm("Sei sicuro di voler disconnettere il tuo account Google? Questo interromperà la creazione di eventi su Google Calendar.");
+        if (!confirmation) return;
+
         try {
-             const { error } = await supabase
+            const { error } = await supabase
                 .from('organization_settings')
                 .update({ google_auth_token: null })
-                .eq('organization_id', organization!.id);
-
+                .eq('organization_id', organization.id);
             if (error) throw error;
-            toast.success('Account Google disconnesso.');
+            toast.success("Account Google disconnesso.");
             refetch();
-
-        } catch(err: any) {
+        } catch (err: any) {
             toast.error(`Errore: ${err.message}`);
-        } finally {
-            setIsSaving(false);
         }
     };
 
-
     return (
-        <div className="space-y-6 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-text-primary">Impostazioni & Integrazioni</h1>
-             <p className="text-text-secondary">
-                Collega i tuoi strumenti preferiti per dare i superpoteri alle tue automazioni. Le chiavi API sono archiviate in modo sicuro.
-            </p>
+        <div className="space-y-8 max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold text-text-primary">Impostazioni</h1>
             
-            <div className="space-y-6">
-
-                <IntegrationCard
-                    title="Marketing via Email con Brevo"
-                    description="Connetti il tuo account Brevo (ex Sendinblue) per consentire alle automazioni di inviare email per tuo conto."
-                >
-                     <div>
-                        <label htmlFor="brevoApiKey" className="block text-sm font-medium text-gray-700">Brevo API Key</label>
-                        <input 
-                            type="password" 
-                            id="brevoApiKey" 
-                            value={brevoApiKey}
-                            onChange={(e) => setBrevoApiKey(e.target.value)}
-                            placeholder="xkeysib-••••••••••••••••••••••••••••••••"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                        />
-                         <p className="mt-2 text-xs text-gray-500">
-                           Puoi trovare la tua chiave API v3 nelle impostazioni SMTP & API del tuo account Brevo.
-                        </p>
-                    </div>
-                </IntegrationCard>
-
-                <IntegrationCard
-                    title="Comunicazione WhatsApp con Twilio"
-                    description="Connetti il tuo account Twilio per inviare messaggi WhatsApp tramite la loro API. Inserisci il tuo Account SID e l'Auth Token."
-                >
-                     <div>
-                        <label htmlFor="twilioAccountSid" className="block text-sm font-medium text-gray-700">Twilio Account SID</label>
-                        <input 
-                            type="password" 
-                            id="twilioAccountSid" 
-                            value={twilioAccountSid}
-                            onChange={(e) => setTwilioAccountSid(e.target.value)}
-                            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                        />
+            <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Integrazioni API</h2>
+                <form onSubmit={handleSave} className="space-y-6 mt-4">
+                    <div>
+                        <label htmlFor="brevo" className="block text-sm font-medium text-gray-700">Chiave API Brevo (per Email)</label>
+                        <input type="password" id="brevo" value={brevoApiKey} onChange={(e) => setBrevoApiKey(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="v3.xxx..." />
+                        <p className="text-xs text-gray-500 mt-1">Necessaria per l'invio di email automatiche ai nuovi contatti.</p>
                     </div>
                     <div>
-                        <label htmlFor="twilioAuthToken" className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
-                        <input 
-                            type="password" 
-                            id="twilioAuthToken" 
-                            value={twilioAuthToken}
-                            onChange={(e) => setTwilioAuthToken(e.target.value)}
-                            placeholder="Nascondi e salva in modo sicuro"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                        />
-                         <p className="mt-2 text-xs text-gray-500">
-                           Puoi trovare entrambi nella dashboard principale del tuo account Twilio.
-                        </p>
+                        <label htmlFor="twilio_sid" className="block text-sm font-medium text-gray-700">Twilio Account SID (per WhatsApp)</label>
+                        <input type="password" id="twilio_sid" value={twilioSid} onChange={(e) => setTwilioSid(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="AC..." />
                     </div>
-                </IntegrationCard>
+                    <div>
+                        <label htmlFor="twilio_token" className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
+                        <input type="password" id="twilio_token" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="••••••••••••••••" />
+                        <p className="text-xs text-gray-500 mt-1">Necessari per inviare messaggi tramite la sandbox di Twilio WhatsApp.</p>
+                    </div>
 
-                <IntegrationCard
-                    title="Integrazione Calendario Google"
-                    description="Collega il tuo account Google per permettere al CRM di creare eventi e meeting per tuo conto."
-                >
-                     <div>
-                        <div className="mt-1">
-                            {!isGoogleConnected ? (
-                                <button
-                                    onClick={handleGoogleConnect}
-                                    className="bg-white border border-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
-                                >
-                                    <GoogleIcon className="w-5 h-5" />
-                                    <span>Connetti a Google</span>
-                                </button>
-                            ) : (
-                                <div className="flex items-center justify-between">
-                                    <p className="text-green-700 font-medium flex items-center">
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
-                                        Account Google Connesso
-                                    </p>
-                                    <button
-                                        onClick={handleGoogleDisconnect}
-                                        disabled={isSaving}
-                                        className="bg-red-50 text-red-700 px-4 py-2 rounded-lg hover:bg-red-100 text-sm disabled:opacity-50"
-                                    >
-                                        Disconnetti
-                                    </button>
-                                </div>
-                            )}
+                    <div className="flex justify-end pt-4 border-t">
+                        <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
+                            {isSaving ? 'Salvataggio...' : 'Salva Impostazioni API'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow">
+                 <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Integrazione Google Calendar</h2>
+                 <div className="mt-4">
+                    {isGoogleConnected ? (
+                        <div className="flex items-center justify-between">
+                            <p className="text-green-700 font-medium">✓ Connesso a Google Calendar</p>
+                            <button onClick={handleGoogleDisconnect} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Disconnetti</button>
                         </div>
-                         <p className="mt-2 text-xs text-gray-500">
-                           Questa integrazione richiederà l'autenticazione tramite Google per accedere e creare eventi sul tuo calendario primario.
-                        </p>
-                    </div>
-                </IntegrationCard>
-
-                <div className="pt-4 flex justify-end">
-                    <button
-                        onClick={handleSaveSettings}
-                        disabled={isSaving}
-                        className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-indigo-700 text-base font-semibold disabled:bg-gray-400"
-                    >
-                       {isSaving ? 'Salvataggio...' : 'Salva Impostazioni API'}
-                    </button>
-                </div>
+                    ) : (
+                         <div className="flex items-center justify-between">
+                            <p className="text-gray-600">Connetti il tuo account Google per creare eventi direttamente dal CRM.</p>
+                            <button onClick={handleGoogleConnect} className="bg-white text-gray-700 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <GoogleIcon />
+                                <span>Connetti a Google</span>
+                            </button>
+                        </div>
+                    )}
+                 </div>
             </div>
         </div>
     );

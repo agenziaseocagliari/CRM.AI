@@ -55,9 +55,9 @@ serve(async (req) => {
         throw new Error("Impossibile generare l'URL di autorizzazione. La libreria ha restituito un formato non valido.");
     }
 
-    // Restituiamo l'URL come testo semplice per evitare problemi di parsing JSON.
-    return new Response(urlString, {
-      headers: { ...corsHeaders, "Content-Type": "text/plain" },
+    // Restituiamo l'URL all'interno di un oggetto JSON per massima compatibilità.
+    return new Response(JSON.stringify({ url: urlString }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 

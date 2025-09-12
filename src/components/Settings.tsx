@@ -110,28 +110,29 @@ export const Settings: React.FC = () => {
             const state = Math.random().toString(36).substring(2);
             localStorage.setItem('google_oauth_state', state);
 
-            // La funzione ora restituisce l'URL come testo semplice.
-            // Il client Supabase assegnerà questa stringa direttamente a 'data'.
+            // La funzione ora restituisce un oggetto JSON: { url: "..." } o { error: "..." }
             const { data, error } = await supabase.functions.invoke('google-auth-url', {
                 body: { state }
             });
 
-            if (error) throw new Error(error.message);
-            
-            // Se c'è un errore applicativo, la funzione restituisce un JSON.
-            // Controlliamo se 'data' è un oggetto con una proprietà 'error'.
-            if (data && typeof data === 'object' && 'error' in data) {
-                throw new Error((data as any).error);
+            if (error) {
+                // Gestisce errori di rete o del client Supabase
+                throw new Error(error.message);
             }
             
-            // Se 'data' non è una stringa o non è un URL valido, c'è un problema.
-            if (typeof data !== 'string' || !data.startsWith("https://accounts.google.com")) {
-                console.error("La funzione 'google-auth-url' ha restituito un dato non valido:", data);
+            if (data && data.error) {
+                // Gestisce errori applicativi restituiti dalla funzione
+                throw new Error(data.error);
+            }
+            
+            // Verifica che la risposta contenga un URL valido
+            if (!data || typeof data.url !== 'string' || !data.url.startsWith("https://accounts.google.com")) {
+                console.error("La funzione 'google-auth-url' ha restituito una risposta non valida:", data);
                 throw new Error("Impossibile ottenere l'URL di autenticazione. Risposta non valida dal server.");
             }
             
-            // 'data' ora è la stringa dell'URL, usiamola per il reindirizzamento.
-            window.location.href = data;
+            // Reindirizza all'URL di autenticazione Google
+            window.location.href = data.url;
 
         } catch (err: any) {
             toast.error(`Errore: ${err.message}`, { id: toastId });

@@ -5,12 +5,17 @@ declare const Deno: {
 };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { handleCors, corsHeaders } from "shared/cors.ts";
 import { OAuth2Client } from "https://deno.land/x/oauth2_client@v1.0.2/mod.ts";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 serve(async (req) => {
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
 
   try {
     const { state } = await req.json();
@@ -37,20 +42,25 @@ serve(async (req) => {
 
     const authUrl = await oauth2Client.code.getAuthorizationUri({
       state,
-      // 'access_type: "offline"' è cruciale per ottenere un refresh token
       accessType: "offline",
-      // 'prompt: "consent"' forza la schermata di consenso, assicurando che un refresh token venga sempre rilasciato.
       prompt: "consent", 
     });
+    
+    // FIX: Aggiunge un controllo di sicurezza per prevenire l'errore '[object Object]'
+    if (!(authUrl instanceof URL)) {
+        console.error("getAuthorizationUri non ha restituito un oggetto URL. Risposta ricevuta:", authUrl);
+        throw new Error("Impossibile generare l'URL di autorizzazione. Controlla che i secrets GOOGLE_CLIENT_ID e GOOGLE_REDIRECT_URI siano corretti e ri-distribuisci la funzione.");
+    }
 
     return new Response(JSON.stringify({ url: authUrl.toString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
+    console.error("Errore in google-auth-url:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200, // Restituisce 200 per una gestione pulita dell'errore lato client
+      status: 200,
     });
   }
 });

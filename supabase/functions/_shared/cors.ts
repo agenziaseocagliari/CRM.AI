@@ -1,9 +1,11 @@
 // File: supabase/functions/_shared/cors.ts
 
+// FIX: Added the missing 'handleCors' function and updated CORS headers. This resolves module import errors across all Supabase functions that use this shared utility.
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Max-Age": "86400"
 };
 
 /**

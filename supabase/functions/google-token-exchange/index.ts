@@ -6,8 +6,7 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-import { OAuth2Client } from "https://deno.land/x/oauth2_client@v1.0.2/mod.ts";
-import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { handleCors, corsHeaders } from "shared/cors.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -15,35 +14,50 @@ serve(async (req) => {
 
   try {
     const { code, organization_id } = await req.json();
-    if (!code || !organization_id) throw new Error("I parametri 'code' e 'organization_id' sono obbligatori.");
+    if (!code || !organization_id) {
+      throw new Error("I parametri 'code' e 'organization_id' sono obbligatori.");
+    }
     
+    // Recupera tutte le credenziali necessarie dai secrets
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!serviceRoleKey) throw new Error("La variabile d'ambiente SUPABASE_SERVICE_ROLE_KEY non è impostata.");
-    
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
     const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
 
-     if (!clientId || !clientSecret || !redirectUri) {
-        throw new Error("Mancano le variabili d'ambiente di Google (CLIENT_ID, CLIENT_SECRET, REDIRECT_URI).");
+    if (!serviceRoleKey || !clientId || !clientSecret || !redirectUri) {
+        throw new Error("Configurazione Incompleta: una o più variabili d'ambiente (SERVICE_ROLE_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI) non sono impostate nei Secrets.");
     }
 
-    const oauth2Client = new OAuth2Client({
-        clientId,
-        clientSecret,
-        authorizationEndpointUri: "https://accounts.google.com/o/oauth2/v2/auth",
-        tokenUri: "https://oauth2.googleapis.com/token",
-        redirectUri,
+    // Effettua la chiamata diretta all'endpoint del token di Google
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        code: code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
     });
     
-    const tokens = await oauth2Client.code.getToken(code);
-    
+    if (!tokenResponse.ok) {
+        const errorBody = await tokenResponse.json();
+        console.error("Errore durante lo scambio del codice con Google:", errorBody);
+        throw new Error(`Errore API Google: ${errorBody.error_description || "Impossibile scambiare il codice di autorizzazione."}`);
+    }
+
+    const tokens = await tokenResponse.json();
+
     const tokenData = {
-        access_token: tokens.accessToken,
-        refresh_token: tokens.refreshToken,
-        expiry_date: new Date(Date.now() + (tokens.expiresIn || 0) * 1000).toISOString(),
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token, // Il refresh_token è cruciale per l'accesso offline
+        expiry_date: new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString(),
     };
     
+    // Salva i token nel database
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
 
     const { error: upsertError } = await supabaseAdmin
@@ -60,7 +74,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Errore nello scambio di token Google:", error);
+    console.error("Errore critico nella funzione 'google-token-exchange':", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500, 

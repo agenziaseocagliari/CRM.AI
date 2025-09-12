@@ -5,7 +5,7 @@ declare const Deno: {
 };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { handleCors, corsHeaders } from "shared/cors.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);

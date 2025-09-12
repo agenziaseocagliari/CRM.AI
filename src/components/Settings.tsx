@@ -9,44 +9,43 @@ export const GoogleAuthCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
-    const [message] = useState('Autenticazione in corso...');
-    const { organization } = useCrmData();
+    const [message, setMessage] = useState('Autenticazione in corso...');
+    // Aggiungiamo il loading state per un controllo più preciso
+    const { organization, loading: crmLoading } = useCrmData(); 
 
     useEffect(() => {
+        // Attendiamo che il caricamento iniziale dei dati CRM sia completato
+        if (crmLoading) {
+            return;
+        }
+
         const exchangeCodeForToken = async () => {
             const code = searchParams.get('code');
             const state = searchParams.get('state');
             const storedState = localStorage.getItem('oauth_state');
-
+            
             if (!code || !state || state !== storedState) {
-                setError('Richiesta di autenticazione non valida o scaduta. Riprova.');
+                const errorMsg = 'Richiesta di autenticazione non valida o scaduta. Riprova.';
+                setError(errorMsg);
                 return;
             }
             
             localStorage.removeItem('oauth_state');
 
             if (!organization) {
-                setError("Informazioni sull'organizzazione non disponibili. Impossibile completare l'autenticazione.");
+                const errorMsg = "Informazioni sull'organizzazione non disponibili. Impossibile completare l'autenticazione.";
+                setError(errorMsg);
                 return;
             }
-
+            
             try {
-                // FIX CRITICO: Recupera manualmente la sessione per garantire che il token sia disponibile dopo il redirect.
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError || !session) {
-                    throw new Error("Sessione utente non trovata. Effettua nuovamente il login e riprova.");
-                }
-                const accessToken = session.access_token;
-
-                // Inietta esplicitamente l'header di autorizzazione per evitare race conditions.
-                const { error: invokeError } = await supabase.functions.invoke('google-token-exchange', {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    },
+                const { data: invokeData, error: invokeError } = await supabase.functions.invoke('google-token-exchange', {
                     body: { code, organization_id: organization.id },
                 });
 
-                if (invokeError) throw new Error(invokeError.message);
+                if (invokeError) throw new Error(`Errore di rete/invoke: ${invokeError.message}`);
+                // CRITICO: Controlliamo il payload per errori logici
+                if (invokeData && invokeData.error) throw new Error(`Errore dalla funzione: ${invokeData.error}`);
                 
                 toast.success('Account Google connesso con successo!');
                 navigate('/settings');
@@ -57,12 +56,10 @@ export const GoogleAuthCallback: React.FC = () => {
             }
         };
 
-        // Aggiungiamo un piccolo ritardo per dare a useCrmData il tempo di caricare l'organizzazione
-        if (organization) {
-            exchangeCodeForToken();
-        }
+        exchangeCodeForToken();
 
-    }, [searchParams, navigate, organization]);
+    // Rendi le dipendenze più esplicite per catturare i cambiamenti
+    }, [searchParams, navigate, organization, crmLoading]);
 
     return (
         <div className="flex items-center justify-center h-screen">
@@ -133,29 +130,22 @@ export const Settings: React.FC = () => {
                 body: { state },
             });
             
-            // Gestione per errori di rete o problemi imprevisti del client Supabase
             if (error) {
                 throw new Error(error.message);
             }
             
-            // GESTIONE AVANZATA: La funzione risponde sempre 200, quindi controlliamo il payload.
-            // Se il payload 'data' contiene una proprietà 'error', significa che la funzione
-            // ha riscontrato un problema e ci ha inviato un report di debug.
             if (data.error) {
                 throw new Error(data.error);
             }
 
-            // Se tutto è andato bene, il payload conterrà l'URL di autenticazione.
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                // Fallback nel caso la risposta sia 200 ma non abbia né 'url' né 'error'.
                 throw new Error("La funzione ha restituito una risposta inaspettata.");
             }
             
         } catch (err: any) {
-            // Questo toast ora mostrerà il messaggio di debug dettagliato dal nostro payload.
-            toast.error(`Impossibile avviare la connessione: ${err.message}`, { duration: 10000 }); // Aumentiamo la durata per leggere
+            toast.error(`Impossibile avviare la connessione: ${err.message}`, { duration: 10000 });
         }
     };
     

@@ -118,7 +118,7 @@ export const Settings: React.FC = () => {
             toast.success('Impostazioni salvate con successo!');
             refetch();
         } catch (err: any) {
-            toast.error(`Errore nel salvataggio: ${err.message}`);
+            toast.error(`Errore nel salvaggio: ${err.message}`);
         } finally {
             setIsSaving(false);
         }
@@ -132,11 +132,21 @@ export const Settings: React.FC = () => {
             const { data, error } = await supabase.functions.invoke('google-auth-url', {
                 body: { state },
             });
-            if (error) throw new Error(error.message);
+            
+            // **FIX DI DEBUG**: Se c'è un errore, estraiamo il messaggio dettagliato
+            // dal corpo della risposta della funzione invece di usare quello generico.
+            if (error) {
+                // L'oggetto 'error' di Supabase contiene un campo 'context' con i dettagli.
+                // La nostra funzione restituisce un JSON { error: "messaggio..." }
+                const detailedMessage = error.context?.error?.error || error.message;
+                throw new Error(detailedMessage);
+            }
+
             if (data.error) throw new Error(data.error);
 
             window.location.href = data.url;
         } catch (err: any) {
+            // Ora questo toast mostrerà il messaggio di debug dettagliato.
             toast.error(`Impossibile avviare la connessione: ${err.message}`);
         }
     };

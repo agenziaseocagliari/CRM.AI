@@ -133,21 +133,29 @@ export const Settings: React.FC = () => {
                 body: { state },
             });
             
-            // **FIX DI DEBUG**: Se c'è un errore, estraiamo il messaggio dettagliato
-            // dal corpo della risposta della funzione invece di usare quello generico.
+            // Gestione per errori di rete o problemi imprevisti del client Supabase
             if (error) {
-                // L'oggetto 'error' di Supabase contiene un campo 'context' con i dettagli.
-                // La nostra funzione restituisce un JSON { error: "messaggio..." }
-                const detailedMessage = error.context?.error?.error || error.message;
-                throw new Error(detailedMessage);
+                throw new Error(error.message);
+            }
+            
+            // GESTIONE AVANZATA: La funzione risponde sempre 200, quindi controlliamo il payload.
+            // Se il payload 'data' contiene una proprietà 'error', significa che la funzione
+            // ha riscontrato un problema e ci ha inviato un report di debug.
+            if (data.error) {
+                throw new Error(data.error);
             }
 
-            if (data.error) throw new Error(data.error);
-
-            window.location.href = data.url;
+            // Se tutto è andato bene, il payload conterrà l'URL di autenticazione.
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                // Fallback nel caso la risposta sia 200 ma non abbia né 'url' né 'error'.
+                throw new Error("La funzione ha restituito una risposta inaspettata.");
+            }
+            
         } catch (err: any) {
-            // Ora questo toast mostrerà il messaggio di debug dettagliato.
-            toast.error(`Impossibile avviare la connessione: ${err.message}`);
+            // Questo toast ora mostrerà il messaggio di debug dettagliato dal nostro payload.
+            toast.error(`Impossibile avviare la connessione: ${err.message}`, { duration: 10000 }); // Aumentiamo la durata per leggere
         }
     };
     

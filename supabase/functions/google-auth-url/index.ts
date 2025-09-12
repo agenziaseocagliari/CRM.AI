@@ -48,23 +48,22 @@ serve(async (req) => {
       prompt: "consent", 
     });
     
-    // Correzione definitiva: Assicuriamoci che l'URL sia una stringa prima di inviarlo.
-    // Il metodo .href di un oggetto URL restituisce la stringa completa.
     const urlString = authUri.href;
 
-    // Aggiungiamo un controllo di sicurezza per garantire che l'URL sia valido.
     if (typeof urlString !== 'string' || !urlString.startsWith("https://accounts.google.com")) {
         console.error("Generazione URL fallita. Risultato inatteso:", authUri);
-        throw new Error("Impossibile generare l'URL di autorizzazione. L'oggetto restituito dalla libreria non era un URL valido.");
+        throw new Error("Impossibile generare l'URL di autorizzazione. La libreria ha restituito un formato non valido.");
     }
 
-    return new Response(JSON.stringify({ url: urlString }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Restituiamo l'URL come testo semplice per evitare problemi di parsing JSON.
+    return new Response(urlString, {
+      headers: { ...corsHeaders, "Content-Type": "text/plain" },
       status: 200,
     });
+
   } catch (error) {
     console.error("Errore critico in google-auth-url:", error.message);
-    // Usiamo uno status 500 per gli errori, che è una pratica migliore.
+    // In caso di errore, restituiamo un JSON per una gestione strutturata lato client.
     return new Response(JSON.stringify({ error: `Errore interno del server: ${error.message}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500, 

@@ -98,7 +98,7 @@ export const Settings: React.FC = () => {
             toast.success('Impostazioni API salvate con successo!');
             refetch();
         } catch (err: any) {
-            toast.error(`Errore nel salvataggio: ${err.message}`);
+            toast.error(`Errore nel salvaggio: ${err.message}`);
         } finally {
             setIsSaving(false);
         }
@@ -110,14 +110,29 @@ export const Settings: React.FC = () => {
             const state = Math.random().toString(36).substring(2);
             localStorage.setItem('google_oauth_state', state);
 
+            // La funzione ora restituisce l'URL come testo semplice.
+            // Il client Supabase assegnerà questa stringa direttamente a 'data'.
             const { data, error } = await supabase.functions.invoke('google-auth-url', {
                 body: { state }
             });
 
             if (error) throw new Error(error.message);
-            if (data.error) throw new Error(data.error);
             
-            window.location.href = data.url;
+            // Se c'è un errore applicativo, la funzione restituisce un JSON.
+            // Controlliamo se 'data' è un oggetto con una proprietà 'error'.
+            if (data && typeof data === 'object' && 'error' in data) {
+                throw new Error((data as any).error);
+            }
+            
+            // Se 'data' non è una stringa o non è un URL valido, c'è un problema.
+            if (typeof data !== 'string' || !data.startsWith("https://accounts.google.com")) {
+                console.error("La funzione 'google-auth-url' ha restituito un dato non valido:", data);
+                throw new Error("Impossibile ottenere l'URL di autenticazione. Risposta non valida dal server.");
+            }
+            
+            // 'data' ora è la stringa dell'URL, usiamola per il reindirizzamento.
+            window.location.href = data;
+
         } catch (err: any) {
             toast.error(`Errore: ${err.message}`, { id: toastId });
         }

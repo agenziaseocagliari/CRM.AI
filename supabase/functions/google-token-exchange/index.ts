@@ -27,23 +27,27 @@ serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  console.log("[google-token-exchange] Funzione invocata.");
+
   try {
     const { code, organization_id } = await req.json();
+    console.log(`[google-token-exchange] Payload ricevuto per organization_id: ${organization_id}`);
+    
     if (!code || !organization_id) {
       throw new Error("I parametri 'code' e 'organization_id' sono obbligatori.");
     }
     
-    // Recupera tutte le credenziali necessarie dai secrets
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
     const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
 
     if (!serviceRoleKey || !clientId || !clientSecret || !redirectUri) {
-        throw new Error("Configurazione Incompleta: una o più variabili d'ambiente (SERVICE_ROLE_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI) non sono impostate nei Secrets.");
+        console.error("[google-token-exchange] ERRORE: Variabili d'ambiente mancanti.");
+        throw new Error("Configurazione Incompleta: una o più variabili d'ambiente non sono impostate nei Secrets.");
     }
 
-    // Effettua la chiamata diretta all'endpoint del token di Google
+    console.log("[google-token-exchange] Preparazione della richiesta di token a Google...");
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
@@ -58,23 +62,26 @@ serve(async (req) => {
       }),
     });
     
+    console.log(`[google-token-exchange] L'endpoint del token di Google ha risposto con lo stato: ${tokenResponse.status}`);
+
     if (!tokenResponse.ok) {
         const errorBody = await tokenResponse.json();
-        console.error("Errore durante lo scambio del codice con Google:", errorBody);
+        console.error("[google-token-exchange] Errore durante lo scambio del codice con Google:", JSON.stringify(errorBody, null, 2));
         throw new Error(`Errore API Google: ${errorBody.error_description || "Impossibile scambiare il codice di autorizzazione."}`);
     }
 
     const tokens = await tokenResponse.json();
+    console.log("[google-token-exchange] Token ricevuti con successo da Google.");
 
     const tokenData = {
         access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token, // Il refresh_token è cruciale per l'accesso offline
+        refresh_token: tokens.refresh_token,
         expiry_date: new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString(),
     };
     
-    // Salva i token nel database
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
 
+    console.log(`[google-token-exchange] Esecuzione dell'upsert dei token per organization_id: ${organization_id}`);
     const { error: upsertError } = await supabaseAdmin
         .from('organization_settings')
         .upsert({
@@ -82,14 +89,19 @@ serve(async (req) => {
             google_auth_token: JSON.stringify(tokenData),
         }, { onConflict: 'organization_id' });
         
-    if (upsertError) throw upsertError;
+    if (upsertError) {
+        console.error(`[google-token-exchange] L'upsert su Supabase è fallito:`, upsertError);
+        throw upsertError;
+    }
+
+    console.log(`[google-token-exchange] Token salvati con successo per organization_id: ${organization_id}`);
 
     return new Response(JSON.stringify({ success: true, message: "Token scambiati e salvati con successo." }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Errore critico nella funzione 'google-token-exchange':", error.message);
+    console.error("[google-token-exchange] ERRORE CRITICO nel gestore:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500, 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
@@ -9,34 +9,56 @@ export const GoogleAuthCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
-    const [message, setMessage] = useState('Autenticazione in corso...');
-    // Aggiungiamo il loading state per un controllo più preciso
+    const [status, setStatus] = useState('Avvio dell\'autenticazione...');
     const { organization, loading: crmLoading } = useCrmData(); 
+    const exchangeAttempted = useRef(false);
 
     useEffect(() => {
-        // Attendiamo che il caricamento iniziale dei dati CRM sia completato
+        console.log('[GoogleAuthCallback] Componente montato.');
+
         if (crmLoading) {
+            console.log('[GoogleAuthCallback] In attesa del caricamento dei dati CRM...');
+            setStatus('Caricamento informazioni utente...');
             return;
         }
 
+        if (exchangeAttempted.current) {
+            console.log('[GoogleAuthCallback] Lo scambio è già stato tentato. Annullamento.');
+            return;
+        }
+        exchangeAttempted.current = true;
+
         const exchangeCodeForToken = async () => {
+            console.log('[GoogleAuthCallback] Avvio del processo di scambio del token.');
+            setStatus('Verifica dell\'autenticazione...');
+            
             const code = searchParams.get('code');
             const state = searchParams.get('state');
             const storedState = localStorage.getItem('oauth_state');
             
+            console.log(`[GoogleAuthCallback] Codice recuperato: ${code ? 'OK' : 'MANCANTE'}, stato: ${state ? 'OK' : 'MANCANTE'}`);
+            
             if (!code || !state || state !== storedState) {
                 const errorMsg = 'Richiesta di autenticazione non valida o scaduta. Riprova.';
+                console.error(`[GoogleAuthCallback] Discrepanza di stato o parametri mancanti. Stato ricevuto: ${state}, Stato memorizzato: ${storedState}`);
                 setError(errorMsg);
+                setStatus(errorMsg);
                 return;
             }
             
             localStorage.removeItem('oauth_state');
+            console.log('[GoogleAuthCallback] Stato validato e rimosso.');
 
             if (!organization) {
                 const errorMsg = "Informazioni sull'organizzazione non disponibili. Impossibile completare l'autenticazione.";
+                console.error('[GoogleAuthCallback] Dati dell\'organizzazione mancanti.');
                 setError(errorMsg);
+                setStatus(errorMsg);
                 return;
             }
+            
+            console.log(`[GoogleAuthCallback] Organizzazione caricata: ${organization.id}. Chiamata della funzione di scambio.`);
+            setStatus('Finalizzazione della connessione...');
             
             try {
                 const { data: invokeData, error: invokeError } = await supabase.functions.invoke('google-token-exchange', {
@@ -44,33 +66,30 @@ export const GoogleAuthCallback: React.FC = () => {
                 });
 
                 if (invokeError) throw new Error(`Errore di rete/invoke: ${invokeError.message}`);
-                // CRITICO: Controlliamo il payload per errori logici
                 if (invokeData && invokeData.error) throw new Error(`Errore dalla funzione: ${invokeData.error}`);
                 
+                console.log('[GoogleAuthCallback] Scambio del token riuscito.');
                 toast.success('Account Google connesso con successo!');
                 navigate('/settings');
 
             } catch (err: any) {
+                console.error('[GoogleAuthCallback] Errore durante la chiamata della funzione:', err);
                 setError(`Errore durante la connessione: ${err.message}`);
+                setStatus(`Errore: ${err.message}`);
                 toast.error(`Errore: ${err.message}`);
             }
         };
 
         exchangeCodeForToken();
 
-    // Rendi le dipendenze più esplicite per catturare i cambiamenti
     }, [searchParams, navigate, organization, crmLoading]);
 
     return (
         <div className="flex items-center justify-center h-screen">
-            <div className="text-center">
-                {error ? (
-                    <>
-                        <p className="text-red-500">{error}</p>
-                        <button onClick={() => navigate('/settings')} className="mt-4 bg-primary text-white px-4 py-2 rounded-lg">Torna alle Impostazioni</button>
-                    </>
-                ) : (
-                    <p>{message}</p>
+            <div className="text-center p-4">
+                <p className={error ? "text-red-500" : ""}>{status}</p>
+                {error && (
+                    <button onClick={() => navigate('/settings')} className="mt-4 bg-primary text-white px-4 py-2 rounded-lg">Torna alle Impostazioni</button>
                 )}
             </div>
         </div>

@@ -10,8 +10,9 @@ import { useCrmData } from '../hooks/useCrmData';
 export const Dashboard: React.FC = () => {
   const { opportunities, contacts } = useOutletContext<ReturnType<typeof useCrmData>>();
 
-  // FIX: The `reduce` method with an initial value was causing type inference issues. Replaced with `flat()` for a more robust and readable way to flatten the nested opportunities array.
-  const allOpportunities: Opportunity[] = Object.values(opportunities).flat();
+  // FIX: The `reduce` method with an untyped initial empty array `[]` can cause type inference issues.
+  // By providing a typed initial value, we ensure the flattened array has the correct type.
+  const allOpportunities: Opportunity[] = Object.values(opportunities).reduce((acc, val) => acc.concat(val), [] as Opportunity[]);
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   
   // Calcolo dinamico basato sui contatti totali, non solo sui lead.

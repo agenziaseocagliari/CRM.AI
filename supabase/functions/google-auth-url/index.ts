@@ -40,19 +40,19 @@ serve(async (req) => {
         },
     });
 
-    const authUrl = await oauth2Client.code.getAuthorizationUri({
+    const authUrl = oauth2Client.code.getAuthorizationUri({
       state,
       accessType: "offline",
       prompt: "consent", 
     });
     
-    // FIX: Aggiunge un controllo di sicurezza per prevenire l'errore '[object Object]'
-    if (!(authUrl instanceof URL)) {
-        console.error("getAuthorizationUri non ha restituito un oggetto URL. Risposta ricevuta:", authUrl);
+    // FIX: Replaced instanceof check with a more robust check on the .href property to prevent '[object Object]' errors.
+    if (!authUrl || typeof authUrl.href !== 'string') {
+        console.error("getAuthorizationUri non ha restituito un oggetto URL-like. Risposta ricevuta:", authUrl);
         throw new Error("Impossibile generare l'URL di autorizzazione. Controlla che i secrets GOOGLE_CLIENT_ID e GOOGLE_REDIRECT_URI siano corretti e ri-distribuisci la funzione.");
     }
 
-    return new Response(JSON.stringify({ url: authUrl.toString() }), {
+    return new Response(JSON.stringify({ url: authUrl.href }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

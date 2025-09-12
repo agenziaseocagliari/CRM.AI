@@ -31,7 +31,18 @@ export const GoogleAuthCallback: React.FC = () => {
             }
 
             try {
+                // FIX CRITICO: Recupera manualmente la sessione per garantire che il token sia disponibile dopo il redirect.
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError || !session) {
+                    throw new Error("Sessione utente non trovata. Effettua nuovamente il login e riprova.");
+                }
+                const accessToken = session.access_token;
+
+                // Inietta esplicitamente l'header di autorizzazione per evitare race conditions.
                 const { error: invokeError } = await supabase.functions.invoke('google-token-exchange', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
                     body: { code, organization_id: organization.id },
                 });
 
@@ -46,7 +57,11 @@ export const GoogleAuthCallback: React.FC = () => {
             }
         };
 
-        exchangeCodeForToken();
+        // Aggiungiamo un piccolo ritardo per dare a useCrmData il tempo di caricare l'organizzazione
+        if (organization) {
+            exchangeCodeForToken();
+        }
+
     }, [searchParams, navigate, organization]);
 
     return (

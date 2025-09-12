@@ -30,7 +30,7 @@ serve(async (req) => {
   console.log("[google-token-exchange] Funzione invocata.");
 
   try {
-    const { code, organization_id } = await req.json();
+    const { code, organization_id, redirectUri: payloadRedirectUri } = await req.json();
     console.log(`[google-token-exchange] Payload ricevuto per organization_id: ${organization_id}`);
     
     if (!code || !organization_id) {
@@ -40,14 +40,22 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-    const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
+    const fallbackRedirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
 
-    if (!serviceRoleKey || !clientId || !clientSecret || !redirectUri) {
+    // Usa il redirectUri dal payload se fornito, altrimenti usa quello dai secrets
+    const finalRedirectUri = payloadRedirectUri || fallbackRedirectUri;
+
+    if (!serviceRoleKey || !clientId || !clientSecret || !finalRedirectUri) {
         console.error("[google-token-exchange] ERRORE: Variabili d'ambiente mancanti.");
-        throw new Error("Configurazione Incompleta: una o più variabili d'ambiente non sono impostate nei Secrets.");
+        let missingVars = [];
+        if (!serviceRoleKey) missingVars.push("SUPABASE_SERVICE_ROLE_KEY");
+        if (!clientId) missingVars.push("GOOGLE_CLIENT_ID");
+        if (!clientSecret) missingVars.push("GOOGLE_CLIENT_SECRET");
+        if (!finalRedirectUri) missingVars.push("GOOGLE_REDIRECT_URI (nel payload o nei secrets)");
+        throw new Error(`Configurazione Incompleta: mancano i seguenti secrets: ${missingVars.join(', ')}.`);
     }
 
-    console.log("[google-token-exchange] Preparazione della richiesta di token a Google...");
+    console.log(`[google-token-exchange] Preparazione della richiesta di token a Google con redirect_uri: ${finalRedirectUri}`);
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
@@ -57,7 +65,7 @@ serve(async (req) => {
         code: code,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: redirectUri,
+        redirect_uri: finalRedirectUri,
         grant_type: "authorization_code",
       }),
     });

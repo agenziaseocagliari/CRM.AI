@@ -119,3 +119,54 @@ export interface EventTemplate {
         reminders: Reminder[];
     };
 }
+
+// --- NUOVI TIPI PER GOOGLE CALENDAR ---
+export interface BusySlot {
+    start: string; // ISO Date String
+    end: string;   // ISO Date String
+}
+
+// --- NUOVI TIPI PER EVENTI E PROMEMORIA NEL DB ---
+export interface EventReminder {
+  id: number;
+  channel: ReminderChannel;
+  scheduled_at: string; // ISO string
+  status: 'scheduled' | 'sent' | 'failed';
+  error_message: string | null;
+}
+
+// --- NUOVO TIPO PER EVENTI CRM ---
+export interface CrmEvent {
+  id: number;
+  google_event_id: string;
+  organization_id: string;
+  contact_id: string;
+  event_summary: string;
+  event_start_time: string; // ISO string
+  event_end_time: string;   // ISO string
+  status: 'confirmed' | 'cancelled';
+  created_at: string;
+  // Join data
+  contacts?: { name: string; email: string };
+  event_reminders?: EventReminder[];
+}
+
+// --- NUOVI TIPI PER IL SISTEMA DI CREDITI ---
+export interface OrganizationSubscription {
+  id: string; // UUID
+  organization_id: string;
+  plan_name: string;
+  total_credits: number;
+  current_credits: number;
+  cycle_start_date: string; // ISO string
+  cycle_end_date: string | null; // ISO string
+}
+
+export interface CreditLedgerEntry {
+    id: number;
+    action_type: string;
+    credits_changed: number;
+    new_balance: number;
+    outcome: 'SUCCESS' | 'INSUFFICIENT_FUNDS';
+    created_at: string; // ISO string
+}

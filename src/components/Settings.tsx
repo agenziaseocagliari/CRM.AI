@@ -164,7 +164,7 @@ export const GoogleAuthCallback: React.FC = () => {
 type SettingsTab = 'integrations' | 'billing';
 
 export const Settings: React.FC = () => {
-    const { organization, organizationSettings, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const { organization, organizationSettings, subscription, ledger, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
     const [activeTab, setActiveTab] = useState<SettingsTab>('integrations');
     const [brevoApiKey, setBrevoApiKey] = useState('');
     const [twilioSid, setTwilioSid] = useState('');
@@ -325,7 +325,10 @@ export const Settings: React.FC = () => {
             )}
             
             {activeTab === 'billing' && (
-                <UsageDashboard />
+                <UsageDashboard 
+                    subscription={subscription}
+                    ledger={ledger}
+                />
             )}
         </div>
     );

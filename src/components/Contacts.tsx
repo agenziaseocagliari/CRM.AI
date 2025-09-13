@@ -9,6 +9,7 @@ import { useCrmData } from '../hooks/useCrmData';
 import { LeadScoreBadge } from './ui/LeadScoreBadge';
 import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
 import { CreateEventModal } from './CreateEventModal';
+import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
 
 // Definiamo un tipo per i dati del form per maggiore chiarezza e sicurezza.
 // Ora include phonePrefix e phoneNumber invece di un unico campo 'phone'.
@@ -60,13 +61,14 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
 
 
 export const Contacts: React.FC = () => {
-    const { contacts, organization, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const { contacts, organization, crmEvents, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
     const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
+    const [isViewEventsModalOpen, setIsViewEventsModalOpen] = useState(false);
 
 
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -123,6 +125,12 @@ export const Contacts: React.FC = () => {
         setSelectedContact(contact);
         setIsCreateEventModalOpen(true);
     };
+    
+    const handleOpenViewEventsModal = (contact: Contact) => {
+        setSelectedContact(contact);
+        setIsViewEventsModalOpen(true);
+    };
+
 
     const handleCloseModals = () => {
         setIsModalOpen(false);
@@ -130,6 +138,7 @@ export const Contacts: React.FC = () => {
         setIsEmailModalOpen(false);
         setIsWhatsAppModalOpen(false);
         setIsCreateEventModalOpen(false);
+        setIsViewEventsModalOpen(false);
         setSelectedContact(null);
     };
     
@@ -312,8 +321,11 @@ export const Contacts: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex items-center justify-end space-x-2">
-                                        <button onClick={() => handleOpenCreateEventModal(contact)} title="Crea Evento" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
+                                        <button onClick={() => handleOpenViewEventsModal(contact)} title="Vedi Eventi" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
                                             <CalendarIcon className="w-5 h-5" />
+                                        </button>
+                                        <button onClick={() => handleOpenCreateEventModal(contact)} title="Crea Evento" className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md">
+                                            <PlusIcon className="w-5 h-5" />
                                         </button>
                                         <button onClick={() => handleOpenEmailModal(contact)} title="Scrivi Email con AI" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
                                             <SparklesIcon className="w-5 h-5" />
@@ -445,6 +457,15 @@ export const Contacts: React.FC = () => {
                 organization={organization}
                 onSaveSuccess={refetch}
             />
+
+            <Modal isOpen={isViewEventsModalOpen} onClose={handleCloseModals} title={`Eventi per ${selectedContact?.name}`}>
+                <ContactEventsList
+                    contact={selectedContact}
+                    events={crmEvents}
+                    organizationId={organization?.id}
+                    onActionSuccess={refetch}
+                />
+            </Modal>
         </>
     );
 };

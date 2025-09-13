@@ -17,28 +17,31 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { contact_phone, message, organization_id } = await req.json();
+    const { contact_phone, message, organization_id, isReminder } = await req.json();
     if (!contact_phone || !message || !organization_id) {
         return new Response(JSON.stringify({ error: "I parametri 'contact_phone', 'message' e 'organization_id' sono obbligatori." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     
-    // --- Integrazione Sistema a Crediti ---
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
-    );
+    // Se non è un promemoria, consuma i crediti come al solito.
+    // I promemoria consumano crediti al momento della schedulazione.
+    if (!isReminder) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+      );
 
-    const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
-        body: { organization_id, action_type: ACTION_TYPE },
-    });
+      const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
+          body: { organization_id, action_type: ACTION_TYPE },
+      });
 
-    if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
-    if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
-    if (!creditData.success) throw new Error("Crediti insufficienti per inviare un messaggio WhatsApp.");
-    console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
-    // --- Fine Integrazione ---
-
+      if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
+      if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
+      if (!creditData.success) throw new Error("Crediti insufficienti per inviare un messaggio WhatsApp.");
+      console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
+    } else {
+        console.log(`[${ACTION_TYPE}] Invio promemoria, consumo crediti saltato.`);
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -56,7 +59,7 @@ serve(async (req) => {
 
     if (settingsError) throw new Error(`Impossibile recuperare le impostazioni: ${settingsError.message}`);
     if (!settings || !settings.twilio_account_sid || !settings.twilio_auth_token) {
-        throw new Error(`Le credenziali Twilio non sono configurate per questa organizzazione. Vai su Impostazioni per aggiungerle.`);
+        throw new Error(`Le credenziali Twilio non sono configurate. Vai su Impostazioni per aggiungerle.`);
     }
     
     const { twilio_account_sid: accountSid, twilio_auth_token: authToken } = settings;
@@ -81,7 +84,7 @@ serve(async (req) => {
     if (!twilioResponse.ok) {
         const errorBody = await twilioResponse.json();
         console.error("Errore da Twilio:", errorBody);
-        throw new Error(`Errore API Twilio: ${errorBody.message} (Codice: ${errorBody.code}). Assicurati che il numero del destinatario (${contact_phone}) sia verificato per la sandbox.`);
+        throw new Error(`Errore API Twilio: ${errorBody.message} (Codice: ${errorBody.code}).`);
     }
 
     return new Response(JSON.stringify({ success: true, message: `Messaggio inviato a ${contact_phone}.` }), {

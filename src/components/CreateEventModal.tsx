@@ -1,7 +1,7 @@
 // src/components/CreateEventModal.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Modal } from './ui/Modal';
-import { Contact, Organization, Reminder, EventFormData, ReminderChannel, EventTemplate } from '../types';
+import { Contact, Organization, EventFormData, EventTemplate } from '../types';
 import { CalendarIcon, ClockIcon, VideoIcon, InfoIcon, SaveIcon } from './ui/icons'; // Assumendo che le nuove icone siano in ui/icons.tsx
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';

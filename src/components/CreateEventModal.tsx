@@ -28,7 +28,7 @@ interface CreateEventModalProps {
     onClose: () => void;
     contact: Contact | null;
     organization: Organization | null;
-    onSaveSuccess: () => void;
+    onSaveSuccess: () => Promise<void>;
 }
 
 export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onClose, contact, organization, onSaveSuccess }) => {
@@ -151,7 +151,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             }
 
             toast.success("Evento creato e sincronizzato!", { id: toastId });
-            onSaveSuccess();
+            await onSaveSuccess();
             onClose();
         } catch (err: any) {
             toast.error(`Errore: ${err.message}`, { id: toastId });

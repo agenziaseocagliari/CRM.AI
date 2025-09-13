@@ -81,7 +81,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             });
             if (error) throw new Error(error.message);
             toast.success('Evento annullato!', { id: toastId });
-            refetch();
+            await refetch();
         } catch (err: any) {
             toast.error(`Errore: ${err.message}`, { id: toastId });
         } finally {
@@ -132,7 +132,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             if (data.error) throw new Error(data.error);
 
             toast.success("Evento creato!", { id: toastId });
-            refetch();
+            await refetch();
             setView('list');
 
         } catch (err: any) {

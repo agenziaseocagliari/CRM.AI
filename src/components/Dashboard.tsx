@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Card } from './ui/Card';
@@ -13,7 +14,9 @@ export const Dashboard: React.FC = () => {
 
   // FIX: The `.flat()` method was causing type inference issues in the build environment.
   // Reverted to a robust `reduce` with `concat` to reliably flatten the array of opportunity arrays.
-  const allOpportunities: Opportunity[] = Object.values(opportunities).reduce((acc, val) => acc.concat(val), []);
+  // FIX: Explicitly specify the generic type for the `reduce` method's accumulator
+  // to ensure TypeScript correctly infers `acc` as an array of `Opportunity` objects.
+  const allOpportunities: Opportunity[] = Object.values(opportunities).reduce<Opportunity[]>((acc, val) => acc.concat(val), []);
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   
   // Calcolo dinamico basato sui contatti totali, non solo sui lead.

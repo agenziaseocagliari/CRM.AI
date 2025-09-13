@@ -76,7 +76,9 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({
         if (!ledger) return [];
         const usageMap = ledger.reduce((acc, entry) => {
             if (entry.outcome === 'SUCCESS') {
-                const cost = Math.abs(entry.credits_changed);
+                // FIX: Explicitly cast `credits_changed` to a number to prevent potential runtime errors
+                // if Supabase returns a string value for a numeric column.
+                const cost = Math.abs(Number(entry.credits_changed));
                 const readableName = entry.action_type.replace(/_/g, ' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
                 acc[readableName] = (acc[readableName] || 0) + cost;
             }
@@ -85,7 +87,9 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({
 
         return Object.entries(usageMap)
             .map(([name, crediti]) => ({ name, crediti }))
-            .sort((a, b) => b.crediti - a.crediti);
+            // FIX: Explicitly cast `crediti` to a number within the sort function to handle cases
+            // where values might be strings, ensuring the arithmetic operation is valid.
+            .sort((a, b) => Number(b.crediti) - Number(a.crediti));
     }, [ledger]);
 
     return (

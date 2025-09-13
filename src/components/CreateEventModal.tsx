@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Modal } from './ui/Modal';
 import { Contact, Organization, Reminder, EventFormData, ReminderChannel, EventTemplate } from '../types';
-import { TrashIcon, PlusIcon, SparklesIcon, CalendarIcon, ClockIcon, VideoIcon, InfoIcon, TemplateIcon, SaveIcon } from './ui/icons'; // Assumendo che le nuove icone siano in ui/icons.tsx
+import { CalendarIcon, ClockIcon, VideoIcon, InfoIcon, SaveIcon } from './ui/icons'; // Assumendo che le nuove icone siano in ui/icons.tsx
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
@@ -21,12 +21,6 @@ const reminderOptions = [
     { label: '1 ora prima', value: 60 }, { label: '2 ore prima', value: 120 },
     { label: '1 giorno prima', value: 1440 },
 ];
-
-const defaultMessage = (channel: ReminderChannel, title: string, contactName: string) => {
-    return channel === 'WhatsApp'
-        ? `Ciao ${contactName.split(' ')[0]}! Ti ricordo del nostro appuntamento "${title}" tra poco. A presto! 👋`
-        : `Ciao ${contactName.split(' ')[0]},\n\nQuesto è un promemoria per il nostro appuntamento: "${title}".\n\nA presto!`;
-};
 
 // Stato iniziale del form, usato per reset e creazione.
 const getInitialFormData = (contactName = ''): EventFormData => ({
@@ -113,7 +107,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
     const [templates, setTemplates] = useState<EventTemplate[]>([]);
     
     const [isSaving, setIsSaving] = useState(false);
-    const [isGenerating, setIsGenerating] = useState(false);
 
     // Carica i template da localStorage all'avvio
     useEffect(() => {
@@ -203,28 +196,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             toast.success(`Template "${template.name}" caricato.`);
         }
     };
-
-
-    // --- Gestione Promemoria ---
-    const handleReminderChange = (index: number, field: keyof Reminder, value: string | number) => {
-        const newReminders = [...formData.reminders];
-        (newReminders[index] as any)[field] = value;
-        setFormData(prev => ({ ...prev, reminders: newReminders }));
-    };
-
-    const addReminder = () => {
-        if (!contact) return;
-        const newReminder: Reminder = { id: Date.now().toString(), minutesBefore: 15, channel: 'Email', message: defaultMessage('Email', formData.title, contact.name) };
-        setFormData(prev => ({ ...prev, reminders: [...prev.reminders, newReminder] }));
-    };
     
-    const removeReminder = (index: number) => setFormData(prev => ({ ...prev, reminders: prev.reminders.filter((_, i) => i !== index) }));
-    
-    // --- Logiche AI e Salvataggio ---
-    const handleGenerateMessage = async (index: number) => {
-        // ... (logica invariata)
-    };
-
     // Passa alla vista di anteprima se il form è valido
     const handleProceedToPreview = (e: React.FormEvent) => {
         e.preventDefault();
@@ -300,7 +272,32 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                                  {errors.time && !errors.date && <p className="text-xs text-red-600 mt-1">{errors.time}</p>}
                             </div>
                         </div>
-                        {/* Altri campi... */}
+                        {/* Altri campi... (Durata, Luogo, Descrizione, Meet) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="duration" className="block text-sm font-medium text-gray-700">Durata (minuti)</label>
+                                <select id="duration" name="duration" value={formData.duration} onChange={handleFormChange} className="mt-1 block w-full input-field">
+                                    <option value={15}>15 minuti</option>
+                                    <option value={30}>30 minuti</option>
+                                    <option value={45}>45 minuti</option>
+                                    <option value={60}>1 ora</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor="location" className="block text-sm font-medium text-gray-700">Luogo (opzionale)</label>
+                                <input type="text" id="location" name="location" value={formData.location} onChange={handleFormChange} className="mt-1 block w-full input-field"/>
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrizione / Note</label>
+                            <textarea id="description" name="description" rows={3} value={formData.description} onChange={handleFormChange} className="mt-1 block w-full input-field"/>
+                        </div>
+                        <div className="flex items-center">
+                            <input id="addMeet" name="addMeet" type="checkbox" checked={formData.addMeet} onChange={handleFormChange} className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+                            <label htmlFor="addMeet" className="ml-2 block text-sm text-gray-900">Aggiungi videoconferenza Google Meet</label>
+                        </div>
+
+
                         <div className="flex justify-end pt-4 border-t mt-4">
                             <button type="button" onClick={onClose} className="btn-secondary mr-2">Annulla</button>
                             <button type="submit" disabled={isSaving} className="btn-primary">{isSaving ? 'Salvataggio...' : 'Vai all\'Anteprima'}</button>

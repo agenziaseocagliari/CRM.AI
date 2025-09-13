@@ -47,7 +47,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
 
     useEffect(() => {
         if (isOpen && contact) {
-            setFormData(prev => ({ ...initialEventState, title: `Incontro con ${contact.name}` }));
+            // FIX: Rimosso il parametro 'prev' non utilizzato.
+            // Il nuovo stato non dipende da quello precedente, quindi possiamo impostarlo direttamente.
+            setFormData({ ...initialEventState, title: `Incontro con ${contact.name}` });
             const savedTemplates = organization ? JSON.parse(localStorage.getItem(`event_templates_${organization.id}`) || '[]') : [];
             setTemplates(savedTemplates);
         } else if (!isOpen) {

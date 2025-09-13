@@ -83,3 +83,24 @@ export interface OrganizationSettings {
     created_at: string;
     updated_at: string;
 }
+
+// --- NUOVI TIPI PER EVENTI E PROMEMORIA ---
+export type ReminderChannel = 'Email' | 'WhatsApp';
+
+export interface Reminder {
+    id: string; // un ID temporaneo lato client, es. `Date.now()`
+    minutesBefore: number;
+    channel: ReminderChannel;
+    message: string;
+}
+
+export interface EventFormData {
+    title: string;
+    date: string; // "YYYY-MM-DD"
+    time: string; // "HH:mm"
+    duration: number; // in minutes
+    location: string;
+    description: string;
+    addMeet: boolean;
+    reminders: Reminder[];
+}

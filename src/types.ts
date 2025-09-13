@@ -104,3 +104,18 @@ export interface EventFormData {
     addMeet: boolean;
     reminders: Reminder[];
 }
+
+// --- NUOVI TIPI PER TEMPLATE EVENTI ---
+export interface EventTemplate {
+    id: string; // es. Date.now().toString()
+    name: string; // Nome dato dall'utente al template
+    // Salva i dati riutilizzabili dell'evento
+    data: {
+        title: string;
+        duration: number;
+        location: string;
+        description: string;
+        addMeet: boolean;
+        reminders: Reminder[];
+    };
+}

@@ -25,7 +25,7 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
 
-    // **MODIFICA**: La query ora include una sub-query per unire i dati dei promemoria.
+    // La query seleziona gli eventi e unisce i dati correlati da 'contacts' e 'event_reminders'
     const { data: events, error } = await supabaseAdmin
         .from('crm_events')
         .select(`

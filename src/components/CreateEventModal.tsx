@@ -61,7 +61,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         if (!organization || !date) return;
         setIsFetchingSlots(true);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+
             const { data, error } = await supabase.functions.invoke('get-google-calendar-events', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { organization_id: organization.id, date },
             });
             if (error) throw new Error(error.message);
@@ -126,7 +130,13 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         setIsLoading(true);
         const toastId = toast.loading("Creazione evento...");
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+            
+            const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
+            
             const { data, error } = await supabase.functions.invoke('create-google-event', {
+                ...functionOptions,
                 body: { eventDetails: formData, contact, organization_id: organization.id, contact_id: contact.id }
             });
 
@@ -135,6 +145,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
 
             if (formData.reminders.length > 0 && data.crmEventId) {
                 await supabase.functions.invoke('schedule-event-reminders', {
+                    ...functionOptions,
                     body: { organization_id: organization.id, crm_event_id: data.crmEventId, event_start_time: data.event.start.dateTime, reminders: formData.reminders }
                 });
             }

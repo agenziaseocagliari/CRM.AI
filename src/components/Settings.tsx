@@ -120,12 +120,18 @@ export const GoogleAuthCallback: React.FC = () => {
             setAuthState({ status: 'loading', message: 'Finalizzazione della connessione sicura...' });
             
             try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) throw new Error('Utente non autenticato.');
+                
                 // --- OTTIMIZZAZIONE: Gestione del timeout esplicito di 20 secondi ---
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Timeout della richiesta dopo 20 secondi. La connessione potrebbe essere lenta.')), 20000)
                 );
 
-                const invokePromise = supabase.functions.invoke('google-token-exchange', { body: payload });
+                const invokePromise = supabase.functions.invoke('google-token-exchange', { 
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                    body: payload 
+                });
 
                 // Fa competere la chiamata API con il timeout
                 const response: any = await Promise.race([invokePromise, timeoutPromise]);
@@ -201,7 +207,7 @@ export const Settings: React.FC = () => {
             toast.success('Impostazioni salvate con successo!');
             refetch();
         } catch (err: any) {
-            toast.error(`Errore nel salvaggio: ${err.message}`);
+            toast.error(`Errore nel salvataggio: ${err.message}`);
         } finally {
             setIsSaving(false);
         }
@@ -212,7 +218,11 @@ export const Settings: React.FC = () => {
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
 
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+
             const { data, error } = await supabase.functions.invoke('google-auth-url', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { state },
             });
             

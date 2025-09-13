@@ -212,7 +212,11 @@ export const Contacts: React.FC = () => {
         const toastId = toast.loading('Generazione email in corso...');
         
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+            
              const { data, error } = await supabase.functions.invoke('generate-email-content', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { 
                     prompt: aiPrompt, 
                     contact: selectedContact,
@@ -238,7 +242,11 @@ export const Contacts: React.FC = () => {
         const toastId = toast.loading('Creazione messaggio...');
         
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+            
             const { data, error } = await supabase.functions.invoke('generate-whatsapp-message', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { 
                     prompt: aiPrompt, 
                     contact: selectedContact,
@@ -263,7 +271,11 @@ export const Contacts: React.FC = () => {
         const toastId = toast.loading('Invio in corso...');
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+            
             const { data, error } = await supabase.functions.invoke('send-whatsapp-message', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: {
                     contact_phone: selectedContact.phone,
                     message: generatedContent,

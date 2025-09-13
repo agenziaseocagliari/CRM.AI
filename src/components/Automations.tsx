@@ -58,7 +58,11 @@ export const Automations: React.FC = () => {
         setIsLoading(true);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+            
             const { data, error } = await supabase.functions.invoke('process-automation-request', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { 
                     prompt: userMessage.text,
                     organization_id: organization.id

@@ -104,7 +104,11 @@ export const Forms: React.FC = () => {
 
         const toastId = toast.loading('Generazione campi in corso...');
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+            
             const { data, error: invokeError } = await supabase.functions.invoke('generate-form-fields', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { 
                     prompt,
                     organization_id: organization.id 

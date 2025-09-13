@@ -64,6 +64,9 @@ export const useCrmData = () => {
       const { organization_id } = profileData;
 
       const { data: eventsData, error: eventsError } = await supabase.functions.invoke('get-all-crm-events', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
           body: { organization_id }
       });
       if (eventsError) throw new Error(`Errore nel caricamento degli eventi CRM: ${eventsError.message}`);

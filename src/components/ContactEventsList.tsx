@@ -104,7 +104,11 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
         setIsDeleting(event.id);
         const toastId = toast.loading('Annullamento evento...');
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+            
             const { error } = await supabase.functions.invoke('delete-google-event', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { organization_id: organizationId, google_event_id: event.google_event_id, crm_event_id: event.id }
             });
             if (error) throw new Error(error.message);

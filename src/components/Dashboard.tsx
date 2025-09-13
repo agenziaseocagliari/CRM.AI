@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Card } from './ui/Card';
@@ -10,9 +11,9 @@ import { useCrmData } from '../hooks/useCrmData';
 export const Dashboard: React.FC = () => {
   const { opportunities, contacts } = useOutletContext<ReturnType<typeof useCrmData>>();
 
-  // FIX: Replaced a `reduce` call that had type inference issues with the `flat()` method.
-  // This is a more modern, readable, and type-safe way to flatten the array of opportunity arrays.
-  const allOpportunities: Opportunity[] = Object.values(opportunities).flat();
+  // FIX: The `.flat()` method was causing type inference issues in the build environment.
+  // Reverted to a robust `reduce` with `concat` to reliably flatten the array of opportunity arrays.
+  const allOpportunities: Opportunity[] = Object.values(opportunities).reduce((acc, val) => acc.concat(val), []);
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   
   // Calcolo dinamico basato sui contatti totali, non solo sui lead.

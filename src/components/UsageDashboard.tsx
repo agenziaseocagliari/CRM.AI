@@ -34,8 +34,11 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({
         noCredits: false
     });
     
-    const currentCredits = subscription?.current_credits ?? 0;
-    const totalCredits = subscription?.total_credits ?? 1; // Evita divisione per zero se i dati non sono ancora arrivati
+    // FIX: Explicitly cast credit values to Number. Although the type definitions
+    // expect numbers, data from Supabase for numeric/decimal columns can sometimes
+    // be returned as strings, causing type errors in arithmetic operations.
+    const currentCredits = Number(subscription?.current_credits ?? 0);
+    const totalCredits = Number(subscription?.total_credits ?? 1); // Evita divisione per zero se i dati non sono ancora arrivati
 
     // Hook per monitorare i crediti e mostrare notifiche
     useEffect(() => {

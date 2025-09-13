@@ -1,5 +1,4 @@
 // Allineato con lo schema del database Supabase
-export type View = 'Dashboard' | 'Opportunities' | 'Contacts' | 'Forms' | 'Automations' | 'Settings';
 
 export interface Organization {
   id: string; // UUID

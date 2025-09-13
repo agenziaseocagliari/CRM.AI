@@ -3,7 +3,8 @@ import React, { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { CrmEvent } from '../types';
-import { Modal } from './ui/Modal';
+import { DayEventsModal } from './DayEventsModal';
+import { PlusIcon } from './ui/icons';
 
 const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
@@ -19,10 +20,10 @@ const CalendarHeader: React.FC<{
                 Oggi
             </button>
             <div className="flex items-center space-x-1">
-                <button onClick={onPrevMonth} className="p-2 text-gray-500 rounded-md hover:bg-gray-100">
+                <button onClick={onPrevMonth} aria-label="Mese precedente" className="p-2 text-gray-500 rounded-md hover:bg-gray-100">
                     &lt;
                 </button>
-                <button onClick={onNextMonth} className="p-2 text-gray-500 rounded-md hover:bg-gray-100">
+                <button onClick={onNextMonth} aria-label="Mese successivo" className="p-2 text-gray-500 rounded-md hover:bg-gray-100">
                     &gt;
                 </button>
             </div>
@@ -33,39 +34,11 @@ const CalendarHeader: React.FC<{
     </div>
 );
 
-const EventDetailsModal: React.FC<{
-    event: CrmEvent | null;
-    onClose: () => void;
-}> = ({ event, onClose }) => {
-    if (!event) return null;
-    
-    const startTime = new Date(event.event_start_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-    const endTime = new Date(event.event_end_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-
-    return (
-        <Modal isOpen={!!event} onClose={onClose} title="Dettagli Evento">
-            <div className="space-y-3 text-sm">
-                <p><strong>Titolo:</strong> {event.event_summary}</p>
-                <p><strong>Contatto:</strong> {event.contacts?.name} ({event.contacts?.email})</p>
-                <p><strong>Data:</strong> {new Date(event.event_start_time).toLocaleDateString('it-IT')}</p>
-                <p><strong>Orario:</strong> {startTime} - {endTime}</p>
-                 <p><strong>Stato:</strong> 
-                    <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full ${
-                        event.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                        {event.status === 'confirmed' ? 'Confermato' : 'Annullato'}
-                    </span>
-                </p>
-            </div>
-        </Modal>
-    );
-};
-
-
 export const CalendarView: React.FC = () => {
-    const { crmEvents, loading } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const crmData = useOutletContext<ReturnType<typeof useCrmData>>();
+    const { crmEvents, loading } = crmData;
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedEvent, setSelectedEvent] = useState<CrmEvent | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
     const handlePrevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
     const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
@@ -77,21 +50,17 @@ export const CalendarView: React.FC = () => {
         const firstDayOfMonth = new Date(year, month, 1);
         const lastDayOfMonth = new Date(year, month + 1, 0);
         
-        // Offset per iniziare la settimana di Lunedì (0=Dom, 1=Lun, ..., 6=Sab)
         const startDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7; 
         
         const daysInMonth = lastDayOfMonth.getDate();
         const days: (Date | null)[] = [];
 
-        // Giorni del mese precedente per riempire l'inizio
         for (let i = 0; i < startDayOfWeek; i++) {
             days.push(null);
         }
-        // Giorni del mese corrente
         for (let i = 1; i <= daysInMonth; i++) {
             days.push(new Date(year, month, i));
         }
-        // Giorni del mese successivo per completare la griglia
         while (days.length % 7 !== 0) {
             days.push(null);
         }
@@ -107,6 +76,8 @@ export const CalendarView: React.FC = () => {
                 acc[dateKey] = [];
             }
             acc[dateKey].push(event);
+            // Ordina gli eventi per ora di inizio
+            acc[dateKey].sort((a, b) => new Date(a.event_start_time).getTime() - new Date(b.event_start_time).getTime());
             return acc;
         }, {} as Record<string, CrmEvent[]>);
     }, [crmEvents]);
@@ -134,32 +105,52 @@ export const CalendarView: React.FC = () => {
                         const dayEvents = dayKey ? eventsByDate[dayKey] || [] : [];
                         
                         return (
-                            <div key={index} className="relative h-32 p-1.5 border-r border-b text-sm overflow-y-auto">
+                            <div key={index} className="relative h-32 p-1.5 border-r border-b text-sm overflow-y-auto group">
                                 {day && (
-                                    <span className={`flex items-center justify-center h-7 w-7 rounded-full ${
-                                        isToday ? 'bg-primary text-white font-bold' : 'text-gray-700'
-                                    }`}>
+                                    <button
+                                        onClick={() => setSelectedDate(day)}
+                                        aria-label={`Eventi per il ${day.toLocaleDateString('it-IT')}`}
+                                        className={`flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+                                            isToday ? 'bg-primary text-white font-bold' : 'text-gray-700 hover:bg-gray-100'
+                                        }`}>
                                         {day.getDate()}
-                                    </span>
+                                    </button>
                                 )}
                                 <div className="mt-1 space-y-1">
-                                    {dayEvents.map(event => (
+                                    {dayEvents.slice(0, 2).map(event => (
                                         <button 
                                             key={event.id}
-                                            onClick={() => setSelectedEvent(event)}
+                                            onClick={() => setSelectedDate(new Date(event.event_start_time))}
                                             className="w-full text-left p-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded truncate hover:bg-indigo-200"
                                         >
                                             {new Date(event.event_start_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })} {event.event_summary}
                                         </button>
                                     ))}
+                                    {dayEvents.length > 2 && (
+                                        <p className="text-xs text-gray-500 mt-1 pl-1">+ {dayEvents.length - 2} altri</p>
+                                    )}
                                 </div>
+                                {day && (
+                                     <button
+                                        onClick={() => setSelectedDate(day)}
+                                        aria-label={`Aggiungi evento per il ${day.toLocaleDateString('it-IT')}`}
+                                        className="absolute bottom-2 right-2 w-6 h-6 flex items-center justify-center bg-primary text-white rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                    >
+                                        <PlusIcon className="w-4 h-4" />
+                                    </button>
+                                )}
                             </div>
                         );
                     })}
                 </div>
             </div>
 
-            <EventDetailsModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+            <DayEventsModal
+                isOpen={!!selectedDate}
+                onClose={() => setSelectedDate(null)}
+                date={selectedDate}
+                crmData={crmData}
+            />
         </>
     );
 };

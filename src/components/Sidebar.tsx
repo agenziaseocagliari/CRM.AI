@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon } from './ui/icons';
+import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon } from './ui/icons';
 
 const NavItem: React.FC<{
   to: string;
@@ -53,6 +53,11 @@ export const Sidebar: React.FC = () => {
             to="/calendar"
             icon={<CalendarIcon className="w-6 h-6" />}
             label="Calendario"
+          />
+          <NavItem
+            to="/meetings"
+            icon={<VideoIcon className="w-6 h-6" />}
+            label="Meeting"
           />
           <NavItem
             to="/forms"

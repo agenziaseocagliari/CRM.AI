@@ -19,6 +19,7 @@ import { PublicForm } from './components/PublicForm';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
 import { CalendarView } from './components/CalendarView';
+import { Meetings } from './components/Meetings';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -91,6 +92,7 @@ const App: React.FC = () => {
           <Route path="opportunities" element={<Opportunities />} />
           <Route path="contacts" element={<Contacts />} />
           <Route path="calendar" element={<CalendarView />} />
+          <Route path="meetings" element={<Meetings />} />
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />
           <Route path="settings" element={<Settings />} />

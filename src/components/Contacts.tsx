@@ -214,14 +214,18 @@ export const Contacts: React.FC = () => {
     };
     
     const handleGenerateEmail = async () => {
-        if (!aiPrompt || !selectedContact) return;
+        if (!aiPrompt || !selectedContact || !organization) return;
         setIsGenerating(true);
         setGeneratedContent('');
         const toastId = toast.loading('Generazione email in corso...');
         
         try {
              const { data, error } = await supabase.functions.invoke('generate-email-content', {
-                body: { prompt: aiPrompt, contact: selectedContact },
+                body: { 
+                    prompt: aiPrompt, 
+                    contact: selectedContact,
+                    organization_id: organization.id 
+                },
             });
             if (error) throw new Error(error.message);
             if(data.error) throw new Error(data.error);
@@ -236,14 +240,18 @@ export const Contacts: React.FC = () => {
     };
     
     const handleGenerateWhatsApp = async () => {
-        if (!aiPrompt || !selectedContact) return;
+        if (!aiPrompt || !selectedContact || !organization) return;
         setIsGenerating(true);
         setGeneratedContent('');
         const toastId = toast.loading('Creazione messaggio...');
         
         try {
             const { data, error } = await supabase.functions.invoke('generate-whatsapp-message', {
-                body: { prompt: aiPrompt, contact: selectedContact },
+                body: { 
+                    prompt: aiPrompt, 
+                    contact: selectedContact,
+                    organization_id: organization.id
+                },
             });
             if (error) throw new Error(error.message);
             if (data.error) throw new Error(data.error);

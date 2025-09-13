@@ -3,11 +3,10 @@ import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
-import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons'; // Aggiunta icona di successo
+import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons';
+import { UsageDashboard } from './UsageDashboard'; // Importa la nuova dashboard
 
 // --- OTTIMIZZAZIONE: Componente Helper per UI di Stato ---
-// Questo componente gestisce la visualizzazione dello stato (caricamento, errore, successo)
-// per mantenere il componente GoogleAuthCallback più pulito e focalizzato sulla logica.
 const AuthStatusDisplay: React.FC<{
     status: 'loading' | 'success' | 'error';
     message: string;
@@ -162,9 +161,11 @@ export const GoogleAuthCallback: React.FC = () => {
     />;
 };
 
+type SettingsTab = 'integrations' | 'billing';
 
 export const Settings: React.FC = () => {
     const { organization, organizationSettings, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const [activeTab, setActiveTab] = useState<SettingsTab>('integrations');
     const [brevoApiKey, setBrevoApiKey] = useState('');
     const [twilioSid, setTwilioSid] = useState('');
     const [twilioToken, setTwilioToken] = useState('');
@@ -208,7 +209,6 @@ export const Settings: React.FC = () => {
     
     const handleGoogleConnect = async () => {
         try {
-            // Genera una stringa casuale per la protezione CSRF
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
 
@@ -248,57 +248,85 @@ export const Settings: React.FC = () => {
         }
     };
 
+    const TabButton: React.FC<{ tab: SettingsTab; label: string }> = ({ tab, label }) => (
+        <button
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+                activeTab === tab 
+                ? 'bg-primary text-white' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+        >
+            {label}
+        </button>
+    );
+
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary">Impostazioni</h1>
             
-            <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Integrazioni API</h2>
-                <form onSubmit={handleSave} className="space-y-6 mt-4">
-                    <div>
-                        <label htmlFor="brevo" className="block text-sm font-medium text-gray-700">Chiave API Brevo (per Email)</label>
-                        <input type="password" id="brevo" value={brevoApiKey} onChange={(e) => setBrevoApiKey(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="v3.xxx..." />
-                        <p className="text-xs text-gray-500 mt-1">Necessaria per l'invio di email automatiche ai nuovi contatti.</p>
-                    </div>
-                    <div>
-                        <label htmlFor="twilio_sid" className="block text-sm font-medium text-gray-700">Twilio Account SID (per WhatsApp)</label>
-                        <input type="password" id="twilio_sid" value={twilioSid} onChange={(e) => setTwilioSid(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="AC..." />
-                    </div>
-                    <div>
-                        <label htmlFor="twilio_token" className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
-                        <input type="password" id="twilio_token" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="••••••••••••••••" />
-                        <p className="text-xs text-gray-500 mt-1">Necessari per inviare messaggi tramite la sandbox di Twilio WhatsApp.</p>
-                    </div>
+            <div className="border-b border-gray-200">
+                <nav className="flex space-x-2" aria-label="Tabs">
+                    <TabButton tab="integrations" label="Integrazioni" />
+                    <TabButton tab="billing" label="Billing & Usage" />
+                </nav>
+            </div>
 
-                    <div className="flex justify-end pt-4 border-t">
-                        <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
-                            {isSaving ? 'Salvataggio...' : 'Salva Impostazioni API'}
-                        </button>
+            {activeTab === 'integrations' && (
+                <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-lg shadow">
+                        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Integrazioni API</h2>
+                        <form onSubmit={handleSave} className="space-y-6 mt-4">
+                            <div>
+                                <label htmlFor="brevo" className="block text-sm font-medium text-gray-700">Chiave API Brevo (per Email)</label>
+                                <input type="password" id="brevo" value={brevoApiKey} onChange={(e) => setBrevoApiKey(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="v3.xxx..." />
+                                <p className="text-xs text-gray-500 mt-1">Necessaria per l'invio di email automatiche ai nuovi contatti.</p>
+                            </div>
+                            <div>
+                                <label htmlFor="twilio_sid" className="block text-sm font-medium text-gray-700">Twilio Account SID (per WhatsApp)</label>
+                                <input type="password" id="twilio_sid" value={twilioSid} onChange={(e) => setTwilioSid(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="AC..." />
+                            </div>
+                            <div>
+                                <label htmlFor="twilio_token" className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
+                                <input type="password" id="twilio_token" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="••••••••••••••••" />
+                                <p className="text-xs text-gray-500 mt-1">Necessari per inviare messaggi tramite la sandbox di Twilio WhatsApp.</p>
+                            </div>
+
+                            <div className="flex justify-end pt-4 border-t">
+                                <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
+                                    {isSaving ? 'Salvataggio...' : 'Salva Impostazioni API'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
+                    
+                    <div className="bg-white p-6 rounded-lg shadow">
+                         <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Integrazione Google Calendar</h2>
+                         <div className="mt-4">
+                            {isGoogleConnected ? (
+                                <div className="flex items-center justify-between">
+                                    <p className="text-green-700 font-medium flex items-center">
+                                        <CheckCircleIcon className="w-5 h-5 mr-2"/> Connesso a Google Calendar
+                                    </p>
+                                    <button onClick={handleGoogleDisconnect} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Disconnetti</button>
+                                </div>
+                            ) : (
+                                 <div className="flex items-center justify-between">
+                                    <p className="text-gray-600">Connetti il tuo account Google per creare eventi direttamente dal CRM.</p>
+                                    <button onClick={handleGoogleConnect} className="bg-white text-gray-700 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                        <GoogleIcon />
+                                        <span>Connetti a Google</span>
+                                    </button>
+                                </div>
+                            )}
+                         </div>
+                    </div>
+                </div>
+            )}
             
-            <div className="bg-white p-6 rounded-lg shadow">
-                 <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Integrazione Google Calendar</h2>
-                 <div className="mt-4">
-                    {isGoogleConnected ? (
-                        <div className="flex items-center justify-between">
-                            <p className="text-green-700 font-medium flex items-center">
-                                <CheckCircleIcon className="w-5 h-5 mr-2"/> Connesso a Google Calendar
-                            </p>
-                            <button onClick={handleGoogleDisconnect} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Disconnetti</button>
-                        </div>
-                    ) : (
-                         <div className="flex items-center justify-between">
-                            <p className="text-gray-600">Connetti il tuo account Google per creare eventi direttamente dal CRM.</p>
-                            <button onClick={handleGoogleConnect} className="bg-white text-gray-700 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2">
-                                <GoogleIcon />
-                                <span>Connetti a Google</span>
-                            </button>
-                        </div>
-                    )}
-                 </div>
-            </div>
+            {activeTab === 'billing' && (
+                <UsageDashboard />
+            )}
         </div>
     );
 };

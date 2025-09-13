@@ -99,12 +99,16 @@ export const Forms: React.FC = () => {
     
     const handleGenerateForm = async () => {
         if (!prompt) { toast.error("Per favore, inserisci una descrizione per il tuo form."); return; }
+        if (!organization) { toast.error("Organizzazione non trovata."); return; }
         setIsLoading(true); setGeneratedFields(null);
 
         const toastId = toast.loading('Generazione campi in corso...');
         try {
             const { data, error: invokeError } = await supabase.functions.invoke('generate-form-fields', {
-                body: { prompt },
+                body: { 
+                    prompt,
+                    organization_id: organization.id 
+                },
             });
 
             if (invokeError) throw new Error(`Errore di rete: ${invokeError.message}`);

@@ -49,7 +49,7 @@ export const Automations: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
+        if (!input.trim() || isLoading || !organization) return;
         
         setLastInteraction(null);
         const userMessage: Message = { sender: 'user', text: input };
@@ -59,7 +59,10 @@ export const Automations: React.FC = () => {
 
         try {
             const { data, error } = await supabase.functions.invoke('process-automation-request', {
-                body: { prompt: userMessage.text },
+                body: { 
+                    prompt: userMessage.text,
+                    organization_id: organization.id
+                },
             });
 
             if (error) throw new Error(`Errore di rete: ${error.message}`);

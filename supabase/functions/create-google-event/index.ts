@@ -6,22 +6,9 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-// --- CORS Helper ---
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Max-Age": "86400"
-};
-
-function handleCors(req: Request): Response | null {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-  return null;
-}
-// --- End CORS Helper ---
+const ACTION_TYPE = 'create_google_event';
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -30,6 +17,24 @@ serve(async (req) => {
   try {
     const { eventDetails, contact, organization_id } = await req.json();
     if (!eventDetails || !contact || !organization_id) throw new Error("Dati mancanti per creare l'evento.");
+
+    // --- Integrazione Sistema a Crediti ---
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+    );
+
+    const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
+        body: { organization_id, action_type: ACTION_TYPE },
+    });
+
+    if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
+    if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
+    if (!creditData.success) throw new Error("Crediti insufficienti per creare un evento.");
+    console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
+    // --- Fine Integrazione ---
+
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY non impostato.");

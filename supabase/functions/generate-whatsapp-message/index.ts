@@ -6,42 +6,47 @@ declare const Deno: {
   };
 };
 
-// @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-// --- CORS Helper ---
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Max-Age": "86400"
-};
-
-function handleCors(req: Request): Response | null {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-  return null;
-}
-// --- End CORS Helper ---
+const ACTION_TYPE = 'ai_whatsapp_generation';
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   try {
+    const { prompt, contact, organization_id } = await req.json();
+    if (!prompt || !contact) {
+      return new Response(JSON.stringify({ error: "I parametri 'prompt' e 'contact' sono obbligatori." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+     if (!organization_id) {
+       return new Response(JSON.stringify({ error: "Il parametro 'organization_id' è obbligatorio per la verifica dei crediti." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // --- Integrazione Sistema a Crediti ---
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+    );
+
+    const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
+        body: { organization_id, action_type: ACTION_TYPE },
+    });
+
+    if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
+    if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
+    if (!creditData.success) throw new Error("Crediti insufficienti per generare un messaggio.");
+    console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
+    // --- Fine Integrazione ---
+
+
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) {
       throw new Error("La variabile d'ambiente GEMINI_API_KEY non è stata impostata.");
-    }
-
-    const { prompt, contact } = await req.json();
-    if (!prompt || !contact) {
-      return new Response(JSON.stringify({ error: "I parametri 'prompt' e 'contact' sono obbligatori." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });

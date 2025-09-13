@@ -6,26 +6,12 @@ declare const Deno: {
   };
 };
 
-// @deno-types="https://esm.sh/@google/genai@1.19.0/dist/index.d.ts"
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-// --- CORS Helper ---
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Max-Age": "86400"
-};
-
-function handleCors(req: Request): Response | null {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-  return null;
-}
-// --- End CORS Helper ---
+const ACTION_TYPE = 'ai_lead_scoring';
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -39,17 +25,38 @@ serve(async (req) => {
     if (!geminiApiKey || !supabaseUrl || !serviceRoleKey) {
       throw new Error("Mancano le variabili d'ambiente necessarie.");
     }
+    
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const { record: contact } = await req.json();
-    if (!contact || !contact.id) {
-      return new Response(JSON.stringify({ error: "ID del contatto non fornito." }), {
+    if (!contact || !contact.id || !contact.organization_id) {
+      return new Response(JSON.stringify({ error: "Dati del contatto (ID, Organization ID) non forniti." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // --- Integrazione Sistema a Crediti (con client admin) ---
+    const { data: creditData, error: creditError } = await supabaseAdmin.functions.invoke('consume-credits', {
+        body: { organization_id: contact.organization_id, action_type: ACTION_TYPE },
+    });
+
+    if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
+    // La funzione invoke con service key può restituire un errore di funzione nel campo 'data'
+    if (creditData && creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
+    if (creditData && !creditData.success) {
+      console.warn(`[${ACTION_TYPE}] Crediti insufficienti per l'organizzazione ${contact.organization_id}. Lead scoring saltato.`);
+      // Non blocchiamo la creazione del contatto, semplicemente non eseguiamo lo scoring.
+      // Restituiamo 200 OK per non far fallire il trigger del database.
+      return new Response(JSON.stringify({ success: true, message: "Crediti insufficienti, scoring saltato." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+      });
+    }
+    console.log(`[${ACTION_TYPE}] Crediti verificati per ${contact.organization_id}. Rimanenti: ${creditData.remaining_credits}`);
+    // --- Fine Integrazione ---
+
+
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const scoringPrompt = `
       Sei un analista di vendite esperto. Il tuo compito è valutare un nuovo lead e assegnargli un punteggio da 1 a 100, una categoria ('Hot', 'Warm', 'Cold') e una breve motivazione.

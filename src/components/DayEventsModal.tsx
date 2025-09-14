@@ -143,8 +143,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
             
-            // **FIX CRITICO TIMEZONE**: Costruisce la data/ora usando i componenti locali
-            // per evitare slittamenti di fuso orario prima della conversione in UTC.
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
@@ -157,8 +155,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
 
             if (eventToEdit) {
                 // --- LOGICA DI MODIFICA ---
-                if (eventToEdit.google_event_id) {
-                    // Modifica di un evento sincronizzato con Google
+                if (isGoogleConnected && eventToEdit.google_event_id) {
                     const eventDetails = {
                         date: localDateString,
                         time: formData.time,
@@ -173,7 +170,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     if (error) throw new Error(error.message);
                     toast.success("Evento modificato e sincronizzato!", { id: toastId });
                 } else {
-                    // Modifica di un evento solo CRM
                     const { error } = await supabase
                         .from('crm_events')
                         .update({
@@ -189,7 +185,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             } else {
                 // --- LOGICA DI CREAZIONE ---
                 if (isGoogleConnected) {
-                    // Creazione di un nuovo evento sincronizzato con Google
                     const selectedContact = contacts.find(c => c.id === formData.contact_id);
                     if (!selectedContact) throw new Error("Contatto selezionato non valido.");
                     
@@ -207,7 +202,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     if (data.error) throw new Error(data.error);
                     toast.success("Evento creato e sincronizzato!", { id: toastId });
                 } else {
-                    // Creazione di un nuovo evento solo CRM
+                    // **FIX CRITICO**: Questo blocco garantisce la creazione di eventi solo-CRM.
                     console.log("[DayEventsModal] Modalità CRM-only. Tentativo di invocare 'create-crm-event'...");
                     
                     const requestBody = {

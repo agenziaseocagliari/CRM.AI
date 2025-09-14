@@ -70,7 +70,7 @@ export const CalendarView: React.FC = () => {
 
     const eventsByDate = useMemo(() => {
         return crmEvents.reduce((acc, event) => {
-            if (event.status === 'cancelled') return acc;
+            if (event.status === 'cancelled' || !event.event_start_time) return acc;
             
             // **FIX CRITICO FUSO ORARIO**: Converte la stringa ISO (UTC) dal database
             // in un oggetto Date e poi costruisce la chiave YYYY-MM-DD usando

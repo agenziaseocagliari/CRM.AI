@@ -52,7 +52,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         if (!date) return [];
         const dateKey = date.toISOString().split('T')[0];
         return crmEvents
-            .filter(e => e.event_start_time.startsWith(dateKey) && e.status !== 'cancelled')
+            .filter(e => e.event_start_time && e.event_start_time.startsWith(dateKey) && e.status !== 'cancelled')
             .sort((a,b) => new Date(a.event_start_time).getTime() - new Date(b.event_start_time).getTime());
     }, [date, crmEvents]);
 

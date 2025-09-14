@@ -75,8 +75,8 @@ export const useCrmData = () => {
         supabase.from('opportunities').select('*').eq('organization_id', organization_id),
         supabase.from('forms').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         supabase.from('automations').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
-        supabase.from('organization_settings').select('*').eq('organization_id', organization_id).single<OrganizationSettings>(),
-        supabase.from('organization_subscriptions').select('*').eq('organization_id', organization_id).single<OrganizationSubscription>(),
+        supabase.from('organization_settings').select('*').eq('organization_id', organization_id).maybeSingle<OrganizationSettings>(),
+        supabase.from('organization_subscriptions').select('*').eq('organization_id', organization_id).maybeSingle<OrganizationSubscription>(),
         supabase.from('credit_ledger').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }).limit(20)
       ]);
 
@@ -87,8 +87,8 @@ export const useCrmData = () => {
       if (opportunitiesResponse.error) throw new Error(`Errore nel caricamento delle opportunità: ${opportunitiesResponse.error.message}`);
       if (formsResponse.error) throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);
       if (automationsResponse.error) throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`);
-      if (settingsResponse.error && settingsResponse.status !== 406) throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);
-      if (subscriptionResponse.error && subscriptionResponse.status !== 406) throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);
+      if (settingsResponse.error) throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);
+      if (subscriptionResponse.error) throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);
       if (ledgerResponse.error) throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`);
       
       setOrganization(orgResponse.data);

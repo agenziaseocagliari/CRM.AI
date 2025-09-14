@@ -105,19 +105,32 @@ serve(async (req) => {
             event_summary: createdEvent.summary, event_start_time: createdEvent.start.dateTime,
             event_end_time: createdEvent.end.dateTime, status: createdEvent.status,
         })
-        .select('id') // **MODIFICA CHIAVE: Seleziona l'ID del record appena inserito**
+        .select('id')
         .single();
     
     if (crmInsertError) {
-        console.error("ERRORE CRITICO: Evento Google creato ma non salvato nel CRM.", crmInsertError);
-    } else {
-        console.log(`Evento Google ${createdEvent.id} mappato nel CRM con ID ${newCrmEvent.id}.`);
+        console.error("ERRORE CRITICO: Evento Google creato ma non salvato nel CRM. Tentativo di cancellare l'evento Google per coerenza...", crmInsertError);
+        // Tentativo di "rollback": cancellare l'evento appena creato su Google.
+        try {
+            await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${createdEvent.id}?sendUpdates=all`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${accessToken}` },
+            });
+            console.log(`Rollback: Evento Google ${createdEvent.id} cancellato con successo.`);
+        } catch (rollbackError) {
+            console.error(`ERRORE CRITICO DURANTE IL ROLLBACK: Impossibile cancellare l'evento Google ${createdEvent.id}. Richiede intervento manuale.`, rollbackError);
+        }
+        
+        // Lancia l'errore per propagarlo al frontend e attivare il fallback.
+        throw new Error(`Evento Google creato, ma fallito il salvataggio nel CRM: ${crmInsertError.message}`);
     }
+    
+    console.log(`Evento Google ${createdEvent.id} mappato nel CRM con ID ${newCrmEvent.id}.`);
 
     return new Response(JSON.stringify({ 
         success: true, 
         event: createdEvent, 
-        crmEventId: newCrmEvent?.id // **MODIFICA CHIAVE: Restituisce l'ID al frontend**
+        crmEventId: newCrmEvent?.id
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

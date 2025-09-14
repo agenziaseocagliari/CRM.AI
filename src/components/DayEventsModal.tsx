@@ -142,9 +142,15 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
+            
+            // **FIX CRITICO TIMEZONE**: Costruisce la data/ora usando i componenti locali
+            // per evitare slittamenti di fuso orario prima della conversione in UTC.
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const localDateString = `${year}-${month}-${day}`;
 
-            // **FIX CRITICO**: Calcola le date/ore qui per usarle in tutti gli scenari
-            const startDateTime = new Date(`${date.toISOString().split('T')[0]}T${formData.time}:00`);
+            const startDateTime = new Date(`${localDateString}T${formData.time}:00`);
             const endDateTime = new Date(startDateTime.getTime() + Number(formData.duration) * 60000);
 
             const isGoogleConnected = !!organizationSettings?.google_auth_token;
@@ -154,7 +160,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 if (eventToEdit.google_event_id) {
                     // Modifica di un evento sincronizzato con Google
                     const eventDetails = {
-                        date: date.toISOString().split('T')[0],
+                        date: localDateString,
                         time: formData.time,
                         duration: Number(formData.duration),
                         title: formData.title,
@@ -188,7 +194,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     if (!selectedContact) throw new Error("Contatto selezionato non valido.");
                     
                     const eventDetails = {
-                        date: date.toISOString().split('T')[0], time: formData.time,
+                        date: localDateString, time: formData.time,
                         duration: Number(formData.duration), title: formData.title,
                         description: formData.description,
                     };

@@ -24,26 +24,52 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-
-    // **MODIFICA**: La query è stata aggiornata per rimuovere il join con la tabella 'contacts'.
-    // I dati dei contatti verranno recuperati separatamente dal frontend usando il 'contact_id'.
-    // Il join con 'event_reminders' viene mantenuto per non interrompere la funzionalità dei promemoria.
-    const { data: events, error } = await supabaseAdmin
+    
+    // --- FIX STRATEGICO: Eseguiamo query separate per evitare errori di relazione in PostgREST ---
+    // 1. Recupera tutti gli eventi per l'organizzazione.
+    const { data: rawEvents, error: eventsError } = await supabaseAdmin
         .from('crm_events')
-        .select(`
-            *,
-            event_reminders (
-                id,
-                channel,
-                scheduled_at,
-                status,
-                error_message
-            )
-        `)
+        .select('*')
         .eq('organization_id', organization_id)
         .order('event_start_time', { ascending: false });
 
-    if (error) throw error;
+    if (eventsError) throw eventsError;
+    
+    // Gestisce il caso in cui non ci siano eventi, restituendo un array vuoto.
+    if (!rawEvents) {
+         return new Response(JSON.stringify({ events: [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+        });
+    }
+    
+    // 2. Recupera tutti i promemoria per l'organizzazione.
+    const { data: reminders, error: remindersError } = await supabaseAdmin
+        .from('event_reminders')
+        .select('*')
+        .eq('organization_id', organization_id);
+    
+    if (remindersError) throw remindersError;
+
+    // 3. Unisci i dati manualmente in JavaScript per massima robustezza.
+    // Crea una mappa per un accesso efficiente agli eventi.
+    const eventsMap = new Map(rawEvents.map(event => [event.id, { ...event, event_reminders: [] }]));
+
+    // Se ci sono promemoria, li assegna all'evento corrispondente.
+    if (reminders) {
+        for (const reminder of reminders) {
+            const event = eventsMap.get(reminder.crm_event_id);
+            // FIX: The value retrieved from the map was being inferred as 'unknown'.
+            // By getting the event first and checking for its existence, we create a type guard.
+            // We then cast it to 'any' to safely access the 'event_reminders' property.
+            if (event) {
+                (event as any).event_reminders.push(reminder);
+            }
+        }
+    }
+    
+    // Converte la mappa in un array per la risposta.
+    const events = Array.from(eventsMap.values());
 
     return new Response(JSON.stringify({ events }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

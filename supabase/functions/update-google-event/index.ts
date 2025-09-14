@@ -99,14 +99,23 @@ serve(async (req) => {
     const tokenData = JSON.parse(settings.google_auth_token);
     const accessToken = await getRefreshedAccessToken(tokenData, organization_id, supabaseAdmin);
 
-    // 4. Recupero dell'evento dal CRM per ottenere il google_event_id
+    // 4. Recupero dell'evento dal CRM per ottenere google_event_id e contact_id
     const { data: crmEvent, error: crmEventError } = await supabaseAdmin
         .from('crm_events')
-        .select('google_event_id, contacts ( email )') // Seleziona anche l'email del contatto per l'invito
+        .select('google_event_id, contact_id') // FIX: Rimosso il join con 'contacts'
         .eq('id', crm_event_id)
         .single();
 
     if (crmEventError || !crmEvent) throw new Error(`Evento CRM con ID ${crm_event_id} non trovato.`);
+    
+    // 4a. Recupero dell'email del contatto con una query separata per robustezza
+    const { data: contact, error: contactError } = await supabaseAdmin
+        .from('contacts')
+        .select('email')
+        .eq('id', crmEvent.contact_id)
+        .single();
+    
+    if (contactError || !contact) throw new Error(`Contatto associato all'evento (ID: ${crmEvent.contact_id}) non trovato.`);
     
     // 5. Preparazione del payload e aggiornamento dell'evento su Google Calendar
     const startDateTime = new Date(`${eventDetails.date}T${eventDetails.time}:00`).toISOString();
@@ -118,7 +127,7 @@ serve(async (req) => {
         description: eventDetails.description,
         start: { dateTime: startDateTime, timeZone },
         end: { dateTime: endDateTime, timeZone },
-        attendees: [{ email: crmEvent.contacts.email }], // Mantiene l'invitato originale
+        attendees: [{ email: contact.email }], // FIX: Usa l'email dalla query separata
     };
 
     const calendarApiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${crmEvent.google_event_id}?sendUpdates=all`;

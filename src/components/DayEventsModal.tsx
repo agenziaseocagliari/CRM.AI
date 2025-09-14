@@ -24,9 +24,6 @@ const initialFormState = {
 type EventFormData = typeof initialFormState;
 
 export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose, date, crmData }) => {
-    // FIX: Aggiunta una destrutturazione sicura con valori di default.
-    // Questo previene crash se crmData o le sue proprietà non sono disponibili,
-    // garantendo che `contacts` e `crmEvents` siano sempre array.
     const { 
         crmEvents = [], 
         contacts = [], 
@@ -39,6 +36,9 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const [isSaving, setIsSaving] = useState(false);
     const [eventToEdit, setEventToEdit] = useState<CrmEvent | null>(null);
     const [formData, setFormData] = useState<EventFormData>(initialFormState);
+    const [syncWithGoogle, setSyncWithGoogle] = useState(true);
+
+    const isGoogleConnected = !!organizationSettings?.google_auth_token;
     
     useEffect(() => {
         // Reset state when modal is opened or date changes
@@ -46,13 +46,13 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             setView('list');
             setEventToEdit(null);
             setFormData(initialFormState);
+            setSyncWithGoogle(true);
         }
     }, [isOpen, date]);
     
     const dayEvents = useMemo(() => {
         if (!date) return [];
         const dateKey = date.toISOString().split('T')[0];
-        // FIX: Aggiunto un controllo per assicurarsi che e.event_start_time esista prima di chiamare .startsWith()
         return crmEvents
             .filter(e => e.event_start_time && e.event_start_time.startsWith(dateKey) && e.status !== 'cancelled')
             .sort((a,b) => new Date(a.event_start_time).getTime() - new Date(b.event_start_time).getTime());
@@ -87,7 +87,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     };
 
     const handleDeleteEvent = async (event: CrmEvent) => {
-        // Se non c'è un google_event_id, è un evento solo CRM e possiamo cancellarlo direttamente
         if (!event.google_event_id) {
             if (!window.confirm(`Eliminare l'evento (solo CRM) "${event.event_summary}"?`)) return;
              setIsSaving(true);
@@ -105,7 +104,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             return;
         }
 
-        // Se c'è un google_event_id, è un evento sincronizzato
         if (!organization) { toast.error("ID organizzazione non trovato."); return; }
         if (!window.confirm(`Annullare l'evento "${event.event_summary}"? Sarà rimosso da Google Calendar.`)) return;
 
@@ -151,8 +149,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             const startDateTime = new Date(`${localDateString}T${formData.time}:00`);
             const endDateTime = new Date(startDateTime.getTime() + Number(formData.duration) * 60000);
 
-            const isGoogleConnected = !!organizationSettings?.google_auth_token;
-
             if (eventToEdit) {
                 // --- LOGICA DI MODIFICA ---
                 if (isGoogleConnected && eventToEdit.google_event_id) {
@@ -184,7 +180,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 }
             } else {
                 // --- LOGICA DI CREAZIONE ---
-                if (isGoogleConnected) {
+                if (isGoogleConnected && syncWithGoogle) {
                     const selectedContact = contacts.find(c => c.id === formData.contact_id);
                     if (!selectedContact) throw new Error("Contatto selezionato non valido.");
                     
@@ -202,9 +198,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     if (data.error) throw new Error(data.error);
                     toast.success("Evento creato e sincronizzato!", { id: toastId });
                 } else {
-                    // **FIX CRITICO**: Questo blocco garantisce la creazione di eventi solo-CRM.
-                    console.log("[DayEventsModal] Modalità CRM-only. Tentativo di invocare 'create-crm-event'...");
-                    
                     const requestBody = {
                         organization_id: organization.id,
                         contact_id: formData.contact_id,
@@ -212,23 +205,14 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                         event_start_time: startDateTime.toISOString(),
                         event_end_time: endDateTime.toISOString(),
                     };
-                    console.log("[DayEventsModal] Payload per la funzione:", JSON.stringify(requestBody, null, 2));
 
                     const { data, error } = await supabase.functions.invoke('create-crm-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: requestBody
                     });
                     
-                    console.log("[DayEventsModal] Risposta dalla funzione 'create-crm-event':", { data, error });
-
-                    if (error) {
-                        console.error("[DayEventsModal] Errore durante l'invocazione:", error);
-                        throw new Error(error.message);
-                    }
-                    if (data && data.error) {
-                        console.error("[DayEventsModal] Errore applicativo dalla funzione:", data.error);
-                        throw new Error(data.error);
-                    }
+                    if (error) throw new Error(error.message);
+                    if (data && data.error) throw new Error(data.error);
 
                     toast.success("Evento CRM creato!", { id: toastId });
                 }
@@ -308,6 +292,21 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrizione</label>
                         <textarea id="description" name="description" value={formData.description} onChange={handleFormChange} rows={3} className="mt-1 block w-full px-3 py-2 border rounded-md" placeholder="Note per l'evento, visibili in Google Calendar"></textarea>
                     </div>
+                    {isGoogleConnected && !eventToEdit && (
+                        <div className="flex items-center pt-2">
+                            <input
+                                type="checkbox"
+                                id="syncWithGoogle"
+                                name="syncWithGoogle"
+                                checked={syncWithGoogle}
+                                onChange={(e) => setSyncWithGoogle(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <label htmlFor="syncWithGoogle" className="ml-2 block text-sm text-gray-900">
+                                Sincronizza con Google Calendar
+                            </label>
+                        </div>
+                    )}
                      <div className="flex justify-end items-center pt-4 border-t space-x-3">
                         <button type="button" onClick={() => setView('list')} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Annulla</button>
                         <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">

@@ -24,7 +24,16 @@ const initialFormState = {
 type EventFormData = typeof initialFormState;
 
 export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose, date, crmData }) => {
-    const { crmEvents, contacts, organization, refetch } = crmData;
+    // FIX: Aggiunta una destrutturazione sicura con valori di default.
+    // Questo previene crash se crmData o le sue proprietà non sono disponibili,
+    // garantendo che `contacts` e `crmEvents` siano sempre array.
+    const { 
+        crmEvents = [], 
+        contacts = [], 
+        organization = null, 
+        refetch = async () => {} 
+    } = crmData || {};
+
     const [view, setView] = useState<'list' | 'form'>('list');
     const [isSaving, setIsSaving] = useState(false);
     const [eventToEdit, setEventToEdit] = useState<CrmEvent | null>(null);

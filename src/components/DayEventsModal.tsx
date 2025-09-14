@@ -60,13 +60,15 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     useEffect(() => {
         if (isOpen) {
-            console.log('[DayEventsModal Aperta] Stato corrente di organizationSettings:', organizationSettings);
+            // LOG 1: All'apertura della modale
+            console.log('[DEBUG] Event modal opened - crmData:', crmData);
+            
             setView('list');
             setEventToEdit(null);
             setFormData(initialFormState);
             setSyncWithGoogle(true);
         }
-    }, [isOpen, date, organizationSettings]);
+    }, [isOpen, date, crmData]);
     
     const dayEvents = useMemo(() => {
         if (!date) return [];
@@ -109,7 +111,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         const toastId = toast.loading('Eliminazione in corso...');
         try {
             if (event.google_event_id && organization) {
-                // FIX: Corrected property access from `event.summary` to `event.event_summary` to match the `CrmEvent` type definition. This resolves the TypeScript error 'Property 'summary' does not exist on type 'CrmEvent''.
                 if (!window.confirm(`Annullare l'evento "${event.event_summary}"? Sarà rimosso anche da Google Calendar.`)) {
                     setIsSaving(false);
                     toast.dismiss(toastId);
@@ -144,8 +145,22 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // LOG 2: All'inizio della funzione handleSaveEvent
+        console.log('[DEBUG] Salvataggio evento - istanza form', { 
+            formData, 
+            organization, 
+            contact_id: formData.contact_id, 
+            isGoogleConnected: googleConnectionStatus === 'connected' 
+        });
+
         if (!organization || !date || !formData.contact_id) {
-            toast.error("Dati mancanti per creare o modificare l'evento.");
+            toast.error("Dati mancanti per creare o modificare l'evento. Controlla che un contatto sia selezionato.");
+            console.error('[DEBUG] Uscita anticipata da handleSaveEvent. Dati mancanti:', {
+                hasOrganization: !!organization,
+                hasDate: !!date,
+                hasContactId: !!formData.contact_id,
+            });
             return;
         }
         
@@ -177,17 +192,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     throw error;
                 }
             } else {
-                 /*
-                 * Esempio di payload che verrà inviato alla funzione.
-                 * NOTA: Le date sono in formato ISO 8601 (UTC).
-                 * {
-                 *   "organization_id": "uuid-of-the-organization",
-                 *   "contact_id": "uuid-of-the-contact",
-                 *   "event_summary": "Incontro con Mario Rossi",
-                 *   "event_start_time": "2024-09-12T07:00:00.000Z",
-                 *   "event_end_time": "2024-09-12T07:30:00.000Z"
-                 * }
-                 */
                 const createPayload = {
                     organization_id: organization.id,
                     contact_id: formData.contact_id,
@@ -196,14 +200,16 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     event_end_time: endDateTime.toISOString(),
                 };
                 
-                console.log("[DayEventsModal] Tentativo di CREAZIONE evento SOLO CRM. Payload inviato a 'create-crm-event':", JSON.stringify(createPayload, null, 2));
+                // LOG 3: Subito PRIMA della chiamata
+                console.log('[DEBUG] Chiamata function edge (payload):', createPayload);
 
                 const { data, error } = await supabase.functions.invoke('create-crm-event', {
                     headers: { Authorization: `Bearer ${session.access_token}` },
                     body: createPayload
                 });
                 
-                console.log("[DayEventsModal] Risposta da 'create-crm-event':", { data, error });
+                // LOG 4: Subito DOPO la chiamata
+                console.log('[DEBUG] Risposta function edge', { data, error });
 
                 if (error) throw new Error(error.message);
                 if (data && data.error) throw new Error(data.error);
@@ -219,10 +225,14 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
                     try {
                         const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description };
-                        const { error } = await supabase.functions.invoke('update-google-event', {
+                        const requestBody = { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails };
+                        console.log('[DEBUG] Chiamata function edge (payload):', requestBody);
+                        
+                        const { data, error } = await supabase.functions.invoke('update-google-event', {
                             headers: { Authorization: `Bearer ${session.access_token}` },
-                            body: { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails }
+                            body: requestBody
                         });
+                        console.log('[DEBUG] Risposta function edge', { data, error });
                         if (error) throw error;
                         toast.success("Evento modificato e sincronizzato!", { id: toastId });
                     } catch (googleError: any) {
@@ -241,10 +251,15 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                         const selectedContact = contacts.find(c => c.id === formData.contact_id);
                         if (!selectedContact) throw new Error("Contatto selezionato non valido.");
                         const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description, addMeet: true, reminders: [] };
+                        const requestBody = { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id };
+                        
+                        console.log('[DEBUG] Chiamata function edge (payload):', requestBody);
+
                         const { data, error } = await supabase.functions.invoke('create-google-event', {
                             headers: { Authorization: `Bearer ${session.access_token}` },
-                            body: { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id }
+                            body: requestBody
                         });
+                        console.log('[DEBUG] Risposta function edge', { data, error });
                         if (error) throw error;
                         if (data.error) throw new Error(data.error);
                         toast.success("Evento creato e sincronizzato!", { id: toastId });

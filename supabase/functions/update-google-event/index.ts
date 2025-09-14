@@ -153,7 +153,7 @@ serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
         .from('crm_events')
         .update({
-            event_summary: updatedGoogleEvent.summary,
+            event_summary: updatedGoogleEvent.summary || eventDetails.title, // PATCH: Fallback per event_summary
             event_start_time: updatedGoogleEvent.start.dateTime,
             event_end_time: updatedGoogleEvent.end.dateTime,
             status: 'confirmed', // Assicura che lo stato sia 'confirmed' in caso di modifica

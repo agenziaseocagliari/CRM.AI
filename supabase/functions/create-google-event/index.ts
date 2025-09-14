@@ -102,7 +102,8 @@ serve(async (req) => {
         .from('crm_events')
         .insert({
             google_event_id: createdEvent.id, organization_id: organization_id, contact_id: contact_id,
-            event_summary: createdEvent.summary, event_start_time: createdEvent.start.dateTime,
+            event_summary: createdEvent.summary || eventDetails.title, // PATCH: Fallback per event_summary
+            event_start_time: createdEvent.start.dateTime,
             event_end_time: createdEvent.end.dateTime, status: createdEvent.status,
         })
         .select('id')

@@ -46,10 +46,8 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         try {
             const parsedToken = JSON.parse(token);
             if (typeof parsedToken.access_token === 'string' && typeof parsedToken.refresh_token === 'string') {
-                console.log('[DayEventsModal] Token Google valido e connesso.');
                 return 'connected';
             } else {
-                 console.warn('[DayEventsModal] Token Google trovato ma mancano le chiavi `access_token` o `refresh_token`.');
                 return 'corrupted';
             }
         } catch (e) {
@@ -60,7 +58,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     useEffect(() => {
         if (isOpen) {
-            // LOG 1: All'apertura della modale
+            // LOG 1: All'apertura della modale, logga tutti i dati ricevuti.
             console.log('[DEBUG] Event modal opened - crmData:', crmData);
             
             setView('list');
@@ -101,7 +99,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             contact_id: event.contact_id,
             time: startTime.toTimeString().substring(0, 5),
             duration: duration,
-            description: '',
+            description: '', // Descrizione non è salvata nel DB, quindi la resettiamo.
         });
         setView('form');
     };
@@ -146,20 +144,18 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        // LOG 2: All'inizio della funzione handleSaveEvent
-        console.log('[DEBUG] Salvataggio evento - istanza form', { 
+        // LOG 2: Dati iniziali prima di qualsiasi operazione di salvataggio.
+        console.log('[DEBUG] Inizio salvataggio evento. Dati correnti:', { 
             formData, 
             organization, 
             contact_id: formData.contact_id, 
-            isGoogleConnected: googleConnectionStatus === 'connected' 
+            googleStatus: googleConnectionStatus 
         });
 
         if (!organization || !date || !formData.contact_id) {
-            toast.error("Dati mancanti per creare o modificare l'evento. Controlla che un contatto sia selezionato.");
-            console.error('[DEBUG] Uscita anticipata da handleSaveEvent. Dati mancanti:', {
-                hasOrganization: !!organization,
-                hasDate: !!date,
-                hasContactId: !!formData.contact_id,
+            toast.error("Dati mancanti (organizzazione, data o contatto) per salvare l'evento.");
+            console.error('[DEBUG] ERRORE: Uscita anticipata da handleSaveEvent. Dati mancanti:', {
+                hasOrganization: !!organization, hasDate: !!date, hasContactId: !!formData.contact_id,
             });
             return;
         }
@@ -185,10 +181,10 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     event_start_time: startDateTime.toISOString(),
                     event_end_time: endDateTime.toISOString(),
                 };
-                console.log('[DayEventsModal] FALLBACK: Tentativo di AGGIORNAMENTO evento SOLO CRM. Payload:', updatePayload);
+                console.log('[DEBUG] FALLBACK: Tentativo di AGGIORNAMENTO evento SOLO CRM. Payload:', updatePayload);
                 const { error } = await supabase.from('crm_events').update(updatePayload).eq('id', eventToEdit.id);
                 if (error) {
-                    console.error('[DayEventsModal] FALLBACK: Errore durante AGGIORNAMENTO SOLO CRM:', error);
+                    console.error('[DEBUG] FALLBACK: Errore durante AGGIORNAMENTO SOLO CRM:', error);
                     throw error;
                 }
             } else {
@@ -200,16 +196,12 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     event_end_time: endDateTime.toISOString(),
                 };
                 
-                // LOG 3: Subito PRIMA della chiamata
-                console.log('[DEBUG] Chiamata function edge (payload):', createPayload);
-
+                console.log('[DEBUG] Chiamata a "create-crm-event". Payload:', createPayload);
                 const { data, error } = await supabase.functions.invoke('create-crm-event', {
                     headers: { Authorization: `Bearer ${session.access_token}` },
                     body: createPayload
                 });
-                
-                // LOG 4: Subito DOPO la chiamata
-                console.log('[DEBUG] Risposta function edge', { data, error });
+                console.log('[DEBUG] Risposta da "create-crm-event":', { data, error });
 
                 if (error) throw new Error(error.message);
                 if (data && data.error) throw new Error(data.error);
@@ -226,13 +218,13 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     try {
                         const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description };
                         const requestBody = { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails };
-                        console.log('[DEBUG] Chiamata function edge (payload):', requestBody);
                         
+                        console.log('[DEBUG] Chiamata a "update-google-event". Payload:', requestBody);
                         const { data, error } = await supabase.functions.invoke('update-google-event', {
                             headers: { Authorization: `Bearer ${session.access_token}` },
                             body: requestBody
                         });
-                        console.log('[DEBUG] Risposta function edge', { data, error });
+                        console.log('[DEBUG] Risposta da "update-google-event":', { data, error });
                         if (error) throw error;
                         toast.success("Evento modificato e sincronizzato!", { id: toastId });
                     } catch (googleError: any) {
@@ -253,13 +245,12 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                         const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description, addMeet: true, reminders: [] };
                         const requestBody = { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id };
                         
-                        console.log('[DEBUG] Chiamata function edge (payload):', requestBody);
-
+                        console.log('[DEBUG] Chiamata a "create-google-event". Payload:', requestBody);
                         const { data, error } = await supabase.functions.invoke('create-google-event', {
                             headers: { Authorization: `Bearer ${session.access_token}` },
                             body: requestBody
                         });
-                        console.log('[DEBUG] Risposta function edge', { data, error });
+                        console.log('[DEBUG] Risposta da "create-google-event":', { data, error });
                         if (error) throw error;
                         if (data.error) throw new Error(data.error);
                         toast.success("Evento creato e sincronizzato!", { id: toastId });
@@ -276,6 +267,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             await refetch();
             setView('list');
         } catch (err: any) {
+            console.error('[DEBUG] Errore CRITICO nel blocco catch principale:', err);
             toast.error(`Errore critico: ${err.message}`, { id: toastId });
         } finally {
             setIsSaving(false);
@@ -352,9 +344,14 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                             <label htmlFor="syncWithGoogle" className="ml-2 block text-sm text-gray-900">Sincronizza con Google Calendar</label>
                         </div>
                     )}
-                    {googleConnectionStatus === 'corrupted' && !eventToEdit && (
+                    {googleConnectionStatus === 'corrupted' && (
                         <div className="p-3 my-2 bg-yellow-100 text-yellow-800 text-sm rounded-md border border-yellow-200">
-                            <p><strong>Attenzione:</strong> L'integrazione con Google Calendar sembra corrotta. Per favore, vai su <a href="/settings" className="underline font-semibold">Impostazioni</a> per riconnettere il tuo account e riabilitare la sincronizzazione.</p>
+                            <p><strong>Attenzione:</strong> L'integrazione con Google Calendar sembra corrotta. Vai su <a href="/settings" className="underline font-semibold">Impostazioni</a> per riconnettere il tuo account.</p>
+                        </div>
+                    )}
+                    {googleConnectionStatus === 'disconnected' && !eventToEdit && (
+                         <div className="p-3 my-2 bg-gray-100 text-gray-700 text-sm rounded-md border">
+                            <p>Connetti il tuo account Google dalle <a href="/settings" className="underline font-semibold">Impostazioni</a> per sincronizzare questo evento.</p>
                         </div>
                     )}
                      <div className="flex justify-end items-center pt-4 border-t space-x-3">

@@ -42,7 +42,9 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const dayEvents = useMemo(() => {
         if (!date) return [];
         const dateKey = date.toISOString().split('T')[0];
-        return crmEvents.filter(e => e.event_start_time.startsWith(dateKey));
+        return crmEvents
+            .filter(e => e.event_start_time.startsWith(dateKey) && e.status !== 'cancelled')
+            .sort((a,b) => new Date(a.event_start_time).getTime() - new Date(b.event_start_time).getTime());
     }, [date, crmEvents]);
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -58,14 +60,41 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     const handleEditEventClick = (event: CrmEvent) => {
         setEventToEdit(event);
-        // Pre-fill form data...
-        // ... (this part is left as a placeholder for future implementation)
-        toast.error("La modifica degli eventi non è ancora implementata.");
-        // setFormData({ ... });
-        // setView('form');
+        
+        const startTime = new Date(event.event_start_time);
+        const endTime = new Date(event.event_end_time);
+        const duration = (endTime.getTime() - startTime.getTime()) / 60000;
+        
+        setFormData({
+            title: event.event_summary,
+            contact_id: event.contact_id,
+            time: startTime.toTimeString().substring(0, 5),
+            duration: duration,
+            description: '', // Description is not stored in crm_events currently
+        });
+        setView('form');
     };
 
     const handleDeleteEvent = async (event: CrmEvent) => {
+        // Se non c'è un google_event_id, è un evento solo CRM e possiamo cancellarlo direttamente
+        if (!event.google_event_id) {
+            if (!window.confirm(`Eliminare l'evento (solo CRM) "${event.event_summary}"?`)) return;
+             setIsSaving(true);
+             const toastId = toast.loading('Eliminazione evento...');
+            try {
+                const { error } = await supabase.from('crm_events').delete().eq('id', event.id);
+                if (error) throw error;
+                toast.success('Evento CRM eliminato!', { id: toastId });
+                await refetch();
+            } catch (err: any) {
+                toast.error(`Errore: ${err.message}`, { id: toastId });
+            } finally {
+                setIsSaving(false);
+            }
+            return;
+        }
+
+        // Se c'è un google_event_id, è un evento sincronizzato
         if (!organization) { toast.error("ID organizzazione non trovato."); return; }
         if (!window.confirm(`Annullare l'evento "${event.event_summary}"? Sarà rimosso da Google Calendar.`)) return;
 
@@ -95,21 +124,11 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             toast.error("Dati mancanti per creare l'evento.");
             return;
         }
-
-        if (eventToEdit) {
-            // --- EDIT LOGIC (FUTURE) ---
-            toast.error("La funzione backend 'update-google-event' non è ancora implementata.");
-            // Here you would call supabase.functions.invoke('update-google-event', ...)
-            return;
-        }
-
-        // --- CREATE LOGIC ---
+        
         setIsSaving(true);
-        const toastId = toast.loading("Creazione evento...");
-        try {
-            const selectedContact = contacts.find(c => c.id === formData.contact_id);
-            if (!selectedContact) throw new Error("Contatto selezionato non valido.");
+        const toastId = toast.loading(eventToEdit ? "Modifica in corso..." : "Creazione evento...");
 
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
 
@@ -119,19 +138,34 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 duration: Number(formData.duration),
                 title: formData.title,
                 description: formData.description,
-                addMeet: true,
-                reminders: [] // Reminders can be added here in the future
             };
 
-            const { data, error } = await supabase.functions.invoke('create-google-event', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id }
-            });
+            if (eventToEdit) {
+                 const { error } = await supabase.functions.invoke('update-google-event', {
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                    body: { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails }
+                });
+                if (error) throw new Error(error.message);
+                toast.success("Evento modificato!", { id: toastId });
 
-            if (error) throw new Error(error.message);
-            if (data.error) throw new Error(data.error);
+            } else {
+                const selectedContact = contacts.find(c => c.id === formData.contact_id);
+                if (!selectedContact) throw new Error("Contatto selezionato non valido.");
 
-            toast.success("Evento creato!", { id: toastId });
+                const { data, error } = await supabase.functions.invoke('create-google-event', {
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                    body: { 
+                        eventDetails: { ...eventDetails, addMeet: true, reminders: [] }, 
+                        contact: selectedContact, 
+                        organization_id: organization.id, 
+                        contact_id: selectedContact.id 
+                    }
+                });
+                if (error) throw new Error(error.message);
+                if (data.error) throw new Error(data.error);
+                toast.success("Evento creato!", { id: toastId });
+            }
+
             await refetch();
             setView('list');
 
@@ -146,7 +180,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         <Modal 
             isOpen={isOpen} 
             onClose={onClose} 
-            title={view === 'form' ? (eventToEdit ? 'Modifica Evento' : 'Nuovo Evento') : `Eventi del ${date?.toLocaleDateString('it-IT')}`}
+            title={view === 'form' ? (eventToEdit ? 'Modifica Evento' : 'Nuovo Evento') : `Eventi del ${date?.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`}
         >
             {view === 'list' ? (
                 <div className="space-y-3">
@@ -186,10 +220,11 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     </div>
                      <div>
                         <label htmlFor="contact_id" className="block text-sm font-medium text-gray-700">Contatto *</label>
-                        <select id="contact_id" name="contact_id" value={formData.contact_id} onChange={handleFormChange} required className="mt-1 block w-full px-3 py-2 border rounded-md bg-white">
+                        <select id="contact_id" name="contact_id" value={formData.contact_id} onChange={handleFormChange} required className="mt-1 block w-full px-3 py-2 border rounded-md bg-white" disabled={!!eventToEdit}>
                             <option value="" disabled>Seleziona un contatto</option>
                             {contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
+                         {eventToEdit && <p className="text-xs text-gray-500 mt-1">Il contatto non può essere modificato per un evento esistente.</p>}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -203,7 +238,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     </div>
                      <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrizione</label>
-                        <textarea id="description" name="description" value={formData.description} onChange={handleFormChange} rows={3} className="mt-1 block w-full px-3 py-2 border rounded-md"></textarea>
+                        <textarea id="description" name="description" value={formData.description} onChange={handleFormChange} rows={3} className="mt-1 block w-full px-3 py-2 border rounded-md" placeholder="Note per l'evento, visibili in Google Calendar"></textarea>
                     </div>
                      <div className="flex justify-end items-center pt-4 border-t space-x-3">
                         <button type="button" onClick={() => setView('list')} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Annulla</button>

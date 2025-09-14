@@ -137,7 +137,7 @@ export interface EventReminder {
 // --- NUOVO TIPO PER EVENTI CRM ---
 export interface CrmEvent {
   id: number;
-  google_event_id: string;
+  google_event_id: string | null; // Può essere null per eventi non sincronizzati
   organization_id: string;
   contact_id: string;
   event_summary: string;

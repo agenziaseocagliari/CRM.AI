@@ -63,16 +63,13 @@ export const useCrmData = () => {
       }
       const { organization_id } = profileData;
 
-      const { data: eventsData, error: eventsError } = await supabase.functions.invoke('get-all-crm-events', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: { organization_id }
-      });
-      if (eventsError) throw new Error(`Errore nel caricamento degli eventi CRM: ${eventsError.message}`);
-      if (eventsData.error) throw new Error(eventsData.error);
-
-      const [orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse, settingsResponse, subscriptionResponse, ledgerResponse] = await Promise.all([
+      const [eventsResponse, orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse, settingsResponse, subscriptionResponse, ledgerResponse] = await Promise.all([
+        supabase.functions.invoke('get-all-crm-events', {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: { organization_id }
+        }),
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         supabase.from('opportunities').select('*').eq('organization_id', organization_id),
@@ -83,6 +80,8 @@ export const useCrmData = () => {
         supabase.from('credit_ledger').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }).limit(20)
       ]);
 
+      if (eventsResponse.error) throw new Error(`Errore nel caricamento degli eventi CRM: ${eventsResponse.error.message}`);
+      if (eventsResponse.data?.error) throw new Error(eventsResponse.data.error);
       if (orgResponse.error) throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);
       if (contactsResponse.error) throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);
       if (opportunitiesResponse.error) throw new Error(`Errore nel caricamento delle opportunità: ${opportunitiesResponse.error.message}`);
@@ -91,14 +90,14 @@ export const useCrmData = () => {
       if (settingsResponse.error && settingsResponse.status !== 406) throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);
       if (subscriptionResponse.error && subscriptionResponse.status !== 406) throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);
       if (ledgerResponse.error) throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`);
-
+      
       setOrganization(orgResponse.data);
       setContacts(contactsResponse.data || []);
       setOpportunities(groupOpportunitiesByStage(opportunitiesResponse.data || []));
       setForms(formsResponse.data || []);
       setAutomations(automationsResponse.data || []);
       setOrganizationSettings(settingsResponse.data);
-      setCrmEvents(eventsData.events || []);
+      setCrmEvents(eventsResponse.data?.events || []);
       setSubscription(subscriptionResponse.data);
       setLedger(ledgerResponse.data || []);
 

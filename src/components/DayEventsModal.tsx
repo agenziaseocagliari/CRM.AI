@@ -151,20 +151,23 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             {view === 'list' ? (
                 <div className="space-y-3">
                     {dayEvents.length > 0 ? (
-                        dayEvents.map(event => (
-                            <div key={event.id} className="p-3 rounded-md bg-gray-50 border flex items-center justify-between">
-                                <div>
-                                    <p className="font-semibold">{event.event_summary}</p>
-                                    <p className="text-sm text-gray-600">
-                                        {new Date(event.event_start_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })} - {event.contacts?.name}
-                                    </p>
+                        dayEvents.map(event => {
+                            const contact = contacts.find(c => c.id === event.contact_id);
+                            return (
+                                <div key={event.id} className="p-3 rounded-md bg-gray-50 border flex items-center justify-between">
+                                    <div>
+                                        <p className="font-semibold">{event.event_summary}</p>
+                                        <p className="text-sm text-gray-600">
+                                            {new Date(event.event_start_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })} - {contact?.name || 'Contatto non trovato'}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <button onClick={() => handleEditEventClick(event)} className="p-2 text-gray-500 hover:bg-gray-200 rounded-md" title="Modifica"><EditIcon className="w-4 h-4"/></button>
+                                        <button onClick={() => handleDeleteEvent(event)} disabled={isSaving} className="p-2 text-red-500 hover:bg-red-100 rounded-md" title="Annulla"><TrashIcon className="w-4 h-4"/></button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <button onClick={() => handleEditEventClick(event)} className="p-2 text-gray-500 hover:bg-gray-200 rounded-md" title="Modifica"><EditIcon className="w-4 h-4"/></button>
-                                    <button onClick={() => handleDeleteEvent(event)} disabled={isSaving} className="p-2 text-red-500 hover:bg-red-100 rounded-md" title="Annulla"><TrashIcon className="w-4 h-4"/></button>
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     ) : (
                         <p className="text-center text-gray-500 py-4">Nessun evento per questo giorno.</p>
                     )}

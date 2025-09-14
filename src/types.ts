@@ -146,7 +146,6 @@ export interface CrmEvent {
   status: 'confirmed' | 'cancelled';
   created_at: string;
   // Join data
-  contacts?: { name: string; email: string };
   event_reminders?: EventReminder[];
 }
 

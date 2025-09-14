@@ -25,22 +25,13 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
 
-    // La query seleziona gli eventi e unisce i dati correlati da 'contacts' e 'event_reminders'
+    // **MODIFICA**: La query è stata aggiornata per rimuovere il join con la tabella 'contacts'.
+    // I dati dei contatti verranno recuperati separatamente dal frontend usando il 'contact_id'.
+    // Il join con 'event_reminders' viene mantenuto per non interrompere la funzionalità dei promemoria.
     const { data: events, error } = await supabaseAdmin
         .from('crm_events')
         .select(`
-            id,
-            google_event_id,
-            contact_id,
-            event_summary,
-            event_start_time,
-            event_end_time,
-            status,
-            created_at,
-            contacts (
-                name,
-                email
-            ),
+            *,
             event_reminders (
                 id,
                 channel,

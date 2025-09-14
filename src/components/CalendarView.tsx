@@ -72,14 +72,17 @@ export const CalendarView: React.FC = () => {
         return crmEvents.reduce((acc, event) => {
             if (event.status === 'cancelled') return acc;
             
-            // FIX: Converte la stringa ISO (UTC) in un oggetto Date locale.
-            // Questo assicura che un evento alle 01:00 in Italia (UTC+2) che è
-            // le 23:00 del giorno prima in UTC, venga correttamente mappato
-            // nel giorno italiano.
+            // **FIX CRITICO FUSO ORARIO**: Converte la stringa ISO (UTC) dal database
+            // in un oggetto Date e poi costruisce la chiave YYYY-MM-DD usando
+            // i metodi locali del browser (getFullYear, getMonth, getDate).
+            // Questo risolve il bug per cui un evento creato nelle prime ore del mattino
+            // (es. 01:00 in Italia) veniva visualizzato nel giorno precedente a causa
+            // della conversione in UTC.
             const localDate = new Date(event.event_start_time);
-            
-            // Crea una chiave YYYY-MM-DD basata sulla data locale.
-            const dateKey = localDate.toISOString().split('T')[0];
+            const year = localDate.getFullYear();
+            const month = String(localDate.getMonth() + 1).padStart(2, '0'); // I mesi sono 0-based
+            const day = String(localDate.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${day}`;
 
             if (!acc[dateKey]) {
                 acc[dateKey] = [];

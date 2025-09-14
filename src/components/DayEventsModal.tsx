@@ -31,6 +31,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         crmEvents = [], 
         contacts = [], 
         organization = null, 
+        organizationSettings = null,
         refetch = async () => {} 
     } = crmData || {};
 
@@ -51,6 +52,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const dayEvents = useMemo(() => {
         if (!date) return [];
         const dateKey = date.toISOString().split('T')[0];
+        // FIX: Aggiunto un controllo per assicurarsi che e.event_start_time esista prima di chiamare .startsWith()
         return crmEvents
             .filter(e => e.event_start_time && e.event_start_time.startsWith(dateKey) && e.status !== 'cancelled')
             .sort((a,b) => new Date(a.event_start_time).getTime() - new Date(b.event_start_time).getTime());
@@ -130,7 +132,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!organization || !date || !formData.contact_id) {
-            toast.error("Dati mancanti per creare l'evento.");
+            toast.error("Dati mancanti per creare o modificare l'evento.");
             return;
         }
         
@@ -141,38 +143,78 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
 
-            const eventDetails = {
-                date: date.toISOString().split('T')[0],
-                time: formData.time,
-                duration: Number(formData.duration),
-                title: formData.title,
-                description: formData.description,
-            };
+            // **FIX CRITICO**: Calcola le date/ore qui per usarle in tutti gli scenari
+            const startDateTime = new Date(`${date.toISOString().split('T')[0]}T${formData.time}:00`);
+            const endDateTime = new Date(startDateTime.getTime() + Number(formData.duration) * 60000);
+
+            const isGoogleConnected = !!organizationSettings?.google_auth_token;
 
             if (eventToEdit) {
-                 const { error } = await supabase.functions.invoke('update-google-event', {
-                    headers: { Authorization: `Bearer ${session.access_token}` },
-                    body: { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails }
-                });
-                if (error) throw new Error(error.message);
-                toast.success("Evento modificato!", { id: toastId });
-
+                // --- LOGICA DI MODIFICA ---
+                if (eventToEdit.google_event_id) {
+                    // Modifica di un evento sincronizzato con Google
+                    const eventDetails = {
+                        date: date.toISOString().split('T')[0],
+                        time: formData.time,
+                        duration: Number(formData.duration),
+                        title: formData.title,
+                        description: formData.description,
+                    };
+                    const { error } = await supabase.functions.invoke('update-google-event', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails }
+                    });
+                    if (error) throw new Error(error.message);
+                    toast.success("Evento modificato e sincronizzato!", { id: toastId });
+                } else {
+                    // Modifica di un evento solo CRM
+                    const { error } = await supabase
+                        .from('crm_events')
+                        .update({
+                            event_summary: formData.title,
+                            contact_id: formData.contact_id,
+                            event_start_time: startDateTime.toISOString(),
+                            event_end_time: endDateTime.toISOString(),
+                        })
+                        .eq('id', eventToEdit.id);
+                    if (error) throw error;
+                    toast.success("Evento CRM modificato!", { id: toastId });
+                }
             } else {
-                const selectedContact = contacts.find(c => c.id === formData.contact_id);
-                if (!selectedContact) throw new Error("Contatto selezionato non valido.");
+                // --- LOGICA DI CREAZIONE ---
+                if (isGoogleConnected) {
+                    // Creazione di un nuovo evento sincronizzato con Google
+                    const selectedContact = contacts.find(c => c.id === formData.contact_id);
+                    if (!selectedContact) throw new Error("Contatto selezionato non valido.");
+                    
+                    const eventDetails = {
+                        date: date.toISOString().split('T')[0], time: formData.time,
+                        duration: Number(formData.duration), title: formData.title,
+                        description: formData.description,
+                    };
 
-                const { data, error } = await supabase.functions.invoke('create-google-event', {
-                    headers: { Authorization: `Bearer ${session.access_token}` },
-                    body: { 
-                        eventDetails: { ...eventDetails, addMeet: true, reminders: [] }, 
-                        contact: selectedContact, 
-                        organization_id: organization.id, 
-                        contact_id: selectedContact.id 
-                    }
-                });
-                if (error) throw new Error(error.message);
-                if (data.error) throw new Error(data.error);
-                toast.success("Evento creato!", { id: toastId });
+                    const { data, error } = await supabase.functions.invoke('create-google-event', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: { eventDetails: { ...eventDetails, addMeet: true, reminders: [] }, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id }
+                    });
+                    if (error) throw new Error(error.message);
+                    if (data.error) throw new Error(data.error);
+                    toast.success("Evento creato e sincronizzato!", { id: toastId });
+                } else {
+                    // Creazione di un nuovo evento solo CRM
+                    const { error } = await supabase.functions.invoke('create-crm-event', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: {
+                            organization_id: organization.id,
+                            contact_id: formData.contact_id,
+                            event_summary: formData.title,
+                            event_start_time: startDateTime.toISOString(),
+                            event_end_time: endDateTime.toISOString(),
+                        }
+                    });
+                    if (error) throw new Error(error.message);
+                    toast.success("Evento CRM creato!", { id: toastId });
+                }
             }
 
             await refetch();

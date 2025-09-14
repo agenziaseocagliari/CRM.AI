@@ -208,17 +208,33 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     toast.success("Evento creato e sincronizzato!", { id: toastId });
                 } else {
                     // Creazione di un nuovo evento solo CRM
-                    const { error } = await supabase.functions.invoke('create-crm-event', {
+                    console.log("[DayEventsModal] Modalità CRM-only. Tentativo di invocare 'create-crm-event'...");
+                    
+                    const requestBody = {
+                        organization_id: organization.id,
+                        contact_id: formData.contact_id,
+                        event_summary: formData.title,
+                        event_start_time: startDateTime.toISOString(),
+                        event_end_time: endDateTime.toISOString(),
+                    };
+                    console.log("[DayEventsModal] Payload per la funzione:", JSON.stringify(requestBody, null, 2));
+
+                    const { data, error } = await supabase.functions.invoke('create-crm-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
-                        body: {
-                            organization_id: organization.id,
-                            contact_id: formData.contact_id,
-                            event_summary: formData.title,
-                            event_start_time: startDateTime.toISOString(),
-                            event_end_time: endDateTime.toISOString(),
-                        }
+                        body: requestBody
                     });
-                    if (error) throw new Error(error.message);
+                    
+                    console.log("[DayEventsModal] Risposta dalla funzione 'create-crm-event':", { data, error });
+
+                    if (error) {
+                        console.error("[DayEventsModal] Errore durante l'invocazione:", error);
+                        throw new Error(error.message);
+                    }
+                    if (data && data.error) {
+                        console.error("[DayEventsModal] Errore applicativo dalla funzione:", data.error);
+                        throw new Error(data.error);
+                    }
+
                     toast.success("Evento CRM creato!", { id: toastId });
                 }
             }

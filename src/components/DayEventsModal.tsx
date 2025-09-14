@@ -38,17 +38,35 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const [formData, setFormData] = useState<EventFormData>(initialFormState);
     const [syncWithGoogle, setSyncWithGoogle] = useState(true);
 
-    const isGoogleConnected = !!organizationSettings?.google_auth_token;
+    // FIX: Aggiunto un controllo robusto per verificare la validità del token Google.
+    // La checkbox apparirà solo se il token è una stringa JSON valida con le chiavi necessarie.
+    const isGoogleConnected = useMemo(() => {
+        const token = organizationSettings?.google_auth_token;
+        if (typeof token !== 'string' || token.trim() === '') {
+            return false;
+        }
+        try {
+            const parsedToken = JSON.parse(token);
+            // Controlla la presenza delle chiavi essenziali per un token OAuth valido.
+            return typeof parsedToken.access_token === 'string' && typeof parsedToken.refresh_token === 'string';
+        } catch (e) {
+            console.warn("Impossibile analizzare `google_auth_token`. L'integrazione potrebbe essere corrotta.", e);
+            return false;
+        }
+    }, [organizationSettings]);
     
     useEffect(() => {
-        // Reset state when modal is opened or date changes
+        // FIX: Aggiunto log robusto per il debug in produzione.
         if (isOpen) {
+            console.log('[DayEventsModal Aperta] Stato corrente di organizationSettings:', organizationSettings);
+            
+            // Reset state when modal is opened or date changes
             setView('list');
             setEventToEdit(null);
             setFormData(initialFormState);
             setSyncWithGoogle(true);
         }
-    }, [isOpen, date]);
+    }, [isOpen, date, organizationSettings]);
     
     const dayEvents = useMemo(() => {
         if (!date) return [];
@@ -149,80 +167,75 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             const startDateTime = new Date(`${localDateString}T${formData.time}:00`);
             const endDateTime = new Date(startDateTime.getTime() + Number(formData.duration) * 60000);
 
+            // --- FUNZIONE HELPER PER IL SALVATAGGIO SOLO CRM ---
+            const saveCrmOnly = async (isUpdate: boolean) => {
+                 const crmPayload = {
+                    event_summary: formData.title,
+                    contact_id: formData.contact_id,
+                    event_start_time: startDateTime.toISOString(),
+                    event_end_time: endDateTime.toISOString(),
+                };
+                if (isUpdate && eventToEdit) {
+                    const { error } = await supabase.from('crm_events').update(crmPayload).eq('id', eventToEdit.id);
+                    if (error) throw error;
+                } else {
+                     const { data, error } = await supabase.functions.invoke('create-crm-event', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: { ...crmPayload, organization_id: organization.id }
+                    });
+                    if (error) throw new Error(error.message);
+                    if (data && data.error) throw new Error(data.error);
+                }
+            };
+
             if (eventToEdit) {
                 // --- LOGICA DI MODIFICA ---
                 if (isGoogleConnected && eventToEdit.google_event_id) {
-                    const eventDetails = {
-                        date: localDateString,
-                        time: formData.time,
-                        duration: Number(formData.duration),
-                        title: formData.title,
-                        description: formData.description,
-                    };
-                    const { error } = await supabase.functions.invoke('update-google-event', {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
-                        body: { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails }
-                    });
-                    if (error) throw new Error(error.message);
-                    toast.success("Evento modificato e sincronizzato!", { id: toastId });
+                    try {
+                        const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description };
+                        const { error } = await supabase.functions.invoke('update-google-event', {
+                            headers: { Authorization: `Bearer ${session.access_token}` },
+                            body: { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails }
+                        });
+                        if (error) throw error;
+                        toast.success("Evento modificato e sincronizzato!", { id: toastId });
+                    } catch (googleError: any) {
+                        console.error("Fallimento sincronizzazione modifica Google:", googleError);
+                        toast.error("Problema con Google, l'evento è stato aggiornato solo localmente.", { id: toastId, duration: 5000 });
+                        await saveCrmOnly(true); // Fallback
+                    }
                 } else {
-                    const { error } = await supabase
-                        .from('crm_events')
-                        .update({
-                            event_summary: formData.title,
-                            contact_id: formData.contact_id,
-                            event_start_time: startDateTime.toISOString(),
-                            event_end_time: endDateTime.toISOString(),
-                        })
-                        .eq('id', eventToEdit.id);
-                    if (error) throw error;
+                    await saveCrmOnly(true);
                     toast.success("Evento CRM modificato!", { id: toastId });
                 }
             } else {
                 // --- LOGICA DI CREAZIONE ---
                 if (isGoogleConnected && syncWithGoogle) {
-                    const selectedContact = contacts.find(c => c.id === formData.contact_id);
-                    if (!selectedContact) throw new Error("Contatto selezionato non valido.");
-                    
-                    const eventDetails = {
-                        date: localDateString, time: formData.time,
-                        duration: Number(formData.duration), title: formData.title,
-                        description: formData.description,
-                    };
-
-                    const { data, error } = await supabase.functions.invoke('create-google-event', {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
-                        body: { eventDetails: { ...eventDetails, addMeet: true, reminders: [] }, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id }
-                    });
-                    if (error) throw new Error(error.message);
-                    if (data.error) throw new Error(data.error);
-                    toast.success("Evento creato e sincronizzato!", { id: toastId });
+                    try {
+                        const selectedContact = contacts.find(c => c.id === formData.contact_id);
+                        if (!selectedContact) throw new Error("Contatto selezionato non valido.");
+                        const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description, addMeet: true, reminders: [] };
+                        const { data, error } = await supabase.functions.invoke('create-google-event', {
+                            headers: { Authorization: `Bearer ${session.access_token}` },
+                            body: { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id }
+                        });
+                        if (error) throw error;
+                        if (data.error) throw new Error(data.error);
+                        toast.success("Evento creato e sincronizzato!", { id: toastId });
+                    } catch (googleError: any) {
+                        console.error("Fallimento sincronizzazione creazione Google:", googleError);
+                        toast.error("Problema con Google, l'evento è stato salvato solo localmente.", { id: toastId, duration: 5000 });
+                        await saveCrmOnly(false); // Fallback
+                    }
                 } else {
-                    const requestBody = {
-                        organization_id: organization.id,
-                        contact_id: formData.contact_id,
-                        event_summary: formData.title,
-                        event_start_time: startDateTime.toISOString(),
-                        event_end_time: endDateTime.toISOString(),
-                    };
-
-                    const { data, error } = await supabase.functions.invoke('create-crm-event', {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
-                        body: requestBody
-                    });
-                    
-                    if (error) throw new Error(error.message);
-                    if (data && data.error) throw new Error(data.error);
-
+                    await saveCrmOnly(false);
                     toast.success("Evento CRM creato!", { id: toastId });
                 }
             }
-
             await refetch();
             setView('list');
-
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            toast.error(`Errore critico: ${err.message}`, { id: toastId });
         } finally {
             setIsSaving(false);
         }

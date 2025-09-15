@@ -143,15 +143,14 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // LOG 2: Dati iniziali prima di qualsiasi operazione di salvataggio.
-        console.log('[DEBUG] Inizio salvataggio evento. Dati correnti:', { 
-            formData, 
-            organization, 
-            contact_id: formData.contact_id, 
-            googleStatus: googleConnectionStatus 
+    
+        console.log('[DEBUG] Inizio salvataggio evento. Dati correnti:', {
+            formData,
+            organization,
+            contact_id: formData.contact_id,
+            googleStatus: googleConnectionStatus
         });
-
+    
         if (!organization || !date || !formData.contact_id) {
             toast.error("Dati mancanti (organizzazione, data o contatto) per salvare l'evento.");
             console.error('[DEBUG] ERRORE: Uscita anticipata da handleSaveEvent. Dati mancanti:', {
@@ -159,32 +158,32 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             });
             return;
         }
-        
+    
         setIsSaving(true);
         const toastId = toast.loading(eventToEdit ? "Modifica in corso..." : "Creazione evento...");
-
+    
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         const localDateString = `${year}-${month}-${day}`;
-
+    
         const startDateTime = new Date(`${localDateString}T${formData.time}:00`);
         const endDateTime = new Date(startDateTime.getTime() + Number(formData.duration) * 60000);
-
+    
         const saveCrmOnly = async (isUpdate: boolean) => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato per il salvataggio CRM-only.');
-        
+    
             if (isUpdate && eventToEdit) {
                 const updatePayload = {
                     event_summary: formData.title,
                     event_start_time: startDateTime.toISOString(),
                     event_end_time: endDateTime.toISOString(),
                 };
-                console.log('[DEBUG] FALLBACK: Tentativo di AGGIORNAMENTO evento SOLO CRM. Payload:', updatePayload);
+                console.log('[DEBUG] Tentativo di AGGIORNAMENTO evento SOLO CRM. Payload:', updatePayload);
                 const { error } = await supabase.from('crm_events').update(updatePayload).eq('id', eventToEdit.id);
                 if (error) {
-                    console.error('[DEBUG] FALLBACK: Errore durante AGGIORNAMENTO SOLO CRM:', error);
+                    console.error('[DEBUG] Errore durante AGGIORNAMENTO SOLO CRM:', error);
                     throw error;
                 }
             } else {
@@ -195,43 +194,39 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     event_start_time: startDateTime.toISOString(),
                     event_end_time: endDateTime.toISOString(),
                 };
-                
+    
                 console.log('[DEBUG] Chiamata a "create-crm-event". Payload:', createPayload);
                 const { data, error } = await supabase.functions.invoke('create-crm-event', {
                     headers: { Authorization: `Bearer ${session.access_token}` },
                     body: createPayload
                 });
                 console.log('[DEBUG] Risposta da "create-crm-event":', { data, error });
-
+    
                 if (error) throw new Error(error.message);
                 if (data && data.error) throw new Error(data.error);
             }
         };
-
+    
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
-
+    
             if (eventToEdit) {
                 // LOGICA DI MODIFICA
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
-                    try {
-                        const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description };
-                        const requestBody = { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails };
-                        
-                        console.log('[DEBUG] Chiamata a "update-google-event". Payload:', requestBody);
-                        const { data, error } = await supabase.functions.invoke('update-google-event', {
-                            headers: { Authorization: `Bearer ${session.access_token}` },
-                            body: requestBody
-                        });
-                        console.log('[DEBUG] Risposta da "update-google-event":', { data, error });
-                        if (error) throw error;
-                        toast.success("Evento modificato e sincronizzato!", { id: toastId });
-                    } catch (googleError: any) {
-                        console.error("Fallimento sincronizzazione modifica Google, avvio fallback:", googleError);
-                        await saveCrmOnly(true);
-                        toast.error("Problema con Google, l'evento è stato aggiornato solo localmente.", { id: toastId, duration: 5000 });
-                    }
+                    const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description };
+                    const requestBody = { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails };
+    
+                    console.log('[DEBUG] Chiamata a "update-google-event". Payload:', requestBody);
+                    const { data, error } = await supabase.functions.invoke('update-google-event', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: requestBody
+                    });
+                    console.log('[DEBUG] Risposta da "update-google-event":', { data, error });
+                    if (error) throw new Error(error.message);
+                    if (data && data.error) throw new Error(data.error);
+    
+                    toast.success("Evento modificato e sincronizzato!", { id: toastId });
                 } else {
                     await saveCrmOnly(true);
                     toast.success("Evento CRM modificato!", { id: toastId });
@@ -239,26 +234,22 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             } else {
                 // LOGICA DI CREAZIONE
                 if (googleConnectionStatus === 'connected' && syncWithGoogle) {
-                    try {
-                        const selectedContact = contacts.find(c => c.id === formData.contact_id);
-                        if (!selectedContact) throw new Error("Contatto selezionato non valido.");
-                        const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description, addMeet: true, reminders: [] };
-                        const requestBody = { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id };
-                        
-                        console.log('[DEBUG] Chiamata a "create-google-event". Payload:', requestBody);
-                        const { data, error } = await supabase.functions.invoke('create-google-event', {
-                            headers: { Authorization: `Bearer ${session.access_token}` },
-                            body: requestBody
-                        });
-                        console.log('[DEBUG] Risposta da "create-google-event":', { data, error });
-                        if (error) throw error;
-                        if (data.error) throw new Error(data.error);
-                        toast.success("Evento creato e sincronizzato!", { id: toastId });
-                    } catch (googleError: any) {
-                        console.error("Fallimento sincronizzazione creazione Google, avvio fallback:", googleError);
-                        await saveCrmOnly(false);
-                        toast.error("Problema con Google, l'evento è stato salvato solo localmente.", { id: toastId, duration: 5000 });
-                    }
+                    const selectedContact = contacts.find(c => c.id === formData.contact_id);
+                    if (!selectedContact) throw new Error("Contatto selezionato non valido.");
+                    const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description, addMeet: true, reminders: [] };
+                    const requestBody = { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id };
+    
+                    console.log('[DEBUG] Chiamata a "create-google-event". Payload:', requestBody);
+                    const { data, error } = await supabase.functions.invoke('create-google-event', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: requestBody
+                    });
+                    console.log('[DEBUG] Risposta da "create-google-event":', { data, error });
+    
+                    if (error) throw new Error(error.message);
+                    if (data && data.error) throw new Error(data.error);
+    
+                    toast.success("Evento creato e sincronizzato!", { id: toastId });
                 } else {
                     await saveCrmOnly(false);
                     toast.success("Evento CRM creato!", { id: toastId });
@@ -268,7 +259,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             setView('list');
         } catch (err: any) {
             console.error('[DEBUG] Errore CRITICO nel blocco catch principale:', err);
-            toast.error(`Errore critico: ${err.message}`, { id: toastId });
+            toast.error(`Operazione fallita: ${err.message}`, { id: toastId, duration: 5000 });
         } finally {
             setIsSaving(false);
         }

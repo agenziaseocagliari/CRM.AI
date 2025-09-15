@@ -215,7 +215,12 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 // LOGICA DI MODIFICA
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
                     const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description };
-                    const requestBody = { organization_id: organization.id, crm_event_id: eventToEdit.id, eventDetails };
+                    const requestBody = { 
+                        organization_id: organization.id, 
+                        crm_event_id: eventToEdit.id, 
+                        eventDetails,
+                        ...eventDetails
+                    };
     
                     console.log('[DEBUG] Chiamata a "update-google-event". Payload:', requestBody);
                     const { data, error } = await supabase.functions.invoke('update-google-event', {
@@ -237,7 +242,13 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     const selectedContact = contacts.find(c => c.id === formData.contact_id);
                     if (!selectedContact) throw new Error("Contatto selezionato non valido.");
                     const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description, addMeet: true, reminders: [] };
-                    const requestBody = { eventDetails, contact: selectedContact, organization_id: organization.id, contact_id: selectedContact.id };
+                    const requestBody = { 
+                        ...eventDetails,
+                        eventDetails, 
+                        contact: selectedContact, 
+                        organization_id: organization.id, 
+                        contact_id: selectedContact.id 
+                    };
     
                     console.log('[DEBUG] Chiamata a "create-google-event". Payload:', requestBody);
                     const { data, error } = await supabase.functions.invoke('create-google-event', {

@@ -102,7 +102,7 @@ serve(async (req) => {
     // 4. Recupero dell'evento dal CRM per ottenere google_event_id e contact_id
     const { data: crmEvent, error: crmEventError } = await supabaseAdmin
         .from('crm_events')
-        .select('google_event_id, contact_id') // FIX: Rimosso il join con 'contacts'
+        .select('google_event_id, contact_id')
         .eq('id', crm_event_id)
         .single();
 
@@ -127,13 +127,13 @@ serve(async (req) => {
         description: eventDetails.description,
         start: { dateTime: startDateTime, timeZone },
         end: { dateTime: endDateTime, timeZone },
-        attendees: [{ email: contact.email }], // FIX: Usa l'email dalla query separata
+        attendees: [{ email: contact.email }],
     };
 
     const calendarApiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${crmEvent.google_event_id}?sendUpdates=all`;
 
     const apiResponse = await fetch(calendarApiUrl, {
-        method: "PUT", // PUT sostituisce l'intero evento con i nuovi dati
+        method: "PUT",
         headers: {
             "Authorization": `Bearer ${accessToken}`,
             "Content-Type": "application/json",
@@ -153,10 +153,13 @@ serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
         .from('crm_events')
         .update({
-            event_summary: updatedGoogleEvent.summary || eventDetails.title, // PATCH: Fallback per event_summary
+            event_summary: updatedGoogleEvent.summary || eventDetails.title,
             event_start_time: updatedGoogleEvent.start.dateTime,
             event_end_time: updatedGoogleEvent.end.dateTime,
-            status: 'confirmed', // Assicura che lo stato sia 'confirmed' in caso di modifica
+            // PATCH DI SICUREZZA: Allinea la logica di stato a quella della creazione.
+            // In questo modo, se un evento viene aggiornato e cancellato contemporaneamente
+            // su Google, lo stato viene riflesso correttamente nel CRM.
+            status: updatedGoogleEvent.status === 'cancelled' ? 'cancelled' : 'confirmed',
         })
         .eq('id', crm_event_id);
 

@@ -102,9 +102,13 @@ serve(async (req) => {
         .from('crm_events')
         .insert({
             google_event_id: createdEvent.id, organization_id: organization_id, contact_id: contact_id,
-            event_summary: createdEvent.summary || eventDetails.title, // PATCH: Fallback per event_summary
+            event_summary: createdEvent.summary || eventDetails.title,
             event_start_time: createdEvent.start.dateTime,
-            event_end_time: createdEvent.end.dateTime, status: createdEvent.status,
+            event_end_time: createdEvent.end.dateTime, 
+            // PATCH CRITICA: Mappa lo stato di Google ('confirmed', 'tentative', 'cancelled')
+            // ai valori permessi dal DB ('confirmed', 'cancelled'). Questo previene errori
+            // di inserimento se Google restituisce 'tentative'.
+            status: createdEvent.status === 'cancelled' ? 'cancelled' : 'confirmed',
         })
         .select('id')
         .single();

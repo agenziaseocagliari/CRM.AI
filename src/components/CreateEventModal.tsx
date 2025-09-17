@@ -47,8 +47,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
 
     useEffect(() => {
         if (isOpen && contact) {
-            // FIX: Rimosso il parametro 'prev' non utilizzato.
-            // Il nuovo stato non dipende da quello precedente, quindi possiamo impostarlo direttamente.
             setFormData({ ...initialEventState, title: `Incontro con ${contact.name}` });
             const savedTemplates = organization ? JSON.parse(localStorage.getItem(`event_templates_${organization.id}`) || '[]') : [];
             setTemplates(savedTemplates);
@@ -145,11 +143,32 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
             
+            // Calcola startTime e endTime sul frontend
+            const startTime = new Date(`${formData.date}T${formData.time}:00`);
+            const endTime = new Date(startTime.getTime() + Number(formData.duration) * 60000);
+
+            // Crea il payload `eventDetails` conforme
+            const eventDetails = {
+                summary: formData.title,
+                description: formData.description,
+                location: formData.location,
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+                addMeet: formData.addMeet,
+                organizationId: organization.id,
+            };
+            
             const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
             
             const { data, error } = await supabase.functions.invoke('create-google-event', {
                 ...functionOptions,
-                body: { eventDetails: formData, contact, organization_id: organization.id, contact_id: contact.id }
+                body: { 
+                    eventDetails,
+                    contact, 
+                    organization_id: organization.id,
+                    organizationId: organization.id, // Inviato per compatibilità
+                    contact_id: contact.id 
+                }
             });
 
             if (error) throw new Error(error.message);

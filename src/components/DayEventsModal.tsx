@@ -58,9 +58,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     useEffect(() => {
         if (isOpen) {
-            // LOG 1: All'apertura della modale, logga tutti i dati ricevuti.
-            console.log('[DEBUG] Event modal opened - crmData:', crmData);
-            
             setView('list');
             setEventToEdit(null);
             setFormData(initialFormState);
@@ -155,19 +152,8 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
-    
-        console.log('[DEBUG] Inizio salvataggio evento. Dati correnti:', {
-            formData,
-            organization,
-            contact_id: formData.contact_id,
-            googleStatus: googleConnectionStatus
-        });
-    
         if (!organization || !date || !formData.contact_id) {
             toast.error("Dati mancanti (organizzazione, data o contatto) per salvare l'evento.");
-            console.error('[DEBUG] ERRORE: Uscita anticipata da handleSaveEvent. Dati mancanti:', {
-                hasOrganization: !!organization, hasDate: !!date, hasContactId: !!formData.contact_id,
-            });
             return;
         }
     
@@ -179,8 +165,8 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         const day = String(date.getDate()).padStart(2, '0');
         const localDateString = `${year}-${month}-${day}`;
     
-        const startDateTime = new Date(`${localDateString}T${formData.time}:00`);
-        const endDateTime = new Date(startDateTime.getTime() + Number(formData.duration) * 60000);
+        const startTime = new Date(`${localDateString}T${formData.time}:00`);
+        const endTime = new Date(startTime.getTime() + Number(formData.duration) * 60000);
     
         const saveCrmOnly = async (isUpdate: boolean) => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -189,30 +175,24 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             if (isUpdate && eventToEdit) {
                 const updatePayload = {
                     event_summary: formData.title,
-                    event_start_time: startDateTime.toISOString(),
-                    event_end_time: endDateTime.toISOString(),
+                    event_start_time: startTime.toISOString(),
+                    event_end_time: endTime.toISOString(),
                 };
-                console.log('[DEBUG] Tentativo di AGGIORNAMENTO evento SOLO CRM. Payload:', updatePayload);
                 const { error } = await supabase.from('crm_events').update(updatePayload).eq('id', eventToEdit.id);
-                if (error) {
-                    console.error('[DEBUG] Errore durante AGGIORNAMENTO SOLO CRM:', error);
-                    throw error;
-                }
+                if (error) throw error;
             } else {
                 const createPayload = {
                     organization_id: organization.id,
                     contact_id: formData.contact_id,
                     event_summary: formData.title,
-                    event_start_time: startDateTime.toISOString(),
-                    event_end_time: endDateTime.toISOString(),
+                    event_start_time: startTime.toISOString(),
+                    event_end_time: endTime.toISOString(),
                 };
     
-                console.log('[DEBUG] Chiamata a "create-crm-event". Payload:', createPayload);
                 const { data, error } = await supabase.functions.invoke('create-crm-event', {
                     headers: { Authorization: `Bearer ${session.access_token}` },
                     body: createPayload
                 });
-                console.log('[DEBUG] Risposta da "create-crm-event":', { data, error });
     
                 if (error) throw new Error(error.message);
                 if (data && data.error) throw new Error(data.error);
@@ -226,20 +206,23 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             if (eventToEdit) {
                 // LOGICA DI MODIFICA
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
-                    const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description };
+                    const eventDetails = { 
+                        summary: formData.title,
+                        description: formData.description,
+                        startTime: startTime.toISOString(),
+                        endTime: endTime.toISOString(),
+                        organizationId: organization.id,
+                    };
                     const requestBody = { 
                         organization_id: organization.id, 
                         crm_event_id: eventToEdit.id, 
-                        eventDetails,
-                        ...eventDetails
+                        eventDetails
                     };
     
-                    console.log('[DEBUG] Chiamata a "update-google-event". Payload:', requestBody);
                     const { data, error } = await supabase.functions.invoke('update-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: requestBody
                     });
-                    console.log('[DEBUG] Risposta da "update-google-event":', { data, error });
                     if (error) throw new Error(error.message);
                     if (data && data.error) throw new Error(data.error);
     
@@ -253,21 +236,27 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 if (googleConnectionStatus === 'connected' && syncWithGoogle) {
                     const selectedContact = contacts.find(c => c.id === formData.contact_id);
                     if (!selectedContact) throw new Error("Contatto selezionato non valido.");
-                    const eventDetails = { date: localDateString, time: formData.time, duration: Number(formData.duration), title: formData.title, description: formData.description, addMeet: true, reminders: [] };
+                    
+                    const eventDetails = { 
+                        summary: formData.title,
+                        description: formData.description,
+                        startTime: startTime.toISOString(),
+                        endTime: endTime.toISOString(),
+                        addMeet: true,
+                        organizationId: organization.id,
+                    };
                     const requestBody = { 
-                        ...eventDetails,
                         eventDetails, 
                         contact: selectedContact, 
-                        organization_id: organization.id, 
+                        organization_id: organization.id,
+                        organizationId: organization.id,
                         contact_id: selectedContact.id 
                     };
     
-                    console.log('[DEBUG] Chiamata a "create-google-event". Payload:', requestBody);
                     const { data, error } = await supabase.functions.invoke('create-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: requestBody
                     });
-                    console.log('[DEBUG] Risposta da "create-google-event":', { data, error });
     
                     if (error) throw new Error(error.message);
                     if (data && data.error) throw new Error(data.error);
@@ -281,7 +270,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             await refetch();
             setView('list');
         } catch (err: any) {
-            console.error('[DEBUG] Errore CRITICO nel blocco catch principale:', err);
             const errorMessage = err.message || '';
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                 toast.error(t => (

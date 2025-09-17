@@ -1,3 +1,5 @@
+// FIX: Updated the triple-slash directive to reference 'vitest/config' to correctly load type definitions for the 'test' property, resolving the type error.
+/// <reference types="vitest/config" />
 // Generated a standard Vite config for a React+TS project.
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -25,6 +27,10 @@ export default defineConfig(({ mode }) => {
       // instead of causing a fatal crash.
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
-    }
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+    },
   }
 })

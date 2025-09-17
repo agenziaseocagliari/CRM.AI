@@ -152,8 +152,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             addMeet: formData.addMeet,
         };
         
+        // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
+        // La struttura del payload deve avere organization_id e contact_id a livello root e in snake_case.
         const invokeBody = {
-            // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
             organization_id: organization.id,
             contact_id: contact.id,
             eventDetails,
@@ -166,8 +167,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             
             const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
             
-            // DEBUG: Log the payload being sent to the Edge Function
-            console.log('Invoking create-google-event with payload:', JSON.stringify(invokeBody, null, 2));
+            console.log('[PAYLOAD to create-google-event]', invokeBody);
 
             const { data, error } = await supabase.functions.invoke('create-google-event', {
                 ...functionOptions,
@@ -188,8 +188,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             await onSaveSuccess();
             onClose();
         } catch (err: any) {
-            // DEBUG: Enhanced error logging as per request
-            console.error("Error creating event. Payload:", JSON.stringify(invokeBody, null, 2), "Error object:", err);
+            console.error('[ERROR] Save event:', { payload: invokeBody, response: err });
             
             const errorMessage = err.message || '';
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {

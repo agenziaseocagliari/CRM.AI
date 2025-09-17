@@ -214,14 +214,14 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                         startTime: startTime.toISOString(),
                         endTime: endTime.toISOString(),
                     };
+                    // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
                     requestBody = { 
                         organization_id: organization.id, 
                         crm_event_id: eventToEdit.id, 
                         eventDetails
                     };
     
-                    // DEBUG: Log the payload being sent to the Edge Function
-                    console.log('Invoking update-google-event with payload:', JSON.stringify(requestBody, null, 2));
+                    console.log('[PAYLOAD to update-google-event]', requestBody);
 
                     const { data, error } = await supabase.functions.invoke('update-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -249,16 +249,16 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                         addMeet: true,
                     };
 
+                    // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
+                    // La struttura del payload deve avere organization_id e contact_id a livello root e in snake_case.
                     requestBody = { 
-                        // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
                         organization_id: organization.id,
                         contact_id: selectedContact.id,
                         eventDetails, 
                         contact: selectedContact, 
                     };
     
-                    // DEBUG: Log the payload being sent to the Edge Function
-                    console.log('Invoking create-google-event with payload:', JSON.stringify(requestBody, null, 2));
+                    console.log('[PAYLOAD to create-google-event]', requestBody);
 
                     const { data, error } = await supabase.functions.invoke('create-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -277,8 +277,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             await refetch();
             setView('list');
         } catch (err: any) {
-            // DEBUG: Enhanced error logging as per request
-            console.error("Error saving event. Payload:", requestBody ? JSON.stringify(requestBody, null, 2) : "Not available (CRM-only operation or error before payload creation)", "Error object:", err);
+            console.error('[ERROR] Save event:', { payload: requestBody, response: err });
             
             const errorMessage = err.message || '';
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {

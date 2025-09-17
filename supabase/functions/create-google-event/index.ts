@@ -1,4 +1,5 @@
 // File: supabase/functions/create-google-event/index.ts
+// SYNC: Aligned with src/lib/eventUtils.ts validation structure (September 2025)
 declare const Deno: {
   env: { get(key: string): string | undefined; };
 };
@@ -8,31 +9,84 @@ import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 const ACTION_TYPE = 'create_google_event';
 
+/**
+ * SYNC: Validate event payload using same structure as frontend eventUtils.ts
+ * Mirrors validateEventPayload() function from src/lib/eventUtils.ts
+ * @param payload The request payload to validate
+ * @returns validation result with detailed error message
+ */
+function validateEventPayload(payload: any): { isValid: boolean, error: string | null } {
+    // SYNC: Root-level null check (matches frontend)
+    if (!payload) {
+        return { isValid: false, error: "Il payload dell'evento è nullo." };
+    }
+    
+    // SYNC: organization_id validation (snake_case, root-level)
+    if (!payload.organization_id) {
+        return { isValid: false, error: "ID Organizzazione mancante nel payload." };
+    }
+    
+    // SYNC: contact_id validation for create operation (snake_case, root-level)
+    if (!payload.contact_id) {
+        return { isValid: false, error: "ID Contatto mancante nel payload." };
+    }
+    
+    // SYNC: contact object validation (root-level)
+    if (!payload.contact) {
+        return { isValid: false, error: "Oggetto 'contact' mancante nel payload." };
+    }
+    
+    // SYNC: eventDetails object validation (root-level)
+    if (!payload.eventDetails) {
+        return { isValid: false, error: "Dettagli dell'evento ('eventDetails') mancanti." };
+    }
+    
+    // SYNC: eventDetails internal structure validation (matches frontend exactly)
+    const { summary, startTime, endTime } = payload.eventDetails;
+    if (!summary || typeof summary !== 'string' || summary.trim() === '') {
+        return { isValid: false, error: "Il titolo (summary) dell'evento è obbligatorio." };
+    }
+    
+    if (!startTime || !endTime) {
+        return { isValid: false, error: "Le date di inizio e fine sono obbligatorie." };
+    }
+    
+    // SYNC: Date validation logic (matches frontend)
+    try {
+        if (new Date(startTime) >= new Date(endTime)) {
+            return { isValid: false, error: "L'orario di fine deve essere successivo a quello di inizio." };
+        }
+    } catch (e) {
+        return { isValid: false, error: "Formato data/ora non valido." };
+    }
+    
+    return { isValid: true, error: null };
+}
+
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
-
+  
   try {
-    // Strict payload parsing - only root-level fields
-    const { eventDetails, contact, organization_id, contact_id } = await req.json();
+    // SYNC: Parse payload using root-level snake_case fields (matches buildCreateEventPayload)
+    const payload = await req.json();
+    const { eventDetails, contact, organization_id, contact_id } = payload;
     
-    // Strict validation - no legacy branches
-    if (!eventDetails || !contact || !organization_id || !contact_id) {
-      throw new Error("Dati mancanti: 'eventDetails', 'contact', 'organization_id' e 'contact_id' sono obbligatori.");
+    // SYNC: Apply frontend validation logic exactly
+    const validation = validateEventPayload(payload);
+    if (!validation.isValid) {
+        console.error("[create-google-event] Validation failed:", validation.error, "Payload:", payload);
+        throw new Error(validation.error!);
     }
     
-    // Validate eventDetails structure
-    const { summary, description, startTime, endTime, addMeet, location } = eventDetails;
-    if (!summary || !startTime || !endTime) {
-        throw new Error("Dati evento mancanti: 'summary', 'startTime', e 'endTime' sono obbligatori in eventDetails.");
-    }
-
+    console.log(`[${ACTION_TYPE}] Payload validation successful. Root-level fields confirmed.`);
+    
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
     );
-
+    
     // Credit validation
     const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
         body: { organization_id, action_type: ACTION_TYPE },
@@ -59,7 +113,7 @@ serve(async (req) => {
     if (settingsError || !settings || !settings.google_auth_token) {
         throw new Error("Integrazione Google Calendar non trovata. Vai su Impostazioni per connettere il tuo account.");
     }
-
+    
     const tokenData = JSON.parse(settings.google_auth_token);
     let accessToken = tokenData.access_token;
     
@@ -103,7 +157,10 @@ serve(async (req) => {
             .update({ google_auth_token: JSON.stringify(newTokenData) })
             .eq('organization_id', organization_id);
     }
-
+    
+    // SYNC: Extract eventDetails using same field names as frontend (summary, startTime, endTime, etc.)
+    const { summary, description, startTime, endTime, addMeet, location } = eventDetails;
+    
     // Create Google Calendar event
     const event = {
         summary: summary,
@@ -126,7 +183,7 @@ serve(async (req) => {
         } : undefined,
         reminders: { useDefault: true },
     };
-
+    
     const response = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all", {
         method: "POST",
         headers: {
@@ -135,28 +192,28 @@ serve(async (req) => {
         },
         body: JSON.stringify(event),
     });
-
+    
     if (!response.ok) {
         const errorBody = await response.json();
         throw new Error(`Errore API Google: ${errorBody.error?.message || "Errore sconosciuto"}`);
     }
-
+    
     const createdEvent = await response.json();
-
-    // Build CRM event data object with strict root-level validated fields only
+    
+    // SYNC: Build CRM event data using snake_case root-level fields (matches payload structure)
     const crmEventData = {
         google_event_id: createdEvent.id,
-        organization_id: organization_id, // Always use root-level organization_id
-        contact_id: contact_id, // Always use root-level contact_id  
+        organization_id: organization_id, // SYNC: Use root-level organization_id
+        contact_id: contact_id, // SYNC: Use root-level contact_id  
         event_summary: createdEvent.summary || summary,
         event_start_time: createdEvent.start.dateTime,
         event_end_time: createdEvent.end.dateTime,
         status: createdEvent.status === 'cancelled' ? 'cancelled' : 'confirmed',
     };
-
+    
     // Debug logging for insert object
     console.log('[DEBUG INSERT OBJECT] crmEventData:', JSON.stringify(crmEventData, null, 2));
-
+    
     // Insert event into CRM with enhanced error handling
     const { data: newCrmEvent, error: crmInsertError } = await supabaseAdmin
         .from('crm_events')
@@ -191,7 +248,7 @@ serve(async (req) => {
         throw new Error(errorMessage);
     }
     
-    console.log(`Evento Google ${createdEvent.id} mappato nel CRM con ID ${newCrmEvent.id}.`);
+    console.log(`[${ACTION_TYPE}] Evento Google ${createdEvent.id} mappato nel CRM con ID ${newCrmEvent.id}. Validation sync completed.`);
     
     return new Response(JSON.stringify({ 
         success: true, 
@@ -203,7 +260,7 @@ serve(async (req) => {
     });
     
   } catch (error) {
-    console.error("Errore funzione create-google-event:", error);
+    console.error(`[${ACTION_TYPE}] Errore con validazione sincronizzata:`, error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500, 

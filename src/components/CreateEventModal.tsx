@@ -147,7 +147,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             const startTime = new Date(`${formData.date}T${formData.time}:00`);
             const endTime = new Date(startTime.getTime() + Number(formData.duration) * 60000);
 
-            // Crea il payload `eventDetails` conforme
+            // FIX: Removed organizationId from eventDetails as it's passed at the top level.
             const eventDetails = {
                 summary: formData.title,
                 description: formData.description,
@@ -155,20 +155,24 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 startTime: startTime.toISOString(),
                 endTime: endTime.toISOString(),
                 addMeet: formData.addMeet,
-                organizationId: organization.id,
             };
             
             const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
             
+            const invokeBody = {
+                // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
+                organization_id: organization.id,
+                contact_id: contact.id,
+                eventDetails,
+                contact,
+            };
+
+            // DEBUG: Log the payload being sent to the Edge Function
+            console.log('Invoking create-google-event with payload:', JSON.stringify(invokeBody, null, 2));
+
             const { data, error } = await supabase.functions.invoke('create-google-event', {
                 ...functionOptions,
-                body: { 
-                    eventDetails,
-                    contact, 
-                    organization_id: organization.id,
-                    organizationId: organization.id, // Inviato per compatibilità
-                    contact_id: contact.id 
-                }
+                body: invokeBody
             });
 
             if (error) throw new Error(error.message);

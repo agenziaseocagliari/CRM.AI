@@ -206,12 +206,12 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             if (eventToEdit) {
                 // LOGICA DI MODIFICA
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
+                    // FIX: Removed organizationId from eventDetails as it's passed at the top level.
                     const eventDetails = { 
                         summary: formData.title,
                         description: formData.description,
                         startTime: startTime.toISOString(),
                         endTime: endTime.toISOString(),
-                        organizationId: organization.id,
                     };
                     const requestBody = { 
                         organization_id: organization.id, 
@@ -219,6 +219,9 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                         eventDetails
                     };
     
+                    // DEBUG: Log the payload being sent to the Edge Function
+                    console.log('Invoking update-google-event with payload:', JSON.stringify(requestBody, null, 2));
+
                     const { data, error } = await supabase.functions.invoke('update-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: requestBody
@@ -237,22 +240,26 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     const selectedContact = contacts.find(c => c.id === formData.contact_id);
                     if (!selectedContact) throw new Error("Contatto selezionato non valido.");
                     
+                    // FIX: Removed organizationId from eventDetails as it's passed at the top level.
                     const eventDetails = { 
                         summary: formData.title,
                         description: formData.description,
                         startTime: startTime.toISOString(),
                         endTime: endTime.toISOString(),
-                        addMeet: true,
-                        organizationId: organization.id,
+                        addMeet: true, // In this modal, a Google Meet is always added for synced events
                     };
+
+                    // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
                     const requestBody = { 
+                        organization_id: organization.id,
+                        contact_id: selectedContact.id,
                         eventDetails, 
                         contact: selectedContact, 
-                        organization_id: organization.id,
-                        organizationId: organization.id,
-                        contact_id: selectedContact.id 
                     };
     
+                    // DEBUG: Log the payload being sent to the Edge Function
+                    console.log('Invoking create-google-event with payload:', JSON.stringify(requestBody, null, 2));
+
                     const { data, error } = await supabase.functions.invoke('create-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: requestBody

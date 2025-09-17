@@ -139,34 +139,33 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         if (!organization || !contact) return;
         setIsLoading(true);
         const toastId = toast.loading("Creazione evento...");
+
+        const startTime = new Date(`${formData.date}T${formData.time}:00`);
+        const endTime = new Date(startTime.getTime() + Number(formData.duration) * 60000);
+
+        const eventDetails = {
+            summary: formData.title,
+            description: formData.description,
+            location: formData.location,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            addMeet: formData.addMeet,
+        };
+        
+        const invokeBody = {
+            // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
+            organization_id: organization.id,
+            contact_id: contact.id,
+            eventDetails,
+            contact,
+        };
+
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
             
-            // Calcola startTime e endTime sul frontend
-            const startTime = new Date(`${formData.date}T${formData.time}:00`);
-            const endTime = new Date(startTime.getTime() + Number(formData.duration) * 60000);
-
-            // FIX: Removed organizationId from eventDetails as it's passed at the top level.
-            const eventDetails = {
-                summary: formData.title,
-                description: formData.description,
-                location: formData.location,
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-                addMeet: formData.addMeet,
-            };
-            
             const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
             
-            const invokeBody = {
-                // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
-                organization_id: organization.id,
-                contact_id: contact.id,
-                eventDetails,
-                contact,
-            };
-
             // DEBUG: Log the payload being sent to the Edge Function
             console.log('Invoking create-google-event with payload:', JSON.stringify(invokeBody, null, 2));
 
@@ -175,7 +174,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 body: invokeBody
             });
 
-            if (error) throw new Error(error.message);
+            if (error) throw error;
             if (data.error) throw new Error(data.error);
 
             if (formData.reminders.length > 0 && data.crmEventId) {
@@ -189,6 +188,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             await onSaveSuccess();
             onClose();
         } catch (err: any) {
+            // DEBUG: Enhanced error logging as per request
+            console.error("Error creating event. Payload:", JSON.stringify(invokeBody, null, 2), "Error object:", err);
+            
             const errorMessage = err.message || '';
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                 toast.error(t => (

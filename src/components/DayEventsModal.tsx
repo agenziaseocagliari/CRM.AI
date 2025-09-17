@@ -168,6 +168,8 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         const startTime = new Date(`${localDateString}T${formData.time}:00`);
         const endTime = new Date(startTime.getTime() + Number(formData.duration) * 60000);
     
+        let requestBody: any = null;
+
         const saveCrmOnly = async (isUpdate: boolean) => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato per il salvataggio CRM-only.');
@@ -206,14 +208,13 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             if (eventToEdit) {
                 // LOGICA DI MODIFICA
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
-                    // FIX: Removed organizationId from eventDetails as it's passed at the top level.
                     const eventDetails = { 
                         summary: formData.title,
                         description: formData.description,
                         startTime: startTime.toISOString(),
                         endTime: endTime.toISOString(),
                     };
-                    const requestBody = { 
+                    requestBody = { 
                         organization_id: organization.id, 
                         crm_event_id: eventToEdit.id, 
                         eventDetails
@@ -240,17 +241,16 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     const selectedContact = contacts.find(c => c.id === formData.contact_id);
                     if (!selectedContact) throw new Error("Contatto selezionato non valido.");
                     
-                    // FIX: Removed organizationId from eventDetails as it's passed at the top level.
                     const eventDetails = { 
                         summary: formData.title,
                         description: formData.description,
                         startTime: startTime.toISOString(),
                         endTime: endTime.toISOString(),
-                        addMeet: true, // In this modal, a Google Meet is always added for synced events
+                        addMeet: true,
                     };
 
-                    // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
-                    const requestBody = { 
+                    requestBody = { 
+                        // FIX: ensure organization_id and contact_id are passed at top-level for Supabase edge compatibility
                         organization_id: organization.id,
                         contact_id: selectedContact.id,
                         eventDetails, 
@@ -277,6 +277,9 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             await refetch();
             setView('list');
         } catch (err: any) {
+            // DEBUG: Enhanced error logging as per request
+            console.error("Error saving event. Payload:", requestBody ? JSON.stringify(requestBody, null, 2) : "Not available (CRM-only operation or error before payload creation)", "Error object:", err);
+            
             const errorMessage = err.message || '';
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                 toast.error(t => (

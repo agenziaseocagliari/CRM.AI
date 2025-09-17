@@ -72,7 +72,19 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             if (data.error) throw new Error(data.error);
             setBusySlots(data.busySlots || []);
         } catch (err: any) {
-            toast.error(`Impossibile caricare disponibilità: ${err.message}`);
+            const errorMessage = err.message || '';
+            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
+                 toast.error(t => (
+                    <span className="text-center">
+                        La connessione Google è scaduta.
+                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
+                            Vai alle Impostazioni per riconnettere
+                        </a>
+                    </span>
+                ), { duration: 8000 });
+            } else {
+                toast.error(`Impossibile caricare disponibilità: ${errorMessage}`);
+            }
             setBusySlots([]);
         } finally {
             setIsFetchingSlots(false);
@@ -154,7 +166,19 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             await onSaveSuccess();
             onClose();
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            const errorMessage = err.message || '';
+            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
+                toast.error(t => (
+                    <span className="text-center">
+                        La connessione Google è scaduta.
+                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
+                            Vai alle Impostazioni per riconnettere
+                        </a>
+                    </span>
+                ), { id: toastId, duration: 8000 });
+            } else {
+                toast.error(`Errore: ${errorMessage}`, { id: toastId });
+            }
         } finally {
             setIsLoading(false);
         }

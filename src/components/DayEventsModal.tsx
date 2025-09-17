@@ -135,7 +135,19 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             }
             await refetch();
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            const errorMessage = err.message || '';
+            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
+                toast.error(t => (
+                    <span className="text-center">
+                        La connessione Google è scaduta.
+                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
+                            Vai alle Impostazioni per riconnettere
+                        </a>
+                    </span>
+                ), { id: toastId, duration: 8000 });
+            } else {
+                toast.error(`Errore: ${errorMessage}`, { id: toastId });
+            }
         } finally {
             setIsSaving(false);
         }
@@ -270,7 +282,19 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             setView('list');
         } catch (err: any) {
             console.error('[DEBUG] Errore CRITICO nel blocco catch principale:', err);
-            toast.error(`Operazione fallita: ${err.message}`, { id: toastId, duration: 5000 });
+            const errorMessage = err.message || '';
+            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
+                toast.error(t => (
+                    <span className="text-center">
+                        La connessione Google è scaduta.
+                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
+                            Vai alle Impostazioni per riconnettere
+                        </a>
+                    </span>
+                ), { id: toastId, duration: 8000 });
+            } else {
+                toast.error(`Operazione fallita: ${errorMessage}`, { id: toastId, duration: 5000 });
+            }
         } finally {
             setIsSaving(false);
         }

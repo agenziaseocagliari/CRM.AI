@@ -89,10 +89,13 @@ serve(async (req) => {
     const { data: newCrmEvent, error: crmInsertError } = await supabaseAdmin
         .from('crm_events')
         .insert({
-            google_event_id: createdEvent.id, organization_id: organization_id, contact_id: contact_id,
+            google_event_id: createdEvent.id,
+            organization_id: organization_id,
+            contact_id: contact_id,
             event_summary: createdEvent.summary || summary,
+            event_description: description,
             event_start_time: createdEvent.start.dateTime,
-            event_end_time: createdEvent.end.dateTime, 
+            event_end_time: createdEvent.end.dateTime,
             status: createdEvent.status === 'cancelled' ? 'cancelled' : 'confirmed',
         })
         .select('id')

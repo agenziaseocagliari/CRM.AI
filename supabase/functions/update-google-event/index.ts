@@ -1,9 +1,7 @@
 // File: supabase/functions/update-google-event/index.ts
-
 declare const Deno: {
   env: { get(key: string): string | undefined; };
 };
-
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
@@ -69,7 +67,6 @@ async function getRefreshedAccessToken(tokenData: any, organization_id: string, 
     return newAccessToken;
 }
 
-
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -77,13 +74,20 @@ serve(async (req) => {
   try {
     // 1. Validazione dell'input
     const { organization_id, crm_event_id, eventDetails } = await req.json();
+    
     if (!organization_id || !crm_event_id || !eventDetails) {
         throw new Error("Parametri `organization_id`, `crm_event_id`, e `eventDetails` sono obbligatori.");
+    }
+
+    // Validate new eventDetails schema
+    if (!eventDetails.summary || !eventDetails.startTime || !eventDetails.endTime) {
+        throw new Error("Schema eventDetails non valido: 'summary', 'startTime' e 'endTime' sono obbligatori.");
     }
 
     // 2. Setup del client Supabase con privilegi di amministratore
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!serviceRoleKey) throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
+    
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
 
     // 3. Recupero delle impostazioni e del token di accesso valido
@@ -96,6 +100,7 @@ serve(async (req) => {
     if (settingsError || !settings || !settings.google_auth_token) {
         throw new Error("Integrazione Google Calendar non trovata o non configurata.");
     }
+
     const tokenData = JSON.parse(settings.google_auth_token);
     const accessToken = await getRefreshedAccessToken(tokenData, organization_id, supabaseAdmin);
 
@@ -118,20 +123,20 @@ serve(async (req) => {
     if (contactError || !contact) throw new Error(`Contatto associato all'evento (ID: ${crmEvent.contact_id}) non trovato.`);
     
     // 5. Preparazione del payload e aggiornamento dell'evento su Google Calendar
-    const startDateTime = new Date(`${eventDetails.date}T${eventDetails.time}:00`).toISOString();
-    const endDateTime = new Date(new Date(startDateTime).getTime() + eventDetails.duration * 60000).toISOString();
+    // Use the new standardized schema: summary, startTime, endTime
+    const startDateTime = new Date(eventDetails.startTime).toISOString();
+    const endDateTime = new Date(eventDetails.endTime).toISOString();
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
+    
     const googleEventPayload = {
-        summary: eventDetails.title,
-        description: eventDetails.description,
+        summary: eventDetails.summary,
+        description: eventDetails.description || '',
         start: { dateTime: startDateTime, timeZone },
         end: { dateTime: endDateTime, timeZone },
         attendees: [{ email: contact.email }],
     };
 
     const calendarApiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${crmEvent.google_event_id}?sendUpdates=all`;
-
     const apiResponse = await fetch(calendarApiUrl, {
         method: "PUT",
         headers: {
@@ -153,7 +158,7 @@ serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
         .from('crm_events')
         .update({
-            event_summary: updatedGoogleEvent.summary || eventDetails.title,
+            event_summary: updatedGoogleEvent.summary || eventDetails.summary,
             event_start_time: updatedGoogleEvent.start.dateTime,
             event_end_time: updatedGoogleEvent.end.dateTime,
             // PATCH DI SICUREZZA: Allinea la logica di stato a quella della creazione.
@@ -174,7 +179,6 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-
   } catch (error) {
     console.error("Errore in update-google-event:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {

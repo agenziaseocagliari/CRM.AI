@@ -86,18 +86,24 @@ serve(async (req) => {
     const createdEvent = await response.json();
     // Inserisce l'evento nel CRM e ottiene l'ID
     console.log('[DEBUG CRM INSERT]', { organization_id, contact_id, eventDetails });
+    
+    // Costruisce dinamicamente l'oggetto per l'insert
+    const crmEventData = {
+        google_event_id: createdEvent.id,
+        organization_id: organization_id,
+        contact_id: contact_id,
+        event_summary: createdEvent.summary || summary,
+        event_description: description,
+        event_start_time: createdEvent.start.dateTime,
+        event_end_time: createdEvent.end.dateTime,
+        status: createdEvent.status === 'cancelled' ? 'cancelled' : 'confirmed',
+    };
+    
+    console.log('[DEBUG INSERT OBJECT]', crmEventData);
+    
     const { data: newCrmEvent, error: crmInsertError } = await supabaseAdmin
         .from('crm_events')
-        .insert({
-            google_event_id: createdEvent.id,
-            organization_id: organization_id,
-            contact_id: contact_id,
-            event_summary: createdEvent.summary || summary,
-            event_description: description,
-            event_start_time: createdEvent.start.dateTime,
-            event_end_time: createdEvent.end.dateTime,
-            status: createdEvent.status === 'cancelled' ? 'cancelled' : 'confirmed',
-        })
+        .insert(crmEventData)
         .select('id')
         .single();
     

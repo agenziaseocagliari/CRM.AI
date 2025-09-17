@@ -1,4 +1,7 @@
 // File: supabase/functions/create-google-event/index.ts
+// feat: dynamic Google Calendar token fetch per org_id, no static secret
+// This update removes dependency on static secrets in favor of multi-user OAuth flow
+// Each organization now has their own Google auth tokens stored in organization_settings
 
 declare const Deno: {
   env: { get(key: string): string | undefined; };
@@ -16,6 +19,7 @@ serve(async (req) => {
 
   try {
     const { eventDetails, contact, organization_id, contact_id } = await req.json();
+    
     if (!eventDetails || !contact || !organization_id || !contact_id) {
       throw new Error("Dati mancanti: 'eventDetails', 'contact', 'organization_id' e 'contact_id' sono obbligatori.");
     }
@@ -32,81 +36,129 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
     );
 
+    // Verifica crediti prima di procedere
     const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
         body: { organization_id, action_type: ACTION_TYPE },
     });
-
+    
     if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
     if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
     if (!creditData.success) throw new Error("Crediti insufficienti per creare un evento.");
+    
     console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
     
+    // Ottieni service role key per accesso diretto ai dati dell'organizzazione
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY non impostato.");
     
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-
+    
+    // STEP 1: Recupera dinamicamente il token Google dal DB usando organization_id
     const { data: settings, error: settingsError } = await supabaseAdmin
-        .from('organization_settings').select('google_auth_token').eq('organization_id', organization_id).single();
+        .from('organization_settings')
+        .select('google_auth_token')
+        .eq('organization_id', organization_id)
+        .single();
         
     if (settingsError || !settings || !settings.google_auth_token) {
         throw new Error("Integrazione Google Calendar non trovata. Vai su Impostazioni per connettere il tuo account.");
     }
-
+    
+    // STEP 2: De-serializza il token JSON e estrai access_token e expiry_date
     const tokenData = JSON.parse(settings.google_auth_token);
     let accessToken = tokenData.access_token;
     
+    // STEP 3: Controllo scadenza e refresh automatico se necessario
     if (new Date() > new Date(tokenData.expiry_date)) {
         console.log("Token scaduto. Richiesta di uno nuovo...");
+        
+        // Ottieni credenziali Google per il refresh
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
         const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-        if (!clientId || !clientSecret) throw new Error("Mancano le credenziali Google per il refresh del token.");
-
+        
+        if (!clientId || !clientSecret) {
+            throw new Error("Mancano le credenziali Google per il refresh del token.");
+        }
+        
+        // STEP 4: Esegui refresh tramite refresh_token
         const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-            method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: tokenData.refresh_token, grant_type: 'refresh_token' })
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                refresh_token: tokenData.refresh_token,
+                grant_type: 'refresh_token'
+            })
         });
-
+        
         if (!tokenResponse.ok) {
             const errorBody = await tokenResponse.json();
             throw new Error(`Impossibile aggiornare il token: ${errorBody.error_description || 'errore sconosciuto'}. Prova a riconnettere il tuo account.`);
         }
-
+        
         const newTokens = await tokenResponse.json();
         accessToken = newTokens.access_token;
         
-        const newTokenData = { ...tokenData, access_token: accessToken, expiry_date: new Date(Date.now() + newTokens.expires_in * 1000).toISOString() };
-        await supabaseAdmin.from('organization_settings').update({ google_auth_token: JSON.stringify(newTokenData) }).eq('organization_id', organization_id);
+        // STEP 5: Aggiorna organization_settings con il nuovo token
+        const newTokenData = {
+            ...tokenData,
+            access_token: accessToken,
+            expiry_date: new Date(Date.now() + newTokens.expires_in * 1000).toISOString()
+        };
+        
+        await supabaseAdmin
+            .from('organization_settings')
+            .update({ google_auth_token: JSON.stringify(newTokenData) })
+            .eq('organization_id', organization_id);
     }
-
+    
+    // STEP 6: Solo dopo tutti i controlli, esegui la chiamata a Google Calendar
     const event = {
         summary: summary,
         description: description,
         location: location,
-        start: { dateTime: startTime, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-        end: { dateTime: endTime, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        start: {
+            dateTime: startTime,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+            dateTime: endTime,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
         attendees: [{ email: contact.email }],
-        conferenceData: addMeet ? { createRequest: { requestId: `guardian-crm-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } } } : undefined,
+        conferenceData: addMeet ? {
+            createRequest: {
+                requestId: `guardian-crm-${Date.now()}`,
+                conferenceSolutionKey: { type: 'hangoutsMeet' }
+            }
+        } : undefined,
         reminders: { useDefault: true },
     };
-
+    
     const response = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all", {
-        method: "POST", headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(event),
     });
-
+    
     if (!response.ok) {
         const errorBody = await response.json();
         throw new Error(`Errore API Google: ${errorBody.error?.message || "Errore sconosciuto"}`);
     }
-
+    
     const createdEvent = await response.json();
-
+    
     // Inserisce l'evento nel CRM e ottiene l'ID
     const { data: newCrmEvent, error: crmInsertError } = await supabaseAdmin
         .from('crm_events')
         .insert({
-            google_event_id: createdEvent.id, organization_id: organization_id, contact_id: contact_id,
+            google_event_id: createdEvent.id,
+            organization_id: organization_id,
+            contact_id: contact_id,
             event_summary: createdEvent.summary || summary,
             event_start_time: createdEvent.start.dateTime,
             event_end_time: createdEvent.end.dateTime, 
@@ -117,6 +169,7 @@ serve(async (req) => {
     
     if (crmInsertError) {
         console.error("ERRORE CRITICO: Evento Google creato ma non salvato nel CRM. Tentativo di cancellare l'evento Google per coerenza...", crmInsertError);
+        
         try {
             await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${createdEvent.id}?sendUpdates=all`, {
                 method: "DELETE",
@@ -131,7 +184,7 @@ serve(async (req) => {
     }
     
     console.log(`Evento Google ${createdEvent.id} mappato nel CRM con ID ${newCrmEvent.id}.`);
-
+    
     return new Response(JSON.stringify({ 
         success: true, 
         event: createdEvent, 
@@ -140,6 +193,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+    
   } catch (error) {
     console.error("Errore funzione create-google-event:", error);
     return new Response(JSON.stringify({ error: error.message }), {

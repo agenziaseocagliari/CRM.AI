@@ -1,5 +1,5 @@
-// FIX: Updated the triple-slash directive to reference 'vitest' instead of 'vitest/config' to correctly load Vitest's type definitions and resolve the type error for the 'test' property in defineConfig.
-/// <reference types="vitest" />
+// FIX: Corrected the triple-slash directive to reference 'vitest/config' to resolve the 'Cannot find type definition file for 'vitest'' error and properly extend Vite's config type.
+/// <reference types="vitest/config" />
 // Generated a standard Vite config for a React+TS project.
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'

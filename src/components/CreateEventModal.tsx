@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Modal } from './ui/Modal';
 import { Contact, Organization, EventFormData, Reminder, BusySlot, EventTemplate } from '../types';
 import { PlusIcon, TrashIcon, ClockIcon, VideoIcon, TemplateIcon, SaveIcon } from './ui/icons';
+import { buildCreateEventPayload, validateAndToast } from '../lib/eventUtils';
 
 const initialEventState: EventFormData = {
     title: '',
@@ -136,30 +137,30 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!organization || !contact) return;
+        if (!organization || !contact || !formData.date) {
+            toast.error("Dati di base (organizzazione, contatto, data) mancanti.");
+            return;
+        }
         setIsLoading(true);
         const toastId = toast.loading("Creazione evento...");
 
-        const startTime = new Date(`${formData.date}T${formData.time}:00`);
-        const endTime = new Date(startTime.getTime() + Number(formData.duration) * 60000);
-
-        const eventDetails = {
-            summary: formData.title,
+        // 1. Costruisci il payload in modo centralizzato
+        const eventDate = new Date(`${formData.date}T00:00:00`);
+        const invokeBody = buildCreateEventPayload(organization, contact, {
+            title: formData.title,
+            time: formData.time,
+            duration: formData.duration,
             description: formData.description,
             location: formData.location,
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
             addMeet: formData.addMeet,
-        };
-        
-        // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
-        // La struttura del payload deve avere organization_id e contact_id a livello root e in snake_case.
-        const invokeBody = {
-            organization_id: organization.id,
-            contact_id: contact.id,
-            eventDetails,
-            contact,
-        };
+        }, eventDate);
+
+        // 2. Valida il payload prima di inviarlo
+        if (!validateAndToast(invokeBody, false)) {
+            setIsLoading(false);
+            toast.dismiss(toastId);
+            return;
+        }
 
         try {
             const { data: { session } } = await supabase.auth.getSession();

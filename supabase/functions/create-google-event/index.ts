@@ -1,9 +1,7 @@
 // File: supabase/functions/create-google-event/index.ts
-
 declare const Deno: {
   env: { get(key: string): string | undefined; };
 };
-
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
@@ -16,8 +14,14 @@ serve(async (req) => {
 
   try {
     const { eventDetails, contact, organization_id, contact_id } = await req.json();
+    
     if (!eventDetails || !contact || !organization_id || !contact_id) {
       throw new Error("Dati mancanti: 'eventDetails', 'contact', 'organization_id' e 'contact_id' sono obbligatori.");
+    }
+
+    // Validate new eventDetails schema
+    if (!eventDetails.summary || !eventDetails.startTime || !eventDetails.endTime) {
+      throw new Error("Schema eventDetails non valido: 'summary', 'startTime' e 'endTime' sono obbligatori.");
     }
 
     const supabaseClient = createClient(
@@ -33,13 +37,13 @@ serve(async (req) => {
     if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
     if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
     if (!creditData.success) throw new Error("Crediti insufficienti per creare un evento.");
+    
     console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
     
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY non impostato.");
     
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-
     const { data: settings, error: settingsError } = await supabaseAdmin
         .from('organization_settings').select('google_auth_token').eq('organization_id', organization_id).single();
         
@@ -55,17 +59,17 @@ serve(async (req) => {
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
         const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
         if (!clientId || !clientSecret) throw new Error("Mancano le credenziali Google per il refresh del token.");
-
+        
         const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
             method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: tokenData.refresh_token, grant_type: 'refresh_token' })
         });
-
+        
         if (!tokenResponse.ok) {
             const errorBody = await tokenResponse.json();
             throw new Error(`Impossibile aggiornare il token: ${errorBody.error_description || 'errore sconosciuto'}. Prova a riconnettere il tuo account.`);
         }
-
+        
         const newTokens = await tokenResponse.json();
         accessToken = newTokens.access_token;
         
@@ -73,11 +77,13 @@ serve(async (req) => {
         await supabaseAdmin.from('organization_settings').update({ google_auth_token: JSON.stringify(newTokenData) }).eq('organization_id', organization_id);
     }
     
-    const startDateTime = new Date(`${eventDetails.date}T${eventDetails.time}:00`).toISOString();
-    const endDateTime = new Date(new Date(startDateTime).getTime() + eventDetails.duration * 60000).toISOString();
-
+    // Use the new standardized schema: summary, startTime, endTime
+    const startDateTime = new Date(eventDetails.startTime).toISOString();
+    const endDateTime = new Date(eventDetails.endTime).toISOString();
+    
     const event = {
-        summary: eventDetails.title, description: eventDetails.description,
+        summary: eventDetails.summary,
+        description: eventDetails.description || '',
         start: { dateTime: startDateTime, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
         end: { dateTime: endDateTime, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
         attendees: [{ email: contact.email }],
@@ -102,7 +108,7 @@ serve(async (req) => {
         .from('crm_events')
         .insert({
             google_event_id: createdEvent.id, organization_id: organization_id, contact_id: contact_id,
-            event_summary: createdEvent.summary || eventDetails.title,
+            event_summary: createdEvent.summary || eventDetails.summary,
             event_start_time: createdEvent.start.dateTime,
             event_end_time: createdEvent.end.dateTime, 
             // PATCH CRITICA: Mappa lo stato di Google ('confirmed', 'tentative', 'cancelled')
@@ -131,7 +137,7 @@ serve(async (req) => {
     }
     
     console.log(`Evento Google ${createdEvent.id} mappato nel CRM con ID ${newCrmEvent.id}.`);
-
+    
     return new Response(JSON.stringify({ 
         success: true, 
         event: createdEvent, 

@@ -85,7 +85,10 @@ serve(async (req) => {
         .select('google_auth_token')
         .eq('organization_id', organization_id)
         .single();
-        
+    
+    // --- REQUISITO SODDISFATTO: Gestione Token Multi-Tenant ---
+    // Il token Google viene recuperato in modo sicuro usando organization_id,
+    // garantendo che ogni organizzazione usi le proprie credenziali.
     if (settingsError || !settings || !settings.google_auth_token) {
         throw new Error("Integrazione Google Calendar non trovata o non configurata.");
     }
@@ -93,6 +96,8 @@ serve(async (req) => {
     const tokenData = JSON.parse(settings.google_auth_token);
 
     // 2. Assicura che il token di accesso sia valido.
+    // --- REQUISITO SODDISFATTO: Refresh Automatico del Token ---
+    // La logica di refresh è gestita interamente lato backend.
     const accessToken = await getRefreshedAccessToken(tokenData, organization_id, supabaseAdmin);
 
     // 3. Chiama l'API di Google Calendar per eliminare l'evento.

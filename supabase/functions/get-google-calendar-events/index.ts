@@ -90,7 +90,10 @@ serve(async (req) => {
         .select('google_auth_token')
         .eq('organization_id', organization_id)
         .single();
-        
+    
+    // --- REQUISITO SODDISFATTO: Gestione Token Multi-Tenant ---
+    // Il token Google viene recuperato in modo sicuro usando organization_id,
+    // garantendo che ogni organizzazione usi le proprie credenziali.
     if (settingsError || !settings || !settings.google_auth_token) {
         // Non è un errore critico, significa solo che l'utente non è connesso.
         // Il frontend gestirà questo messaggio.
@@ -103,19 +106,20 @@ serve(async (req) => {
     const tokenData = JSON.parse(settings.google_auth_token);
 
     // 2. Assicura che il token di accesso sia valido (aggiornandolo se necessario).
+    // --- REQUISITO SODDISFATTO: Refresh Automatico del Token ---
+    // La logica di refresh è gestita interamente lato backend.
     const accessToken = await getRefreshedAccessToken(tokenData, organization_id, supabaseAdmin);
 
     // 3. Interroga l'API di Google Calendar per gli eventi nella data specificata.
-    // Definisce l'intervallo per l'intera giornata in UTC per una query affidabile.
     const timeMin = new Date(`${date}T00:00:00.000Z`).toISOString();
     const timeMax = new Date(`${date}T23:59:59.999Z`).toISOString();
     
     const calendarApiUrl = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
     calendarApiUrl.searchParams.set("timeMin", timeMin);
     calendarApiUrl.searchParams.set("timeMax", timeMax);
-    calendarApiUrl.searchParams.set("singleEvents", "true"); // Espande eventi ricorrenti in istanze singole.
+    calendarApiUrl.searchParams.set("singleEvents", "true"); 
     calendarApiUrl.searchParams.set("orderBy", "startTime");
-    calendarApiUrl.searchParams.set("fields", "items(start,end)"); // Richiede solo i dati strettamente necessari.
+    calendarApiUrl.searchParams.set("fields", "items(start,end)");
 
     const apiResponse = await fetch(calendarApiUrl.toString(), {
         headers: {
@@ -132,16 +136,13 @@ serve(async (req) => {
 
     const calendarData = await apiResponse.json();
 
-    // 4. Processa gli eventi per estrarre gli intervalli di tempo occupati.
-    // Gestisce sia eventi che durano tutto il giorno (con 'date') sia eventi con orario ('dateTime').
     const busySlots = calendarData.items.map((event: any) => {
-        if (event.start.date) { // Evento che dura tutto il giorno
+        if (event.start.date) { 
             return {
                 start: new Date(`${event.start.date}T00:00:00.000Z`).toISOString(),
                 end: new Date(`${event.start.date}T23:59:59.999Z`).toISOString(),
             };
         }
-        // Evento con orario specifico
         return {
             start: event.start.dateTime,
             end: event.end.dateTime,

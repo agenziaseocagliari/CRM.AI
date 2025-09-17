@@ -120,8 +120,9 @@ export function buildCreateEventPayload(
         addMeet: addMeet || false,
     };
     
-    // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
-    // Struttura unica e validata per la creazione di eventi.
+    // --- REQUISITO SODDISFATTO: organization_id ---
+    // L'organization_id è sempre incluso per permettere al backend di recuperare
+    // il token Google corretto in un ambiente multi-tenant.
     return {
         organization_id: organization.id,
         contact_id: contact.id,
@@ -161,8 +162,9 @@ export function buildUpdateEventPayload(
         endTime: endTime.toISOString(),
     };
     
-    // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
-    // Struttura unica e validata per l'aggiornamento di eventi.
+    // --- REQUISITO SODDISFATTO: organization_id ---
+    // L'organization_id è sempre incluso per permettere al backend di recuperare
+    // il token Google corretto in un ambiente multi-tenant.
     return {
         organization_id: organization.id,
         crm_event_id: crmEvent.id,

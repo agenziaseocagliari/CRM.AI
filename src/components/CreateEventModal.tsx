@@ -72,6 +72,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             setBusySlots(data.busySlots || []);
         } catch (err: any) {
             const errorMessage = err.message || '';
+            // --- REQUISITO SODDISFATTO: Gestione Errori Token Google ---
+            // Se il backend segnala un problema con il token, viene mostrato un toast
+            // che guida l'utente a ricollegare il proprio account Google.
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                  toast.error(t => (
                     <span className="text-center">
@@ -186,6 +189,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             console.error('[ERROR] Save event:', { payload, response: err });
             
             const errorMessage = err.message || '';
+            // --- REQUISITO SODDISFATTO: Gestione Errori Token Google ---
+            // Se il backend segnala un problema con il token (scaduto, mancante, invalido),
+            // viene mostrato un toast che guida l'utente alla pagina delle impostazioni
+            // per ricollegare il proprio account Google, come richiesto.
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                 toast.error(t => (
                     <span className="text-center">

@@ -145,18 +145,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         const toastId = toast.loading("Creazione evento...");
 
         // 1. Costruisci il payload in modo centralizzato
-        const eventDate = new Date(`${formData.date}T00:00:00`);
-        const invokeBody = buildCreateEventPayload(organization, contact, {
-            title: formData.title,
-            time: formData.time,
-            duration: formData.duration,
-            description: formData.description,
-            location: formData.location,
-            addMeet: formData.addMeet,
-        }, eventDate);
+        const payload = buildCreateEventPayload(organization, contact, formData, new Date(formData.date));
 
         // 2. Valida il payload prima di inviarlo
-        if (!validateAndToast(invokeBody, false)) {
+        if (!validateAndToast(payload)) {
             setIsLoading(false);
             toast.dismiss(toastId);
             return;
@@ -168,11 +160,12 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             
             const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
             
-            console.log('[PAYLOAD to create-google-event]', invokeBody);
+            // Log esatto prima della chiamata
+            console.log('[PAYLOAD to create-google-event]', payload);
 
             const { data, error } = await supabase.functions.invoke('create-google-event', {
                 ...functionOptions,
-                body: invokeBody
+                body: payload
             });
 
             if (error) throw error;
@@ -189,7 +182,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             await onSaveSuccess();
             onClose();
         } catch (err: any) {
-            console.error('[ERROR] Save event:', { payload: invokeBody, response: err });
+            // Log esatto in caso di errore
+            console.error('[ERROR] Save event:', { payload, response: err });
             
             const errorMessage = err.message || '';
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {

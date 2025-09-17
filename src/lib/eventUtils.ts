@@ -10,73 +10,81 @@ interface EventFormData {
     description: string;
     location?: string;
     addMeet?: boolean;
+    contact_id?: string; // Needed for DayEventsModal form
 }
 
 /**
  * Validates the payload for creating or updating an event.
+ * Shows a toast with a specific error message on failure.
  * @param payload The object to validate.
  * @param isUpdate A flag to indicate if this is for an update operation.
- * @returns An object with validation status and an error message if invalid.
+ * @returns boolean True if the payload is valid, false otherwise.
  */
-function validateEventPayload(payload: any, isUpdate: boolean = false): { isValid: boolean, error: string | null } {
+export function validateAndToast(payload: any, isUpdate: boolean = false): boolean {
     if (!payload) {
-        return { isValid: false, error: "Il payload dell'evento è nullo." };
+        toast.error("Errore interno: il payload dell'evento è nullo.");
+        console.error("Validation failed: Payload is null or undefined", payload);
+        return false;
     }
 
     if (!payload.organization_id) {
-        return { isValid: false, error: "ID Organizzazione mancante nel payload." };
+        toast.error("ID Organizzazione mancante. Impossibile salvare l'evento.");
+        console.error("Validation failed: Missing organization_id", payload);
+        return false;
     }
 
     if (isUpdate) {
         if (!payload.crm_event_id) {
-            return { isValid: false, error: "ID Evento CRM mancante per l'aggiornamento." };
+            toast.error("ID Evento CRM mancante per l'aggiornamento.");
+            console.error("Validation failed: Missing crm_event_id for update", payload);
+            return false;
         }
     } else {
         if (!payload.contact_id) {
-            return { isValid: false, error: "ID Contatto mancante nel payload." };
+            toast.error("ID Contatto mancante. Impossibile salvare l'evento.");
+            console.error("Validation failed: Missing contact_id", payload);
+            return false;
         }
-         if (!payload.contact) {
-            return { isValid: false, error: "Oggetto 'contact' mancante nel payload." };
+         if (!payload.contact || typeof payload.contact !== 'object') {
+            toast.error("Dati del contatto mancanti o non validi.");
+            console.error("Validation failed: Missing or invalid 'contact' object", payload);
+            return false;
         }
     }
 
     if (!payload.eventDetails) {
-        return { isValid: false, error: "Dettagli dell'evento ('eventDetails') mancanti." };
+        toast.error("Dettagli dell'evento ('eventDetails') mancanti.");
+        console.error("Validation failed: Missing eventDetails object", payload);
+        return false;
     }
     
     const { summary, startTime, endTime } = payload.eventDetails;
+
     if (!summary || typeof summary !== 'string' || summary.trim() === '') {
-        return { isValid: false, error: "Il titolo (summary) dell'evento è obbligatorio." };
+        toast.error("Il titolo dell'evento è obbligatorio.");
+        console.error("Validation failed: Missing or empty summary", payload);
+        return false;
     }
     if (!startTime || !endTime) {
-        return { isValid: false, error: "Le date di inizio e fine sono obbligatorie." };
+        toast.error("Le date di inizio e fine sono obbligatorie.");
+        console.error("Validation failed: Missing startTime or endTime", payload);
+        return false;
     }
     try {
         if (new Date(startTime) >= new Date(endTime)) {
-            return { isValid: false, error: "L'orario di fine deve essere successivo a quello di inizio." };
+            toast.error("L'orario di fine deve essere successivo a quello di inizio.");
+            console.error("Validation failed: endTime is not after startTime", payload);
+            return false;
         }
     } catch (e) {
-        return { isValid: false, error: "Formato data/ora non valido." };
-    }
-
-    return { isValid: true, error: null };
-}
-
-/**
- * A wrapper to handle the frontend validation and toast display logic.
- * @param payload The payload to validate.
- * @param isUpdate Whether the validation is for an update.
- * @returns True if valid, false otherwise.
- */
-export function validateAndToast(payload: any, isUpdate: boolean = false): boolean {
-    const validation = validateEventPayload(payload, isUpdate);
-    if (!validation.isValid) {
-        toast.error(validation.error || "Errore di validazione sconosciuto.");
-        console.error("Validation failed:", validation.error, "Payload:", payload);
+        toast.error("Formato data/ora non valido.");
+        console.error("Validation failed: Invalid date format", payload);
         return false;
     }
-    return true;
+
+    return true; // All checks passed
 }
+
 
 /**
  * Centralized utility to build the payload for creating a new Google event.
@@ -94,6 +102,7 @@ export function buildCreateEventPayload(
 ) {
     const { title, time, duration, description, location, addMeet } = formData;
     
+    // Assicura che la data sia interpretata nel fuso orario locale
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -104,7 +113,7 @@ export function buildCreateEventPayload(
 
     const eventDetails = {
         summary: title,
-        description,
+        description: description || '',
         location: location || '',
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
@@ -112,7 +121,7 @@ export function buildCreateEventPayload(
     };
     
     // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
-    // Struttura unica per la creazione di eventi.
+    // Struttura unica e validata per la creazione di eventi.
     return {
         organization_id: organization.id,
         contact_id: contact.id,
@@ -147,13 +156,13 @@ export function buildUpdateEventPayload(
 
     const eventDetails = {
         summary: title,
-        description,
+        description: description || '',
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
     };
     
     // TODO: Allineamento payload per edge function, compatibilità Supabase v2 (settembre 2025)
-    // Struttura unica per l'aggiornamento di eventi.
+    // Struttura unica e validata per l'aggiornamento di eventi.
     return {
         organization_id: organization.id,
         crm_event_id: crmEvent.id,

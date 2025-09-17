@@ -161,16 +161,19 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         setIsSaving(true);
         const toastId = toast.loading(eventToEdit ? "Modifica in corso..." : "Creazione evento...");
     
-        let payload: any = null;
+        let payload: any = null; // To hold the payload for logging
+        const isUpdate = !!eventToEdit;
     
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('Utente non autenticato.');
     
-            if (eventToEdit) {
+            if (isUpdate && eventToEdit) {
                 // --- LOGICA DI MODIFICA ---
                 payload = buildUpdateEventPayload(organization, eventToEdit, formData);
-                if (!validateAndToast(payload, true)) throw new Error("Dati non validi");
+                if (!validateAndToast(payload, true)) {
+                    throw new Error("Dati non validi");
+                }
     
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
                     console.log('[PAYLOAD to update-google-event]', payload);
@@ -194,10 +197,15 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             } else {
                 // --- LOGICA DI CREAZIONE ---
                 const selectedContact = contacts.find(c => c.id === formData.contact_id);
-                if (!selectedContact) throw new Error("Contatto selezionato non valido.");
+                if (!selectedContact) {
+                    toast.error("Per favore, seleziona un contatto valido.");
+                    throw new Error("Dati non validi");
+                }
                 
                 payload = buildCreateEventPayload(organization, selectedContact, formData, date);
-                if (!validateAndToast(payload, false)) throw new Error("Dati non validi");
+                if (!validateAndToast(payload, false)) {
+                    throw new Error("Dati non validi");
+                }
     
                 if (googleConnectionStatus === 'connected' && syncWithGoogle) {
                     console.log('[PAYLOAD to create-google-event]', payload);
@@ -231,6 +239,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             setView('list');
         } catch (err: any) {
             if (err.message === "Dati non validi") {
+                // The toast is already shown by the utility function or a local check
                 toast.dismiss(toastId);
             } else {
                 console.error('[ERROR] Save event:', { payload, response: err });

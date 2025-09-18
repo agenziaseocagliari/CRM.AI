@@ -119,7 +119,8 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 await invokeSupabaseFunction(
                     'delete-google-event',
                     { organization_id: organization.id, google_event_id: event.google_event_id, crm_event_id: event.id },
-                    true
+                    true,
+                    organizationSettings
                 );
                 toast.success('Evento annullato e sincronizzato!', { id: toastId });
             } else {
@@ -164,8 +165,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 if (!validateAndToast(payload, true)) throw new Error("Dati non validi");
     
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
-                    console.log('[PAYLOAD to update-google-event]', JSON.stringify(payload, null, 2));
-                    await invokeSupabaseFunction('update-google-event', payload, true);
+                    await invokeSupabaseFunction('update-google-event', payload, true, organizationSettings);
                     toast.success("Evento modificato e sincronizzato!", { id: toastId });
                 } else {
                     // Modifica solo CRM
@@ -186,13 +186,11 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 if (!validateAndToast(payload, false)) throw new Error("Dati non validi");
     
                 if (googleConnectionStatus === 'connected' && syncWithGoogle) {
-                    console.log('[PAYLOAD to create-google-event]', JSON.stringify(payload, null, 2));
-                    await invokeSupabaseFunction('create-google-event', payload, true);
+                    await invokeSupabaseFunction('create-google-event', payload, true, organizationSettings);
                     toast.success("Evento creato e sincronizzato!", { id: toastId });
                 } else {
                     // Crea solo CRM
-                    console.log('[PAYLOAD to create-crm-event]', JSON.stringify(payload, null, 2));
-                    await invokeSupabaseFunction('create-crm-event', payload, false);
+                    await invokeSupabaseFunction('create-crm-event', payload, false); // Non richiede auth Google
                     toast.success("Evento CRM creato!", { id: toastId });
                 }
             }

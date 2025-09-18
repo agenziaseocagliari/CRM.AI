@@ -1,7 +1,7 @@
 
 // src/components/ContactEventsList.tsx
 import React, { useState, useMemo } from 'react';
-import { Contact, CrmEvent, EventReminder } from '../types';
+import { Contact, CrmEvent, EventReminder, OrganizationSettings } from '../types';
 import { toast } from 'react-hot-toast';
 import { TrashIcon, ClockIcon, CheckCircleIcon, InfoIcon, WhatsAppIcon } from './ui/icons';
 import { invokeSupabaseFunction } from '../lib/api';
@@ -10,6 +10,7 @@ interface ContactEventsListProps {
     contact: Contact | null;
     events: CrmEvent[];
     organizationId?: string;
+    organizationSettings: OrganizationSettings | null;
     onActionSuccess: () => void;
 }
 
@@ -88,7 +89,7 @@ const EventItem: React.FC<{
     );
 };
 
-export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, events, organizationId, onActionSuccess }) => {
+export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, events, organizationId, organizationSettings, onActionSuccess }) => {
     const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
     const contactEvents = useMemo(() => {
@@ -108,7 +109,8 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
             await invokeSupabaseFunction(
                 'delete-google-event',
                 { organization_id: organizationId, google_event_id: event.google_event_id, crm_event_id: event.id },
-                true
+                true,
+                organizationSettings
             );
             toast.success('Evento annullato!', { id: toastId });
             onActionSuccess();

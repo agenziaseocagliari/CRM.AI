@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 
 import { invokeSupabaseFunction } from '../lib/api';
 import { buildCreateEventPayload, validateAndToast } from '../lib/eventUtils';
-import { Contact, Organization, EventFormData, Reminder, BusySlot, EventTemplate } from '../types';
+import { Contact, Organization, EventFormData, Reminder, BusySlot, EventTemplate, OrganizationSettings } from '../types';
 import { Modal } from './ui/Modal';
 import { ClockIcon, PlusIcon, SaveIcon, TemplateIcon, TrashIcon, VideoIcon } from './ui/icons';
 
@@ -31,10 +31,11 @@ interface CreateEventModalProps {
     onClose: () => void;
     contact: Contact | null;
     organization: Organization | null;
+    organizationSettings: OrganizationSettings | null;
     onSaveSuccess: () => Promise<void>;
 }
 
-export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onClose, contact, organization, onSaveSuccess }) => {
+export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onClose, contact, organization, organizationSettings, onSaveSuccess }) => {
     const [formData, setFormData] = useState<EventFormData>(initialEventState);
     const [busySlots, setBusySlots] = useState<BusySlot[]>([]);
     const [templates, setTemplates] = useState<EventTemplate[]>([]);
@@ -65,7 +66,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             const data = await invokeSupabaseFunction(
                 'get-google-calendar-events',
                 { organization_id: organization.id, date },
-                true
+                true,
+                organizationSettings
             );
             setBusySlots(data.busySlots || []);
         } catch (err: any) {
@@ -76,7 +78,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         } finally {
             setIsFetchingSlots(false);
         }
-    }, [organization]);
+    }, [organization, organizationSettings]);
 
     useEffect(() => {
         if (isOpen && formData.date) {
@@ -137,20 +139,19 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             if (!validateAndToast(payload)) {
                  throw new Error("Dati non validi");
             }
-
-            console.log('[PAYLOAD to create-google-event]', JSON.stringify(payload, null, 2));
-
+            
             const data = await invokeSupabaseFunction(
                 'create-google-event',
                 payload,
-                true
+                true,
+                organizationSettings
             );
 
             if (formData.reminders.length > 0 && data.crmEventId) {
                 await invokeSupabaseFunction(
                     'schedule-event-reminders',
                     { organization_id: organization.id, crm_event_id: data.crmEventId, event_start_time: data.event.start.dateTime, reminders: formData.reminders },
-                    false
+                    false // Questa funzione non richiede autenticazione Google diretta
                 );
             }
 

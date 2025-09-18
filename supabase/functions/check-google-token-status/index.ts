@@ -1,51 +1,64 @@
+// FIX: Added Deno global declaration to resolve TypeScript errors with Deno.env.get.
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-// FIX: Replaced non-existent 'cors' import with 'corsHeaders' and 'handleCors' and will refactor to use them.
 import { corsHeaders, handleCors } from '../_shared/cors.ts'
 import { getGoogleTokens } from '../_shared/google.ts'
-// FIX: Imported createClient to instantiate a Supabase client for the getGoogleTokens function.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-
 
 serve(async (req) => {
   // Handle CORS
-  // FIX: Switched to the standard handleCors function for preflight requests.
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   try {
-    console.log('🔍 Starting Google token status check...')
-    
-    const url = new URL(req.url)
-    const organizationId = url.searchParams.get('organization_id')
+    // Extensive logging as requested
+    console.log("EDGE LOG: [START] - Function 'check-google-token-status' invoked.");
+
+    // 1. Log all relevant Deno environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    console.log(`EDGE LOG: [ENV] - SUPABASE_URL: ${supabaseUrl ? 'Loaded' : 'MISSING!'}`);
+    console.log(`EDGE LOG: [ENV] - SUPABASE_ANON_KEY: ${supabaseAnonKey ? 'Loaded' : 'MISSING!'}`);
+    // Note: SERVICE_ROLE_KEY is not used here, as we use the user's token.
+
+    // 2. Log received parameters
+    const url = new URL(req.url);
+    const organizationId = url.searchParams.get('organization_id');
+    console.log(`EDGE LOG: [PARAMS] - Received organization_id: ${organizationId}`);
 
     if (!organizationId) {
-      console.error('❌ Missing organization_id parameter')
-      // FIX: Standardized response creation with CORS headers.
+      console.error('EDGE LOG: [ERROR] - Missing organization_id parameter');
       return new Response(
         JSON.stringify({ error: 'Missing organization_id parameter' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
 
-    console.log('🏢 Organization ID:', organizationId)
-    
-    // FIX: Create a Supabase client to pass to the refactored getGoogleTokens function.
-    // This function will likely be called with user authentication.
+    // 3. Log key type used for Supabase query
+    const authHeader = req.headers.get("Authorization");
+    console.log(`EDGE LOG: [AUTH] - Using user's JWT for query (Authorization header ${authHeader ? 'present' : 'missing'}). This will respect RLS.`);
+
+    // Create a Supabase client to pass to the getGoogleTokens function.
     const supabaseClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+        supabaseUrl!,
+        supabaseAnonKey!,
+        { global: { headers: { Authorization: authHeader! } } }
     );
 
-    // Get tokens using the shared utility - this will include our detailed logging
-    const tokens = await getGoogleTokens(supabaseClient, organizationId)
+    // Get tokens using the shared utility
+    console.log(`EDGE LOG: [CALL] - Invoking getGoogleTokens for org: ${organizationId}`);
+    const tokens = await getGoogleTokens(supabaseClient, organizationId);
     
     if (!tokens) {
-      console.log('⚠️  No valid tokens found or tokens could not be retrieved')
-      // FIX: Standardized response creation with CORS headers.
+      console.log('EDGE LOG: [RESULT] - No valid tokens found or tokens could not be retrieved.');
       return new Response(
         JSON.stringify({ 
           connected: false, 
@@ -60,24 +73,23 @@ serve(async (req) => {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
 
     // Check if token is expired
-    const now = Math.floor(Date.now() / 1000)
+    const now = Math.floor(Date.now() / 1000);
     const expiryTimestamp = tokens.expiry_date || tokens.expires_at;
     const isExpired = expiryTimestamp ? expiryTimestamp < now : false;
-    const timeUntilExpiry = expiryTimestamp ? expiryTimestamp - now : null
+    const timeUntilExpiry = expiryTimestamp ? expiryTimestamp - now : null;
     
-    console.log('✅ Token status check complete:', {
+    console.log('EDGE LOG: [RESULT] - Token status check complete:', {
       hasAccessToken: !!tokens.access_token,
       hasRefreshToken: !!tokens.refresh_token,
       isExpired,
       timeUntilExpiry,
       expiresAt: expiryTimestamp ? new Date(expiryTimestamp * 1000).toISOString() : 'Not set'
-    })
+    });
 
-    // FIX: Standardized response creation with CORS headers.
     return new Response(
       JSON.stringify({ 
         connected: true,
@@ -97,13 +109,12 @@ serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
     
   } catch (error) {
-    console.error('❌ Unexpected error in check-google-token-status:', error)
-    console.error('🔬 Error stack:', error.stack)
+    console.error('EDGE LOG: [FATAL] - Unexpected error in check-google-token-status:', error);
+    console.error('EDGE LOG: [FATAL] - Error stack:', error.stack);
     
-    // FIX: Standardized response creation with CORS headers.
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
@@ -118,6 +129,6 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
-})
+});

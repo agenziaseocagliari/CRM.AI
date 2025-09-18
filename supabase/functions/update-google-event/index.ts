@@ -73,7 +73,7 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { userId, organization_id, crm_event_id, eventDetails } = await req.json();
+    const { userId, organization_id, crm_event_id, event: eventPayload } = await req.json();
     
     // --- REQUISITO SODDISFATTO: Validazione server-side di userId ---
     // La funzione ora verifica che il campo `userId` sia presente nel payload,
@@ -81,8 +81,8 @@ serve(async (req) => {
     if (!userId) {
         return new Response(JSON.stringify({ error: "userId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    if (!organization_id || !crm_event_id || !eventDetails) {
-        throw new Error("Parametri `organization_id`, `crm_event_id`, e `eventDetails` sono obbligatori.");
+    if (!organization_id || !crm_event_id || !eventPayload) {
+        throw new Error("Parametri `organization_id`, `crm_event_id`, e `event` sono obbligatori.");
     }
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -118,9 +118,9 @@ serve(async (req) => {
     
     if (contactError || !contact) throw new Error(`Contatto associato all'evento (ID: ${crmEvent.contact_id}) non trovato.`);
     
-    const { summary, startTime, endTime, description } = eventDetails;
-    if (!summary || !startTime || !endTime) {
-        throw new Error("Dati evento mancanti: 'summary', 'startTime', e 'endTime' sono obbligatori in eventDetails.");
+    const { summary, start, end, description } = eventPayload;
+    if (!summary || !start || !end) {
+        throw new Error("Dati evento mancanti: 'summary', 'start', e 'end' sono obbligatori in event.");
     }
     
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -128,8 +128,8 @@ serve(async (req) => {
     const googleEventPayload = {
         summary,
         description,
-        start: { dateTime: startTime, timeZone },
-        end: { dateTime: endTime, timeZone },
+        start: { dateTime: start, timeZone },
+        end: { dateTime: end, timeZone },
         attendees: [{ email: contact.email }],
     };
 

@@ -50,28 +50,28 @@ export function validateAndToast(payload: any, isUpdate: boolean = false): boole
         }
     }
 
-    if (!payload.eventDetails) {
-        toast.error("Dettagli dell'evento ('eventDetails') mancanti.");
-        console.error("Validation failed: Missing eventDetails object", payload);
+    if (!payload.event) {
+        toast.error("Dettagli dell'evento ('event') mancanti.");
+        console.error("Validation failed: Missing event object", payload);
         return false;
     }
     
-    const { summary, startTime, endTime } = payload.eventDetails;
+    const { summary, start, end } = payload.event;
 
     if (!summary || typeof summary !== 'string' || summary.trim() === '') {
         toast.error("Il titolo dell'evento è obbligatorio.");
         console.error("Validation failed: Missing or empty summary", payload);
         return false;
     }
-    if (!startTime || !endTime) {
+    if (!start || !end) {
         toast.error("Le date di inizio e fine sono obbligatorie.");
-        console.error("Validation failed: Missing startTime or endTime", payload);
+        console.error("Validation failed: Missing start or end", payload);
         return false;
     }
     try {
-        if (new Date(startTime) >= new Date(endTime)) {
+        if (new Date(start) >= new Date(end)) {
             toast.error("L'orario di fine deve essere successivo a quello di inizio.");
-            console.error("Validation failed: endTime is not after startTime", payload);
+            console.error("Validation failed: end is not after start", payload);
             return false;
         }
     } catch (e) {
@@ -115,12 +115,12 @@ export function buildCreateEventPayload(
         userId,
         organization_id: organization.id,
         contact_id: contact.id,
-        eventDetails: {
+        event: {
             summary: title,
             description: description || '',
             location: location || '',
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
+            start: startTime.toISOString(),
+            end: endTime.toISOString(),
             addMeet: addMeet || false,
         },
         contact: {
@@ -161,11 +161,11 @@ export function buildUpdateEventPayload(
         userId,
         organization_id: organization.id,
         crm_event_id: crmEvent.id,
-        eventDetails: {
+        event: {
             summary: title,
             description: description || '',
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
+            start: startTime.toISOString(),
+            end: endTime.toISOString(),
         }
     };
 }

@@ -76,7 +76,7 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { userId, eventDetails, contact, organization_id, contact_id } = await req.json();
+    const { userId, event: eventPayload, contact, organization_id, contact_id } = await req.json();
     
     // --- REQUISITO SODDISFATTO: Validazione server-side di userId ---
     // La funzione ora verifica che il campo `userId` sia presente nel payload,
@@ -84,13 +84,13 @@ serve(async (req) => {
     if (!userId) {
         return new Response(JSON.stringify({ error: "userId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    if (!eventDetails || !contact || !organization_id || !contact_id) {
-      throw new Error("Dati mancanti: 'eventDetails', 'contact', 'organization_id' e 'contact_id' sono obbligatori.");
+    if (!eventPayload || !contact || !organization_id || !contact_id) {
+      throw new Error("Dati mancanti: 'event', 'contact', 'organization_id' e 'contact_id' sono obbligatori.");
     }
     
-    const { summary, description, startTime, endTime, addMeet, location } = eventDetails;
-    if (!summary || !startTime || !endTime) {
-        throw new Error("Dati evento mancanti: 'summary', 'startTime', e 'endTime' sono obbligatori in eventDetails.");
+    const { summary, description, start, end, addMeet, location } = eventPayload;
+    if (!summary || !start || !end) {
+        throw new Error("Dati evento mancanti: 'summary', 'start', e 'end' sono obbligatori in event.");
     }
 
     const supabaseClient = createClient(
@@ -127,8 +127,8 @@ serve(async (req) => {
         summary: summary,
         description: description,
         location: location,
-        start: { dateTime: startTime, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-        end: { dateTime: endTime, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        start: { dateTime: start, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        end: { dateTime: end, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
         attendees: [{ email: contact.email }],
         conferenceData: addMeet ? { createRequest: { requestId: `guardian-crm-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } } } : undefined,
         reminders: { useDefault: true },

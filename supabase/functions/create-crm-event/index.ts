@@ -20,17 +20,24 @@ serve(async (req) => {
         userId,
         organization_id, 
         contact_id, 
-        event_summary, 
-        event_start_time, 
-        event_end_time 
+        event_summary, // Kept for backward compatibility if old payload is sent
+        event_start_time, // Kept for backward compatibility
+        event_end_time, // Kept for backward compatibility
+        event: eventPayload // New standard payload
     } = await req.json();
     
     // --- REQUISITO SODDISFATTO: Validazione server-side di userId ---
     if (!userId) {
         return new Response(JSON.stringify({ error: "userId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    if (!organization_id || !contact_id || !event_summary || !event_start_time || !event_end_time) {
-        throw new Error("I parametri `organization_id`, `contact_id`, `event_summary`, `event_start_time` e `event_end_time` sono obbligatori.");
+    
+    // Use new payload structure if available, otherwise fall back to old one.
+    const summary = eventPayload?.summary || event_summary;
+    const startTime = eventPayload?.start || event_start_time;
+    const endTime = eventPayload?.end || event_end_time;
+    
+    if (!organization_id || !contact_id || !summary || !startTime || !endTime) {
+        throw new Error("I parametri `organization_id`, `contact_id`, e i dettagli dell'evento (`summary`, `start`, `end`) sono obbligatori.");
     }
 
     // 2. Setup del client Supabase con privilegi di amministratore
@@ -46,9 +53,9 @@ serve(async (req) => {
         .insert({
             organization_id,
             contact_id,
-            event_summary,
-            event_start_time,
-            event_end_time,
+            event_summary: summary,
+            event_start_time: startTime,
+            event_end_time: endTime,
             status: 'confirmed',
             google_event_id: null,
         })

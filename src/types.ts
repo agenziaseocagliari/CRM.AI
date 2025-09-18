@@ -173,18 +173,18 @@ export interface CreditLedgerEntry {
 interface BaseEventPayload {
   userId: string;
   organization_id: string;
-  eventDetails: {
+  event: {
     summary: string;
     description: string;
-    startTime: string;
-    endTime: string;
+    start: string;
+    end: string;
     location?: string;
   };
 }
 
 export interface CreateGoogleEventPayload extends BaseEventPayload {
   contact_id: string;
-  eventDetails: BaseEventPayload['eventDetails'] & {
+  event: BaseEventPayload['event'] & {
     addMeet: boolean;
   };
   contact: {

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
-import { CrmEvent } from '../types';
+import { CrmEvent, Contact } from '../types';
 import { Modal } from './ui/Modal';
 import { PlusIcon, TrashIcon, EditIcon } from './ui/icons';
 import { buildCreateEventPayload, buildUpdateEventPayload, validateAndToast } from '../lib/eventUtils';
@@ -134,9 +134,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             await refetch();
         } catch (err: any) {
             const errorMessage = err.message || '';
-            // --- REQUISITO SODDISFATTO: Gestione Errori Token Google ---
-            // Se il backend segnala un problema con il token, viene mostrato un toast
-            // che guida l'utente a ricollegare il proprio account Google.
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                 toast.error(t => (
                     <span className="text-center">
@@ -156,30 +153,39 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     
     const handleSaveEvent = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!organization || !date) {
-            toast.error("Dati di base (organizzazione, data) mancanti.");
-            return;
-        }
-    
         setIsSaving(true);
         const toastId = toast.loading(eventToEdit ? "Modifica in corso..." : "Creazione evento...");
     
-        let payload: any = null; // To hold the payload for logging
-        const isUpdate = !!eventToEdit;
-    
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
+            // --- REQUISITO SODDISFATTO: Estrazione e validazione userId ---
+            // Recupera l'utente dalla sessione. Se non è presente, mostra un errore
+            // e interrompe l'esecuzione prima di qualsiasi chiamata API.
+            const userId = session?.user?.id;
+            if (!userId) {
+                toast.error("Impossibile salvare l'evento: sessione utente non valida o scaduta. Riprova il login.", { id: toastId });
+                setIsSaving(false);
+                return;
+            }
+
+            if (!organization || !date) {
+                toast.error("Dati di base (organizzazione, data) mancanti.", { id: toastId });
+                setIsSaving(false);
+                return;
+            }
+    
+            let payload: any = null; // To hold the payload for logging
+            const isUpdate = !!eventToEdit;
     
             if (isUpdate && eventToEdit) {
                 // --- LOGICA DI MODIFICA ---
-                payload = buildUpdateEventPayload(organization, eventToEdit, formData);
+                payload = buildUpdateEventPayload(userId, organization, eventToEdit, formData, date);
                 if (!validateAndToast(payload, true)) {
                     throw new Error("Dati non validi");
                 }
     
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
-                    console.log('[PAYLOAD to update-google-event]', payload);
+                    console.log('[PAYLOAD to update-google-event]', JSON.stringify(payload, null, 2));
                     const { data, error } = await supabase.functions.invoke('update-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: payload
@@ -201,17 +207,17 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 // --- LOGICA DI CREAZIONE ---
                 const selectedContact = contacts.find(c => c.id === formData.contact_id);
                 if (!selectedContact) {
-                    toast.error("Per favore, seleziona un contatto valido.");
+                    toast.error("Per favore, seleziona un contatto valido.", { id: toastId });
                     throw new Error("Dati non validi");
                 }
                 
-                payload = buildCreateEventPayload(organization, selectedContact, formData, date);
+                payload = buildCreateEventPayload(userId, organization, selectedContact, formData, date);
                 if (!validateAndToast(payload, false)) {
                     throw new Error("Dati non validi");
                 }
     
                 if (googleConnectionStatus === 'connected' && syncWithGoogle) {
-                    console.log('[PAYLOAD to create-google-event]', payload);
+                    console.log('[PAYLOAD to create-google-event]', JSON.stringify(payload, null, 2));
                     const { data, error } = await supabase.functions.invoke('create-google-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: payload
@@ -222,13 +228,14 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 } else {
                     // Crea solo CRM
                     const crmPayload = {
+                        userId: payload.userId,
                         organization_id: payload.organization_id,
                         contact_id: payload.contact_id,
                         event_summary: payload.eventDetails.summary,
                         event_start_time: payload.eventDetails.startTime,
                         event_end_time: payload.eventDetails.endTime,
                     };
-                    console.log('[PAYLOAD to create-crm-event]', crmPayload);
+                    console.log('[PAYLOAD to create-crm-event]', JSON.stringify(crmPayload, null, 2));
                     const { data, error } = await supabase.functions.invoke('create-crm-event', {
                         headers: { Authorization: `Bearer ${session.access_token}` },
                         body: crmPayload,
@@ -241,15 +248,9 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             await refetch();
             setView('list');
         } catch (err: any) {
-            if (err.message === "Dati non validi") {
-                // The toast is already shown by the utility function or a local check
-                toast.dismiss(toastId);
-            } else {
-                console.error('[ERROR] Save event:', { payload, response: err });
-                const errorMessage = err.message || '';
-                // --- REQUISITO SODDISFATTO: Gestione Errori Token Google ---
-                // Se il backend segnala un problema con il token, viene mostrato un toast
-                // che guida l'utente a ricollegare il proprio account Google.
+            if (err.message !== "Dati non validi") {
+                 console.error('[ERROR] Save event:', err);
+                 const errorMessage = err.message || '';
                 if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                     toast.error(t => (
                         <span className="text-center">
@@ -262,6 +263,8 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 } else {
                     toast.error(`Operazione fallita: ${errorMessage}`, { id: toastId, duration: 5000 });
                 }
+            } else {
+                toast.dismiss(toastId);
             }
         } finally {
             setIsSaving(false);

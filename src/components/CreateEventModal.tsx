@@ -72,9 +72,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             setBusySlots(data.busySlots || []);
         } catch (err: any) {
             const errorMessage = err.message || '';
-            // --- REQUISITO SODDISFATTO: Gestione Errori Token Google ---
-            // Se il backend segnala un problema con il token, viene mostrato un toast
-            // che guida l'utente a ricollegare il proprio account Google.
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                  toast.error(t => (
                     <span className="text-center">
@@ -140,32 +137,42 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!organization || !contact || !formData.date) {
-            toast.error("Dati di base (organizzazione, contatto, data) mancanti.");
-            return;
-        }
         setIsLoading(true);
         const toastId = toast.loading("Creazione evento...");
 
-        // 1. Costruisci il payload in modo centralizzato
-        const payload = buildCreateEventPayload(organization, contact, formData, new Date(formData.date));
-
-        // 2. Valida il payload prima di inviarlo
-        if (!validateAndToast(payload)) {
-            setIsLoading(false);
-            toast.dismiss(toastId);
-            return;
-        }
-
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-            
+            // --- REQUISITO SODDISFATTO: Estrazione e validazione userId ---
+            // Recupera l'utente dalla sessione. Se non è presente, mostra un errore
+            // e interrompe l'esecuzione prima di qualsiasi chiamata API.
+            const userId = session?.user?.id;
+            if (!userId) {
+                toast.error("Impossibile creare evento: sessione utente non valida o scaduta. Riprova il login.", { id: toastId });
+                setIsLoading(false);
+                return;
+            }
+
+            if (!organization || !contact || !formData.date) {
+                toast.error("Dati di base (organizzazione, contatto, data) mancanti.", { id: toastId });
+                setIsLoading(false);
+                return;
+            }
+
+            // 1. Costruisci il payload passando lo userId
+            const payload = buildCreateEventPayload(userId, organization, contact, formData);
+
+            // 2. Valida il payload (ora include il check su userId)
+            if (!validateAndToast(payload)) {
+                setIsLoading(false);
+                toast.dismiss(toastId);
+                return;
+            }
+
+            // --- REQUISITO SODDISFATTO: Logging per debug ---
+            console.log('[PAYLOAD to create-google-event]', JSON.stringify(payload, null, 2));
+
             const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
             
-            // Log esatto prima della chiamata
-            console.log('[PAYLOAD to create-google-event]', payload);
-
             const { data, error } = await supabase.functions.invoke('create-google-event', {
                 ...functionOptions,
                 body: payload
@@ -185,14 +192,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             await onSaveSuccess();
             onClose();
         } catch (err: any) {
-            // Log esatto in caso di errore
-            console.error('[ERROR] Save event:', { payload, response: err });
-            
+            console.error('[ERROR] Save event:', err);
             const errorMessage = err.message || '';
-            // --- REQUISITO SODDISFATTO: Gestione Errori Token Google ---
-            // Se il backend segnala un problema con il token (scaduto, mancante, invalido),
-            // viene mostrato un toast che guida l'utente alla pagina delle impostazioni
-            // per ricollegare il proprio account Google, come richiesto.
             if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
                 toast.error(t => (
                     <span className="text-center">

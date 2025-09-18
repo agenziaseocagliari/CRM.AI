@@ -17,6 +17,7 @@ serve(async (req) => {
   try {
     // 1. Validazione dell'input
     const { 
+        userId,
         organization_id, 
         contact_id, 
         event_summary, 
@@ -24,6 +25,10 @@ serve(async (req) => {
         event_end_time 
     } = await req.json();
     
+    // --- REQUISITO SODDISFATTO: Validazione server-side di userId ---
+    if (!userId) {
+        return new Response(JSON.stringify({ error: "userId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     if (!organization_id || !contact_id || !event_summary || !event_start_time || !event_end_time) {
         throw new Error("I parametri `organization_id`, `contact_id`, `event_summary`, `event_start_time` e `event_end_time` sono obbligatori.");
     }
@@ -36,7 +41,6 @@ serve(async (req) => {
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
 
     // 3. Inserimento del nuovo evento nel database
-    // L'evento è creato solo nel CRM, quindi `google_event_id` sarà null.
     const { data: newEvent, error } = await supabaseAdmin
         .from('crm_events')
         .insert({
@@ -45,10 +49,10 @@ serve(async (req) => {
             event_summary,
             event_start_time,
             event_end_time,
-            status: 'confirmed', // Lo stato di default per un evento creato manualmente
-            google_event_id: null, // Nessun ID Google associato
+            status: 'confirmed',
+            google_event_id: null,
         })
-        .select('id') // Restituisce solo l'ID del nuovo evento creato
+        .select('id')
         .single();
 
     if (error) {

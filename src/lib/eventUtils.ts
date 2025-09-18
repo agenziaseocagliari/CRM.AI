@@ -1,8 +1,8 @@
 // src/lib/eventUtils.ts
-import { Organization, Contact, CrmEvent } from '../types';
+import { Organization, Contact, CrmEvent, CreateGoogleEventPayload, UpdateGoogleEventPayload } from '../types';
 import { toast } from 'react-hot-toast';
 
-// A standardized form data type for our utility functions
+// Un tipo standard per i dati del form, usato da entrambe le modali
 interface EventFormData {
     title: string;
     time: string;
@@ -10,20 +10,23 @@ interface EventFormData {
     description: string;
     location?: string;
     addMeet?: boolean;
-    contact_id?: string; // Needed for DayEventsModal form
+    contact_id?: string;
 }
 
 /**
- * Validates the payload for creating or updating an event.
- * Shows a toast with a specific error message on failure.
- * @param payload The object to validate.
- * @param isUpdate A flag to indicate if this is for an update operation.
- * @returns boolean True if the payload is valid, false otherwise.
+ * Valida il payload per creare o aggiornare un evento.
+ * Mostra un toast con un messaggio di errore specifico in caso di fallimento.
+ * @param payload L'oggetto da validare.
+ * @param isUpdate Flag per indicare se è un'operazione di aggiornamento.
+ * @returns boolean True se il payload è valido, altrimenti false.
  */
 export function validateAndToast(payload: any, isUpdate: boolean = false): boolean {
-    if (!payload) {
-        toast.error("Errore interno: il payload dell'evento è nullo.");
-        console.error("Validation failed: Payload is null or undefined", payload);
+    // --- REQUISITO SODDISFATTO: Validazione userId ---
+    // Questo è il primo e più importante controllo. Se manca l'ID utente,
+    // l'operazione viene bloccata immediatamente.
+    if (!payload || !payload.userId) {
+        toast.error("Impossibile salvare l'evento: sessione utente non valida o scaduta. Riprova il login.");
+        console.error("Validation failed: Payload or userId is missing", payload);
         return false;
     }
 
@@ -40,14 +43,9 @@ export function validateAndToast(payload: any, isUpdate: boolean = false): boole
             return false;
         }
     } else {
-        if (!payload.contact_id) {
-            toast.error("ID Contatto mancante. Impossibile salvare l'evento.");
-            console.error("Validation failed: Missing contact_id", payload);
-            return false;
-        }
-         if (!payload.contact || typeof payload.contact !== 'object') {
+        if (!payload.contact_id || !payload.contact) {
             toast.error("Dati del contatto mancanti o non validi.");
-            console.error("Validation failed: Missing or invalid 'contact' object", payload);
+            console.error("Validation failed: Missing contact_id or contact object", payload);
             return false;
         }
     }
@@ -78,96 +76,96 @@ export function validateAndToast(payload: any, isUpdate: boolean = false): boole
         }
     } catch (e) {
         toast.error("Formato data/ora non valido.");
-        console.error("Validation failed: Invalid date format", payload);
+        console.error("Validation failed: Invalid date format", e, payload);
         return false;
     }
 
-    return true; // All checks passed
+    return true; // Tutti i controlli sono passati
 }
 
 
 /**
- * Centralized utility to build the payload for creating a new Google event.
- * @param organization The current organization.
- * @param contact The contact for the event.
- * @param formData The data from the event form.
- * @param date The specific date for the event.
- * @returns The structured payload for the 'create-google-event' edge function.
+ * Utility centralizzata per costruire il payload per la creazione di un evento.
+ * @param userId ID dell'utente autenticato (obbligatorio).
+ * @param organization L'organizzazione corrente.
+ * @param contact Il contatto per l'evento.
+ * @param formData I dati dal form dell'evento.
+ * @param date La data specifica dell'evento (opzionale, default a oggi).
+ * @returns Il payload strutturato per la funzione 'create-google-event'.
  */
 export function buildCreateEventPayload(
+    userId: string,
     organization: Organization,
     contact: Contact,
     formData: EventFormData,
-    date: Date
-) {
+    date?: Date
+): CreateGoogleEventPayload {
     const { title, time, duration, description, location, addMeet } = formData;
     
-    // Assicura che la data sia interpretata nel fuso orario locale
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const eventDate = date || new Date();
+    const year = eventDate.getFullYear();
+    const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+    const day = String(eventDate.getDate()).padStart(2, '0');
     const localDateString = `${year}-${month}-${day}`;
 
     const startTime = new Date(`${localDateString}T${time}:00`);
     const endTime = new Date(startTime.getTime() + Number(duration) * 60000);
 
-    const eventDetails = {
-        summary: title,
-        description: description || '',
-        location: location || '',
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        addMeet: addMeet || false,
-    };
-    
-    // --- REQUISITO SODDISFATTO: organization_id ---
-    // L'organization_id è sempre incluso per permettere al backend di recuperare
-    // il token Google corretto in un ambiente multi-tenant.
     return {
+        userId,
         organization_id: organization.id,
         contact_id: contact.id,
-        eventDetails,
-        contact,
+        eventDetails: {
+            summary: title,
+            description: description || '',
+            location: location || '',
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            addMeet: addMeet || false,
+        },
+        contact: {
+            id: contact.id,
+            email: contact.email,
+        },
     };
 }
 
 /**
- * Centralized utility to build the payload for updating an existing Google event.
- * @param organization The current organization.
- * @param crmEvent The CRM event to be updated.
- * @param formData The new data from the event form.
- * @returns The structured payload for the 'update-google-event' edge function.
+ * Utility centralizzata per costruire il payload per l'aggiornamento di un evento.
+ * @param userId ID dell'utente autenticato (obbligatorio).
+ * @param organization L'organizzazione corrente.
+ * @param crmEvent L'evento CRM da aggiornare.
+ * @param formData I nuovi dati dal form dell'evento.
+ * @param date La data specifica dell'evento.
+ * @returns Il payload strutturato per la funzione 'update-google-event'.
  */
 export function buildUpdateEventPayload(
+    userId: string,
     organization: Organization,
     crmEvent: CrmEvent,
-    formData: EventFormData
-) {
+    formData: EventFormData,
+    date: Date
+): UpdateGoogleEventPayload {
     const { title, time, duration, description } = formData;
     
-    // La data viene presa dall'evento esistente per mantenere il giorno corretto
-    const existingDate = new Date(crmEvent.event_start_time);
-    const year = existingDate.getFullYear();
-    const month = String(existingDate.getMonth() + 1).padStart(2, '0');
-    const day = String(existingDate.getDate()).padStart(2, '0');
+    const eventDate = date || new Date(crmEvent.event_start_time);
+    const year = eventDate.getFullYear();
+    const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+    const day = String(eventDate.getDate()).padStart(2, '0');
     const localDateString = `${year}-${month}-${day}`;
 
     const startTime = new Date(`${localDateString}T${time}:00`);
     const endTime = new Date(startTime.getTime() + Number(duration) * 60000);
 
-    const eventDetails = {
-        summary: title,
-        description: description || '',
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-    };
-    
-    // --- REQUISITO SODDISFATTO: organization_id ---
-    // L'organization_id è sempre incluso per permettere al backend di recuperare
-    // il token Google corretto in un ambiente multi-tenant.
     return {
+        userId,
         organization_id: organization.id,
         crm_event_id: crmEvent.id,
-        eventDetails
+        eventDetails: {
+            summary: title,
+            description: description || '',
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+        }
     };
 }

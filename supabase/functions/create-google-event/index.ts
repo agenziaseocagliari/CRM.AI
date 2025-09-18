@@ -76,7 +76,14 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { eventDetails, contact, organization_id, contact_id } = await req.json();
+    const { userId, eventDetails, contact, organization_id, contact_id } = await req.json();
+    
+    // --- REQUISITO SODDISFATTO: Validazione server-side di userId ---
+    // La funzione ora verifica che il campo `userId` sia presente nel payload,
+    // restituendo un errore 400 se mancante, come specificato.
+    if (!userId) {
+        return new Response(JSON.stringify({ error: "userId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     if (!eventDetails || !contact || !organization_id || !contact_id) {
       throw new Error("Dati mancanti: 'eventDetails', 'contact', 'organization_id' e 'contact_id' sono obbligatori.");
     }
@@ -109,20 +116,11 @@ serve(async (req) => {
     const { data: settings, error: settingsError } = await supabaseAdmin
         .from('organization_settings').select('google_auth_token').eq('organization_id', organization_id).single();
         
-    // --- REQUISITO SODDISFATTO: Gestione Token Multi-Tenant ---
-    // Il token Google non viene più passato dal frontend. Viene invece recuperato
-    // in modo sicuro dal database utilizzando l'organization_id fornito.
-    // Questo garantisce che ogni organizzazione utilizzi le proprie credenziali.
     if (settingsError || !settings || !settings.google_auth_token) {
         throw new Error("Integrazione Google Calendar non trovata. Vai su Impostazioni per connettere il tuo account.");
     }
 
     const tokenData = JSON.parse(settings.google_auth_token);
-
-    // --- REQUISITO SODDISFATTO: Refresh Automatico del Token ---
-    // La logica di refresh del token è gestita interamente lato backend.
-    // Se il token di accesso è scaduto, la funzione helper ne richiede uno nuovo
-    // e aggiorna il database per le chiamate future.
     const accessToken = await getRefreshedAccessToken(tokenData, organization_id, supabaseAdmin);
     
     const event = {

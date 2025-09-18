@@ -168,3 +168,31 @@ export interface CreditLedgerEntry {
     outcome: 'SUCCESS' | 'INSUFFICIENT_FUNDS';
     created_at: string; // ISO string
 }
+
+// --- NUOVI TIPI PER I PAYLOAD DEGLI EVENTI ---
+interface BaseEventPayload {
+  userId: string;
+  organization_id: string;
+  eventDetails: {
+    summary: string;
+    description: string;
+    startTime: string;
+    endTime: string;
+    location?: string;
+  };
+}
+
+export interface CreateGoogleEventPayload extends BaseEventPayload {
+  contact_id: string;
+  eventDetails: BaseEventPayload['eventDetails'] & {
+    addMeet: boolean;
+  };
+  contact: {
+    id: string;
+    email: string;
+  };
+}
+
+export interface UpdateGoogleEventPayload extends BaseEventPayload {
+  crm_event_id: number;
+}

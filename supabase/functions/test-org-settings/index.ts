@@ -1,74 +1,40 @@
-// File: supabase/functions/test-org-settings/index.ts
+-- Create debug_logs table for tracking Edge Function debugging
+CREATE TABLE debug_logs (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    logged_at timestamp with time zone DEFAULT now(),
+    function_name text NOT NULL,
+    organization_id text,
+    request_payload jsonb,
+    google_auth_token_value jsonb,
+    step text,
+    error_message text,
+    error_stack text,
+    extra jsonb,
+    created_at timestamp with time zone DEFAULT now()
+);
 
-// FIX: Added Deno global declaration to resolve TypeScript errors with Deno.env.get.
-declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-  };
-};
+-- Add index for better query performance
+CREATE INDEX idx_debug_logs_logged_at ON debug_logs(logged_at DESC);
+CREATE INDEX idx_debug_logs_function_name ON debug_logs(function_name);
+CREATE INDEX idx_debug_logs_organization_id ON debug_logs(organization_id);
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { corsHeaders, handleCors } from '../_shared/cors.ts'
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+-- Enable RLS (Row Level Security)
+ALTER TABLE debug_logs ENABLE ROW LEVEL SECURITY;
 
-serve(async (req) => {
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+-- Create policy to allow service role full access
+CREATE POLICY "Service role can manage debug_logs"
+    ON debug_logs
+    FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
-  try {
-    console.log("EDGE LOG: [START] - Function 'test-org-settings' invoked.");
-
-    // 1. Log all relevant Deno environment variables
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const projectRef = supabaseUrl ? new URL(supabaseUrl).hostname.split('.')[0] : 'N/A';
-    console.log(`EDGE LOG: [ENV] - SUPABASE_URL: ${supabaseUrl ? `Loaded (Project Ref: ${projectRef})` : 'MISSING!'}`);
-    console.log(`EDGE LOG: [ENV] - SUPABASE_SERVICE_ROLE_KEY: ${serviceRoleKey ? 'Loaded' : 'MISSING!'}`);
-    
-    if (!supabaseUrl || !serviceRoleKey) {
-        throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars.");
-    }
-
-    // 2. Log received parameters
-    const { organization_id } = await req.json();
-    console.log(`EDGE LOG: [PARAMS] - Received organization_id: ${organization_id}`);
-
-    if (!organization_id) {
-      return new Response(JSON.stringify({ error: 'Missing organization_id in request body' }), { 
-          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // 3. Log key type used for Supabase query
-    console.log("EDGE LOG: [AUTH] - Using service_role_key for query. This will BYPASS RLS.");
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-
-    // 4. Test SELECT * FROM organization_settings
-    console.log(`EDGE LOG: [QUERY] - Executing: SELECT * FROM organization_settings WHERE organization_id = '${organization_id}'`);
-    const { data, error } = await supabaseAdmin
-        .from('organization_settings')
-        .select('*')
-        .eq('organization_id', organization_id)
-        .single();
-        
-    console.log("EDGE LOG: [RESULT] - Query finished.");
-    console.log("EDGE LOG: [RESULT] - Data:", data);
-    console.log("EDGE LOG: [RESULT] - Error:", error);
-
-    if (error && !data) {
-        return new Response(JSON.stringify({ success: false, message: "Query failed or no record found.", error: error }), {
-            status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-    }
-
-    return new Response(JSON.stringify({ success: true, data: data, error: error }), {
-        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
-  } catch (err) {
-    console.error("EDGE LOG: [FATAL] - Unexpected error in test-org-settings:", err);
-    return new Response(JSON.stringify({ error: err.message }), { 
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
-});
+COMMENT ON TABLE debug_logs IS 'Debug logging table for Edge Function troubleshooting';
+COMMENT ON COLUMN debug_logs.function_name IS 'Name of the Edge Function that created this log entry';
+COMMENT ON COLUMN debug_logs.organization_id IS 'Organization ID if applicable';
+COMMENT ON COLUMN debug_logs.request_payload IS 'Full request payload received by the function';
+COMMENT ON COLUMN debug_logs.google_auth_token_value IS 'Raw Google auth token data for debugging';
+COMMENT ON COLUMN debug_logs.step IS 'Current step/phase when logging occurred';
+COMMENT ON COLUMN debug_logs.error_message IS 'Error message if any';
+COMMENT ON COLUMN debug_logs.error_stack IS 'Full error stack trace if any';
+COMMENT ON COLUMN debug_logs.extra IS 'Additional debugging data in JSON format';

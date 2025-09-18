@@ -6,258 +6,145 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-// FIX: Replaced getGoogleAccessToken with getGoogleTokens and will extract the access token from the returned object.
 import { getGoogleTokens } from "../_shared/google.ts";
 import { getOrganizationId } from '../_shared/supabase.ts';
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-// CORS Headers centralizzati per TUTTE le risposte
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
-};
-
-// Gestione delle richieste OPTIONS (preflight)
-function handleCors(req: Request): Response | null {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { 
-      headers: corsHeaders,
-      status: 200 
+// Helper function to write debug logs to the database
+async function writeDebugLog(supabase: any, functionName: string, organizationId: string | null, step: string, data: any, error?: Error) {
+  try {
+    await supabase.from('debug_logs').insert({
+      function_name: functionName,
+      organization_id: organizationId,
+      request_payload: data.request_payload || null,
+      google_auth_token_value: data.google_auth_token_value || null,
+      step: step,
+      error_message: error?.message || null,
+      error_stack: error?.stack || null,
+      extra: data.extra || null
     });
+  } catch (dbError) {
+    console.error(`FAILED TO WRITE DEBUG LOG for ${step}:`, dbError);
   }
-  return null;
 }
 
-// Helper per creare risposte con CORS sempre inclusi
-function createResponse(body: string, status: number = 200): Response {
-  return new Response(body, {
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-    },
+// Helper for creating consistent JSON responses
+function createResponse(body: object, status: number = 200): Response {
+  return new Response(JSON.stringify(body, null, 2), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     status,
   });
 }
 
 serve(async (req) => {
-  console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Richiesta ricevuta:`, {
-    method: req.method,
-    url: req.url,
-    headers: Object.fromEntries(req.headers.entries()),
-  });
-
-  // Gestione CORS per richieste OPTIONS
   const corsResponse = handleCors(req);
-  if (corsResponse) {
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Risposta CORS OPTIONS inviata`);
-    return corsResponse;
-  }
+  if (corsResponse) return corsResponse;
 
-  let diagnostic = {
-    timestamp: new Date().toISOString(),
-    stage: 'INITIALIZATION',
-    success: false,
-    diagnostics: {
-      request: {
-        method: req.method,
-        url: req.url,
-        headers: {
-          authorization: req.headers.get('authorization') ? '[PRESENT]' : null,
-          contentType: req.headers.get('content-type'),
-          userAgent: req.headers.get('user-agent'),
-        },
-      },
-      authentication: null,
-      googleIntegration: null,
-      error: null,
-    },
-  };
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceRoleKey) {
+    console.error("CRITICAL ERROR: SUPABASE_SERVICE_ROLE_KEY is not set.");
+    return createResponse({ error: "Server configuration error." }, 500);
+  }
+  const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+  const functionName = 'get-google-calendar-events';
+  
+  let organization_id: string | null = null;
+  let requestPayload: any = {};
 
   try {
-    // 1. Validazione parametri
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Estrazione payload dalla richiesta...`);
-    diagnostic.stage = 'PARAMETER_VALIDATION';
-    
-    const { timeMin, timeMax } = await req.json();
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Parametri estratti:`, { timeMin, timeMax });
+    // 1. Log Start & Validate Parameters
+    requestPayload = await req.json();
+    await writeDebugLog(supabaseAdmin, functionName, null, 'function-start', {
+      request_payload: requestPayload,
+      extra: { headers: Object.fromEntries(req.headers.entries()) }
+    });
 
+    const { timeMin, timeMax } = requestPayload;
     if (!timeMin || !timeMax) {
-      const errorMsg = "I parametri `timeMin` e `timeMax` sono obbligatori.";
-      diagnostic.diagnostics.error = {
-        message: errorMsg,
-        code: 'MISSING_REQUIRED_PARAMETERS',
-        context: { timeMin, timeMax }
-      };
-      console.error(`[${new Date().toISOString()}] [CALENDAR-EVENTS] ERRORE - Parametri mancanti:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: errorMsg,
-        diagnostic 
-      }), 400);
+      throw new Error("Parameters `timeMin` and `timeMax` are required.");
     }
 
-    // 2. Estrazione organization_id dal JWT
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Estrazione organization_id dal token JWT...`);
-    diagnostic.stage = 'ORGANIZATION_EXTRACTION';
+    // 2. Extract Organization ID from JWT
+    organization_id = await getOrganizationId(req);
+    await writeDebugLog(supabaseAdmin, functionName, organization_id, 'organization-extraction-success', {
+      request_payload: requestPayload,
+      extra: { organization_id }
+    });
+
+    // 3. Retrieve Google Access Token
+    let googleAccessToken: string;
+    await writeDebugLog(supabaseAdmin, functionName, organization_id, 'get-google-token-start', { request_payload: requestPayload });
     
-    let organization_id;
-    try {
-      organization_id = await getOrganizationId(req);
-      diagnostic.diagnostics.authentication = {
-        hasAuthHeader: !!req.headers.get('authorization'),
-        organizationFound: !!organization_id,
-        organizationId: organization_id || null,
-      };
-      console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Organization ID estratto:`, { organization_id });
-    } catch (authError) {
-      diagnostic.diagnostics.authentication = {
-        hasAuthHeader: !!req.headers.get('authorization'),
-        organizationFound: false,
-        organizationId: null,
-        error: authError.message
-      };
-      diagnostic.diagnostics.error = {
-        message: authError.message,
-        code: 'ORGANIZATION_EXTRACTION_FAILED',
-        context: {
-          hasAuthHeader: !!req.headers.get('authorization'),
-          authHeaderValue: req.headers.get('authorization') ? '[REDACTED]' : null
-        }
-      };
-      console.error(`[${new Date().toISOString()}] [CALENDAR-EVENTS] ERRORE - Estrazione organization_id fallita:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: authError.message,
-        diagnostic 
-      }), 401);
+    const tokens = await getGoogleTokens(supabaseAdmin, organization_id);
+    if (!tokens || !tokens.access_token) {
+      await writeDebugLog(supabaseAdmin, functionName, organization_id, 'get-google-token-failure', { 
+          request_payload: requestPayload, 
+          google_auth_token_value: tokens 
+      }, new Error("Failed to retrieve a valid Google access token."));
+      throw new Error("Could not retrieve a valid Google access token. Please re-authenticate.");
     }
+    googleAccessToken = tokens.access_token;
 
-    // 3. Recupero token Google
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Recupero token di accesso Google...`);
-    diagnostic.stage = 'GOOGLE_TOKEN_RETRIEVAL';
+    await writeDebugLog(supabaseAdmin, functionName, organization_id, 'get-google-token-success', { 
+        request_payload: requestPayload,
+        extra: { accessTokenPresent: !!googleAccessToken }
+    });
     
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!serviceRoleKey) {
-      const errorMsg = "La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.";
-      diagnostic.diagnostics.error = {
-        message: errorMsg,
-        code: 'MISSING_SERVICE_ROLE_KEY',
-        context: {}
-      };
-      console.error(`[${new Date().toISOString()}] [CALENDAR-EVENTS] ERRORE - Service role key mancante`);
-      return createResponse(JSON.stringify({ 
-        error: errorMsg,
-        diagnostic 
-      }), 500);
-    }
-
-    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-    let googleAccessToken;
-    try {
-      // FIX: Call getGoogleTokens and extract the access_token.
-      const tokens = await getGoogleTokens(supabaseAdmin, organization_id);
-      if (!tokens || !tokens.access_token) {
-        throw new Error("Could not retrieve a valid Google access token. Please re-authenticate.");
-      }
-      googleAccessToken = tokens.access_token;
-
-      diagnostic.diagnostics.googleIntegration = {
-        tokenRetrieved: !!googleAccessToken,
-        organizationId: organization_id,
-      };
-      console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Token Google recuperato con successo per org:`, organization_id);
-    } catch (googleError) {
-      diagnostic.diagnostics.googleIntegration = {
-        tokenRetrieved: false,
-        organizationId: organization_id,
-        error: googleError.message
-      };
-      diagnostic.diagnostics.error = {
-        message: googleError.message,
-        code: 'GOOGLE_TOKEN_RETRIEVAL_FAILED',
-        context: {
-          organizationId: organization_id
-        }
-      };
-      console.error(`[${new Date().toISOString()}] [CALENDAR-EVENTS] ERRORE - Recupero token Google fallito:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: googleError.message,
-        diagnostic 
-      }), 401);
-    }
-
-    // 4. Chiamata API Google Calendar
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Chiamata API Google Calendar...`);
-    diagnostic.stage = 'GOOGLE_API_CALL';
-    
+    // 4. Call Google Calendar API
     const eventsListUrl = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
     eventsListUrl.searchParams.set("timeMin", timeMin);
     eventsListUrl.searchParams.set("timeMax", timeMax);
     eventsListUrl.searchParams.set("singleEvents", "true");
     eventsListUrl.searchParams.set("orderBy", "startTime");
 
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] URL chiamata:`, eventsListUrl.toString());
+    await writeDebugLog(supabaseAdmin, functionName, organization_id, 'google-api-call-start', {
+      request_payload: requestPayload,
+      extra: { apiUrl: eventsListUrl.toString() }
+    });
 
     const eventsListResponse = await fetch(eventsListUrl.toString(), {
       method: "GET",
-      headers: {
-        "Authorization": `Bearer ${googleAccessToken}`,
-      },
+      headers: { "Authorization": `Bearer ${googleAccessToken}` },
     });
 
-    const eventsListData = await eventsListResponse.json();
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Risposta Google API:`, {
-      status: eventsListResponse.status,
-      ok: eventsListResponse.ok,
-      itemsCount: eventsListData.items?.length || 0
+    const responseBodyText = await eventsListResponse.text();
+    let eventsListData;
+    try {
+        eventsListData = JSON.parse(responseBodyText);
+    } catch {
+        eventsListData = { error: { message: "Invalid JSON response from Google" }, raw_body: responseBodyText };
+    }
+
+    await writeDebugLog(supabaseAdmin, functionName, organization_id, 'google-api-call-response', {
+      request_payload: requestPayload,
+      extra: { 
+        status: eventsListResponse.status,
+        ok: eventsListResponse.ok,
+        response: eventsListData
+      }
     });
 
     if (!eventsListResponse.ok) {
-      diagnostic.diagnostics.error = {
-        message: `Impossibile recuperare gli eventi: ${eventsListData.error?.message || 'Errore sconosciuto'}`,
-        code: 'GOOGLE_API_ERROR',
-        context: {
-          googleApiStatus: eventsListResponse.status,
-          googleApiError: eventsListData.error || eventsListData
-        }
-      };
-      console.error(`[${new Date().toISOString()}] [CALENDAR-EVENTS] ERRORE - Chiamata Google API fallita:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: `Impossibile recuperare i dettagli degli eventi: ${eventsListData.error?.message || 'Errore sconosciuto'}`,
-        diagnostic 
-      }), 500);
+      throw new Error(`Google API Error (${eventsListResponse.status}): ${eventsListData.error?.message || responseBodyText}`);
     }
 
-    // 5. Successo
-    diagnostic.success = true;
-    diagnostic.stage = 'SUCCESS';
-    
-    console.log(`[${new Date().toISOString()}] [CALENDAR-EVENTS] Successo - Eventi recuperati:`, {
-      count: eventsListData.items?.length || 0,
-      organizationId: organization_id
+    // 5. Success
+    await writeDebugLog(supabaseAdmin, functionName, organization_id, 'function-success', {
+      request_payload: requestPayload,
+      extra: { itemCount: eventsListData.items?.length || 0 }
     });
 
-    return createResponse(JSON.stringify({
-      events: eventsListData.items || [],
-      diagnostic
-    }));
+    return createResponse({ events: eventsListData.items || [] });
 
   } catch (error) {
-    diagnostic.diagnostics.error = {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    };
+    console.error(`[${functionName}] Error:`, error.message);
     
-    console.error(`[${new Date().toISOString()}] [CALENDAR-EVENTS] ERRORE GENERALE:`, {
-      stage: diagnostic.stage,
-      error: error.message,
-      stack: error.stack,
-      diagnostic
-    });
+    // Log the final error to the database
+    await writeDebugLog(supabaseAdmin, functionName, organization_id, 'function-error', { 
+      request_payload: requestPayload,
+      extra: { caught_error: error.message }
+    }, error);
     
-    return createResponse(JSON.stringify({ 
-      error: error.message,
-      diagnostic
-    }), 500);
+    return createResponse({ error: error.message }, 500);
   }
 });

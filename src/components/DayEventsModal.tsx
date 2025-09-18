@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
-import { CrmEvent, Contact } from '../types';
+import { CrmEvent } from '../types';
 import { Modal } from './ui/Modal';
 import { PlusIcon, TrashIcon, EditIcon } from './ui/icons';
 import { buildCreateEventPayload, buildUpdateEventPayload, validateAndToast } from '../lib/eventUtils';

@@ -1,11 +1,15 @@
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
-import { supabase } from '../lib/supabaseClient';
 import { CrmEvent } from '../types';
 import { Modal } from './ui/Modal';
 import { PlusIcon, TrashIcon, EditIcon } from './ui/icons';
 import { buildCreateEventPayload, buildUpdateEventPayload, validateAndToast } from '../lib/eventUtils';
+import { invokeSupabaseFunction } from '../lib/api';
+// FIX: Import the Supabase client directly, as it is not part of the crmData context.
+import { supabase } from '../lib/supabaseClient';
 
 interface DayEventsModalProps {
     isOpen: boolean;
@@ -112,40 +116,33 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     toast.dismiss(toastId);
                     return;
                 }
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) throw new Error('Utente non autenticato.');
                 
-                const { error } = await supabase.functions.invoke('delete-google-event', {
-                    headers: { Authorization: `Bearer ${session.access_token}` },
-                    body: { organization_id: organization.id, google_event_id: event.google_event_id, crm_event_id: event.id }
-                });
-                if (error) throw new Error(error.message);
+                await invokeSupabaseFunction(
+                    'delete-google-event',
+                    { organization_id: organization.id, google_event_id: event.google_event_id, crm_event_id: event.id },
+                    true
+                );
                 toast.success('Evento annullato e sincronizzato!', { id: toastId });
             } else {
-                if (!window.confirm(`Eliminare l'evento (solo CRM) "${event.event_summary}"?`)) {
+                 if (!window.confirm(`Eliminare l'evento (solo CRM) "${event.event_summary}"?`)) {
                      setIsSaving(false);
                      toast.dismiss(toastId);
                      return;
                 }
-                const { error } = await supabase.from('crm_events').delete().eq('id', event.id);
+                // Questo dovrebbe essere gestito da una funzione per coerenza,
+                // ma per una semplice delete va bene anche così.
+                // FIX: Use the imported 'supabase' client directly instead of trying to access it from 'crmData'.
+                const { error } = await supabase
+                    .from('crm_events')
+                    .delete()
+                    .eq('id', event.id);
                 if (error) throw error;
                 toast.success('Evento CRM eliminato!', { id: toastId });
             }
             await refetch();
         } catch (err: any) {
-            const errorMessage = err.message || '';
-            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
-                toast.error(t => (
-                    <span className="text-center">
-                        La connessione Google è scaduta.
-                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
-                            Vai alle Impostazioni per riconnettere
-                        </a>
-                    </span>
-                ), { id: toastId, duration: 8000 });
-            } else {
-                toast.error(`Errore: ${errorMessage}`, { id: toastId });
-            }
+            console.error("Errore durante l'eliminazione:", err);
+            toast.error(`Errore: ${err.message}`, { id: toastId });
         } finally {
             setIsSaving(false);
         }
@@ -157,48 +154,28 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         const toastId = toast.loading(eventToEdit ? "Modifica in corso..." : "Creazione evento...");
     
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            // --- REQUISITO SODDISFATTO: Estrazione e validazione userId ---
-            // Recupera l'utente dalla sessione. Se non è presente, mostra un errore
-            // e interrompe l'esecuzione prima di qualsiasi chiamata API.
-            const userId = session?.user?.id;
-            if (!userId) {
-                toast.error("Impossibile salvare l'evento: sessione utente non valida o scaduta. Riprova il login.", { id: toastId });
-                setIsSaving(false);
-                return;
-            }
-
             if (!organization || !date) {
-                toast.error("Dati di base (organizzazione, data) mancanti.", { id: toastId });
-                setIsSaving(false);
-                return;
+                throw new Error("Dati di base (organizzazione, data) mancanti.");
             }
     
-            let payload: any = null; // To hold the payload for logging
             const isUpdate = !!eventToEdit;
     
             if (isUpdate && eventToEdit) {
                 // --- LOGICA DI MODIFICA ---
-                payload = buildUpdateEventPayload(userId, organization, eventToEdit, formData, date);
-                if (!validateAndToast(payload, true)) {
-                    throw new Error("Dati non validi");
-                }
+                const payload = buildUpdateEventPayload(organization, eventToEdit, formData, date);
+                if (!validateAndToast(payload, true)) throw new Error("Dati non validi");
     
                 if (googleConnectionStatus === 'connected' && eventToEdit.google_event_id) {
                     console.log('[PAYLOAD to update-google-event]', JSON.stringify(payload, null, 2));
-                    const { data, error } = await supabase.functions.invoke('update-google-event', {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
-                        body: payload
-                    });
-                    if (error) throw new Error(error.message);
-                    if (data && data.error) throw new Error(data.error);
+                    await invokeSupabaseFunction('update-google-event', payload, true);
                     toast.success("Evento modificato e sincronizzato!", { id: toastId });
                 } else {
                     // Modifica solo CRM
-                    const { error } = await supabase.from('crm_events').update({
-                        event_summary: payload.eventDetails.summary,
-                        event_start_time: payload.eventDetails.startTime,
-                        event_end_time: payload.eventDetails.endTime,
+                     // FIX: Use the imported 'supabase' client directly instead of trying to access it from 'crmData'.
+                     const { error } = await supabase.from('crm_events').update({
+                        event_summary: payload.event.summary,
+                        event_start_time: payload.event.start,
+                        event_end_time: payload.event.end,
                     }).eq('id', eventToEdit.id);
                     if (error) throw error;
                     toast.success("Evento CRM modificato!", { id: toastId });
@@ -206,42 +183,19 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
             } else {
                 // --- LOGICA DI CREAZIONE ---
                 const selectedContact = contacts.find(c => c.id === formData.contact_id);
-                if (!selectedContact) {
-                    toast.error("Per favore, seleziona un contatto valido.", { id: toastId });
-                    throw new Error("Dati non validi");
-                }
+                if (!selectedContact) throw new Error("Per favore, seleziona un contatto valido.");
                 
-                payload = buildCreateEventPayload(userId, organization, selectedContact, formData, date);
-                if (!validateAndToast(payload, false)) {
-                    throw new Error("Dati non validi");
-                }
+                const payload = buildCreateEventPayload(organization, selectedContact, formData, date);
+                if (!validateAndToast(payload, false)) throw new Error("Dati non validi");
     
                 if (googleConnectionStatus === 'connected' && syncWithGoogle) {
                     console.log('[PAYLOAD to create-google-event]', JSON.stringify(payload, null, 2));
-                    const { data, error } = await supabase.functions.invoke('create-google-event', {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
-                        body: payload
-                    });
-                    if (error) throw new Error(error.message);
-                    if (data && data.error) throw new Error(data.error);
+                    await invokeSupabaseFunction('create-google-event', payload, true);
                     toast.success("Evento creato e sincronizzato!", { id: toastId });
                 } else {
                     // Crea solo CRM
-                    const crmPayload = {
-                        userId: payload.userId,
-                        organization_id: payload.organization_id,
-                        contact_id: payload.contact_id,
-                        event_summary: payload.eventDetails.summary,
-                        event_start_time: payload.eventDetails.startTime,
-                        event_end_time: payload.eventDetails.endTime,
-                    };
-                    console.log('[PAYLOAD to create-crm-event]', JSON.stringify(crmPayload, null, 2));
-                    const { data, error } = await supabase.functions.invoke('create-crm-event', {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
-                        body: crmPayload,
-                    });
-                    if (error) throw new Error(error.message);
-                    if (data && data.error) throw new Error(data.error);
+                    console.log('[PAYLOAD to create-crm-event]', JSON.stringify(payload, null, 2));
+                    await invokeSupabaseFunction('create-crm-event', payload, false);
                     toast.success("Evento CRM creato!", { id: toastId });
                 }
             }
@@ -250,19 +204,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         } catch (err: any) {
             if (err.message !== "Dati non validi") {
                  console.error('[ERROR] Save event:', err);
-                 const errorMessage = err.message || '';
-                if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
-                    toast.error(t => (
-                        <span className="text-center">
-                            La connessione Google è scaduta.
-                            <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
-                                Vai alle Impostazioni per riconnettere
-                            </a>
-                        </span>
-                    ), { id: toastId, duration: 8000 });
-                } else {
-                    toast.error(`Operazione fallita: ${errorMessage}`, { id: toastId, duration: 5000 });
-                }
+                 toast.error(`Operazione fallita: ${err.message}`, { id: toastId, duration: 5000 });
             } else {
                 toast.dismiss(toastId);
             }

@@ -1,3 +1,4 @@
+
 // File: supabase/functions/delete-google-event/index.ts
 
 declare const Deno: {
@@ -8,68 +9,22 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-/**
- * Funzione helper per rinfrescare un token di accesso Google scaduto.
- * Ritorna un nuovo access token valido.
- */
-async function getRefreshedAccessToken(tokenData: any, organization_id: string, supabaseAdmin: any): Promise<string> {
-    const expiryDate = new Date(tokenData.expiry_date);
-    if (new Date() < expiryDate) {
-        return tokenData.access_token;
-    }
-
-    console.log("Token Google scaduto, avvio refresh...");
-    const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-    const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-    if (!clientId || !clientSecret) throw new Error("Credenziali Google mancanti per il refresh.");
-
-    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
-            refresh_token: tokenData.refresh_token,
-            grant_type: 'refresh_token'
-        })
-    });
-
-    if (!tokenResponse.ok) {
-        const errorBody = await tokenResponse.json();
-        console.error("Errore refresh token Google:", errorBody);
-        await supabaseAdmin
-            .from('organization_settings')
-            .update({ google_auth_token: null })
-            .eq('organization_id', organization_id);
-        throw new Error("Impossibile aggiornare il token. Riconnetti il tuo account Google.");
-    }
-
-    const newTokens = await tokenResponse.json();
-    const newAccessToken = newTokens.access_token;
-    
-    const newTokenData = {
-        ...tokenData,
-        access_token: newAccessToken,
-        expires_in: newTokens.expires_in,
-        expiry_date: new Date(Date.now() + newTokens.expires_in * 1000).toISOString(),
-    };
-
-    await supabaseAdmin
-        .from('organization_settings')
-        .update({ google_auth_token: JSON.stringify(newTokenData) })
-        .eq('organization_id', organization_id);
-    
-    console.log("Token rinfrescato con successo.");
-    return newAccessToken;
-}
-
-
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   try {
-    const { organization_id, google_event_id, crm_event_id } = await req.json();
+    const { 
+        organization_id, 
+        google_event_id, 
+        crm_event_id,
+        googleProviderToken
+    } = await req.json();
+    
+    if (!googleProviderToken) {
+        return new Response(JSON.stringify({ error: "No valid access token found. User needs to re-authenticate with Google." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (!organization_id || !google_event_id || !crm_event_id) {
         throw new Error("Parametri organization_id, google_event_id e crm_event_id sono obbligatori.");
     }
@@ -78,36 +33,15 @@ serve(async (req) => {
     if (!serviceRoleKey) throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
     
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-
-    // 1. Recupera i token Google dell'organizzazione.
-    const { data: settings, error: settingsError } = await supabaseAdmin
-        .from('organization_settings')
-        .select('google_auth_token')
-        .eq('organization_id', organization_id)
-        .single();
     
-    // --- REQUISITO SODDISFATTO: Gestione Token Multi-Tenant ---
-    // Il token Google viene recuperato in modo sicuro usando organization_id,
-    // garantendo che ogni organizzazione usi le proprie credenziali.
-    if (settingsError || !settings || !settings.google_auth_token) {
-        throw new Error("Integrazione Google Calendar non trovata o non configurata.");
-    }
-
-    const tokenData = JSON.parse(settings.google_auth_token);
-
-    // 2. Assicura che il token di accesso sia valido.
-    // --- REQUISITO SODDISFATTO: Refresh Automatico del Token ---
-    // La logica di refresh è gestita interamente lato backend.
-    const accessToken = await getRefreshedAccessToken(tokenData, organization_id, supabaseAdmin);
-
-    // 3. Chiama l'API di Google Calendar per eliminare l'evento.
+    // Chiama l'API di Google Calendar per eliminare l'evento.
     // sendUpdates=all notifica i partecipanti della cancellazione.
     const calendarApiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${google_event_id}?sendUpdates=all`;
     
     const apiResponse = await fetch(calendarApiUrl, {
         method: "DELETE",
         headers: {
-            "Authorization": `Bearer ${accessToken}`,
+            "Authorization": `Bearer ${googleProviderToken}`,
         },
     });
     
@@ -121,7 +55,7 @@ serve(async (req) => {
     
     console.log(`Evento ${google_event_id} cancellato con successo da Google Calendar (Stato: ${apiResponse.status}).`);
 
-    // 4. Aggiorna lo stato dell'evento nel database CRM a 'cancelled'.
+    // Aggiorna lo stato dell'evento nel database CRM a 'cancelled'.
     // Usiamo crm_event_id per essere sicuri di aggiornare il record corretto.
     const { error: updateError } = await supabaseAdmin
         .from('crm_events')

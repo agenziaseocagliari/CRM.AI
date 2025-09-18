@@ -1,9 +1,10 @@
+
 // src/components/ContactEventsList.tsx
 import React, { useState, useMemo } from 'react';
 import { Contact, CrmEvent, EventReminder } from '../types';
-import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { TrashIcon, ClockIcon, CheckCircleIcon, InfoIcon, WhatsAppIcon } from './ui/icons';
+import { invokeSupabaseFunction } from '../lib/api';
 
 interface ContactEventsListProps {
     contact: Contact | null;
@@ -104,33 +105,17 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
         setIsDeleting(event.id);
         const toastId = toast.loading('Annullamento evento...');
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-            
-            const { error } = await supabase.functions.invoke('delete-google-event', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { organization_id: organizationId, google_event_id: event.google_event_id, crm_event_id: event.id }
-            });
-            if (error) throw new Error(error.message);
+            await invokeSupabaseFunction(
+                'delete-google-event',
+                { organization_id: organizationId, google_event_id: event.google_event_id, crm_event_id: event.id },
+                true
+            );
             toast.success('Evento annullato!', { id: toastId });
             onActionSuccess();
         } catch (err: any) {
-            const errorMessage = err.message || '';
-            // --- REQUISITO SODDISFATTO: Gestione Errori Token Google ---
-            // Se il backend segnala un problema con il token, viene mostrato un toast
-            // che guida l'utente a ricollegare il proprio account Google.
-            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
-                toast.error(t => (
-                    <span className="text-center">
-                        La connessione Google è scaduta.
-                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
-                            Vai alle Impostazioni per riconnettere
-                        </a>
-                    </span>
-                ), { id: toastId, duration: 8000 });
-            } else {
-                toast.error(`Errore: ${errorMessage}`, { id: toastId });
-            }
+            // L'errore specifico viene già gestito da invokeSupabaseFunction,
+            // che mostra un toast adeguato. Qui aggiorniamo solo il nostro toast di caricamento.
+            toast.error(`Errore: ${err.message}`, { id: toastId });
         } finally {
             setIsDeleting(null);
         }

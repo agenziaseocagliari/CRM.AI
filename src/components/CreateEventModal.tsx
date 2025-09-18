@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
@@ -5,6 +6,7 @@ import { Modal } from './ui/Modal';
 import { Contact, Organization, EventFormData, Reminder, BusySlot, EventTemplate } from '../types';
 import { PlusIcon, TrashIcon, ClockIcon, VideoIcon, TemplateIcon, SaveIcon } from './ui/icons';
 import { buildCreateEventPayload, validateAndToast } from '../lib/eventUtils';
+import { invokeSupabaseFunction } from '../lib/api';
 
 const initialEventState: EventFormData = {
     title: '',
@@ -60,30 +62,16 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         if (!organization || !date) return;
         setIsFetchingSlots(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-
-            const { data, error } = await supabase.functions.invoke('get-google-calendar-events', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { organization_id: organization.id, date },
-            });
-            if (error) throw new Error(error.message);
-            if (data.error) throw new Error(data.error);
+            const data = await invokeSupabaseFunction(
+                'get-google-calendar-events',
+                { organization_id: organization.id, date },
+                true
+            );
             setBusySlots(data.busySlots || []);
         } catch (err: any) {
-            const errorMessage = err.message || '';
-            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
-                 toast.error(t => (
-                    <span className="text-center">
-                        La connessione Google è scaduta.
-                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
-                            Vai alle Impostazioni per riconnettere
-                        </a>
-                    </span>
-                ), { duration: 8000 });
-            } else {
-                toast.error(`Impossibile caricare disponibilità: ${errorMessage}`);
-            }
+            // L'errore specifico (es. token scaduto) viene gestito da invokeSupabaseFunction con un toast.
+            // Qui possiamo mostrare un errore generico o semplicemente non caricare gli slot.
+            console.error(`Impossibile caricare disponibilità: ${err.message}`);
             setBusySlots([]);
         } finally {
             setIsFetchingSlots(false);
@@ -141,71 +129,41 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         const toastId = toast.loading("Creazione evento...");
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            // --- REQUISITO SODDISFATTO: Estrazione e validazione userId ---
-            // Recupera l'utente dalla sessione. Se non è presente, mostra un errore
-            // e interrompe l'esecuzione prima di qualsiasi chiamata API.
-            const userId = session?.user?.id;
-            if (!userId) {
-                toast.error("Impossibile creare evento: sessione utente non valida o scaduta. Riprova il login.", { id: toastId });
-                setIsLoading(false);
-                return;
-            }
-
             if (!organization || !contact || !formData.date) {
-                toast.error("Dati di base (organizzazione, contatto, data) mancanti.", { id: toastId });
-                setIsLoading(false);
-                return;
+                throw new Error("Dati di base (organizzazione, contatto, data) mancanti.");
             }
 
-            // 1. Costruisci il payload passando lo userId
-            const payload = buildCreateEventPayload(userId, organization, contact, formData);
-
-            // 2. Valida il payload (ora include il check su userId)
+            const payload = buildCreateEventPayload(organization, contact, formData);
             if (!validateAndToast(payload)) {
-                setIsLoading(false);
-                toast.dismiss(toastId);
-                return;
+                 throw new Error("Dati non validi");
             }
 
-            // --- REQUISITO SODDISFATTO: Logging per debug ---
             console.log('[PAYLOAD to create-google-event]', JSON.stringify(payload, null, 2));
 
-            const functionOptions = { headers: { Authorization: `Bearer ${session.access_token}` } };
-            
-            const { data, error } = await supabase.functions.invoke('create-google-event', {
-                ...functionOptions,
-                body: payload
-            });
-
-            if (error) throw error;
-            if (data.error) throw new Error(data.error);
+            const data = await invokeSupabaseFunction(
+                'create-google-event',
+                payload,
+                true
+            );
 
             if (formData.reminders.length > 0 && data.crmEventId) {
-                await supabase.functions.invoke('schedule-event-reminders', {
-                    ...functionOptions,
-                    body: { organization_id: organization.id, crm_event_id: data.crmEventId, event_start_time: data.event.start.dateTime, reminders: formData.reminders }
-                });
+                await invokeSupabaseFunction(
+                    'schedule-event-reminders',
+                    { organization_id: organization.id, crm_event_id: data.crmEventId, event_start_time: data.event.start.dateTime, reminders: formData.reminders },
+                    false
+                );
             }
 
             toast.success("Evento creato e sincronizzato!", { id: toastId });
             await onSaveSuccess();
             onClose();
         } catch (err: any) {
-            console.error('[ERROR] Save event:', err);
-            const errorMessage = err.message || '';
-            if (errorMessage.includes('Riconnetti il tuo account Google') || errorMessage.includes('Integrazione Google Calendar non trovata')) {
-                toast.error(t => (
-                    <span className="text-center">
-                        La connessione Google è scaduta.
-                        <a href="/settings" onClick={() => toast.dismiss(t.id)} className="block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500">
-                            Vai alle Impostazioni per riconnettere
-                        </a>
-                    </span>
-                ), { id: toastId, duration: 8000 });
-            } else {
-                toast.error(`Errore: ${errorMessage}`, { id: toastId });
-            }
+             if (err.message !== "Dati non validi") {
+                console.error('[ERROR] Save event:', err);
+                toast.error(`Errore: ${err.message}`, { id: toastId });
+             } else {
+                toast.dismiss(toastId);
+             }
         } finally {
             setIsLoading(false);
         }

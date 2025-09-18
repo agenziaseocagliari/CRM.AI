@@ -1,3 +1,4 @@
+
 // src/lib/eventUtils.ts
 import { Organization, Contact, CrmEvent, CreateGoogleEventPayload, UpdateGoogleEventPayload } from '../types';
 import { toast } from 'react-hot-toast';
@@ -21,15 +22,6 @@ interface EventFormData {
  * @returns boolean True se il payload è valido, altrimenti false.
  */
 export function validateAndToast(payload: any, isUpdate: boolean = false): boolean {
-    // --- REQUISITO SODDISFATTO: Validazione userId ---
-    // Questo è il primo e più importante controllo. Se manca l'ID utente,
-    // l'operazione viene bloccata immediatamente.
-    if (!payload || !payload.userId) {
-        toast.error("Impossibile salvare l'evento: sessione utente non valida o scaduta. Riprova il login.");
-        console.error("Validation failed: Payload or userId is missing", payload);
-        return false;
-    }
-
     if (!payload.organization_id) {
         toast.error("ID Organizzazione mancante. Impossibile salvare l'evento.");
         console.error("Validation failed: Missing organization_id", payload);
@@ -86,7 +78,6 @@ export function validateAndToast(payload: any, isUpdate: boolean = false): boole
 
 /**
  * Utility centralizzata per costruire il payload per la creazione di un evento.
- * @param userId ID dell'utente autenticato (obbligatorio).
  * @param organization L'organizzazione corrente.
  * @param contact Il contatto per l'evento.
  * @param formData I dati dal form dell'evento.
@@ -94,12 +85,11 @@ export function validateAndToast(payload: any, isUpdate: boolean = false): boole
  * @returns Il payload strutturato per la funzione 'create-google-event'.
  */
 export function buildCreateEventPayload(
-    userId: string,
     organization: Organization,
     contact: Contact,
     formData: EventFormData,
     date?: Date
-): CreateGoogleEventPayload {
+): Omit<CreateGoogleEventPayload, 'userId'> {
     const { title, time, duration, description, location, addMeet } = formData;
     
     const eventDate = date || new Date();
@@ -112,7 +102,6 @@ export function buildCreateEventPayload(
     const endTime = new Date(startTime.getTime() + Number(duration) * 60000);
 
     return {
-        userId,
         organization_id: organization.id,
         contact_id: contact.id,
         event: {
@@ -132,7 +121,6 @@ export function buildCreateEventPayload(
 
 /**
  * Utility centralizzata per costruire il payload per l'aggiornamento di un evento.
- * @param userId ID dell'utente autenticato (obbligatorio).
  * @param organization L'organizzazione corrente.
  * @param crmEvent L'evento CRM da aggiornare.
  * @param formData I nuovi dati dal form dell'evento.
@@ -140,12 +128,11 @@ export function buildCreateEventPayload(
  * @returns Il payload strutturato per la funzione 'update-google-event'.
  */
 export function buildUpdateEventPayload(
-    userId: string,
     organization: Organization,
     crmEvent: CrmEvent,
     formData: EventFormData,
     date: Date
-): UpdateGoogleEventPayload {
+): Omit<UpdateGoogleEventPayload, 'userId'> {
     const { title, time, duration, description } = formData;
     
     const eventDate = date || new Date(crmEvent.event_start_time);
@@ -158,7 +145,6 @@ export function buildUpdateEventPayload(
     const endTime = new Date(startTime.getTime() + Number(duration) * 60000);
 
     return {
-        userId,
         organization_id: organization.id,
         crm_event_id: crmEvent.id,
         event: {

@@ -16,6 +16,7 @@ import {
     PipelineStage,
     Profile
 } from '../types';
+import { invokeSupabaseFunction } from '../lib/api';
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
   const emptyData: OpportunitiesData = {
@@ -81,12 +82,7 @@ export const useCrmData = () => {
       const { organization_id } = profileData;
 
       const [eventsResponse, orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse, settingsResponse, subscriptionResponse, ledgerResponse] = await Promise.all([
-        supabase.functions.invoke('get-all-crm-events', {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: { organization_id }
-        }),
+        invokeSupabaseFunction('get-all-crm-events', { organization_id }),
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         supabase.from('opportunities').select('*').eq('organization_id', organization_id),
@@ -97,8 +93,6 @@ export const useCrmData = () => {
         supabase.from('credit_ledger').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }).limit(20)
       ]);
 
-      if (eventsResponse.error) throw new Error(`Errore nel caricamento degli eventi CRM: ${eventsResponse.error.message}`);
-      if (eventsResponse.data?.error) throw new Error(eventsResponse.data.error);
       if (orgResponse.error) throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);
       if (contactsResponse.error) throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);
       if (opportunitiesResponse.error) throw new Error(`Errore nel caricamento delle opportunità: ${opportunitiesResponse.error.message}`);
@@ -114,7 +108,7 @@ export const useCrmData = () => {
       setForms(formsResponse.data || []);
       setAutomations(automationsResponse.data || []);
       setOrganizationSettings(settingsResponse.data);
-      setCrmEvents(eventsResponse.data?.events || []);
+      setCrmEvents(eventsResponse?.events || []);
       setSubscription(subscriptionResponse.data);
       setLedger(ledgerResponse.data || []);
       setIsCalendarLinked(!!settingsResponse.data?.google_auth_token);

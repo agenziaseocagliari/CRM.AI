@@ -13,6 +13,7 @@ import { LeadScoreBadge } from './ui/LeadScoreBadge';
 import { CreateEventModal } from './CreateEventModal';
 // FIX: Corrected import path for ContactEventsList.
 import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
+import { invokeSupabaseFunction } from '../lib/api';
 
 // Definiamo un tipo per i dati del form per maggiore chiarezza e sicurezza.
 // Ora include phonePrefix e phoneNumber invece di un unico campo 'phone'.
@@ -209,26 +210,16 @@ export const Contacts: React.FC = () => {
     };
     
     const handleGenerateEmail = async () => {
-        if (!aiPrompt || !selectedContact || !organization) return;
+        if (!aiPrompt || !selectedContact) return;
         setIsGenerating(true);
         setGeneratedContent('');
         const toastId = toast.loading('Generazione email in corso...');
         
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-            
-             const { data, error } = await supabase.functions.invoke('generate-email-content', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { 
-                    prompt: aiPrompt, 
-                    contact: selectedContact,
-                    organization_id: organization.id 
-                },
+            const data = await invokeSupabaseFunction('generate-email-content', { 
+                prompt: aiPrompt, 
+                contact: selectedContact,
             });
-            if (error) throw new Error(error.message);
-            if(data.error) throw new Error(data.error);
-
             setGeneratedContent(data.email);
             toast.success('Email generata!', { id: toastId });
         } catch (err: any) {
@@ -239,26 +230,16 @@ export const Contacts: React.FC = () => {
     };
     
     const handleGenerateWhatsApp = async () => {
-        if (!aiPrompt || !selectedContact || !organization) return;
+        if (!aiPrompt || !selectedContact) return;
         setIsGenerating(true);
         setGeneratedContent('');
         const toastId = toast.loading('Creazione messaggio...');
         
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-            
-            const { data, error } = await supabase.functions.invoke('generate-whatsapp-message', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { 
-                    prompt: aiPrompt, 
-                    contact: selectedContact,
-                    organization_id: organization.id
-                },
+            const data = await invokeSupabaseFunction('generate-whatsapp-message', { 
+                prompt: aiPrompt, 
+                contact: selectedContact,
             });
-            if (error) throw new Error(error.message);
-            if (data.error) throw new Error(data.error);
-
             setGeneratedContent(data.message);
             toast.success('Messaggio pronto!', { id: toastId });
         } catch (err: any) {
@@ -269,25 +250,15 @@ export const Contacts: React.FC = () => {
     };
     
     const handleSendWhatsApp = async () => {
-        if (!generatedContent || !selectedContact || !organization) return;
+        if (!generatedContent || !selectedContact) return;
         setIsSaving(true);
         const toastId = toast.loading('Invio in corso...');
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-            
-            const { data, error } = await supabase.functions.invoke('send-whatsapp-message', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: {
-                    contact_phone: selectedContact.phone,
-                    message: generatedContent,
-                    organization_id: organization.id
-                },
+            await invokeSupabaseFunction('send-whatsapp-message', {
+                contact_phone: selectedContact.phone,
+                message: generatedContent,
             });
-            if (error) throw new Error(error.message);
-            if (data.error) throw new Error(data.error);
-
             toast.success('Messaggio WhatsApp inviato!', { id: toastId });
             handleCloseModals();
         } catch (err: any) {

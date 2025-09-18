@@ -6,6 +6,7 @@ import { Modal } from './ui/Modal';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
+import { invokeSupabaseFunction } from '../lib/api';
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
@@ -99,24 +100,11 @@ export const Forms: React.FC = () => {
     
     const handleGenerateForm = async () => {
         if (!prompt) { toast.error("Per favore, inserisci una descrizione per il tuo form."); return; }
-        if (!organization) { toast.error("Organizzazione non trovata."); return; }
         setIsLoading(true); setGeneratedFields(null);
 
         const toastId = toast.loading('Generazione campi in corso...');
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-            
-            const { data, error: invokeError } = await supabase.functions.invoke('generate-form-fields', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { 
-                    prompt,
-                    organization_id: organization.id 
-                },
-            });
-
-            if (invokeError) throw new Error(`Errore di rete: ${invokeError.message}`);
-            if (data.error) throw new Error(data.error);
+            const data = await invokeSupabaseFunction('generate-form-fields', { prompt });
             
             const fields = data.fields as FormField[];
             if (!fields || !Array.isArray(fields) || fields.length === 0) {

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons';
 import { UsageDashboard } from './UsageDashboard'; // Importa la nuova dashboard
+import { invokeSupabaseFunction } from '../lib/api';
 
 // --- OTTIMIZZAZIONE: Componente Helper per UI di Stato ---
 const AuthStatusDisplay: React.FC<{
@@ -55,7 +56,7 @@ const AuthStatusDisplay: React.FC<{
 export const GoogleAuthCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { organization, loading: crmLoading } = useCrmData(); 
+    const { loading: crmLoading } = useCrmData(); 
     
     // OTTIMIZZAZIONE: Stato strutturato per gestire UI e messaggi in modo pulito.
     const [authState, setAuthState] = useState<{
@@ -104,49 +105,29 @@ export const GoogleAuthCallback: React.FC = () => {
                 return;
             }
             
-            // La validazione è andata a buon fine, puliamo lo stato
             localStorage.removeItem('oauth_state');
             console.log('[GoogleAuthCallback] Stato CSRF validato con successo e rimosso.');
-
-            if (!organization) {
-                const errorMsg = "Impossibile identificare l'organizzazione. Autenticazione fallita.";
-                console.error('[GoogleAuthCallback] ERRORE: Dati dell\'organizzazione non disponibili.');
-                setAuthState({ status: 'error', message: errorMsg });
-                return;
-            }
             
-            const payload = { code, organization_id: organization.id };
+            const payload = { code };
             console.log('[GoogleAuthCallback] Dati pronti per l\'invocazione della funzione Supabase:', payload);
             setAuthState({ status: 'loading', message: 'Finalizzazione della connessione sicura...' });
             
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) throw new Error('Utente non autenticato.');
-                
                 // --- OTTIMIZZAZIONE: Gestione del timeout esplicito di 20 secondi ---
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Timeout della richiesta dopo 20 secondi. La connessione potrebbe essere lenta.')), 20000)
                 );
 
-                const invokePromise = supabase.functions.invoke('google-token-exchange', { 
-                    headers: { Authorization: `Bearer ${session.access_token}` },
-                    body: payload 
-                });
+                const invokePromise = invokeSupabaseFunction('google-token-exchange', payload);
 
-                // Fa competere la chiamata API con il timeout
                 const response: any = await Promise.race([invokePromise, timeoutPromise]);
                 
-                // --- OTTIMIZZAZIONE: Logging trasparente della risposta ---
                 console.log('[GoogleAuthCallback] Risposta ricevuta dalla funzione:', response);
-
-                if (response.error) throw new Error(response.error.message || 'Errore di rete/invoke sconosciuto.');
-                if (response.data && response.data.error) throw new Error(response.data.error);
                 
-                // --- OTTIMIZZAZIONE: Gestione del successo con feedback e redirect ---
                 console.log('[GoogleAuthCallback] Successo! Scambio del token completato.');
                 setAuthState({ status: 'success', message: 'Account Google connesso con successo! Sarai reindirizzato a breve...' });
                 toast.success('Integrazione Google Calendar attivata!');
-                setTimeout(() => navigate('/settings'), 2500); // Redirect dopo aver mostrato il messaggio
+                setTimeout(() => navigate('/settings'), 2500);
 
             } catch (err: any) {
                 console.error('[GoogleAuthCallback] ERRORE nel blocco catch finale:', err);
@@ -157,7 +138,7 @@ export const GoogleAuthCallback: React.FC = () => {
 
         exchangeCodeForToken();
 
-    }, [searchParams, navigate, organization, crmLoading]);
+    }, [searchParams, navigate, crmLoading]);
 
     // --- OTTIMIZZAZIONE: UI reattiva basata sullo stato ---
     return <AuthStatusDisplay 
@@ -218,17 +199,8 @@ export const Settings: React.FC = () => {
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
 
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-
-            const { data, error } = await supabase.functions.invoke('google-auth-url', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { state },
-            });
+            const data = await invokeSupabaseFunction('google-auth-url', { state });
             
-            if (error) throw new Error(error.message);
-            if (data.error) throw new Error(data.error);
-
             if (data.url) {
                 window.location.href = data.url;
             } else {

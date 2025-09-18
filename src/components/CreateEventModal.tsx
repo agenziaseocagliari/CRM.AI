@@ -84,36 +84,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 const endOfDay = new Date(formData.date);
                 endOfDay.setHours(23, 59, 59, 999);
 
-                // --- Frontend Guardian/Controller Logic ---
-                // This guardian validates the payload before sending it to the backend.
-                // The backend securely derives user/organization and Google access tokens
-                // from the JWT session. Sending them from the frontend would be a security risk.
                 const payload = {
                     timeMin: startOfDay.toISOString(),
                     timeMax: endOfDay.toISOString(),
                 };
 
-                const validationError = (param: string) => {
-                    const errorMsg = `Errore di validazione: il parametro del calendario '${param}' non è valido. Chiamata annullata.`;
-                    console.error(errorMsg, { payload });
-                    toast.error("Errore interno nella preparazione della richiesta al calendario.");
-                    setBusySlots([]);
-                    setIsFetchingSlots(false); // Make sure loading state is turned off
-                    return true; // Indicates an error occurred
-                };
-
-                if (!payload.timeMin || typeof payload.timeMin !== 'string') {
-                    if (validationError('timeMin')) return;
-                }
-                if (!payload.timeMax || typeof payload.timeMax !== 'string') {
-                    if (validationError('timeMax')) return;
-                }
-                // --- End Guardian Logic ---
-
-
-                // FIX: Explicitly type the expected return value from invokeSupabaseFunction.
-                // This resolves the error where 'data' was inferred as 'void', ensuring
-                // that the 'events' property is accessible.
                 const data = await invokeSupabaseFunction('get-google-calendar-events', payload) as { events: any[] };
                 
                 const slots = data.events.map((event: any) => ({
@@ -122,17 +97,16 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 }));
                 setBusySlots(slots);
             } catch (err: any) {
-                 // Per the request, handle missing parameter errors specifically
                  if (err.message && (err.message.includes('parametro mancante') || err.message.includes('400'))) {
                      const errorMsg = "Errore critico dal backend: parametro mancante. Le chiamate al calendario sono state bloccate per questa sessione.";
                      console.error(errorMsg, err);
                      toast.error("Errore di comunicazione con il calendario. Ricarica la pagina o contatta il supporto.", { duration: 6000 });
-                     setCalendarApiBlocked(true); // Block future calls
+                     setCalendarApiBlocked(true);
                  } else if (err.message && /token|google|autenticazione/i.test(err.message.toLowerCase())) {
                     console.error("Errore di sessione Google rilevato:", err);
                     toast.error("La tua connessione a Google Calendar è scaduta. Riconnettiti dalle impostazioni.", { duration: 6000 });
-                    onActionSuccess(); // This is the refetch function
-                    onClose(); // Close the modal to force a UI update
+                    onActionSuccess();
+                    onClose();
                  } else {
                     toast.error(`Impossibile caricare la disponibilità: ${err.message}`);
                  }
@@ -150,10 +124,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         if (isOpen) {
             setFormData({
                 ...initialFormState,
-                // If Google isn't connected, default to not creating an event
                 createGoogleEvent: isGoogleConnected,
             });
-            setCalendarApiBlocked(false); // Reset block when modal re-opens
+            setCalendarApiBlocked(false);
         }
     }, [isOpen, contact, isGoogleConnected]);
 
@@ -166,7 +139,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         const checked = (e.target as HTMLInputElement).checked;
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
         
-        // Auto-update end time when start time is selected
         if (name === 'startTime' && value) {
             const startIndex = timeSlots.findIndex(s => s.time === value);
             if (startIndex !== -1 && startIndex + 1 < timeSlots.length) {
@@ -219,8 +191,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
             let googleEventId: string | null = null;
             if (isGoogleConnected && formData.createGoogleEvent) {
-                 // FIX: Explicitly type the expected return value from invokeSupabaseFunction.
-                 // This prevents type inference errors and ensures 'googleEvent.googleEventId' can be accessed.
                  const googleEvent = await invokeSupabaseFunction('create-google-event', {
                     event_summary: formData.summary,
                     event_description: formData.description,
@@ -240,13 +210,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 google_event_id: googleEventId,
             };
 
-            // FIX: Explicitly type the expected return value from invokeSupabaseFunction.
-            // This allows destructuring 'crmEvent' from the response, resolving the type inference error.
             const { crmEvent } = await invokeSupabaseFunction('create-crm-event', crmEventPayload) as { crmEvent: CrmEvent };
 
             if (formData.reminders.length > 0) {
                  await invokeSupabaseFunction('schedule-event-reminders', {
-                    organization_id: organization.id,
                     crm_event_id: crmEvent.id,
                     event_start_time: eventStartDate.toISOString(),
                     reminders: formData.reminders

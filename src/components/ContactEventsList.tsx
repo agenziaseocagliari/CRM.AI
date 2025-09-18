@@ -103,7 +103,6 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
         setIsDeleting(event.id);
         const toastId = toast.loading('Annullamento evento...');
         try {
-            // La chiamata è ora molto più semplice. Il backend gestisce l'autenticazione.
             await invokeSupabaseFunction(
                 'delete-google-event',
                 { 

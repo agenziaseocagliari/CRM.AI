@@ -14,7 +14,7 @@ const handleAuthErrorToast = (toastId?: string, diagnosticData?: string) => {
       React.createElement(
         'div',
         { className: 'text-center flex flex-col items-center' },
-        React.createElement('span', null, "La tua sessione o la connessione sono scadute."),
+        React.createElement('span', { className: 'font-semibold' }, "La tua sessione o la connessione sono scadute."),
         React.createElement(
           'a',
           {
@@ -133,45 +133,38 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         // Prepara i dati diagnostici da mostrare all'utente, dando priorità al campo 'diagnostic' del backend.
         if (errorJson) {
             if (errorJson.diagnostic) {
-                // Se il backend fornisce un oggetto diagnostico, usa quello.
-                diagnosticDataForToast = JSON.stringify(errorJson.diagnostic, null, 2); // Formattato per leggibilità
+                diagnosticDataForToast = JSON.stringify(errorJson.diagnostic, null, 2);
             } else {
-                // Altrimenti, usa l'intero oggetto JSON di errore.
                 diagnosticDataForToast = JSON.stringify(errorJson, null, 2);
             }
         } else {
-            // Fallback per errori non-JSON.
             diagnosticDataForToast = errorText;
         }
 
-        const isAuthError = response.status === 401 || response.status === 403 || (errorText && (errorText.includes("MISSING_ORGANIZATION_ID") || errorText.includes("organization_id is required")));
+        const isAuthError = response.status === 401 || response.status === 403 || (errorText && (errorText.includes("MISSING_ORGANIZATION_ID") || errorText.includes("organization_id is required") || errorText.includes("non autenticato")));
 
         if (isAuthError && !isRetry) {
             console.warn(`[API Helper] Errore di autenticazione (${response.status}) su '${functionName}'. Tento un nuovo tentativo automatico...`);
             return invokeSupabaseFunction(functionName, payload, true); // Esegui il retry
         }
         
-        // Se il retry fallisce o non è un errore di autenticazione, mostra il toast con i dettagli diagnostici,
-        // in particolare per tutti gli errori del calendario.
         if (isAuthError || functionName.includes('calendar')) {
              handleAuthErrorToast('final-error-toast', diagnosticDataForToast);
         }
 
-        // Lancia l'errore finale da gestire nel componente chiamante.
         throw new Error(errorJson?.error || errorJson?.message || `Errore del server (${response.status}): ${errorText}`);
     }
 
     const responseData = await response.json();
     console.log(`[API Helper] Risposta OK da '${functionName}'.`);
     
-    // Controlla anche le risposte 200 OK che potrebbero contenere errori logici di autenticazione
     if (responseData && responseData.error) {
         const errorMessage = responseData.error.toString().toLowerCase();
         if (
-        errorMessage.includes("authenticate") ||
-        errorMessage.includes("token") ||
-        errorMessage.includes("non autenticato") ||
-        errorMessage.includes("accesso negato")
+            errorMessage.includes("authenticate") ||
+            errorMessage.includes("token") ||
+            errorMessage.includes("non autenticato") ||
+            errorMessage.includes("accesso negato")
         ) {
             const diagnosticData = JSON.stringify(responseData.diagnostic || responseData, null, 2);
             handleAuthErrorToast('logic-auth-error-toast', diagnosticData);

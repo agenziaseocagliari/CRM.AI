@@ -6,6 +6,7 @@ import { MessageBotIcon, UserCircleIcon, SparklesIcon, TrashIcon } from './ui/ic
 import { useCrmData } from '../hooks/useCrmData';
 import { Automation } from '../types';
 import { Modal } from './ui/Modal';
+import { invokeSupabaseFunction } from '../lib/api';
 
 interface Message {
   sender: 'user' | 'ai';
@@ -49,7 +50,7 @@ export const Automations: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isLoading || !organization) return;
+        if (!input.trim() || isLoading) return;
         
         setLastInteraction(null);
         const userMessage: Message = { sender: 'user', text: input };
@@ -58,19 +59,8 @@ export const Automations: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
+            const data = await invokeSupabaseFunction('process-automation-request', { prompt: userMessage.text });
             
-            const { data, error } = await supabase.functions.invoke('process-automation-request', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { 
-                    prompt: userMessage.text,
-                    organization_id: organization.id
-                },
-            });
-
-            if (error) throw new Error(`Errore di rete: ${error.message}`);
-            if (data.error) throw new Error(data.error);
             if (!data.reply) throw new Error("La risposta dell'AI non è valida.");
 
             const aiMessage: Message = { sender: 'ai', text: data.reply };

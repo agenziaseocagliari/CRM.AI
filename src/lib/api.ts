@@ -1,8 +1,7 @@
-
-// src/lib/api.ts
+// This import section is managed in batch via AIStudio—do not add unused imports.
 import React from 'react';
-import { supabase } from './supabaseClient';
 import { toast } from 'react-hot-toast';
+import { supabase } from './supabaseClient';
 
 /**
  * Gestisce la visualizzazione di un toast di errore per la ri-autenticazione Google.

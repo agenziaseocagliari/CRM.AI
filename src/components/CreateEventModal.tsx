@@ -1,12 +1,12 @@
-
+// This import section is managed in batch via AIStudio—do not add unused imports.
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
-import { Modal } from './ui/Modal';
-import { Contact, Organization, EventFormData, Reminder, BusySlot, EventTemplate } from '../types';
-import { PlusIcon, TrashIcon, ClockIcon, VideoIcon, TemplateIcon, SaveIcon } from './ui/icons';
-import { buildCreateEventPayload, validateAndToast } from '../lib/eventUtils';
+
 import { invokeSupabaseFunction } from '../lib/api';
+import { buildCreateEventPayload, validateAndToast } from '../lib/eventUtils';
+import { Contact, Organization, EventFormData, Reminder, BusySlot, EventTemplate } from '../types';
+import { Modal } from './ui/Modal';
+import { ClockIcon, PlusIcon, SaveIcon, TemplateIcon, TrashIcon, VideoIcon } from './ui/icons';
 
 const initialEventState: EventFormData = {
     title: '',

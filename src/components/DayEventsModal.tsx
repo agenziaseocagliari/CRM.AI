@@ -1,15 +1,14 @@
-
-
+// This import section is managed in batch via AIStudio—do not add unused imports.
 import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { invokeSupabaseFunction } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
+import { buildCreateEventPayload, buildUpdateEventPayload, validateAndToast } from '../lib/eventUtils';
 import { useCrmData } from '../hooks/useCrmData';
 import { CrmEvent } from '../types';
 import { Modal } from './ui/Modal';
-import { PlusIcon, TrashIcon, EditIcon } from './ui/icons';
-import { buildCreateEventPayload, buildUpdateEventPayload, validateAndToast } from '../lib/eventUtils';
-import { invokeSupabaseFunction } from '../lib/api';
-// FIX: Import the Supabase client directly, as it is not part of the crmData context.
-import { supabase } from '../lib/supabaseClient';
+import { EditIcon, PlusIcon, TrashIcon } from './ui/icons';
 
 interface DayEventsModalProps {
     isOpen: boolean;
@@ -131,7 +130,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 }
                 // Questo dovrebbe essere gestito da una funzione per coerenza,
                 // ma per una semplice delete va bene anche così.
-                // FIX: Use the imported 'supabase' client directly instead of trying to access it from 'crmData'.
                 const { error } = await supabase
                     .from('crm_events')
                     .delete()
@@ -171,7 +169,6 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     toast.success("Evento modificato e sincronizzato!", { id: toastId });
                 } else {
                     // Modifica solo CRM
-                     // FIX: Use the imported 'supabase' client directly instead of trying to access it from 'crmData'.
                      const { error } = await supabase.from('crm_events').update({
                         event_summary: payload.event.summary,
                         event_start_time: payload.event.start,

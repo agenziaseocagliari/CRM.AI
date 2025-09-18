@@ -1,7 +1,6 @@
-
-// src/lib/eventUtils.ts
-import { Organization, Contact, CrmEvent, CreateGoogleEventPayload, UpdateGoogleEventPayload } from '../types';
+// This import section is managed in batch via AIStudio—do not add unused imports.
 import { toast } from 'react-hot-toast';
+import { Contact, CreateGoogleEventPayload, CrmEvent, Organization, UpdateGoogleEventPayload } from '../types';
 
 // Un tipo standard per i dati del form, usato da entrambe le modali
 interface EventFormData {

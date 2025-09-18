@@ -76,7 +76,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                     )}
                 </div>
                 <div className="flex justify-end pt-4 border-t mt-4">
-                     <button onClick={handleOpenCreateModal} className="btn-primary flex items-center space-x-2">
+                     <button onClick={handleOpenCreateModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
                         <PlusIcon className="w-5 h-5"/>
                         <span>Crea Evento</span>
                     </button>
@@ -90,7 +90,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 contact={selectedContact}
                 organization={organization}
                 organizationSettings={organizationSettings}
-                onSaveSuccess={handleSaveSuccess}
+                onActionSuccess={handleSaveSuccess}
                 // Potremmo passare la data preselezionata in futuro
             />}
         </>

@@ -3,9 +3,11 @@ import React, { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { CrmEvent } from '../types';
-// FIX: Corrected import path for DayEventsModal.
 import { DayEventsModal } from './DayEventsModal';
 import { PlusIcon } from './ui/icons';
+import { ConnectCalendarPrompt } from './ConnectCalendarPrompt';
+import { supabase } from '../lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
@@ -37,9 +39,10 @@ const CalendarHeader: React.FC<{
 
 export const CalendarView: React.FC = () => {
     const crmData = useOutletContext<ReturnType<typeof useCrmData>>();
-    const { crmEvents, loading } = crmData;
+    const { crmEvents, loading, isCalendarLinked } = crmData;
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [isConnecting, setIsConnecting] = useState(false);
 
     const handlePrevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
     const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
@@ -95,7 +98,40 @@ export const CalendarView: React.FC = () => {
         }, {} as Record<string, CrmEvent[]>);
     }, [crmEvents]);
     
+    const handleGoogleConnect = async () => {
+        setIsConnecting(true);
+        try {
+            const state = Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('oauth_state', state);
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Utente non autenticato.');
+
+            const { data, error } = await supabase.functions.invoke('google-auth-url', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
+                body: { state },
+            });
+            
+            if (error) throw new Error(error.message);
+            if (data.error) throw new Error(data.error);
+
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("La funzione ha restituito una risposta inaspettata.");
+            }
+            
+        } catch (err: any) {
+            toast.error(`Impossibile avviare la connessione: ${err.message}`, { duration: 10000 });
+            setIsConnecting(false);
+        }
+    };
+    
     if (loading) return <div className="text-center p-8">Caricamento calendario...</div>;
+    
+    if (!isCalendarLinked) {
+        return <ConnectCalendarPrompt onConnect={handleGoogleConnect} isLoading={isConnecting} />;
+    }
 
     return (
         <>

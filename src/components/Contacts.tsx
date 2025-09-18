@@ -471,7 +471,7 @@ export const Contacts: React.FC = () => {
                 contact={selectedContact}
                 organization={organization}
                 organizationSettings={organizationSettings}
-                onSaveSuccess={refetch}
+                onActionSuccess={refetch}
             />
 
             <Modal isOpen={isViewEventsModalOpen} onClose={handleCloseModals} title={`Eventi per ${selectedContact?.name}`}>

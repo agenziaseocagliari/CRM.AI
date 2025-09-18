@@ -20,7 +20,7 @@ interface CreateEventModalProps {
     contact: Contact | null;
     organization: Organization | null;
     organizationSettings: OrganizationSettings | null;
-    onSaveSuccess: () => void;
+    onActionSuccess: () => void;
 }
 
 // State for the form
@@ -55,7 +55,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     contact,
     organization,
     organizationSettings,
-    onSaveSuccess,
+    onActionSuccess,
 }) => {
     const [formData, setFormData] = useState<EventFormData>(initialFormState);
     const [isSaving, setIsSaving] = useState(false);
@@ -124,6 +124,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                      console.error(errorMsg, err);
                      toast.error("Errore di comunicazione con il calendario. Ricarica la pagina o contatta il supporto.", { duration: 6000 });
                      setCalendarApiBlocked(true); // Block future calls
+                 } else if (err.message && /token|google|autenticazione/i.test(err.message.toLowerCase())) {
+                    console.error("Errore di sessione Google rilevato:", err);
+                    toast.error("La tua connessione a Google Calendar è scaduta. Riconnettiti dalle impostazioni.", { duration: 6000 });
+                    onActionSuccess(); // This is the refetch function
+                    onClose(); // Close the modal to force a UI update
                  } else {
                     toast.error(`Impossibile caricare la disponibilità: ${err.message}`);
                  }
@@ -134,7 +139,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         };
 
         fetchBusySlots();
-    }, [isOpen, isGoogleConnected, formData.date, isCalendarApiBlocked]);
+    }, [isOpen, isGoogleConnected, formData.date, isCalendarApiBlocked, onActionSuccess, onClose]);
 
     // Reset form when the modal is opened or the contact changes
     useEffect(() => {
@@ -241,7 +246,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             }
 
             toast.success('Evento creato con successo!', { id: toastId });
-            onSaveSuccess();
+            onActionSuccess();
             onClose();
 
         } catch (err: any) {

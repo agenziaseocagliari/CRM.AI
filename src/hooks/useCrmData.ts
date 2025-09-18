@@ -47,6 +47,7 @@ export const useCrmData = () => {
   const [crmEvents, setCrmEvents] = useState<CrmEvent[]>([]);
   const [subscription, setSubscription] = useState<OrganizationSubscription | null>(null);
   const [ledger, setLedger] = useState<CreditLedgerEntry[]>([]);
+  const [isCalendarLinked, setIsCalendarLinked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +65,7 @@ export const useCrmData = () => {
         setOrganization(null); setContacts([]); setOpportunities(groupOpportunitiesByStage([]));
         setForms([]); setAutomations([]); setOrganizationSettings(null);
         setCrmEvents([]); setSubscription(null); setLedger([]);
+        setIsCalendarLinked(false);
         return;
       }
 
@@ -115,6 +117,7 @@ export const useCrmData = () => {
       setCrmEvents(eventsResponse.data?.events || []);
       setSubscription(subscriptionResponse.data);
       setLedger(ledgerResponse.data || []);
+      setIsCalendarLinked(!!settingsResponse.data?.google_auth_token);
 
     } catch (err: any) {
       setError(err.message);
@@ -137,5 +140,5 @@ export const useCrmData = () => {
 
   }, [fetchData]);
 
-  return { organization, contacts, opportunities, forms, automations, organizationSettings, crmEvents, subscription, ledger, loading, error, refetch: fetchData };
+  return { organization, contacts, opportunities, forms, automations, organizationSettings, crmEvents, subscription, ledger, isCalendarLinked, loading, error, refetch: fetchData };
 };

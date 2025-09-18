@@ -1,30 +1,12 @@
-// This import section is managed in batch via AIStudio—do not add unused imports.
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+// File: src/components/CreateEventModal.tsx
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
-
-import { invokeSupabaseFunction } from '../lib/api';
-import { buildCreateEventPayload, validateAndToast } from '../lib/eventUtils';
-import { Contact, Organization, EventFormData, Reminder, BusySlot, EventTemplate, OrganizationSettings } from '../types';
 import { Modal } from './ui/Modal';
-import { ClockIcon, PlusIcon, SaveIcon, TemplateIcon, TrashIcon, VideoIcon } from './ui/icons';
-
-const initialEventState: EventFormData = {
-    title: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '10:00',
-    duration: 30,
-    location: '',
-    description: '',
-    addMeet: false,
-    reminders: [],
-};
-
-const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
-const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
-    const hours = Math.floor(i / 2);
-    const minutes = (i % 2) * 30;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-});
+import { Contact, Organization, OrganizationSettings } from '../types';
+import { invokeSupabaseFunction } from '../lib/api';
+import { generateTimeSlots, combineDateAndTime, TimeSlot } from '../lib/eventUtils';
+import { ClockIcon, VideoIcon, InfoIcon, TemplateIcon, SaveIcon, SparklesIcon, WhatsAppIcon } from './ui/icons';
 
 interface CreateEventModalProps {
     isOpen: boolean;
@@ -32,190 +14,206 @@ interface CreateEventModalProps {
     contact: Contact | null;
     organization: Organization | null;
     organizationSettings: OrganizationSettings | null;
-    onSaveSuccess: () => Promise<void>;
+    onSaveSuccess: () => void;
 }
 
-export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onClose, contact, organization, organizationSettings, onSaveSuccess }) => {
-    const [formData, setFormData] = useState<EventFormData>(initialEventState);
-    const [busySlots, setBusySlots] = useState<BusySlot[]>([]);
-    const [templates, setTemplates] = useState<EventTemplate[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+const defaultReminders = [
+    { minutesBefore: 1440, channel: 'Email', message: 'Questo è un promemoria per il tuo appuntamento di domani.', enabled: false },
+    { minutesBefore: 60, channel: 'WhatsApp', message: 'Ciao! Ti ricordiamo il nostro appuntamento tra circa un\'ora. A presto!', enabled: false },
+];
+
+export const CreateEventModal: React.FC<CreateEventModalProps> = ({
+    isOpen,
+    onClose,
+    contact,
+    organization,
+    organizationSettings,
+    onSaveSuccess
+}) => {
+    const [summary, setSummary] = useState('');
+    const [description, setDescription] = useState('');
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [selectedTime, setSelectedTime] = useState<string>('');
+    const [duration, setDuration] = useState(30);
     const [isFetchingSlots, setIsFetchingSlots] = useState(false);
-
-    const resetState = useCallback(() => {
-        setFormData(initialEventState);
-        setBusySlots([]);
-        setIsLoading(false);
-        setIsFetchingSlots(false);
-    }, []);
-
+    const [isSaving, setIsSaving] = useState(false);
+    const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+    const [reminders, setReminders] = useState(defaultReminders);
+    
+    // Reset state when modal opens or contact changes
     useEffect(() => {
         if (isOpen && contact) {
-            setFormData({ ...initialEventState, title: `Incontro con ${contact.name}` });
-            const savedTemplates = organization ? JSON.parse(localStorage.getItem(`event_templates_${organization.id}`) || '[]') : [];
-            setTemplates(savedTemplates);
-        } else if (!isOpen) {
-            resetState();
+            setSummary(`Appuntamento con ${contact.name}`);
+            setDescription('');
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            setSelectedDate(today);
+            setSelectedTime('');
+            setTimeSlots([]);
+            setReminders(defaultReminders);
         }
-    }, [isOpen, contact, organization, resetState]);
+    }, [isOpen, contact]);
 
-    const fetchBusySlots = useCallback(async (date: string) => {
-        if (!organization || !date) return;
-        setIsFetchingSlots(true);
-        try {
-            const data = await invokeSupabaseFunction(
-                'get-google-calendar-events',
-                { organization_id: organization.id, date },
-                true,
-                organizationSettings
-            );
-            setBusySlots(data.busySlots || []);
-        } catch (err: any) {
-            // L'errore specifico (es. token scaduto) viene gestito da invokeSupabaseFunction con un toast.
-            // Qui possiamo mostrare un errore generico o semplicemente non caricare gli slot.
-            console.error(`Impossibile caricare disponibilità: ${err.message}`);
-            setBusySlots([]);
-        } finally {
-            setIsFetchingSlots(false);
-        }
-    }, [organization, organizationSettings]);
-
+    // Fetch busy slots when date changes
     useEffect(() => {
-        if (isOpen && formData.date) {
-            fetchBusySlots(formData.date);
+        const fetchSlots = async () => {
+            if (!isOpen || !organizationSettings?.google_auth_token) {
+                setTimeSlots(generateTimeSlots(selectedDate, []));
+                return;
+            }
+            setIsFetchingSlots(true);
+            try {
+                const dateString = selectedDate.toISOString().split('T')[0];
+                const data = await invokeSupabaseFunction(
+                    'get-google-calendar-events',
+                    { organization_id: organization?.id, date: dateString },
+                    true,
+                    organizationSettings
+                );
+                setTimeSlots(generateTimeSlots(selectedDate, data.busySlots, duration));
+            } catch (err: any) {
+                toast.error(`Impossibile caricare disponibilità: ${err.message}`);
+                setTimeSlots(generateTimeSlots(selectedDate, [])); // Mostra slot senza verifica
+            } finally {
+                setIsFetchingSlots(false);
+            }
+        };
+        fetchSlots();
+    }, [selectedDate, duration, isOpen, organization, organizationSettings]);
+
+    const handleReminderChange = (index: number) => {
+        setReminders(prev => prev.map((r, i) => i === index ? { ...r, enabled: !r.enabled } : r));
+    };
+
+    const handleSave = async () => {
+        if (!contact || !organization || !selectedTime) {
+            toast.error("Contatto, data e ora sono obbligatori.");
+            return;
         }
-    }, [isOpen, formData.date, fetchBusySlots]);
-
-    const availableTimeSlots = useMemo(() => {
-        return TIME_SLOTS.filter(slot => {
-            const slotStart = new Date(`${formData.date}T${slot}:00`);
-            return !busySlots.some(busy => {
-                const busyStart = new Date(busy.start);
-                const busyEnd = new Date(busy.end);
-                return slotStart >= busyStart && slotStart < busyEnd;
-            });
-        });
-    }, [formData.date, busySlots]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value, type } = e.target;
-        const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : (name === 'duration' ? parseInt(value) : value),
-        }));
-    };
-    
-    const addReminder = () => setFormData(prev => ({ ...prev, reminders: [...prev.reminders, { id: Date.now().toString(), minutesBefore: 10, channel: 'Email', message: `Promemoria: ${prev.title}` }] }));
-    const removeReminder = (id: string) => setFormData(prev => ({ ...prev, reminders: prev.reminders.filter(r => r.id !== id) }));
-    const handleReminderChange = (id: string, field: keyof Omit<Reminder, 'id'| 'message'>, value: string | number) => {
-        setFormData(prev => ({ ...prev, reminders: prev.reminders.map(r => r.id === id ? { ...r, [field]: value } : r) }));
-    };
-
-    const handleSaveTemplate = () => {
-      const name = window.prompt("Nome del template:");
-      if (!name || !organization) return;
-      const newTemplate: EventTemplate = {
-        id: Date.now().toString(), name,
-        data: { title: `Appuntamento con ${contact?.name || ''}`, duration: formData.duration, location: formData.location, description: formData.description, addMeet: formData.addMeet, reminders: formData.reminders }
-      };
-      const updatedTemplates = [...templates, newTemplate];
-      setTemplates(updatedTemplates);
-      localStorage.setItem(`event_templates_${organization.id}`, JSON.stringify(updatedTemplates));
-      toast.success("Template salvato!");
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        const toastId = toast.loading("Creazione evento...");
+        setIsSaving(true);
+        const toastId = toast.loading('Creazione evento in corso...');
 
         try {
-            if (!organization || !contact || !formData.date) {
-                throw new Error("Dati di base (organizzazione, contatto, data) mancanti.");
-            }
+            const startTime = combineDateAndTime(selectedDate, selectedTime);
+            const endTime = new Date(startTime.getTime() + duration * 60000);
 
-            const payload = buildCreateEventPayload(organization, contact, formData);
-            if (!validateAndToast(payload)) {
-                 throw new Error("Dati non validi");
-            }
-            
-            const data = await invokeSupabaseFunction(
+            // 1. Crea l'evento su Google Calendar
+            const { googleEventId } = await invokeSupabaseFunction(
                 'create-google-event',
-                payload,
+                {
+                    event_summary: summary,
+                    event_description: description,
+                    event_start_time: startTime.toISOString(),
+                    event_end_time: endTime.toISOString(),
+                    attendee_email: contact.email,
+                },
                 true,
                 organizationSettings
             );
-
-            if (formData.reminders.length > 0 && data.crmEventId) {
-                await invokeSupabaseFunction(
+            
+            // 2. Salva l'evento nel CRM
+            const { crmEvent } = await invokeSupabaseFunction(
+                'create-crm-event',
+                {
+                    organization_id: organization.id,
+                    contact_id: contact.id,
+                    event_summary: summary,
+                    event_description: description,
+                    event_start_time: startTime.toISOString(),
+                    event_end_time: endTime.toISOString(),
+                    google_event_id: googleEventId,
+                },
+                false // Non serve il token google qui
+            );
+            
+            // 3. Schedula i promemoria
+            const activeReminders = reminders.filter(r => r.enabled);
+            if (activeReminders.length > 0) {
+                 await invokeSupabaseFunction(
                     'schedule-event-reminders',
-                    { organization_id: organization.id, crm_event_id: data.crmEventId, event_start_time: data.event.start.dateTime, reminders: formData.reminders },
-                    false // Questa funzione non richiede autenticazione Google diretta
-                );
+                    {
+                        organization_id: organization.id,
+                        crm_event_id: crmEvent.id,
+                        event_start_time: startTime.toISOString(),
+                        reminders: activeReminders
+                    },
+                    false
+                 );
             }
 
-            toast.success("Evento creato e sincronizzato!", { id: toastId });
-            await onSaveSuccess();
+            toast.success('Evento creato con successo!', { id: toastId });
+            onSaveSuccess();
             onClose();
         } catch (err: any) {
-             if (err.message !== "Dati non validi") {
-                console.error('[ERROR] Save event:', err);
-                toast.error(`Errore: ${err.message}`, { id: toastId });
-             } else {
-                toast.dismiss(toastId);
-             }
+            toast.error(`Errore: ${err.message}`, { id: toastId });
         } finally {
-            setIsLoading(false);
+            setIsSaving(false);
         }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Crea Evento per ${contact?.name}`}>
-            <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Titolo evento" required className="w-full p-2 border rounded-md" />
-                    <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="Luogo o link" className="w-full p-2 border rounded-md" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="date" name="date" value={formData.date} onChange={handleChange} required className="w-full p-2 border rounded-md" />
-                     <select name="time" value={formData.time} onChange={handleChange} required className="w-full p-2 border rounded-md">
-                        {isFetchingSlots ? <option>Caricamento...</option> : availableTimeSlots.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-                    </select>
-                    <div className="flex items-center space-x-2"><ClockIcon className="w-5 h-5 text-gray-400" /><select name="duration" value={formData.duration} onChange={handleChange} required className="w-full p-2 border rounded-md">
-                        {DURATION_OPTIONS.map(d => <option key={d} value={d}>{d} min</option>)}
-                    </select></div>
-                </div>
-                 <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Descrizione e note" rows={3} className="w-full p-2 border rounded-md"></textarea>
-                 <div className="flex items-center"><input type="checkbox" id="addMeet" name="addMeet" checked={formData.addMeet} onChange={handleChange} className="mr-2" /><label htmlFor="addMeet" className="flex items-center"><VideoIcon className="w-5 h-5 mr-1" />Aggiungi Google Meet</label></div>
+        <Modal isOpen={isOpen} onClose={onClose} title={`Nuovo Evento per ${contact?.name}`}>
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                 <div>
-                    <h4 className="font-medium text-gray-800">Promemoria</h4>
-                    <div className="space-y-2 mt-1">
-                        {formData.reminders.map(r => (
-                            <div key={r.id} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-md">
-                                <input type="number" value={r.minutesBefore} onChange={e => handleReminderChange(r.id, 'minutesBefore', parseInt(e.target.value))} className="w-20 p-1 border rounded-md" />
-                                <span>minuti prima via</span>
-                                <select value={r.channel} onChange={e => handleReminderChange(r.id, 'channel', e.target.value)} className="p-1 border rounded-md">
-                                    <option value="Email">Email</option>
-                                    <option value="WhatsApp">WhatsApp</option>
-                                </select>
-                                <button type="button" onClick={() => removeReminder(r.id)}><TrashIcon className="w-4 h-4 text-red-500 hover:text-red-700" /></button>
-                            </div>
+                    <label htmlFor="summary" className="block text-sm font-medium text-gray-700">Oggetto</label>
+                    <input type="text" id="summary" value={summary} onChange={e => setSummary(e.target.value)} className="mt-1 w-full input-std" />
+                </div>
+                <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrizione</label>
+                    <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="mt-1 w-full input-std" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="date" className="block text-sm font-medium text-gray-700">Data</label>
+                        <input type="date" id="date" value={selectedDate.toISOString().split('T')[0]} onChange={e => setSelectedDate(new Date(e.target.value))} className="mt-1 w-full input-std" />
+                    </div>
+                    <div>
+                        <label htmlFor="duration" className="block text-sm font-medium text-gray-700">Durata</label>
+                        <select id="duration" value={duration} onChange={e => setDuration(Number(e.target.value))} className="mt-1 w-full input-std">
+                            <option value={15}>15 min</option>
+                            <option value={30}>30 min</option>
+                            <option value={45}>45 min</option>
+                            <option value={60}>60 min</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Orario</label>
+                     {isFetchingSlots ? <div className="text-center p-4">Caricamento disponibilità...</div> :
+                        <div className="mt-2 grid grid-cols-4 gap-2">
+                            {timeSlots.map(slot => (
+                                <button key={slot.time} onClick={() => setSelectedTime(slot.time)} disabled={!slot.available}
+                                    className={`px-3 py-2 rounded-md text-sm font-semibold text-center ${
+                                        selectedTime === slot.time ? 'bg-primary text-white' : 
+                                        slot.available ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : 'bg-gray-50 text-gray-400 cursor-not-allowed line-through'
+                                    }`}>
+                                    {slot.time}
+                                </button>
+                            ))}
+                        </div>
+                     }
+                </div>
+                <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Promemoria Automatici</h4>
+                    <div className="space-y-2">
+                        {reminders.map((reminder, index) => (
+                            <label key={index} className="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" checked={reminder.enabled} onChange={() => handleReminderChange(index)} className="h-4 w-4 rounded text-primary focus:ring-primary"/>
+                                <span className="ml-3 text-sm text-gray-800">
+                                    {reminder.channel === 'Email' ? '📧' : <WhatsAppIcon className="w-4 h-4 inline-block"/>} Invia {reminder.channel} {reminder.minutesBefore / 60}h prima
+                                </span>
+                            </label>
                         ))}
                     </div>
-                    <button type="button" onClick={addReminder} className="text-primary hover:underline mt-2 flex items-center space-x-1"><PlusIcon className="w-4 h-4" /><span>Aggiungi promemoria</span></button>
                 </div>
-                <div className="flex justify-between items-center pt-4 border-t mt-4">
-                    <div className="flex items-center space-x-2">
-                        <button type="button" onClick={handleSaveTemplate} title="Salva come Template" className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"><SaveIcon className="w-5 h-5"/></button>
-                        <button type="button" title="Carica da Template" className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"><TemplateIcon className="w-5 h-5"/></button>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Annulla</button>
-                        <button type="submit" disabled={isLoading} className="px-4 py-2 bg-primary text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">{isLoading ? 'Salvataggio...' : 'Crea Evento'}</button>
-                    </div>
-                </div>
-            </form>
+            </div>
+            <div className="flex justify-end pt-4 border-t mt-4">
+                <button type="button" onClick={onClose} className="btn-secondary mr-2">Annulla</button>
+                <button onClick={handleSave} disabled={isSaving || !selectedTime} className="btn-primary flex items-center space-x-2">
+                    <SaveIcon className="w-5 h-5"/>
+                    <span>{isSaving ? 'Salvataggio...' : 'Salva Evento'}</span>
+                </button>
+            </div>
         </Modal>
     );
 };

@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { CrmEvent } from '../types';
+// FIX: Corrected import path for DayEventsModal.
 import { DayEventsModal } from './DayEventsModal';
 import { PlusIcon } from './ui/icons';
 

@@ -8,7 +8,9 @@ import toast from 'react-hot-toast';
 import { useCrmData } from '../hooks/useCrmData';
 import { LeadScoreBadge } from './ui/LeadScoreBadge';
 import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
+// FIX: Corrected import path for CreateEventModal.
 import { CreateEventModal } from './CreateEventModal';
+// FIX: Corrected import path for ContactEventsList.
 import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
 
 // Definiamo un tipo per i dati del form per maggiore chiarezza e sicurezza.

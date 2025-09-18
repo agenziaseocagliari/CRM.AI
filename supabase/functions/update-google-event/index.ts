@@ -5,7 +5,10 @@ declare const Deno: {
 };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { getGoogleAccessToken } from "../_shared/google.ts";
+import { getOrganizationId } from "../_shared/supabase.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -19,15 +22,20 @@ serve(async (req) => {
         event_start_time,
         event_end_time,
         attendee_email,
-        googleProviderToken,
     } = await req.json();
-
-    if (!googleProviderToken) {
-        return new Response(JSON.stringify({ error: "No valid access token found." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    
     if (!google_event_id || !event_summary || !event_start_time || !event_end_time || !attendee_email) {
         throw new Error("Tutti i parametri dell'evento sono obbligatori.");
     }
+    
+    // 1. Ottenere l'ID dell'organizzazione in modo sicuro dal token JWT.
+    const organization_id = await getOrganizationId(req);
+    
+    // 2. Ottenere il token di accesso Google in modo sicuro.
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceRoleKey) throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+    const googleAccessToken = await getGoogleAccessToken(supabaseAdmin, organization_id);
     
     const eventBody = {
         summary: event_summary,
@@ -40,9 +48,9 @@ serve(async (req) => {
     const calendarApiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${google_event_id}?sendUpdates=all`;
 
     const apiResponse = await fetch(calendarApiUrl, {
-        method: "PUT", // o PATCH se si aggiornano solo alcuni campi
+        method: "PUT",
         headers: {
-            "Authorization": `Bearer ${googleProviderToken}`,
+            "Authorization": `Bearer ${googleAccessToken}`,
             "Content-Type": "application/json",
         },
         body: JSON.stringify(eventBody),

@@ -57,6 +57,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     // Fetch busy slots when date changes
     useEffect(() => {
         const fetchSlots = async () => {
+            // Non eseguiamo la fetch se l'integrazione Google non è attiva
             if (!isOpen || !organizationSettings?.google_auth_token) {
                 setTimeSlots(generateTimeSlots(selectedDate, []));
                 return;
@@ -64,22 +65,23 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             setIsFetchingSlots(true);
             try {
                 const dateString = selectedDate.toISOString().split('T')[0];
+                // Chiamata semplificata: il backend gestisce l'autenticazione e l'ID organizzazione.
                 const data = await invokeSupabaseFunction(
                     'get-google-calendar-events',
-                    { organization_id: organization?.id, date: dateString },
-                    true,
-                    organizationSettings
+                    { date: dateString }
                 );
                 setTimeSlots(generateTimeSlots(selectedDate, data.busySlots, duration));
             } catch (err: any) {
                 toast.error(`Impossibile caricare disponibilità: ${err.message}`);
-                setTimeSlots(generateTimeSlots(selectedDate, [])); // Mostra slot senza verifica
+                setTimeSlots(generateTimeSlots(selectedDate, [])); // Mostra slot senza verifica in caso di errore
             } finally {
                 setIsFetchingSlots(false);
             }
         };
-        fetchSlots();
-    }, [selectedDate, duration, isOpen, organization, organizationSettings]);
+        if (isOpen) {
+            fetchSlots();
+        }
+    }, [selectedDate, duration, isOpen, organizationSettings]);
 
     const handleReminderChange = (index: number) => {
         setReminders(prev => prev.map((r, i) => i === index ? { ...r, enabled: !r.enabled } : r));
@@ -106,38 +108,44 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 }
             });
 
-            // 1. Crea l'evento su Google Calendar
-            const { googleEventId } = await invokeSupabaseFunction(
-                'create-google-event',
-                {
-                    event_summary: summary,
-                    event_description: description,
-                    event_start_time: startTime.toISOString(),
-                    event_end_time: endTime.toISOString(),
-                    attendee_email: contact.email,
-                },
-                true,
-                organizationSettings
-            );
+            // 1. Crea l'evento su Google Calendar (se l'integrazione è attiva)
+            let googleEventId = null;
+            if (organizationSettings?.google_auth_token) {
+                 try {
+                    const googleResponse = await invokeSupabaseFunction(
+                        'create-google-event',
+                        {
+                            event_summary: summary,
+                            event_description: description,
+                            event_start_time: startTime.toISOString(),
+                            event_end_time: endTime.toISOString(),
+                            attendee_email: contact.email,
+                        }
+                    );
+                    googleEventId = googleResponse.googleEventId;
+                } catch(googleError: any) {
+                    // Se la creazione su Google fallisce, avvisa l'utente ma procedi a salvare l'evento solo nel CRM
+                    toast.error(`Errore Google Calendar: ${googleError.message}. L'evento sarà salvato solo nel CRM.`, { duration: 6000 });
+                }
+            }
             
-            // 2. Salva l'evento nel CRM
+            // 2. Salva l'evento nel CRM (sempre)
             const { crmEvent } = await invokeSupabaseFunction(
                 'create-crm-event',
                 {
-                    organization_id: organization.id,
+                    // organization_id non è più necessario, viene derivato dal token
                     contact_id: contact.id,
                     event_summary: summary,
                     event_description: description,
                     event_start_time: startTime.toISOString(),
                     event_end_time: endTime.toISOString(),
                     google_event_id: googleEventId,
-                },
-                false // Non serve il token google qui
+                }
             );
             
-            // 3. Schedula i promemoria
+            // 3. Schedula i promemoria (se l'evento CRM è stato creato con successo)
             const activeReminders = reminders.filter(r => r.enabled);
-            if (activeReminders.length > 0) {
+            if (activeReminders.length > 0 && crmEvent) {
                  await invokeSupabaseFunction(
                     'schedule-event-reminders',
                     {
@@ -145,8 +153,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                         crm_event_id: crmEvent.id,
                         event_start_time: startTime.toISOString(),
                         reminders: activeReminders
-                    },
-                    false
+                    }
                  );
             }
 

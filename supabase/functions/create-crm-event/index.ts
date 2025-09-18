@@ -7,6 +7,7 @@ declare const Deno: {
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { getOrganizationId } from "../_shared/supabase.ts"; // Importa il nuovo helper
 
 const ACTION_TYPE = 'create_crm_event';
 
@@ -15,8 +16,10 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
+    // organization_id viene ora recuperato in modo sicuro dal token JWT
+    const organization_id = await getOrganizationId(req);
+
     const {
-      organization_id,
       contact_id,
       event_summary,
       event_description,
@@ -25,8 +28,8 @@ serve(async (req) => {
       google_event_id
     } = await req.json();
 
-    if (!organization_id || !contact_id || !event_summary || !event_start_time || !event_end_time) {
-      throw new Error("Parametri `organization_id`, `contact_id`, `event_summary`, `event_start_time`, e `event_end_time` sono obbligatori.");
+    if (!contact_id || !event_summary || !event_start_time || !event_end_time) {
+      throw new Error("Parametri `contact_id`, `event_summary`, `event_start_time`, e `event_end_time` sono obbligatori.");
     }
     
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -46,7 +49,7 @@ serve(async (req) => {
     const { data: newEvent, error: insertError } = await supabaseAdmin
       .from('crm_events')
       .insert({
-        organization_id,
+        organization_id, // Usiamo l'ID sicuro recuperato dal token
         contact_id,
         event_summary,
         event_description,

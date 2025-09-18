@@ -3,10 +3,9 @@ import React from 'react';
 import { toast } from 'react-hot-toast';
 
 import { supabase } from './supabaseClient';
-import { OrganizationSettings } from '../types';
 
 /**
- * Gestisce la visualizzazione di un toast di errore per la ri-autenticazione Google.
+ * Gestisce la visualizzazione di un toast di errore per problemi di autenticazione.
  * @param toastId L'ID di un toast di caricamento esistente da aggiornare.
  */
 const handleAuthErrorToast = (toastId?: string) => {
@@ -15,85 +14,58 @@ const handleAuthErrorToast = (toastId?: string) => {
     // This creates a custom toast component programmatically without needing TSX syntax.
     toast.error(t => (
         React.createElement('span', { className: "text-center" },
-            "La connessione a Google è scaduta o non è valida.",
+            "La tua sessione o la connessione a Google sono scadute.",
             React.createElement('a', {
                 href: "/settings",
                 onClick: () => toast.dismiss(t.id),
                 className: "block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500"
-            }, "Riconnetti il tuo account")
+            }, "Verifica nelle Impostazioni")
         )
     ), options);
 };
 
 /**
- * Helper centralizzato per invocare le Supabase Functions, gestendo automaticamente
- * l'autenticazione della sessione e l'inclusione del token Google nel payload.
+ * Helper centralizzato e sicuro per invocare le Supabase Functions.
+ * La funzione gestisce automaticamente l'invio del token JWT dell'utente per
+ * l'autenticazione lato backend. La logica per ottenere e rinfrescare i token
+ * di servizi esterni (es. Google) è gestita interamente dalla funzione Edge,
+ * garantendo massima sicurezza.
  * 
  * @param functionName Il nome della funzione Edge da chiamare.
  * @param payload Il corpo della richiesta (body) da inviare alla funzione.
- * @param requiresGoogleAuth Se true, la funzione tenterà di aggiungere il provider_token di Google al payload.
- * @param organizationSettings Obbligatorio se requiresGoogleAuth è true. Contiene il token Google.
  * @returns Una Promise che si risolve con i dati della funzione in caso di successo.
  * @throws Un errore se l'autenticazione fallisce o la funzione restituisce un errore.
  */
 export async function invokeSupabaseFunction(
     functionName: string,
-    payload: object,
-    requiresGoogleAuth: boolean,
-    organizationSettings?: OrganizationSettings | null
+    payload: object = {} // Il payload ora è opzionale
 ) {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-        throw new Error('Sessione utente non valida o scaduta. Effettua nuovamente il login.');
-    }
-
-    let finalPayload = { ...payload };
+    // Il metodo `invoke` del client Supabase si occupa automaticamente di:
+    // 1. Recuperare la sessione utente corrente.
+    // 2. Inserire l'header `Authorization: Bearer <token>` nella richiesta.
+    // 3. Gestire il refresh del token JWT di Supabase se è scaduto.
+    console.log(`[API Helper] Invocazione di '${functionName}'...`);
     
-    if (requiresGoogleAuth) {
-        let googleProviderToken: string | null = null;
-
-        if (organizationSettings?.google_auth_token) {
-            try {
-                // Il token è salvato come stringa JSON nel DB, quindi va analizzato
-                const tokenData = JSON.parse(organizationSettings.google_auth_token);
-                googleProviderToken = tokenData.access_token || null;
-            } catch (e) {
-                console.error("Errore critico nel parsing del google_auth_token:", e);
-                // Il token è corrotto, forziamo l'errore di autenticazione
-                googleProviderToken = null; 
-            }
-        }
-        
-        // --- STEP DI DEBUG RICHIESTO ---
-        // Questo log stampa lo stato del token prima di ogni chiamata critica.
-        // Rimuovere in produzione per non esporre dati sensibili in console.
-        console.log(
-            `[Guardian AI Debug] Chiamata a '${functionName}'. ` +
-            `Token Google richiesto: SI. ` +
-            `Token trovato e valido: ${googleProviderToken ? `SÌ (Lunghezza: ${googleProviderToken.length})` : 'NO'}`
-        );
-        // --- FINE STEP DI DEBUG ---
-
-        if (!googleProviderToken) {
-            handleAuthErrorToast();
-            throw new Error('Token di accesso Google non trovato. L\'utente deve autenticarsi nuovamente.');
-        }
-        
-        finalPayload = { ...finalPayload, googleProviderToken };
-    }
-
     const { data, error } = await supabase.functions.invoke(functionName, {
-        body: finalPayload,
+        body: payload,
+    });
+
+    // Log per il debug della risposta, come richiesto
+    console.log(`[API Helper] Risposta da '${functionName}':`, {
+      data: data,
+      error: error,
     });
 
     if (error) {
-        // Errore di rete o a livello di Supabase
-        throw new Error(error.message);
+        // Errore di rete, CORS, o a livello di Supabase (es. funzione non trovata)
+        throw new Error(`Errore di rete o del server: ${error.message}`);
     }
 
     if (data && data.error) {
-        // Errore restituito dalla logica interna della funzione
-        if (data.error.includes("re-authenticate") || data.error.includes("token")) {
+        // Errore applicativo restituito dalla logica interna della funzione Edge.
+        // Controlliamo se è un errore di autenticazione per fornire un feedback specifico.
+        const errorMessage = data.error.toLowerCase();
+        if (errorMessage.includes("authenticate") || errorMessage.includes("token") || errorMessage.includes("non autenticato") || errorMessage.includes("accesso negato")) {
             handleAuthErrorToast();
         }
         throw new Error(data.error);

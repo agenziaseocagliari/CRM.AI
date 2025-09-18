@@ -1,4 +1,3 @@
-
 // src/components/ContactEventsList.tsx
 import React, { useState, useMemo } from 'react';
 import { Contact, CrmEvent, EventReminder, OrganizationSettings } from '../types';
@@ -100,23 +99,22 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
     }, [contact, events]);
 
     const handleDeleteEvent = async (event: CrmEvent) => {
-        if (!organizationId) { toast.error("ID organizzazione non trovato."); return; }
-        if (!window.confirm(`Annullare l'evento "${event.event_summary}"? Sarà rimosso da Google Calendar.`)) return;
+        if (!window.confirm(`Annullare l'evento "${event.event_summary}"? Sarà rimosso anche da Google Calendar (se collegato).`)) return;
 
         setIsDeleting(event.id);
         const toastId = toast.loading('Annullamento evento...');
         try {
+            // La chiamata è ora molto più semplice. Il backend gestisce l'autenticazione.
             await invokeSupabaseFunction(
                 'delete-google-event',
-                { organization_id: organizationId, google_event_id: event.google_event_id, crm_event_id: event.id },
-                true,
-                organizationSettings
+                { 
+                    google_event_id: event.google_event_id,
+                    crm_event_id: event.id
+                }
             );
             toast.success('Evento annullato!', { id: toastId });
             onActionSuccess();
         } catch (err: any) {
-            // L'errore specifico viene già gestito da invokeSupabaseFunction,
-            // che mostra un toast adeguato. Qui aggiorniamo solo il nostro toast di caricamento.
             toast.error(`Errore: ${err.message}`, { id: toastId });
         } finally {
             setIsDeleting(null);

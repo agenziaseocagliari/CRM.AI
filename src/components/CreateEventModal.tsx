@@ -61,12 +61,19 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     const [isSaving, setIsSaving] = useState(false);
     const [busySlots, setBusySlots] = useState<{ start: string, end: string }[]>([]);
     const [isFetchingSlots, setIsFetchingSlots] = useState(false);
+    const [isCalendarApiBlocked, setCalendarApiBlocked] = useState(false);
 
     const isGoogleConnected = !!organizationSettings?.google_auth_token;
 
     // Fetch busy slots from Google Calendar when the date changes
     useEffect(() => {
         if (!isOpen || !isGoogleConnected || !formData.date) return;
+        
+        if (isCalendarApiBlocked) {
+            console.warn("Chiamata a get-google-calendar-events bloccata a causa di un errore critico precedente.");
+            toast.error("Funzionalità calendario disabilitata a causa di un errore. Ricarica la pagina.", { id: 'calendar-blocked-toast' });
+            return;
+        }
 
         const fetchBusySlots = async () => {
             setIsFetchingSlots(true);
@@ -76,10 +83,34 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 const endOfDay = new Date(formData.date);
                 endOfDay.setHours(23, 59, 59, 999);
 
-                const data = await invokeSupabaseFunction('get-google-calendar-events', {
+                // --- Frontend Guardian/Controller Logic ---
+                // This guardian validates the payload before sending it to the backend.
+                // The backend securely derives user/organization and Google access tokens
+                // from the JWT session. Sending them from the frontend would be a security risk.
+                const payload = {
                     timeMin: startOfDay.toISOString(),
                     timeMax: endOfDay.toISOString(),
-                });
+                };
+
+                const validationError = (param: string) => {
+                    const errorMsg = `Errore di validazione: il parametro del calendario '${param}' non è valido. Chiamata annullata.`;
+                    console.error(errorMsg, { payload });
+                    toast.error("Errore interno nella preparazione della richiesta al calendario.");
+                    setBusySlots([]);
+                    setIsFetchingSlots(false); // Make sure loading state is turned off
+                    return true; // Indicates an error occurred
+                };
+
+                if (!payload.timeMin || typeof payload.timeMin !== 'string') {
+                    if (validationError('timeMin')) return;
+                }
+                if (!payload.timeMax || typeof payload.timeMax !== 'string') {
+                    if (validationError('timeMax')) return;
+                }
+                // --- End Guardian Logic ---
+
+
+                const data = await invokeSupabaseFunction('get-google-calendar-events', payload);
                 
                 const slots = data.events.map((event: any) => ({
                     start: event.start.dateTime,
@@ -87,7 +118,15 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 }));
                 setBusySlots(slots);
             } catch (err: any) {
-                toast.error(`Impossibile caricare la disponibilità: ${err.message}`);
+                 // Per the request, handle missing parameter errors specifically
+                 if (err.message && (err.message.includes('parametro mancante') || err.message.includes('400'))) {
+                     const errorMsg = "Errore critico dal backend: parametro mancante. Le chiamate al calendario sono state bloccate per questa sessione.";
+                     console.error(errorMsg, err);
+                     toast.error("Errore di comunicazione con il calendario. Ricarica la pagina o contatta il supporto.", { duration: 6000 });
+                     setCalendarApiBlocked(true); // Block future calls
+                 } else {
+                    toast.error(`Impossibile caricare la disponibilità: ${err.message}`);
+                 }
                 setBusySlots([]);
             } finally {
                 setIsFetchingSlots(false);
@@ -95,7 +134,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         };
 
         fetchBusySlots();
-    }, [isOpen, isGoogleConnected, formData.date]);
+    }, [isOpen, isGoogleConnected, formData.date, isCalendarApiBlocked]);
 
     // Reset form when the modal is opened or the contact changes
     useEffect(() => {
@@ -105,6 +144,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 // If Google isn't connected, default to not creating an event
                 createGoogleEvent: isGoogleConnected,
             });
+            setCalendarApiBlocked(false); // Reset block when modal re-opens
         }
     }, [isOpen, contact, isGoogleConnected]);
 

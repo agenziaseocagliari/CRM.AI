@@ -1,117 +1,152 @@
-// File: supabase/functions/_shared/google.ts
-
+// Google OAuth utilities for Supabase Edge Functions
+// FIX: Added a Deno global declaration to resolve TypeScript errors in the Supabase Edge Function environment.
 declare const Deno: {
-  env: { get(key: string): string | undefined; };
+  env: {
+    get(key: string): string | undefined;
+  };
 };
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
-interface GoogleTokenData {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  scope: string;
-  token_type: string;
-  expiry_date: string;
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+export interface GoogleTokens {
+  access_token: string
+  refresh_token: string
+  expires_in?: number // expires_in is for refresh, not always present
+  expiry_date?: number // This is what we'll use, calculated from expires_in
+  expires_at?: number // Legacy, keeping for compatibility
 }
 
-/**
- * Retrieves a valid Google access token for an organization, refreshing it if necessary.
- * This is the secure, server-side method for handling Google API authentication.
- *
- * @param supabaseAdmin A Supabase client with service_role permissions.
- * @param organization_id The ID of the organization to get the token for.
- * @returns A promise that resolves to a valid Google access token.
- * @throws An error if the token cannot be retrieved, refreshed, or is missing.
- */
-export async function getGoogleAccessToken(supabaseAdmin: SupabaseClient, organization_id: string): Promise<string> {
-  // 1. Fetch the organization's stored tokens
-  const { data: settings, error: settingsError } = await supabaseAdmin
-    .from('organization_settings')
-    .select('google_auth_token')
-    .eq('organization_id', organization_id)
-    .single();
-
-  if (settingsError || !settings?.google_auth_token) {
-    throw new Error("Impostazioni di integrazione Google non trovate o token mancante. Per favore, connetti l'account Google nelle impostazioni.");
-  }
-  
-  // ROBUST TOKEN PARSING LOGIC - PATCH APPLIED
-  let tokenData: GoogleTokenData;
+// FIX: Refactored functions to accept a Supabase client instance, making them more modular.
+export async function getGoogleTokens(supabase: SupabaseClient, organizationId: string): Promise<GoogleTokens | null> {
   try {
-    if (typeof settings.google_auth_token === "string") {
-      tokenData = JSON.parse(settings.google_auth_token);
-    } else {
-      tokenData = settings.google_auth_token;
+    console.log('🔍 Getting Google tokens for organization:', organizationId)
+    
+    const { data: settings, error } = await supabase
+      .from('organization_settings')
+      .select('google_auth_token')
+      .eq('organization_id', organizationId)
+      .single()
+    
+    if (error) {
+      console.error('❌ Error fetching settings:', error)
+      return null
     }
-  } catch (e) {
-    console.error("[GOOGLE TOKEN PARSE ERROR] Raw data:", settings.google_auth_token, "Type:", typeof settings.google_auth_token);
-    throw new Error("GoogleAuthToken parse error: " + String(settings.google_auth_token));
+    
+    if (!settings?.google_auth_token) {
+      console.error('⚠️  No google_auth_token found in settings')
+      return null
+    }
+
+    // DIAGNOSTIC LOGGING - RAW TOKEN DEBUG
+    console.error('🔬 TOKEN RAW DEBUG:', {
+      typeof: typeof settings.google_auth_token,
+      rawValue: String(settings.google_auth_token).slice(0, 100),
+      fullLength: String(settings.google_auth_token).length,
+      isString: typeof settings.google_auth_token === 'string',
+      isNull: settings.google_auth_token === null,
+      isUndefined: settings.google_auth_token === undefined
+    })
+    
+    let tokens: GoogleTokens
+    try {
+      tokens = typeof settings.google_auth_token === 'string' ? JSON.parse(settings.google_auth_token) : settings.google_auth_token;
+      console.log('✅ Successfully parsed Google tokens')
+    } catch (parseError) {
+      console.error('❌ Error parsing google_auth_token:', parseError)
+      console.error('🔬 Raw token that failed parsing:', settings.google_auth_token)
+      return null
+    }
+    
+    // Check if token is expired
+    const expiryTimestamp = tokens.expiry_date || tokens.expires_at;
+    const now = Math.floor(Date.now() / 1000)
+    if (expiryTimestamp && expiryTimestamp < now) {
+      console.log('🔄 Token expired, attempting refresh...')
+      const refreshedTokens = await refreshGoogleToken(supabase, tokens.refresh_token, organizationId)
+      if (refreshedTokens) {
+        return refreshedTokens
+      }
+      console.error('❌ Failed to refresh expired token')
+      return null
+    }
+    
+    return tokens
+  } catch (error) {
+    console.error('❌ Unexpected error in getGoogleTokens:', error)
+    return null
   }
-  
-  if (!tokenData || !tokenData.access_token) {
-    console.error("[GOOGLE TOKEN STRUCTURE ERROR] Parsed data:", tokenData);
-    throw new Error("Google token not available: Token not found or structure invalid");
+}
+
+// FIX: Refactored function to accept a Supabase client instance.
+export async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string, organizationId: string): Promise<GoogleTokens | null> {
+  try {
+    console.log('🔄 Refreshing Google token for organization:', organizationId)
+    
+    const clientId = Deno.env.get('GOOGLE_CLIENT_ID')
+    const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')
+    
+    if (!clientId || !clientSecret) {
+      console.error('❌ Missing Google OAuth credentials in environment')
+      return null
+    }
+    
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ Google token refresh failed:', response.status, errorText)
+      return null
+    }
+    
+    const data = await response.json()
+    
+    const newTokens: GoogleTokens = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || refreshToken, // Keep old refresh token if not provided
+      expiry_date: Math.floor(Date.now() / 1000) + data.expires_in,
+    }
+    
+    // Save the new tokens
+    await saveGoogleTokens(supabase, organizationId, newTokens);
+    
+    console.log('✅ Google token refreshed successfully')
+    return newTokens
+  } catch (error) {
+    console.error('❌ Unexpected error in refreshGoogleToken:', error)
+    return null
   }
+}
 
-  // 2. Check if the token is expired (with a 60-second buffer)
-  const isExpired = new Date(tokenData.expiry_date).getTime() < (Date.now() + 60000);
-
-  if (!isExpired) {
-    return tokenData.access_token;
+// FIX: Refactored function to accept a Supabase client instance.
+export async function saveGoogleTokens(supabase: SupabaseClient, organizationId: string, tokens: GoogleTokens): Promise<boolean> {
+  try {
+    console.log('💾 Saving Google tokens for organization:', organizationId)
+    
+    const { error } = await supabase
+      .from('organization_settings')
+      .update({ google_auth_token: JSON.stringify(tokens) })
+      .eq('organization_id', organizationId)
+    
+    if (error) {
+      console.error('❌ Error saving tokens:', error)
+      return false
+    }
+    
+    console.log('✅ Google tokens saved successfully')
+    return true
+  } catch (error) {
+    console.error('❌ Unexpected error in saveGoogleTokens:', error)
+    return false
   }
-  
-  // 3. If expired, use the refresh token to get a new access token
-  console.log(`[Google Auth] Token scaduto per l'organizzazione ${organization_id}. Inizio refresh...`);
-  if (!tokenData.refresh_token) {
-      throw new Error("Token di accesso scaduto e refresh token non disponibile. L'utente deve autenticarsi nuovamente.");
-  }
-
-  const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-  const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-  if (!clientId || !clientSecret) {
-      throw new Error("I secrets del client Google (ID o Secret) non sono configurati sul server.");
-  }
-
-  const body = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: tokenData.refresh_token,
-      grant_type: 'refresh_token',
-  });
-
-  const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body,
-  });
-
-  const refreshedTokens = await refreshResponse.json();
-
-  if (!refreshResponse.ok) {
-      console.error("Errore durante il refresh del token Google:", refreshedTokens);
-      throw new Error(`Impossibile aggiornare il token di accesso: ${refreshedTokens.error_description || refreshedTokens.error}`);
-  }
-
-  // 4. Update the database with the new token information
-  const newTokenData: GoogleTokenData = {
-    ...tokenData, // Mantieni il refresh token originale se non ne viene fornito uno nuovo
-    access_token: refreshedTokens.access_token,
-    expires_in: refreshedTokens.expires_in,
-    expiry_date: new Date(Date.now() + refreshedTokens.expires_in * 1000).toISOString(),
-    refresh_token: refreshedTokens.refresh_token || tokenData.refresh_token,
-  };
-  
-  const { error: updateError } = await supabaseAdmin
-    .from('organization_settings')
-    .update({ google_auth_token: JSON.stringify(newTokenData) })
-    .eq('organization_id', organization_id);
-
-  if (updateError) {
-      console.error("ERRORE CRITICO: Impossibile salvare il nuovo token di accesso Google nel database.", updateError);
-      // Nonostante l'errore, restituiamo il nuovo token per completare l'operazione corrente
-  }
-  
-  console.log(`[Google Auth] Token aggiornato con successo per l'organizzazione ${organization_id}.`);
-
-  return newTokenData.access_token;
 }

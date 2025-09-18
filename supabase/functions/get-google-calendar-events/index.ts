@@ -6,7 +6,8 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-import { getGoogleAccessToken } from "../_shared/google.ts";
+// FIX: Replaced getGoogleAccessToken with getGoogleTokens and will extract the access token from the returned object.
+import { getGoogleTokens } from "../_shared/google.ts";
 import { getOrganizationId } from '../_shared/supabase.ts';
 
 // CORS Headers centralizzati per TUTTE le risposte
@@ -152,7 +153,13 @@ serve(async (req) => {
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
     let googleAccessToken;
     try {
-      googleAccessToken = await getGoogleAccessToken(supabaseAdmin, organization_id);
+      // FIX: Call getGoogleTokens and extract the access_token.
+      const tokens = await getGoogleTokens(supabaseAdmin, organization_id);
+      if (!tokens || !tokens.access_token) {
+        throw new Error("Could not retrieve a valid Google access token. Please re-authenticate.");
+      }
+      googleAccessToken = tokens.access_token;
+
       diagnostic.diagnostics.googleIntegration = {
         tokenRetrieved: !!googleAccessToken,
         organizationId: organization_id,

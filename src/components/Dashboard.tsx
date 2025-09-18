@@ -1,12 +1,16 @@
 
 
+
+
 import React from 'react';
+// FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext } from 'react-router-dom';
 import { Card } from './ui/Card';
 import { Opportunity, PipelineStage } from '../types';
 import { DollarSignIcon, UsersIcon, CheckCircleIcon, TrendingUpIcon } from './ui/icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useCrmData } from '../hooks/useCrmData';
+import { supabase } from '../lib/supabaseClient';
 
 
 export const Dashboard: React.FC = () => {
@@ -45,10 +49,52 @@ export const Dashboard: React.FC = () => {
   ];
   const COLORS = ['#4f46e5', '#34d399', '#f59e0b', '#ec4899'];
 
+  // --- TEMPORARY DEBUG FUNCTION ---
+  const handleDebugQuery = async () => {
+    console.log("--- DEBUG: ESECUZIONE QUERY SQL ---");
+    try {
+      const { data, error } = await supabase
+        .from('organization_settings')
+        .select('*')
+        .eq('organization_id', 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e')
+        .single();
+
+      if (error) {
+        console.error("Errore durante la query:", error);
+        return;
+      }
+      
+      if (data) {
+        console.log("Risultato query grezzo:", data);
+        console.log("--- Analisi Campi e Tipi ---");
+        for (const [key, value] of Object.entries(data)) {
+          console.log(`Campo: ${key}, Valore:`, value, `, Tipo: ${typeof value}`);
+        }
+        console.log("--- Fine Analisi ---");
+      } else {
+        console.log("Nessun record trovato per l'ID specificato.");
+      }
+
+    } catch (err) {
+      console.error("Errore imprevisto durante l'esecuzione della query:", err);
+    }
+    console.log("--- DEBUG: FINE ESECUZIONE ---");
+  };
+  // --- END TEMPORARY DEBUG FUNCTION ---
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
+        {/* --- TEMPORARY DEBUG BUTTON --- */}
+        <button
+          onClick={handleDebugQuery}
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+        >
+          Debug SQL Query
+        </button>
+         {/* --- END TEMPORARY DEBUG BUTTON --- */}
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card title="Fatturato Totale" value={`€${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />

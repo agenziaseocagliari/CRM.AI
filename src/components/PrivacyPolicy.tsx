@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected the import for Link from 'react-router-dom' to resolve module export errors.
 import { Link } from 'react-router-dom';
 import { GuardianIcon } from './ui/icons';
 
@@ -34,7 +35,7 @@ export const PrivacyPolicy: React.FC = () => {
                         </p>
 
                         <h2 className="text-2xl font-semibold text-text-primary pt-4 border-t mt-6">3. Finalità e Base Giuridica del Trattamento</h2>
-                        <p>I Dati dell’Utente sono raccolti per consentire al Titolare di fornire il Servizio, adempiere a obblighi di legge, rispondere a richieste o azioni esecutive, tutelare i propri diritti ed interessi (o quelli di Utenti o di terze parti), individuare eventuali attività dolose o fraudolente, nonché per le seguenti finalità:</p>
+                        <p>I Dati dell’Utente sono raccolti per consentire al Titolare di fornire il Servizio, adempiere a obblighi di legge, rispondere a richieste o azioni esecutive, tutelare i propri diritti ed interessi (o quelli di Utenti o di terze parti), individuare eventuali attività dolose o fraudaudolente, nonché per le seguenti finalità:</p>
                         <ul className="list-disc ml-6 space-y-2">
                             <li><strong>Fornitura del Servizio:</strong> Per creare e gestire l'account utente, fornire le funzionalità del CRM, e garantire l'operatività tecnica. La base giuridica è l'esecuzione di un contratto di cui l'Utente è parte.</li>
                             <li><strong>Contattare l'Utente:</strong> Per inviare comunicazioni di servizio o rispondere a richieste di supporto. La base giuridica è l'esecuzione di un contratto.</li>

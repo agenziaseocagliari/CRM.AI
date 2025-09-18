@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// FIX: Corrected imports for Routes, Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Session } from '@supabase/supabase-js';

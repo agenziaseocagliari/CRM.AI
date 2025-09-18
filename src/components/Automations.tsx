@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+// FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';

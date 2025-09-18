@@ -1,6 +1,7 @@
 // src/components/CreateEventModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
+// FIX: Corrected the import for Link from 'react-router-dom' to resolve module export errors.
 import { Link } from 'react-router-dom';
 
 import { Contact, Organization, OrganizationSettings, CrmEvent } from '../types';

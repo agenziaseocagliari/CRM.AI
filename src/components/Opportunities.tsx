@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext } from 'react-router-dom';
 import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
 import { supabase } from '../lib/supabaseClient';

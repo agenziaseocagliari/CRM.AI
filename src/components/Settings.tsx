@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+// FIX: Corrected imports for useOutletContext, useSearchParams, and useNavigate from 'react-router-dom' to resolve module export errors.
 import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';

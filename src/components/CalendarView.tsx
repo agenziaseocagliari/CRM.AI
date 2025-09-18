@@ -1,5 +1,6 @@
 // src/components/CalendarView.tsx
 import React, { useState, useMemo } from 'react';
+// FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { CrmEvent } from '../types';

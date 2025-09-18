@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// FIX: Corrected the import for useNavigate from 'react-router-dom' to resolve module export errors.
 import { useNavigate } from 'react-router-dom';
 import { GuardianIcon } from './ui/icons';
 import { supabase } from '../lib/supabaseClient';

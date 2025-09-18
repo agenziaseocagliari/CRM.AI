@@ -7,7 +7,8 @@ declare const Deno: {
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
-import { getGoogleAccessToken } from "../_shared/google.ts";
+// FIX: Replaced getGoogleAccessToken with getGoogleTokens and will extract the access token from the returned object.
+import { getGoogleTokens } from "../_shared/google.ts";
 import { getOrganizationId } from '../_shared/supabase.ts';
 
 serve(async (req) => {
@@ -30,7 +31,12 @@ serve(async (req) => {
 
     // 2. Se esiste un ID evento Google, procedi con la cancellazione su Google Calendar.
     if (google_event_id) {
-        const googleAccessToken = await getGoogleAccessToken(supabaseAdmin, organization_id);
+        // FIX: Call getGoogleTokens and extract the access_token.
+        const tokens = await getGoogleTokens(supabaseAdmin, organization_id);
+        if (!tokens || !tokens.access_token) {
+          throw new Error("Could not retrieve a valid Google access token. Please re-authenticate.");
+        }
+        const googleAccessToken = tokens.access_token;
         
         const calendarApiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${google_event_id}?sendUpdates=all`;
         

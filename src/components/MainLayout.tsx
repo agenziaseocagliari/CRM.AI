@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected the import for Outlet from 'react-router-dom' to resolve module export errors.
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';

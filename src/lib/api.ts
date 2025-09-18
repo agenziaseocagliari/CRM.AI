@@ -3,39 +3,6 @@ import { toast } from 'react-hot-toast'
 import { supabase } from './supabaseClient'
 
 /**
- * Creates a detailed diagnostic string for debugging purposes.
- * @param functionName The name of the Edge Function.
- * @param payload The request payload.
- * @param headers The request headers.
- * @param response The fetch Response object.
- * @param errorText The error text from the response body.
- * @returns A formatted JSON string with diagnostic data.
- */
-const createDiagnosticData = (functionName: string, payload: object, headers: HeadersInit, response: Response, errorText: string) => {
-    const diagnostic = {
-        timestamp: new Date().toISOString(),
-        functionName,
-        request: {
-            url: response.url,
-            payload,
-            headers: {
-                'Content-Type': (headers as Record<string, string>)['Content-Type'],
-                // Sanitize sensitive headers for logging
-                'Authorization': (headers as Record<string, string>)['Authorization'] ? 'Bearer [REDACTED]' : undefined,
-                'apikey': (headers as Record<string, string>)['apikey'] ? '[REDACTED]' : undefined,
-            }
-        },
-        response: {
-            status: response.status,
-            statusText: response.statusText,
-            body: errorText,
-        },
-    };
-    return JSON.stringify(diagnostic, null, 2);
-};
-
-
-/**
  * Displays a detailed authentication error toast with an option to copy diagnostic data.
  * @param toastId A unique ID for the toast.
  * @param diagnosticData A string containing diagnostic information.
@@ -150,6 +117,33 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
 
     if (!response.ok) {
         const errorText = await response.text();
+        let errorJson: any = null;
+        let diagnosticDataForToast: string | undefined = undefined;
+
+        // Logga la risposta di errore completa in modo strutturato.
+        try {
+            errorJson = JSON.parse(errorText);
+            console.error(`[API Helper] Errore da '${functionName}' (${response.status}). Risposta completa:`);
+            // Usiamo console.dir per un output navigabile nell'inspector del browser.
+            console.dir(errorJson);
+        } catch (e) {
+            console.error(`[API Helper] Errore non-JSON da '${functionName}' (${response.status}):`, errorText);
+        }
+        
+        // Prepara i dati diagnostici da mostrare all'utente, dando priorità al campo 'diagnostic' del backend.
+        if (errorJson) {
+            if (errorJson.diagnostic) {
+                // Se il backend fornisce un oggetto diagnostico, usa quello.
+                diagnosticDataForToast = JSON.stringify(errorJson.diagnostic, null, 2); // Formattato per leggibilità
+            } else {
+                // Altrimenti, usa l'intero oggetto JSON di errore.
+                diagnosticDataForToast = JSON.stringify(errorJson, null, 2);
+            }
+        } else {
+            // Fallback per errori non-JSON.
+            diagnosticDataForToast = errorText;
+        }
+
         const isAuthError = response.status === 401 || response.status === 403 || (errorText && (errorText.includes("MISSING_ORGANIZATION_ID") || errorText.includes("organization_id is required")));
 
         if (isAuthError && !isRetry) {
@@ -157,20 +151,14 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             return invokeSupabaseFunction(functionName, payload, true); // Esegui il retry
         }
         
-        // Se il retry fallisce o non è un errore di auth, procedi con l'errore finale.
-        const diagnosticData = createDiagnosticData(functionName, finalPayload, headers, response, errorText);
-        console.error(`[API Helper] Errore HTTP da '${functionName}' (${response.status}). Diagnostica:`, diagnosticData);
-
-        if (isAuthError) {
-             handleAuthErrorToast('final-auth-error-toast', diagnosticData);
+        // Se il retry fallisce o non è un errore di autenticazione, mostra il toast con i dettagli diagnostici,
+        // in particolare per tutti gli errori del calendario.
+        if (isAuthError || functionName.includes('calendar')) {
+             handleAuthErrorToast('final-error-toast', diagnosticDataForToast);
         }
 
-        try {
-            const errorJson = JSON.parse(errorText);
-            throw new Error(errorJson.error || errorJson.message || `Errore del server (${response.status})`);
-        } catch (e) {
-            throw new Error(`Errore del server (${response.status}): ${errorText}`);
-        }
+        // Lancia l'errore finale da gestire nel componente chiamante.
+        throw new Error(errorJson?.error || errorJson?.message || `Errore del server (${response.status}): ${errorText}`);
     }
 
     const responseData = await response.json();
@@ -185,7 +173,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         errorMessage.includes("non autenticato") ||
         errorMessage.includes("accesso negato")
         ) {
-            const diagnosticData = createDiagnosticData(functionName, finalPayload, headers, response, JSON.stringify(responseData));
+            const diagnosticData = JSON.stringify(responseData.diagnostic || responseData, null, 2);
             handleAuthErrorToast('logic-auth-error-toast', diagnosticData);
         }
         throw new Error(responseData.error);

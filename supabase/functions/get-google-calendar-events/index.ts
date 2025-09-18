@@ -1,14 +1,7 @@
 // File: supabase/functions/get-google-calendar-events/index.ts
 
-// FIX: Expanded the Deno.env type declaration to include the 'toObject' method.
-// The original declaration was incomplete, causing a TypeScript error when trying
-// to access environment variables for debugging purposes. This change aligns the
-// type definition with the actual Deno runtime API.
 declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-    toObject(): Record<string, string>;
-  };
+  env: { get(key: string): string | undefined; };
 };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -17,293 +10,355 @@ import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { getGoogleAccessToken } from "../_shared/google.ts";
 import { getOrganizationId } from '../_shared/supabase.ts';
 
+// Diagnostics helper function
+function createDiagnosticPayload(
+  stage: string,
+  success: boolean,
+  headers: Record<string, string | null>,
+  req: Request,
+  error?: any,
+  user?: any,
+  profileData?: any,
+  organizationId?: string,
+  googleTokenInfo?: any
+) {
+  const timestamp = new Date().toISOString();
+  const truncatedToken = headers.Authorization ? 
+    `${headers.Authorization.substring(0, 20)}...${headers.Authorization.substring(headers.Authorization.length - 10)}` : 
+    null;
+  
+  return {
+    timestamp,
+    stage,
+    success,
+    diagnostics: {
+      request: {
+        method: req.method,
+        url: req.url,
+        headers: {
+          authorization: truncatedToken,
+          contentType: headers['Content-Type'],
+          userAgent: headers['User-Agent']
+        }
+      },
+      authentication: {
+        hasAuthHeader: !!headers.Authorization,
+        user: user ? {
+          id: user.id,
+          email: user.email,
+          role: user.role
+        } : null,
+        profileQuery: profileData ? {
+          found: true,
+          organizationId: organizationId
+        } : null
+      },
+      googleIntegration: googleTokenInfo || null,
+      error: error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      } : null
+    }
+  };
+}
+
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
-  try {
-    const { timeMin, timeMax } = await req.json();
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] [CALENDAR-API] Request initiated`, {
+    method: req.method,
+    url: req.url
+  });
 
-    // Log incoming request data
-    console.log("[CALENDAR-EVENTS] Request payload:", JSON.stringify({
-      timeMin,
-      timeMax,
-      timestamp: new Date().toISOString()
-    }));
+  // Extract headers for diagnostics
+  const requestHeaders = {
+    'Authorization': req.headers.get('Authorization'),
+    'Content-Type': req.headers.get('Content-Type'),
+    'User-Agent': req.headers.get('User-Agent')
+  };
+
+  try {
+    // Step 1: Parse and validate request payload
+    const { timeMin, timeMax } = await req.json();
+    console.log(`[${timestamp}] [CALENDAR-API] Payload received:`, { timeMin, timeMax });
 
     if (!timeMin || !timeMax) {
-      const error = {
-        error: "Missing required parameters",
-        missing_params: { timeMin: !timeMin, timeMax: !timeMax },
-        timestamp: new Date().toISOString()
-      };
-      console.error("[CALENDAR-EVENTS] Parameter validation failed:", JSON.stringify(error));
-      return new Response(JSON.stringify(error), {
+      const diagnostic = createDiagnosticPayload(
+        'PAYLOAD_VALIDATION',
+        false,
+        requestHeaders,
+        req,
+        new Error("I parametri `timeMin` e `timeMax` sono obbligatori.")
+      );
+      console.error(`[${timestamp}] [CALENDAR-API] Payload validation failed:`, diagnostic);
+      
+      return new Response(JSON.stringify({
+        error: "I parametri `timeMin` e `timeMax` sono obbligatori.",
+        diagnostic
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
     
-    // 1. Ottenere l'ID dell'organizzazione in modo sicuro dal token JWT
-    console.log("[CALENDAR-EVENTS] Step 1: Extracting organization_id from JWT...");
-    let organization_id;
+    // Step 2: Extract organization ID securely from JWT
+    let organization_id: string;
+    let user: any = null;
+    let profileData: any = null;
+    
     try {
-      organization_id = await getOrganizationId(req);
-      // Log successful organization_id extraction
-      console.log("[CALENDAR-EVENTS] Organization ID extracted:", JSON.stringify({
-        organization_id,
-        type: typeof organization_id,
-        is_valid: !!organization_id,
-        timestamp: new Date().toISOString()
-      }));
+      console.log(`[${timestamp}] [CALENDAR-API] Starting organization ID extraction...`);
+      
+      // Create supabase client for authentication
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: requestHeaders.Authorization! } } }
+      );
+
+      // Get user from JWT
+      const { data: { user: authUser }, error: userError } = await supabaseClient.auth.getUser();
+      user = authUser;
+      
+      if (userError || !user) {
+        const diagnostic = createDiagnosticPayload(
+          'USER_AUTHENTICATION',
+          false,
+          requestHeaders,
+          req,
+          userError || new Error("User not found"),
+          user
+        );
+        console.error(`[${timestamp}] [CALENDAR-API] User authentication failed:`, diagnostic);
+        
+        return new Response(JSON.stringify({
+          error: "Accesso negato: utente non autenticato o sessione scaduta.",
+          diagnostic
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        });
+      }
+
+      console.log(`[${timestamp}] [CALENDAR-API] User authenticated:`, {
+        userId: user.id,
+        email: user.email
+      });
+
+      // Get user profile and organization ID
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      profileData = profile;
+      
+      if (profileError || !profile) {
+        const diagnostic = createDiagnosticPayload(
+          'PROFILE_LOOKUP',
+          false,
+          requestHeaders,
+          req,
+          profileError || new Error("Profile not found"),
+          user,
+          profileData
+        );
+        console.error(`[${timestamp}] [CALENDAR-API] Profile lookup failed:`, diagnostic);
+        
+        return new Response(JSON.stringify({
+          error: "Impossibile determinare l'organizzazione: profilo utente non trovato.",
+          diagnostic
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        });
+      }
+
+      organization_id = profile.organization_id;
+      console.log(`[${timestamp}] [CALENDAR-API] Organization ID extracted:`, {
+        organizationId: organization_id,
+        userId: user.id
+      });
+
     } catch (orgError) {
-      // Log organization_id extraction failure with detailed error info
-      const errorDetails = {
-        step: "organization_id_extraction",
-        error_message: orgError.message,
-        error_stack: orgError.stack,
-        request_headers: {
-          authorization: req.headers.get('authorization') ? 'present' : 'missing',
-          user_agent: req.headers.get('user-agent'),
-        },
-        timestamp: new Date().toISOString()
-      };
-      console.error("[CALENDAR-EVENTS] Organization ID extraction failed:", JSON.stringify(errorDetails));
+      const diagnostic = createDiagnosticPayload(
+        'ORGANIZATION_EXTRACTION',
+        false,
+        requestHeaders,
+        req,
+        orgError,
+        user,
+        profileData
+      );
+      console.error(`[${timestamp}] [CALENDAR-API] Organization extraction error:`, diagnostic);
       
       return new Response(JSON.stringify({
-        error: "Authentication failed: Unable to extract organization ID",
-        details: errorDetails,
-        verified_keys: ['authorization_header', 'jwt_token', 'organization_claim']
+        error: orgError.message,
+        diagnostic
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
+        status: 500,
       });
     }
 
-    // Validate organization_id
-    if (!organization_id) {
-      const validationError = {
-        step: "organization_id_validation",
-        error: "Organization ID is null or undefined",
-        extracted_value: organization_id,
-        verified_keys: ['jwt_payload', 'organization_claim', 'user_metadata'],
-        timestamp: new Date().toISOString()
-      };
-      console.error("[CALENDAR-EVENTS] Organization ID validation failed:", JSON.stringify(validationError));
-      
-      return new Response(JSON.stringify({
-        error: "Authentication failed: Invalid organization ID",
-        details: validationError
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-
-    // 2. Ottenere il token di accesso Google in modo sicuro
-    console.log("[CALENDAR-EVENTS] Step 2: Getting Google access token for org:", organization_id);
+    // Step 3: Get Google access token
+    let googleAccessToken: string;
+    let googleTokenInfo: any = null;
     
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!serviceRoleKey) {
-      const envError = {
-        step: "environment_validation",
-        error: "SUPABASE_SERVICE_ROLE_KEY not set",
-        available_env_vars: Object.keys(Deno.env.toObject()).filter(key => key.includes('SUPABASE')),
-        timestamp: new Date().toISOString()
-      };
-      console.error("[CALENDAR-EVENTS] Environment validation failed:", JSON.stringify(envError));
-      throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
-    }
-    
-    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-    
-    let googleAccessToken;
-    let tokenDetails;
     try {
-      // Attempt to get Google access token
-      const tokenResult = await getGoogleAccessToken(supabaseAdmin, organization_id);
-      googleAccessToken = tokenResult;
+      console.log(`[${timestamp}] [CALENDAR-API] Starting Google token retrieval...`);
       
-      // Log successful token retrieval with detailed info
-      tokenDetails = {
-        token_length: googleAccessToken ? googleAccessToken.length : 0,
-        token_prefix: googleAccessToken ? googleAccessToken.substring(0, 10) + '...' : 'null',
-        token_type: typeof googleAccessToken,
-        is_valid_format: googleAccessToken ? /^[A-Za-z0-9._-]+$/.test(googleAccessToken) : false,
-        organization_id,
-        timestamp: new Date().toISOString()
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (!serviceRoleKey) {
+        throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
+      }
+      
+      const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+      googleAccessToken = await getGoogleAccessToken(supabaseAdmin, organization_id);
+      
+      googleTokenInfo = {
+        hasToken: !!googleAccessToken,
+        tokenLength: googleAccessToken ? googleAccessToken.length : 0,
+        organizationId: organization_id
       };
       
-      console.log("[CALENDAR-EVENTS] Google access token retrieved:", JSON.stringify(tokenDetails));
+      console.log(`[${timestamp}] [CALENDAR-API] Google token retrieved successfully:`, googleTokenInfo);
       
     } catch (tokenError) {
-      // Log token retrieval failure with comprehensive error details
-      const tokenErrorDetails = {
-        step: "google_token_retrieval",
-        error_message: tokenError.message,
-        error_stack: tokenError.stack,
+      const diagnostic = createDiagnosticPayload(
+        'GOOGLE_TOKEN_RETRIEVAL',
+        false,
+        requestHeaders,
+        req,
+        tokenError,
+        user,
+        profileData,
         organization_id,
-        supabase_connection: !!supabaseAdmin,
-        verified_keys: [
-          'google_credentials_table',
-          'access_token_column', 
-          'refresh_token_column',
-          'token_expiry',
-          'organization_mapping'
-        ],
-        database_query_attempted: true,
-        timestamp: new Date().toISOString()
-      };
-      
-      console.error("[CALENDAR-EVENTS] Google token retrieval failed:", JSON.stringify(tokenErrorDetails));
+        googleTokenInfo
+      );
+      console.error(`[${timestamp}] [CALENDAR-API] Google token retrieval failed:`, diagnostic);
       
       return new Response(JSON.stringify({
-        error: "Authentication failed: Unable to retrieve Google access token",
-        details: tokenErrorDetails
+        error: `Errore nel recupero del token Google: ${tokenError.message}`,
+        diagnostic
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-
-    // Validate Google access token
-    if (!googleAccessToken || typeof googleAccessToken !== 'string') {
-      const tokenValidationError = {
-        step: "google_token_validation",
-        error: "Invalid or missing Google access token",
-        token_value: googleAccessToken,
-        token_type: typeof googleAccessToken,
-        organization_id,
-        verified_keys: [
-          'token_format',
-          'token_length', 
-          'token_content',
-          'database_record',
-          'token_refresh_status'
-        ],
-        timestamp: new Date().toISOString()
-      };
-      
-      console.error("[CALENDAR-EVENTS] Google token validation failed:", JSON.stringify(tokenValidationError));
-      
-      return new Response(JSON.stringify({
-        error: "Authentication failed: Invalid Google access token format",
-        details: tokenValidationError
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
+        status: 500,
       });
     }
     
-    // 3. Chiamata all'API di Google Calendar per ottenere la lista degli eventi
-    console.log("[CALENDAR-EVENTS] Step 3: Making Google Calendar API call...");
-    
-    const eventsListUrl = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
-    eventsListUrl.searchParams.set("timeMin", timeMin);
-    eventsListUrl.searchParams.set("timeMax", timeMax);
-    eventsListUrl.searchParams.set("singleEvents", "true");
-    eventsListUrl.searchParams.set("orderBy", "startTime");
+    // Step 4: Call Google Calendar API
+    try {
+      console.log(`[${timestamp}] [CALENDAR-API] Calling Google Calendar API...`);
+      
+      const eventsListUrl = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
+      eventsListUrl.searchParams.set("timeMin", timeMin);
+      eventsListUrl.searchParams.set("timeMax", timeMax);
+      eventsListUrl.searchParams.set("singleEvents", "true");
+      eventsListUrl.searchParams.set("orderBy", "startTime");
 
-    // Log API call details
-    console.log("[CALENDAR-EVENTS] Google Calendar API request:", JSON.stringify({
-      url: eventsListUrl.toString(),
-      method: "GET",
-      has_auth_header: true,
-      token_preview: googleAccessToken.substring(0, 10) + '...',
-      query_params: {
-        timeMin,
-        timeMax,
-        singleEvents: "true",
-        orderBy: "startTime"
-      },
-      timestamp: new Date().toISOString()
-    }));
-
-    const eventsListResponse = await fetch(eventsListUrl.toString(), {
+      const eventsListResponse = await fetch(eventsListUrl.toString(), {
         method: "GET",
         headers: {
-            "Authorization": `Bearer ${googleAccessToken}`
+          "Authorization": `Bearer ${googleAccessToken}`
         },
-    });
+      });
 
-    const eventsListData = await eventsListResponse.json();
-    
-    // Log API response details
-    const apiResponseLog = {
-      status: eventsListResponse.status,
-      status_text: eventsListResponse.statusText,
-      response_ok: eventsListResponse.ok,
-      events_count: eventsListData.items ? eventsListData.items.length : 0,
-      has_error: !!eventsListData.error,
-      error_details: eventsListData.error || null,
-      timestamp: new Date().toISOString()
-    };
-    
-    console.log("[CALENDAR-EVENTS] Google Calendar API response:", JSON.stringify(apiResponseLog));
-    
-    if (!eventsListResponse.ok) {
-        const apiError = {
-          step: "google_calendar_api_call",
-          api_status: eventsListResponse.status,
-          api_status_text: eventsListResponse.statusText,
-          api_error: eventsListData.error,
-          full_response: eventsListData,
-          request_url: eventsListUrl.toString(),
+      const eventsListData = await eventsListResponse.json();
+      
+      if (!eventsListResponse.ok) {
+        const diagnostic = createDiagnosticPayload(
+          'GOOGLE_CALENDAR_API',
+          false,
+          requestHeaders,
+          req,
+          new Error(`Google Calendar API error: ${eventsListData.error?.message || 'Unknown error'}`),
+          user,
+          profileData,
           organization_id,
-          verified_keys: [
-            'api_endpoint',
-            'authorization_header',
-            'token_validity',
-            'calendar_permissions',
-            'api_quota'
-          ],
-          timestamp: new Date().toISOString()
-        };
+          googleTokenInfo
+        );
+        console.error(`[${timestamp}] [CALENDAR-API] Google Calendar API error:`, {
+          status: eventsListResponse.status,
+          response: eventsListData,
+          diagnostic
+        });
         
-        console.error("[CALENDAR-EVENTS] Google Calendar API error:", JSON.stringify(apiError));
-        
-        // Return 401 for authentication/authorization errors
-        if (eventsListResponse.status === 401 || eventsListResponse.status === 403) {
-          return new Response(JSON.stringify({
-            error: "Google Calendar API authentication failed",
-            details: apiError
-          }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 401,
-          });
-        }
-        
-        throw new Error(`Impossibile recuperare i dettagli degli eventi: ${eventsListData.error?.message || 'Errore sconosciuto'}`);
+        return new Response(JSON.stringify({
+          error: `Impossibile recuperare i dettagli degli eventi: ${eventsListData.error?.message || 'Errore sconosciuto'}`,
+          diagnostic
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        });
+      }
+
+      console.log(`[${timestamp}] [CALENDAR-API] Google Calendar API call successful:`, {
+        eventsCount: eventsListData.items?.length || 0,
+        organizationId: organization_id
+      });
+
+      // Success response with diagnostic info (for successful calls)
+      const successDiagnostic = createDiagnosticPayload(
+        'SUCCESS',
+        true,
+        requestHeaders,
+        req,
+        null,
+        user,
+        profileData,
+        organization_id,
+        googleTokenInfo
+      );
+
+      return new Response(JSON.stringify({ 
+        events: eventsListData.items || [],
+        diagnostic: successDiagnostic
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+
+    } catch (apiError) {
+      const diagnostic = createDiagnosticPayload(
+        'GOOGLE_API_CALL',
+        false,
+        requestHeaders,
+        req,
+        apiError,
+        user,
+        profileData,
+        organization_id,
+        googleTokenInfo
+      );
+      console.error(`[${timestamp}] [CALENDAR-API] Google API call failed:`, diagnostic);
+      
+      return new Response(JSON.stringify({
+        error: `Errore nella chiamata API Google: ${apiError.message}`,
+        diagnostic
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
     }
 
-    // Log successful completion
-    console.log("[CALENDAR-EVENTS] Successfully retrieved calendar events:", JSON.stringify({
-      events_count: eventsListData.items ? eventsListData.items.length : 0,
-      organization_id,
-      time_range: { timeMin, timeMax },
-      timestamp: new Date().toISOString()
-    }));
-
-    return new Response(JSON.stringify({ events: eventsListData.items || [] }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-
   } catch (error) {
-    // Enhanced error logging with full context
-    const errorContext = {
-      error_message: error.message,
-      error_stack: error.stack,
-      error_name: error.name,
-      function_name: "get-google-calendar-events",
-      timestamp: new Date().toISOString()
-    };
+    const diagnostic = createDiagnosticPayload(
+      'GENERAL_ERROR',
+      false,
+      requestHeaders,
+      req,
+      error
+    );
+    console.error(`[${timestamp}] [CALENDAR-API] General error:`, diagnostic);
     
-    console.error("[CALENDAR-EVENTS] Unhandled error:", JSON.stringify(errorContext));
-    
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: error.message,
-      context: errorContext
+      diagnostic
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

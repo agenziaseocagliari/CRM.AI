@@ -1,12 +1,12 @@
-// File: src/components/CreateEventModal.tsx
-
-import React, { useState, useEffect, useMemo } from 'react';
+// Gli import devono essere sempre usati. Dopo ogni refactor/AI patch eseguire "batch clean up imports".
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Modal } from './ui/Modal';
-import { Contact, Organization, OrganizationSettings } from '../types';
+
 import { invokeSupabaseFunction } from '../lib/api';
-import { generateTimeSlots, combineDateAndTime, TimeSlot } from '../lib/eventUtils';
-import { ClockIcon, VideoIcon, InfoIcon, TemplateIcon, SaveIcon, SparklesIcon, WhatsAppIcon } from './ui/icons';
+import { combineDateAndTime, generateTimeSlots, TimeSlot } from '../lib/eventUtils';
+import { Contact, Organization, OrganizationSettings } from '../types';
+import { Modal } from './ui/Modal';
+import { SaveIcon, WhatsAppIcon } from './ui/icons';
 
 interface CreateEventModalProps {
     isOpen: boolean;
@@ -96,6 +96,15 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         try {
             const startTime = combineDateAndTime(selectedDate, selectedTime);
             const endTime = new Date(startTime.getTime() + duration * 60000);
+
+            // Stampa del payload per il debug, come richiesto in precedenza
+            console.log('[Guardian AI Debug] Payload per create-google-event:', {
+                event: {
+                    summary: summary,
+                    startDateTime: startTime.toISOString(),
+                    endDateTime: endTime.toISOString(),
+                }
+            });
 
             // 1. Crea l'evento su Google Calendar
             const { googleEventId } = await invokeSupabaseFunction(

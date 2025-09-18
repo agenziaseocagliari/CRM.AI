@@ -1,8 +1,9 @@
-// This import section is managed in batch via AIStudio—do not add unused imports.
+// Gli import devono essere sempre usati. Dopo ogni refactor/AI patch eseguire "batch clean up imports".
 import React from 'react';
 import { toast } from 'react-hot-toast';
-import { supabase } from './supabaseClient';
+
 import { OrganizationSettings } from '../types';
+import { supabase } from './supabaseClient';
 
 /**
  * Gestisce la visualizzazione di un toast di errore per la ri-autenticazione Google.

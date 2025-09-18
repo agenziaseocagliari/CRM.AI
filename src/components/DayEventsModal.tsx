@@ -1,10 +1,10 @@
-// File: src/components/DayEventsModal.tsx
+// Gli import devono essere sempre usati. Dopo ogni refactor/AI patch eseguire "batch clean up imports".
+import React, { useState } from 'react';
 
-import React, { useState, useEffect } from 'react';
-import { Modal } from './ui/Modal';
+import { Contact, CrmEvent } from '../types';
 import { useCrmData } from '../hooks/useCrmData';
-import { CrmEvent, Contact } from '../types';
-import { CreateEventModal } from './CreateEventModal'; // Per la logica di creazione
+import { CreateEventModal } from './CreateEventModal';
+import { Modal } from './ui/Modal';
 import { PlusIcon } from './ui/icons';
 
 interface DayEventsModalProps {
@@ -59,6 +59,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const handleSaveSuccess = () => {
         refetch(); // Ricarica tutti i dati del CRM
         setIsCreateModalOpen(false); // Chiude il modale di creazione
+        // Non chiudiamo il modale del giorno, così l'utente vede l'evento aggiunto
     };
     
     // Un hack per "nascondere" il modale del giorno mentre quello di creazione è aperto

@@ -1,20 +1,24 @@
-
-
-
-
-import React from 'react';
+import React, { useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext } from 'react-router-dom';
-import { Card } from './ui/Card';
-import { Opportunity, PipelineStage } from '../types';
-import { DollarSignIcon, UsersIcon, CheckCircleIcon, TrendingUpIcon } from './ui/icons';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, CartesianGrid, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from 'recharts';
 import { useCrmData } from '../hooks/useCrmData';
-import { supabase } from '../lib/supabaseClient';
+import { Opportunity, PipelineStage } from '../types';
+import { Card } from './ui/Card';
+import { CheckCircleIcon, DollarSignIcon, TrendingUpIcon, UsersIcon } from './ui/icons';
+import { Modal } from './ui/Modal';
+import { invokeSupabaseFunction } from '../lib/api';
 
 
 export const Dashboard: React.FC = () => {
   const { opportunities, contacts } = useOutletContext<ReturnType<typeof useCrmData>>();
+
+  // --- START DEBUG INTERFACE STATE ---
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
+  const [debugModalTitle, setDebugModalTitle] = useState('');
+  const [debugModalContent, setDebugModalContent] = useState<any>(null);
+  // --- END DEBUG INTERFACE STATE ---
 
   // FIX: Switched from `Object.values` to `Object.keys` to work around a type
   // inference issue where `val` was incorrectly inferred as `unknown`, causing a
@@ -49,51 +53,69 @@ export const Dashboard: React.FC = () => {
   ];
   const COLORS = ['#4f46e5', '#34d399', '#f59e0b', '#ec4899'];
 
-  // --- TEMPORARY DEBUG FUNCTION ---
-  const handleDebugQuery = async () => {
-    console.log("--- DEBUG: ESECUZIONE QUERY SQL ---");
-    try {
-      const { data, error } = await supabase
-        .from('organization_settings')
-        .select('*')
-        .eq('organization_id', 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e')
-        .single();
-
-      if (error) {
-        console.error("Errore durante la query:", error);
-        return;
-      }
-      
-      if (data) {
-        console.log("Risultato query grezzo:", data);
-        console.log("--- Analisi Campi e Tipi ---");
-        for (const [key, value] of Object.entries(data)) {
-          console.log(`Campo: ${key}, Valore:`, value, `, Tipo: ${typeof value}`);
+  // --- START DEBUG INTERFACE LOGIC ---
+    const runDebugAction = async (title: string, action: () => Promise<any>) => {
+        setIsLoading(true);
+        setDebugModalTitle(title);
+        try {
+            const result = await action();
+            console.log(`--- DEBUG [${title}] RESULT ---`);
+            console.log(result);
+            setDebugModalContent(result);
+        } catch (error: any) {
+            console.error(`--- DEBUG [${title}] ERROR ---`, error);
+            const errorMessage = error.message || 'Errore sconosciuto';
+            // Check if error message is a JSON string
+            try {
+                const parsedError = JSON.parse(errorMessage);
+                setDebugModalContent({ error: 'Errore dalla funzione', details: parsedError });
+            } catch (e) {
+                setDebugModalContent({ error: errorMessage, details: error });
+            }
+        } finally {
+            setIsDebugModalOpen(true);
+            setIsLoading(false);
         }
-        console.log("--- Fine Analisi ---");
-      } else {
-        console.log("Nessun record trovato per l'ID specificato.");
-      }
+    };
 
-    } catch (err) {
-      console.error("Errore imprevisto durante l'esecuzione della query:", err);
-    }
-    console.log("--- DEBUG: FINE ESECUZIONE ---");
-  };
-  // --- END TEMPORARY DEBUG FUNCTION ---
+    const handleTestDebugLogsQuery = () => runDebugAction(
+        "Risultati Query: Ultimi 10 Log",
+        () => invokeSupabaseFunction('run-debug-query', { query_name: 'get_latest_logs' })
+    );
+
+    const handleTriggerCheckToken = () => runDebugAction(
+        "Trigger: Check Token Status",
+        () => invokeSupabaseFunction('check-google-token-status', { 
+            organization_id: 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e' 
+        })
+    );
+
+    const handleTriggerCalendarEvents = () => {
+        const timeMin = new Date();
+        const timeMax = new Date();
+        timeMax.setDate(timeMin.getDate() + 1);
+
+        runDebugAction(
+            "Trigger: Get Google Calendar Events",
+            () => invokeSupabaseFunction('get-google-calendar-events', { 
+                organization_id: 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e',
+                timeMin: timeMin.toISOString(),
+                timeMax: timeMax.toISOString()
+            })
+        );
+    };
+
+    const handleClearDebugLogs = () => runDebugAction(
+        "Azione: Pulisci Log di Debug",
+        () => invokeSupabaseFunction('run-debug-query', { query_name: 'clear_logs' })
+    );
+    // --- END DEBUG INTERFACE LOGIC ---
+
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
-        {/* --- TEMPORARY DEBUG BUTTON --- */}
-        <button
-          onClick={handleDebugQuery}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-        >
-          Debug SQL Query
-        </button>
-         {/* --- END TEMPORARY DEBUG BUTTON --- */}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -145,6 +167,52 @@ export const Dashboard: React.FC = () => {
             </ResponsiveContainer>
         </div>
       </div>
+       {/* --- START DEBUG INTERFACE UI --- */}
+        <div className="mt-8 p-4 border-2 border-dashed border-red-400 rounded-lg bg-red-50">
+            <h2 className="text-xl font-bold text-red-700 mb-4">Pannello di Debug Avanzato</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button
+                    onClick={handleTestDebugLogsQuery}
+                    disabled={isLoading}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                >
+                    {isLoading ? 'Caricamento...' : 'Test Debug Logs Query'}
+                </button>
+                <button
+                    onClick={handleTriggerCheckToken}
+                    disabled={isLoading}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
+                >
+                    {isLoading ? 'Caricamento...' : 'Trigger Check Token'}
+                </button>
+                <button
+                    onClick={handleTriggerCalendarEvents}
+                    disabled={isLoading}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+                >
+                    {isLoading ? 'Caricamento...' : 'Trigger Calendar Events'}
+                </button>
+                <button
+                    onClick={handleClearDebugLogs}
+                    disabled={isLoading}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400"
+                >
+                    {isLoading ? 'Caricamento...' : 'Clear Debug Logs'}
+                </button>
+            </div>
+        </div>
+        {/* --- END DEBUG INTERFACE UI --- */}
+
+        {/* --- START DEBUG MODAL --- */}
+        <Modal isOpen={isDebugModalOpen} onClose={() => setIsDebugModalOpen(false)} title={debugModalTitle}>
+            <div className="bg-gray-900 text-white p-4 rounded-md max-h-[60vh] overflow-auto">
+                <pre><code>{JSON.stringify(debugModalContent, null, 2)}</code></pre>
+            </div>
+            <div className="flex justify-end pt-4 border-t mt-4">
+                <button type="button" onClick={() => setIsDebugModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Chiudi</button>
+            </div>
+        </Modal>
+        {/* --- END DEBUG MODAL --- */}
     </div>
   );
 };

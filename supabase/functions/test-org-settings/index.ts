@@ -1,40 +1,77 @@
--- Create debug_logs table for tracking Edge Function debugging
-CREATE TABLE debug_logs (
-    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    logged_at timestamp with time zone DEFAULT now(),
-    function_name text NOT NULL,
-    organization_id text,
-    request_payload jsonb,
-    google_auth_token_value jsonb,
-    step text,
-    error_message text,
-    error_stack text,
-    extra jsonb,
-    created_at timestamp with time zone DEFAULT now()
-);
+// File: supabase/functions/test-org-settings/index.ts
 
--- Add index for better query performance
-CREATE INDEX idx_debug_logs_logged_at ON debug_logs(logged_at DESC);
-CREATE INDEX idx_debug_logs_function_name ON debug_logs(function_name);
-CREATE INDEX idx_debug_logs_organization_id ON debug_logs(organization_id);
+// FIX: Replaced incorrect SQL DDL with a valid Supabase Edge Function.
+// This function is designed for debugging and retrieves all settings for a specific organization.
+// This resolves all TypeScript compilation errors for this file.
 
--- Enable RLS (Row Level Security)
-ALTER TABLE debug_logs ENABLE ROW LEVEL SECURITY;
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
--- Create policy to allow service role full access
-CREATE POLICY "Service role can manage debug_logs"
-    ON debug_logs
-    FOR ALL
-    TO service_role
-    USING (true)
-    WITH CHECK (true);
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { getOrganizationId } from "../_shared/supabase.ts";
 
-COMMENT ON TABLE debug_logs IS 'Debug logging table for Edge Function troubleshooting';
-COMMENT ON COLUMN debug_logs.function_name IS 'Name of the Edge Function that created this log entry';
-COMMENT ON COLUMN debug_logs.organization_id IS 'Organization ID if applicable';
-COMMENT ON COLUMN debug_logs.request_payload IS 'Full request payload received by the function';
-COMMENT ON COLUMN debug_logs.google_auth_token_value IS 'Raw Google auth token data for debugging';
-COMMENT ON COLUMN debug_logs.step IS 'Current step/phase when logging occurred';
-COMMENT ON COLUMN debug_logs.error_message IS 'Error message if any';
-COMMENT ON COLUMN debug_logs.error_stack IS 'Full error stack trace if any';
-COMMENT ON COLUMN debug_logs.extra IS 'Additional debugging data in JSON format';
+serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  try {
+    // This function is for debugging, so we will use an admin client.
+    // We still authenticate the user to ensure they are logged in.
+    await getOrganizationId(req);
+
+    const { organization_id } = await req.json();
+    if (!organization_id) {
+      throw new Error("Il parametro 'organization_id' è obbligatorio per questo test.");
+    }
+
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceRoleKey) {
+      throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
+    }
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+
+    const { data: settings, error: settingsError } = await supabaseAdmin
+      .from('organization_settings')
+      .select('*')
+      .eq('organization_id', organization_id)
+      .maybeSingle();
+
+    if (settingsError) {
+      throw settingsError;
+    }
+    
+    // For comprehensive testing, also fetch subscription data.
+    const { data: subscription, error: subError } = await supabaseAdmin
+      .from('organization_subscriptions')
+      .select('*')
+      .eq('organization_id', organization_id)
+      .maybeSingle();
+      
+    if (subError) {
+        throw subError;
+    }
+
+    const responsePayload = {
+        message: `Impostazioni per l'organizzazione ${organization_id}`,
+        settings: settings || 'Nessuna impostazione trovata.',
+        subscription: subscription || 'Nessuna sottoscrizione trovata.'
+    };
+
+    return new Response(JSON.stringify(responsePayload), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
+  } catch (error) {
+    console.error(`Errore in test-org-settings:`, error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});

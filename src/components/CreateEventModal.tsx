@@ -1,14 +1,15 @@
 // src/components/CreateEventModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
-// FIX: Added CrmEvent to imports for better type safety in the handleSave function.
 import { Contact, Organization, OrganizationSettings, CrmEvent } from '../types';
 import { invokeSupabaseFunction } from '../lib/api';
 import { generateTimeSlots, combineDateAndTime } from '../lib/eventUtils';
 import { Modal } from './ui/Modal';
 import {
     GoogleIcon,
+    InfoIcon,
     SaveIcon,
     TrashIcon,
     WhatsAppIcon
@@ -63,16 +64,20 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     const [busySlots, setBusySlots] = useState<{ start: string, end: string }[]>([]);
     const [isFetchingSlots, setIsFetchingSlots] = useState(false);
     const [isCalendarApiBlocked, setCalendarApiBlocked] = useState(false);
+    const [googleConnectionError, setGoogleConnectionError] = useState<string | null>(null);
 
     const isGoogleConnected = !!organizationSettings?.google_auth_token;
 
     // Fetch busy slots from Google Calendar when the date changes
     useEffect(() => {
-        if (!isOpen || !isGoogleConnected || !formData.date) return;
+        if (isOpen) {
+            setGoogleConnectionError(null);
+        }
+        
+        if (!isOpen || !isGoogleConnected || !formData.date || googleConnectionError) return;
         
         if (isCalendarApiBlocked) {
             console.warn("Chiamata a get-google-calendar-events bloccata a causa di un errore critico precedente.");
-            toast.error("Funzionalità calendario disabilitata. Ricarica la pagina.", { id: 'calendar-blocked-toast' });
             return;
         }
 
@@ -84,12 +89,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 const endOfDay = new Date(formData.date);
                 endOfDay.setHours(23, 59, 59, 999);
 
-                const payload = {
+                const data = await invokeSupabaseFunction('get-google-calendar-events', {
                     timeMin: startOfDay.toISOString(),
                     timeMax: endOfDay.toISOString(),
-                };
-
-                const data = await invokeSupabaseFunction('get-google-calendar-events', payload) as { events: any[] };
+                }) as { events: any[] };
                 
                 const slots = data.events.map((event: any) => ({
                     start: event.start.dateTime,
@@ -97,15 +100,16 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 }));
                 setBusySlots(slots);
             } catch (err: any) {
-                 if (err.message && (err.message.includes('obbligatori'))) {
+                const errorMessage = err.message || '';
+                if (/token|google|autenticazione|credential/i.test(errorMessage.toLowerCase())) {
+                     console.error("Errore di connessione Google rilevato:", err);
+                     setGoogleConnectionError("La connessione con Google Calendar ha un problema.");
+                     // The detailed error toast is already shown by the API helper.
+                } else if (errorMessage.includes('obbligatori')) {
                      const errorMsg = "Errore critico dal backend: parametro mancante. Le chiamate al calendario sono state bloccate per questa sessione.";
                      console.error(errorMsg, err);
                      toast.error("Errore di comunicazione col calendario. Ricarica la pagina.", { duration: 6000 });
                      setCalendarApiBlocked(true);
-                 } else if (err.message && /token|google|autenticazione/i.test(err.message.toLowerCase())) {
-                    console.error("Errore di sessione Google rilevato:", err);
-                    // L'errore dettagliato viene già mostrato dall'helper, non ne mostriamo un altro.
-                    onClose();
                  }
                 setBusySlots([]);
             } finally {
@@ -114,16 +118,17 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         };
 
         fetchBusySlots();
-    }, [isOpen, isGoogleConnected, formData.date, isCalendarApiBlocked, onClose]);
+    }, [isOpen, isGoogleConnected, formData.date, isCalendarApiBlocked, googleConnectionError]);
 
     // Reset form when the modal is opened or the contact changes
     useEffect(() => {
         if (isOpen) {
             setFormData({
                 ...initialFormState,
-                createGoogleEvent: isGoogleConnected,
+                createGoogleEvent: isGoogleConnected && !googleConnectionError,
             });
             setCalendarApiBlocked(false);
+            setGoogleConnectionError(null);
         }
     }, [isOpen, contact, isGoogleConnected]);
 
@@ -187,7 +192,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             const eventEndDate = combineDateAndTime(new Date(formData.date), formData.endTime);
 
             let googleEventId: string | null = null;
-            if (isGoogleConnected && formData.createGoogleEvent) {
+            if (isGoogleConnected && formData.createGoogleEvent && !googleConnectionError) {
                  const googleEvent = await invokeSupabaseFunction('create-google-event', {
                     event_summary: formData.summary,
                     event_description: formData.description,
@@ -222,7 +227,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             onClose();
 
         } catch (err: any) {
-            toast.error(`Errore durante la creazione.`, { id: toastId });
+            toast.dismiss(toastId); // The API helper shows a more detailed toast
             console.error(err);
         } finally {
             setIsSaving(false);
@@ -250,7 +255,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     </div>
                      <div>
                         <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">Ora Inizio *</label>
-                        <select id="startTime" name="startTime" value={formData.startTime} onChange={handleFormChange} required className={inputStyle}>
+                        <select id="startTime" name="startTime" value={formData.startTime} onChange={handleFormChange} required className={inputStyle} disabled={!!googleConnectionError}>
                             <option value="" disabled>Seleziona...</option>
                             {isFetchingSlots ? <option>Caricamento...</option> : timeSlots.map(slot => (
                                 <option key={slot.time} value={slot.time} disabled={!slot.available}>
@@ -261,19 +266,55 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     </div>
                      <div>
                         <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">Ora Fine *</label>
-                         <select id="endTime" name="endTime" value={formData.endTime} onChange={handleFormChange} required className={inputStyle}>
+                         <select id="endTime" name="endTime" value={formData.endTime} onChange={handleFormChange} required className={inputStyle} disabled={!!googleConnectionError}>
                              <option value="" disabled>Seleziona...</option>
                              {timeSlots.map(slot => ( <option key={slot.time} value={slot.time}>{slot.time}</option> ))}
                          </select>
                     </div>
                 </div>
                 
-                 {isGoogleConnected && (
-                    <div className="flex items-center space-x-2 pt-2">
-                        <input type="checkbox" id="createGoogleEvent" name="createGoogleEvent" checked={formData.createGoogleEvent} onChange={handleFormChange} className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
-                        <label htmlFor="createGoogleEvent" className="text-sm text-gray-700 flex items-center"><GoogleIcon className="mr-2" /> Crea anche su Google Calendar</label>
+                {isGoogleConnected ? (
+                    <div className="pt-2">
+                        <div className="flex items-center space-x-2">
+                            <input 
+                                type="checkbox" 
+                                id="createGoogleEvent" 
+                                name="createGoogleEvent" 
+                                checked={formData.createGoogleEvent} 
+                                onChange={handleFormChange} 
+                                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                disabled={!!googleConnectionError}
+                            />
+                            <label 
+                                htmlFor="createGoogleEvent" 
+                                className={`text-sm flex items-center ${googleConnectionError ? 'text-gray-500' : 'text-gray-700'}`}
+                            >
+                                <GoogleIcon className="mr-2" /> 
+                                Crea anche su Google Calendar
+                            </label>
+                        </div>
+                        {googleConnectionError && (
+                            <div className="mt-2 p-2 bg-red-50 text-red-700 text-sm rounded-md flex items-start space-x-2">
+                                <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <span>
+                                    {googleConnectionError}
+                                    {' '}
+                                    <Link to="/settings" className="font-bold underline hover:text-red-800" onClick={onClose}>
+                                        Vai alle impostazioni per riconnettere.
+                                    </Link>
+                                </span>
+                            </div>
+                        )}
                     </div>
-                 )}
+                ) : (
+                    <div className="pt-2 p-2 bg-yellow-50 text-yellow-800 text-sm rounded-md">
+                        Per creare eventi direttamente sul tuo calendario, 
+                        <Link to="/settings" className="font-bold underline hover:text-yellow-900" onClick={onClose}>
+                            {' '}connetti il tuo account Google
+                        </Link>
+                        {' '}nelle impostazioni.
+                    </div>
+                )}
                  
                  <div className="pt-2">
                      <h4 className="text-sm font-medium text-gray-700 mb-2">Promemoria Automatici</h4>

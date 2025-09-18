@@ -6,97 +6,164 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-const TARGET_ORGANIZATION_ID = 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e';
+// Target organization_id for diagnostics
+const TARGET_ORG_ID = 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e';
+
+interface GoogleTokenData {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  scope: string;
+  token_type: string;
+  expiry_date: string;
+}
+
+interface DiagnosticResponse {
+  organization_id: string;
+  record_exists: boolean;
+  token_status: 'missing' | 'null' | 'empty' | 'corrupted' | 'valid' | 'expired';
+  token_data_preview?: string;
+  expiry_date?: string;
+  needs_reconnection: boolean;
+  suggested_action: string;
+  raw_token_type?: string;
+  raw_token_value?: any;
+  timestamp: string;
+}
 
 serve(async (req) => {
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  console.log(`[CHECK-TOKEN-STATUS] Request received at ${new Date().toISOString()}`);
+  
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  };
+
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
 
   try {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!serviceRoleKey) {
-        throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    
+    if (!serviceRoleKey || !supabaseUrl) {
+      throw new Error("Missing Supabase configuration");
     }
 
-    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-
-    const diagnosticReport = {
-        checked_at: new Date().toISOString(),
-        organization_id: TARGET_ORGANIZATION_ID,
-        record_exists: false,
-        token_status: 'missing' as 'missing' | 'null' | 'empty' | 'corrupted' | 'invalid_structure' | 'valid' | 'expired',
-        token_data_preview: null as string | null,
-        expiry_date: null as string | null,
-        is_expired: null as boolean | null,
-        needs_reconnection: true,
-        suggested_action: 'Il record per questa organizzazione non è stato trovato nella tabella `organization_settings`. L\'utente deve completare il flusso di autenticazione Google per la prima volta.',
-    };
-
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    
+    console.log(`[CHECK-TOKEN-STATUS] Checking token status for organization: ${TARGET_ORG_ID}`);
+    
+    // Step 1: Check if record exists
     const { data: settings, error: settingsError } = await supabaseAdmin
       .from('organization_settings')
       .select('google_auth_token')
-      .eq('organization_id', TARGET_ORGANIZATION_ID)
-      .maybeSingle();
+      .eq('organization_id', TARGET_ORG_ID)
+      .single();
 
-    if (settingsError) throw settingsError;
+    const diagnostic: DiagnosticResponse = {
+      organization_id: TARGET_ORG_ID,
+      record_exists: false,
+      token_status: 'missing',
+      needs_reconnection: true,
+      suggested_action: 'Record not found - create organization settings first',
+      timestamp: new Date().toISOString()
+    };
 
-    if (!settings) {
-      // Il record non esiste, il report di default è già corretto.
-      return new Response(JSON.stringify(diagnosticReport), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+    // Step 2: Handle record not found
+    if (settingsError || !settings) {
+      console.log(`[CHECK-TOKEN-STATUS] No record found for organization ${TARGET_ORG_ID}`);
+      diagnostic.suggested_action = 'Organization settings record not found. Please ensure the organization exists and has been properly initialized.';
+      
+      return new Response(JSON.stringify(diagnostic), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 404
       });
     }
 
-    diagnosticReport.record_exists = true;
-    const token = settings.google_auth_token;
+    // Step 3: Record exists, now check token
+    diagnostic.record_exists = true;
+    const rawToken = settings.google_auth_token;
+    diagnostic.raw_token_value = rawToken;
+    diagnostic.raw_token_type = typeof rawToken;
 
-    if (token === null) {
-        diagnosticReport.token_status = 'null';
-        diagnosticReport.suggested_action = 'Il record esiste, ma il campo `google_auth_token` è nullo. L\'utente deve connettere o riconnettere il proprio account Google.';
-    } else if (token === '') {
-        diagnosticReport.token_status = 'empty';
-        diagnosticReport.suggested_action = 'Il campo `google_auth_token` è una stringa vuota. L\'utente deve riconnettere il proprio account Google.';
+    console.log(`[CHECK-TOKEN-STATUS] Raw token type: ${typeof rawToken}`);
+    console.log(`[CHECK-TOKEN-STATUS] Raw token preview: ${String(rawToken).substring(0, 100)}...`);
+
+    // Step 4: Check token status
+    if (rawToken === null) {
+      diagnostic.token_status = 'null';
+      diagnostic.suggested_action = 'Google auth token is null - user needs to connect Google account';
+      diagnostic.token_data_preview = 'null';
+    } else if (rawToken === '' || rawToken === undefined) {
+      diagnostic.token_status = 'empty';
+      diagnostic.suggested_action = 'Google auth token is empty - user needs to connect Google account';
+      diagnostic.token_data_preview = 'empty string';
     } else {
-        diagnosticReport.token_data_preview = token.substring(0, 50) + (token.length > 50 ? '...' : '');
-        try {
-            const tokenData = JSON.parse(token);
-
-            if (!tokenData.access_token || !tokenData.refresh_token || !tokenData.expiry_date) {
-                diagnosticReport.token_status = 'invalid_structure';
-                diagnosticReport.suggested_action = 'Il token è un JSON valido ma mancano campi essenziali (access_token, refresh_token, o expiry_date). L\'utente deve riconnettere il suo account.';
-            } else {
-                diagnosticReport.expiry_date = tokenData.expiry_date;
-                const isExpired = new Date(tokenData.expiry_date).getTime() < Date.now();
-                diagnosticReport.is_expired = isExpired;
-                
-                if (isExpired) {
-                    diagnosticReport.token_status = 'expired';
-                    diagnosticReport.needs_reconnection = false; // Il sistema dovrebbe provare a rinfrescarlo
-                    diagnosticReport.suggested_action = 'Il token è valido ma scaduto. Il sistema tenterà di rinfrescarlo automaticamente. Se le chiamate API continuano a fallire, l\'utente potrebbe dover riconnettere il suo account.';
-                } else {
-                    diagnosticReport.token_status = 'valid';
-                    diagnosticReport.needs_reconnection = false;
-                    diagnosticReport.suggested_action = 'Il token è valido e attivo. L\'integrazione con Google Calendar dovrebbe funzionare correttamente.';
-                }
-            }
-        } catch (e) {
-            diagnosticReport.token_status = 'corrupted';
-            diagnosticReport.suggested_action = 'Il contenuto del campo `google_auth_token` non è un JSON valido. L\'utente deve riconnettere il suo account Google per generare un token valido.';
+      // ROBUST TOKEN PARSING LOGIC - PATCH APPLIED
+      let tokenData: GoogleTokenData;
+      try {
+        if (typeof rawToken === "string") {
+          tokenData = JSON.parse(rawToken);
+          diagnostic.token_data_preview = rawToken.substring(0, 50) + '...';
+        } else {
+          tokenData = rawToken;
+          diagnostic.token_data_preview = JSON.stringify(rawToken).substring(0, 50) + '...';
         }
+
+        // Step 5: Validate token structure
+        if (!tokenData || !tokenData.access_token || !tokenData.refresh_token || !tokenData.expiry_date) {
+          diagnostic.token_status = 'corrupted';
+          diagnostic.suggested_action = 'Token exists but is missing required fields (access_token, refresh_token, expiry_date) - user needs to reconnect Google account';
+        } else {
+          // Step 6: Check if token is expired
+          diagnostic.expiry_date = tokenData.expiry_date;
+          const isExpired = new Date(tokenData.expiry_date).getTime() < Date.now();
+          
+          if (isExpired) {
+            diagnostic.token_status = 'expired';
+            diagnostic.suggested_action = 'Token is valid but expired - automatic refresh should handle this, if it fails user needs to reconnect';
+            diagnostic.needs_reconnection = false; // Let auto-refresh try first
+          } else {
+            diagnostic.token_status = 'valid';
+            diagnostic.suggested_action = 'Token is valid and not expired - Google integration should work';
+            diagnostic.needs_reconnection = false;
+          }
+        }
+      } catch (parseError) {
+        console.error(`[CHECK-TOKEN-STATUS] JSON parse error:`, parseError);
+        diagnostic.token_status = 'corrupted';
+        diagnostic.suggested_action = `Token parsing failed: ${parseError.message} - user needs to reconnect Google account`;
+        diagnostic.token_data_preview = `Parse error: ${String(rawToken).substring(0, 50)}...`;
+      }
     }
 
-    return new Response(JSON.stringify(diagnosticReport), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+    console.log(`[CHECK-TOKEN-STATUS] Final diagnostic:`, diagnostic);
+    
+    return new Response(JSON.stringify(diagnostic, null, 2), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
     });
 
   } catch (error) {
-    console.error("Errore in check-google-token-status:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+    console.error(`[CHECK-TOKEN-STATUS] Error:`, error);
+    
+    const errorResponse: DiagnosticResponse = {
+      organization_id: TARGET_ORG_ID,
+      record_exists: false,
+      token_status: 'missing',
+      needs_reconnection: true,
+      suggested_action: `System error: ${error.message}`,
+      timestamp: new Date().toISOString()
+    };
+    
+    return new Response(JSON.stringify(errorResponse), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 500
     });
   }
 });

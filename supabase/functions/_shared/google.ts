@@ -35,11 +35,22 @@ export async function getGoogleAccessToken(supabaseAdmin: SupabaseClient, organi
     throw new Error("Impostazioni di integrazione Google non trovate o token mancante. Per favore, connetti l'account Google nelle impostazioni.");
   }
   
+  // ROBUST TOKEN PARSING LOGIC - PATCH APPLIED
   let tokenData: GoogleTokenData;
   try {
-    tokenData = JSON.parse(settings.google_auth_token);
-  } catch(e) {
-    throw new Error("Il token di autenticazione Google salvato è corrotto. Per favore, riconnetti l'account.");
+    if (typeof settings.google_auth_token === "string") {
+      tokenData = JSON.parse(settings.google_auth_token);
+    } else {
+      tokenData = settings.google_auth_token;
+    }
+  } catch (e) {
+    console.error("[GOOGLE TOKEN PARSE ERROR] Raw data:", settings.google_auth_token, "Type:", typeof settings.google_auth_token);
+    throw new Error("GoogleAuthToken parse error: " + String(settings.google_auth_token));
+  }
+  
+  if (!tokenData || !tokenData.access_token) {
+    console.error("[GOOGLE TOKEN STRUCTURE ERROR] Parsed data:", tokenData);
+    throw new Error("Google token not available: Token not found or structure invalid");
   }
 
   // 2. Check if the token is expired (with a 60-second buffer)

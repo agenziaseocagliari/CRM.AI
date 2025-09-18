@@ -12,27 +12,65 @@ function getOrganizationIdFromStorage(): string | null {
 }
 
 /**
+ * Creates a comprehensive diagnostic report string for debugging.
+ * @param userMessage The user-facing error message.
+ * @param functionName The name of the function that was called.
+ * @param rawErrorPayload The raw response from the backend (JSON or text).
+ * @param errorObject The caught JavaScript Error object.
+ * @returns A formatted string with all diagnostic information.
+ */
+function createDiagnosticReport(
+    userMessage: string,
+    functionName: string,
+    rawErrorPayload: any,
+    errorObject?: Error
+): string {
+    let report = `==== Guardian AI CRM Diagnostic Report ====\n\n`;
+    report += `Function: ${functionName}\n`;
+    report += `Timestamp: ${new Date().toISOString()}\n`;
+    report += `User Message: ${userMessage}\n\n`;
+    
+    if (errorObject) {
+        report += `--- JAVASCRIPT ERROR ---\n`;
+        report += `Name: ${errorObject.name}\n`;
+        report += `Message: ${errorObject.message}\n`;
+        report += `Stack: ${errorObject.stack}\n\n`;
+    }
+
+    report += `--- BACKEND RESPONSE ---\n`;
+    report += `Type: ${typeof rawErrorPayload}\n`;
+    report += `Raw Payload:\n${typeof rawErrorPayload === 'string' ? rawErrorPayload : JSON.stringify(rawErrorPayload, null, 2)}\n`;
+    
+    report += `\n=======================================\n`;
+    return report;
+}
+
+
+/**
  * Displays a detailed and actionable error toast.
  * @param message The main error message to display to the user.
- * @param diagnosticData The detailed diagnostic data to be copied.
+ * @param diagnosticReport The full diagnostic report to be copied.
  */
-function showErrorToast(message: string, diagnosticData?: object | string) {
-    const diagnosticString = diagnosticData 
-        ? typeof diagnosticData === 'string' ? diagnosticData : JSON.stringify(diagnosticData, null, 2)
-        : 'Nessun dato diagnostico disponibile.';
-        
+function showErrorToast(message: string, diagnosticReport: string) {
+    // Check if the error suggests a Google reconnection is needed.
+    const needsReconnect = /token|google|autenticazione|connetti|credential/i.test(diagnosticReport.toLowerCase());
+    
     toast.error(
         (t) => (
-            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', maxWidth: '400px' } },
-                React.createElement('p', { className: 'font-semibold text-center' }, message),
-                React.createElement('div', { className: "flex items-center space-x-2 mt-2" },
+            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'start', gap: '12px', maxWidth: '400px' } },
+                React.createElement('p', { className: 'font-semibold text-center w-full' }, message),
+                needsReconnect && React.createElement('p', { className: 'text-sm text-center w-full' },
+                    'Potrebbe essere necessario riconnettere il tuo account Google. ',
+                    React.createElement('span', { className: 'font-bold' }, 'Vai su Impostazioni -> Integrazioni.')
+                ),
+                React.createElement('div', { className: "flex items-center space-x-2 w-full justify-center" },
                     React.createElement('button', {
                         onClick: () => {
-                            navigator.clipboard.writeText(diagnosticString);
+                            navigator.clipboard.writeText(diagnosticReport);
                             toast.success('Diagnostica copiata!', { id: 'copy-toast', duration: 2000 });
                         },
                         className: 'bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm hover:bg-gray-300'
-                    }, 'Copia Diagnosi'),
+                    }, 'Copia Diagnosi per Supporto'),
                     React.createElement('button', {
                         onClick: () => toast.dismiss(t.id),
                         className: 'bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600'
@@ -60,14 +98,13 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
     if (!user) {
         const errorMsg = "Utente non autenticato. Effettua nuovamente il login per continuare.";
         console.error("[API Helper] Pre-flight check failed: User not authenticated.");
-        showErrorToast(errorMsg);
+        showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, "Pre-flight check failed"));
         throw new Error(errorMsg);
     }
 
     // 2. Prepare payload with organization_id.
     const finalPayload: any = { ...payload };
     
-    // QA Debug Mode: Allow overriding organization_id via URL parameters.
     const urlParams = new URLSearchParams(window.location.search);
     const isDebugMode = urlParams.get('debug_mode') === 'true';
     const debugOrgId = urlParams.get('debug_org_id');
@@ -75,29 +112,21 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
     if (isDebugMode && debugOrgId) {
         finalPayload.organization_id = debugOrgId;
         console.warn(`[API Helper] DEBUG MODE: Overriding organization_id with '${debugOrgId}' for function '${functionName}'.`);
-        toast.custom((t) => (
-            React.createElement('div', { className: `${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-yellow-100 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 p-4`},
-              React.createElement('div', { className: 'flex-1 w-0' },
-                  React.createElement('p', { className: 'text-sm font-medium text-yellow-800' }, 'Modalità Debug Attiva'),
-                  React.createElement('p', { className: 'mt-1 text-sm text-yellow-700' }, '`organization_id` è stato forzato nel payload.')
-              )
-            )
-        ), { id: 'debug-mode-toast' });
-    } else if (!finalPayload.organization_id) { // Only add if not already present
+    } else if (!finalPayload.organization_id) {
         const orgId = getOrganizationIdFromStorage();
         if (!orgId) {
-            const errorMsg = 'ID Organizzazione non impostato. Impossibile completare la richiesta. Ricarica la pagina o effettua nuovamente il login.';
+            const errorMsg = 'ID Organizzazione non impostato. Ricarica la pagina o effettua nuovamente il login.';
             console.error(`[API Helper] CRITICAL: organization_id is missing for function '${functionName}'.`, { payload });
-            showErrorToast(errorMsg);
+            showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, "organization_id missing from localStorage"));
             throw new Error(errorMsg);
         }
         finalPayload.organization_id = orgId;
     }
     
-    // 3. Get session and prepare headers.
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session) {
-        showErrorToast('Sessione utente non trovata o scaduta.');
+        const errorMsg = 'Sessione utente non trovata o scaduta.';
+        showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, sessionError || 'No session found'));
         throw new Error(sessionError?.message || 'Invalid session.');
     }
 
@@ -111,7 +140,6 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         'apikey': supabaseAnonKey
     };
     
-    // 4. Fetch logic with try/catch.
     try {
         const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
             method: 'POST',
@@ -119,46 +147,52 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             body: JSON.stringify(finalPayload),
         });
 
-        // 5. Advanced response handling.
         if (!response.ok) {
             const errorText = await response.text();
             let errorJson: any = null;
-            try { errorJson = JSON.parse(errorText); } catch (e) { /* ignore if not JSON */ }
+            try { errorJson = JSON.parse(errorText); } catch (e) { /* ignore */ }
             
-            console.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`);
-            console.dir(errorJson || errorText);
+            console.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`, errorJson || errorText);
 
-            const isAuthError = response.status === 401 || response.status === 403 || (errorText && errorText.includes("organization_id"));
+            const isAuthError = response.status === 401 || response.status === 403 || (errorText && /organization_id|jwt|token/i.test(errorText));
             
-            // 6. Automatic Retry Logic.
             if (isAuthError && !isRetry) {
                 console.warn(`[API Helper] Auth error on '${functionName}'. Attempting session refresh and one retry...`);
                 await supabase.auth.refreshSession();
-                return invokeSupabaseFunction(functionName, payload, true); // Recursive call for retry
+                return invokeSupabaseFunction(functionName, payload, true);
             }
             
-            // If retry fails or it's not an auth error, show toast and throw.
             const userMessage = errorJson?.error || `Errore del server (${response.status})`;
-            showErrorToast(userMessage, errorJson?.diagnostic || errorJson || errorText);
+            const diagnosticReport = createDiagnosticReport(userMessage, functionName, errorJson || errorText);
+            showErrorToast(userMessage, diagnosticReport);
             throw new Error(userMessage);
         }
         
         const data = await response.json();
-        console.log(`[API Helper] OK response from '${functionName}'. Full response:`);
-        console.dir(data); // Log success response as requested.
+        console.log(`[API Helper] OK response from '${functionName}'.`);
+        console.dir(data);
 
-        // Handle cases where the backend returns 200 OK but with an error payload.
         if (data.error) {
             console.warn(`[API Helper] Function '${functionName}' returned 200 OK but with an error payload.`);
-            showErrorToast(data.error, data.diagnostic || data);
+            const diagnosticReport = createDiagnosticReport(data.error, functionName, data);
+            showErrorToast(data.error, diagnosticReport);
             throw new Error(data.error);
         }
 
         return data;
 
     } catch (error) {
+        if (error instanceof Error && (error.message.includes('Errore del server') || error.message.includes('ID Organizzazione non impostato'))) {
+            throw error;
+        }
         console.error(`[API Helper] Network or unexpected error calling '${functionName}':`, error);
-        // Re-throw the error so the calling component can handle its own state (e.g., stop loading spinners).
+        const diagnosticReport = createDiagnosticReport(
+            'Errore di rete o imprevisto.',
+            functionName,
+            "Nessuna risposta dal backend.",
+            error as Error
+        );
+        showErrorToast('Errore di rete o imprevisto. Controlla la console per i dettagli.', diagnosticReport);
         throw error;
     }
 }

@@ -64,10 +64,41 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             }
             setIsFetchingSlots(true);
             try {
-                // DEBUG: Allineamento e logging del payload per `get-google-calendar-events`
-                const dateString = selectedDate.toISOString().split('T')[0];
-                const payload = { date: dateString };
-                console.log('[DEBUG] Preparazione chiamata a get-google-calendar-events con payload:', payload);
+                // Allineamento payload come da richiesta
+                let googleAuthTokenData;
+                try {
+                    googleAuthTokenData = JSON.parse(organizationSettings.google_auth_token);
+                } catch (e) {
+                    toast.error("Token di autenticazione Google corrotto. Riconnetti l'account nelle Impostazioni.");
+                    setTimeSlots(generateTimeSlots(selectedDate, []));
+                    setIsFetchingSlots(false);
+                    return;
+                }
+                
+                const accessToken = googleAuthTokenData.access_token;
+                const calendarId = 'primary';
+                
+                const timeMinDate = new Date(selectedDate);
+                timeMinDate.setHours(0, 0, 0, 0);
+                const timeMin = timeMinDate.toISOString();
+
+                const timeMaxDate = new Date(selectedDate);
+                timeMaxDate.setHours(23, 59, 59, 999);
+                const timeMax = timeMaxDate.toISOString();
+
+                // Validazione frontend prima dell'invio
+                if (!accessToken || !calendarId || !timeMin || !timeMax) {
+                    toast.error("Parametro mancante per la richiesta a Google Calendar.", { duration: 5000 });
+                    console.error("Bloccata chiamata a get-google-calendar-events per parametro mancante.", { accessToken: !!accessToken, calendarId, timeMin, timeMax });
+                    setTimeSlots(generateTimeSlots(selectedDate, []));
+                    setIsFetchingSlots(false);
+                    return;
+                }
+
+                const payload = { accessToken, calendarId, timeMin, timeMax };
+
+                // Log del payload prima della fetch
+                console.log('[DEBUG] Chiamata a get-google-calendar-events con payload:', payload);
 
                 const data = await invokeSupabaseFunction(
                     'get-google-calendar-events',

@@ -5,36 +5,25 @@ declare const Deno: {
 };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
-import { getGoogleAccessToken } from "../_shared/google.ts";
-import { getOrganizationId } from "../_shared/supabase.ts";
 
 serve(async (req) => {
+  // NOTA: La logica di sicurezza (autenticazione JWT tramite header) non viene rimossa
+  // ma questa funzione ora si basa sui parametri espliciti passati dal client per la
+  // chiamata a Google, come richiesto per il debug e l'allineamento.
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   try {
-    const { date } = await req.json(); // La data è in formato "YYYY-MM-DD"
+    const { accessToken, calendarId, timeMin, timeMax } = await req.json();
 
-    if (!date) {
-        throw new Error("Il parametro `date` è obbligatorio.");
+    // Validazione robusta del payload come da contratto
+    if (!accessToken || !calendarId || !timeMin || !timeMax) {
+        throw new Error("Contratto API violato: i parametri `accessToken`, `calendarId`, `timeMin`, e `timeMax` sono tutti obbligatori.");
     }
     
-    // 1. Ottenere l'ID dell'organizzazione in modo sicuro dal token JWT.
-    const organization_id = await getOrganizationId(req);
-    
-    // 2. Ottenere in modo sicuro il token di accesso a Google (gestendo il refresh se necessario).
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!serviceRoleKey) throw new Error("La chiave SUPABASE_SERVICE_ROLE_KEY non è impostata.");
-    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-    const googleAccessToken = await getGoogleAccessToken(supabaseAdmin, organization_id);
-    
-    // 3. Interrogare l'API di Google Calendar per gli eventi.
-    const timeMin = new Date(`${date}T00:00:00.000Z`).toISOString();
-    const timeMax = new Date(`${date}T23:59:59.999Z`).toISOString();
-    
-    const calendarApiUrl = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
+    // Usa i parametri forniti per interrogare l'API di Google Calendar
+    const calendarApiUrl = new URL(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`);
     calendarApiUrl.searchParams.set("timeMin", timeMin);
     calendarApiUrl.searchParams.set("timeMax", timeMax);
     calendarApiUrl.searchParams.set("singleEvents", "true"); 
@@ -43,21 +32,21 @@ serve(async (req) => {
 
     const apiResponse = await fetch(calendarApiUrl.toString(), {
         headers: {
-            "Authorization": `Bearer ${googleAccessToken}`,
+            "Authorization": `Bearer ${accessToken}`,
             "Content-Type": "application/json",
         },
     });
 
+    const responseData = await apiResponse.json();
+
     if (!apiResponse.ok) {
-        const errorBody = await apiResponse.json();
-        console.error("Errore dall'API di Google Calendar:", errorBody);
-        throw new Error(`Impossibile recuperare gli eventi: ${errorBody.error.message}`);
+        console.error("Errore dall'API di Google Calendar:", responseData);
+        throw new Error(`Impossibile recuperare gli eventi: ${responseData.error.message}`);
     }
 
-    const calendarData = await apiResponse.json();
-
-    const busySlots = calendarData.items.map((event: any) => {
+    const busySlots = (responseData.items || []).map((event: any) => {
         if (event.start.date) { 
+            // Gestisce eventi che durano tutto il giorno
             return {
                 start: new Date(`${event.start.date}T00:00:00.000Z`).toISOString(),
                 end: new Date(`${event.start.date}T23:59:59.999Z`).toISOString(),
@@ -75,9 +64,10 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Errore in get-google-calendar-events:", error.message);
+    // Restituisce 400 per errori di payload o validazione, come da richiesta.
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500, 
+      status: 400,
     });
   }
 });

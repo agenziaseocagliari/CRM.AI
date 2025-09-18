@@ -1,181 +1,164 @@
-import React from 'react'
-import { toast } from 'react-hot-toast'
-import { supabase } from './supabaseClient'
+import React from 'react';
+import { toast } from 'react-hot-toast';
+import { supabase } from './supabaseClient';
 
 /**
- * Displays a detailed authentication error toast with an option to copy diagnostic data.
- * @param toastId A unique ID for the toast.
- * @param diagnosticData A string containing diagnostic information.
+ * Retrieves the current organization ID from localStorage.
+ * This is populated by the useCrmData hook after the user logs in.
+ * @returns {string | null} The organization ID or null if not found.
  */
-const handleAuthErrorToast = (toastId?: string, diagnosticData?: string) => {
-  const options = { id: toastId, duration: 15000 };
-  toast.error(
-    t =>
-      React.createElement(
-        'div',
-        { className: 'text-center flex flex-col items-center' },
-        React.createElement('span', { className: 'font-semibold' }, "La tua sessione o la connessione sono scadute."),
-        React.createElement(
-          'a',
-          {
-            href: '/settings',
-            onClick: () => toast.dismiss(t.id),
-            className: 'block mt-2 font-bold underline text-indigo-600 hover:text-indigo-500'
-          },
-          "Verifica nelle Impostazioni"
-        ),
-        diagnosticData && React.createElement(
-            'button',
-            { 
-                onClick: () => {
-                    navigator.clipboard.writeText(diagnosticData);
-                    toast.success('Dettagli errore copiati negli appunti!', { id: 'copy-toast', duration: 3000 });
-                },
-                className: 'block mt-3 w-full text-xs bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-300'
-            },
-            "Copia Dettagli per Supporto"
-        )
-      ),
-    options
-  )
+function getOrganizationIdFromStorage(): string | null {
+    return localStorage.getItem('organization_id');
 }
 
 /**
- * Helper centralizzato per chiamare le Supabase Edge Function con autenticazione solida,
- * logica di retry e diagnostica avanzata.
- * Invocare sempre questa funzione e MAI fetch nativo o wrapper non documentati.
+ * Displays a detailed and actionable error toast.
+ * @param message The main error message to display to the user.
+ * @param diagnosticData The detailed diagnostic data to be copied.
  */
-export async function invokeSupabaseFunction(functionName: string, payload: object = {}, isRetry: boolean = false) {
-  console.log(`[API Helper] Invocazione di '${functionName}'...`, { isRetry, payload });
-
-  // Pre-flight check: Assicurati che l'utente sia loggato prima di procedere.
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    console.error("[API Helper] Pre-flight check fallito: Utente non autenticato.");
-    handleAuthErrorToast('unauthenticated-user-toast');
-    throw new Error("Utente non autenticato. Effettua nuovamente il login per continuare.");
-  }
-  console.log(`[API Helper] Pre-flight check superato per l'utente: ${user.id}`);
-
-
-  const supabaseUrl = process.env.VITE_SUPABASE_URL
-  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Le variabili d'ambiente VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY non sono configurate.")
-  }
-
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) throw new Error(`Errore nel recupero della sessione: ${sessionError.message}`)
-
-  if (!session) {
-    handleAuthErrorToast('no-session-toast')
-    throw new Error("Sessione utente non trovata. Effettua nuovamente il login.")
-  }
-
-  const functionUrl = `${supabaseUrl}/functions/v1/${functionName}`
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${session.access_token}`,
-    'apikey': supabaseAnonKey
-  }
-  
-  console.log(`[API Helper] Headers per '${functionName}':`, {
-        'Content-Type': headers['Content-Type'],
-        'Authorization': headers['Authorization'] ? 'Bearer [REDACTED]' : 'N/A',
-        'apikey': headers['apikey'] ? '[REDACTED]' : 'N/A',
-    });
-    
-  // (QA ONLY) Fallback per organization_id nel body se in modalità debug
-  let finalPayload = { ...payload };
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('debug_mode') === 'true') {
-      const debugOrgId = urlParams.get('debug_org_id');
-      if (debugOrgId) {
-          (finalPayload as any).organization_id = debugOrgId;
-          console.warn(`[API Helper] MODO DEBUG ATTIVO: Aggiunto organization_id=${debugOrgId} al payload per '${functionName}'.`);
-          // FIX: Replaced JSX with React.createElement to resolve parsing errors in a .ts file.
-          // This ensures the code is valid TypeScript and avoids cascading scope-related errors.
-          toast.custom((t) => (
-              React.createElement('div', { className: `${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-yellow-100 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 p-4`},
-                React.createElement('div', { className: 'flex-1 w-0' },
-                    React.createElement('p', { className: 'text-sm font-medium text-yellow-800' }, 'Modalità Debug Attiva'),
-                    React.createElement('p', { className: 'mt-1 text-sm text-yellow-700' }, '`organization_id` è stato forzato nel payload.')
+function showErrorToast(message: string, diagnosticData?: object | string) {
+    const diagnosticString = diagnosticData 
+        ? typeof diagnosticData === 'string' ? diagnosticData : JSON.stringify(diagnosticData, null, 2)
+        : 'Nessun dato diagnostico disponibile.';
+        
+    toast.error(
+        (t) => (
+            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', maxWidth: '400px' } },
+                React.createElement('p', { className: 'font-semibold text-center' }, message),
+                React.createElement('div', { className: "flex items-center space-x-2 mt-2" },
+                    React.createElement('button', {
+                        onClick: () => {
+                            navigator.clipboard.writeText(diagnosticString);
+                            toast.success('Diagnostica copiata!', { id: 'copy-toast', duration: 2000 });
+                        },
+                        className: 'bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm hover:bg-gray-300'
+                    }, 'Copia Diagnosi'),
+                    React.createElement('button', {
+                        onClick: () => toast.dismiss(t.id),
+                        className: 'bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600'
+                    }, 'Chiudi')
                 )
+            )
+        ),
+        { duration: 15000, id: `error-toast-${Date.now()}` }
+    );
+}
+
+/**
+ * Centralized helper to invoke Supabase Edge Functions with robust authentication,
+ * retry logic, and advanced diagnostics.
+ * @param functionName The name of the Edge Function to invoke.
+ * @param payload The JSON payload to send to the function.
+ * @param isRetry A flag to prevent infinite retry loops.
+ * @returns {Promise<any>} A promise that resolves with the function's response data.
+ */
+export async function invokeSupabaseFunction(functionName: string, payload: object = {}, isRetry: boolean = false): Promise<any> {
+    console.log(`[API Helper] Invoking '${functionName}'...`, { isRetry });
+
+    // 1. Pre-flight security check: Ensure a user is logged in.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        const errorMsg = "Utente non autenticato. Effettua nuovamente il login per continuare.";
+        console.error("[API Helper] Pre-flight check failed: User not authenticated.");
+        showErrorToast(errorMsg);
+        throw new Error(errorMsg);
+    }
+
+    // 2. Prepare payload with organization_id.
+    const finalPayload: any = { ...payload };
+    
+    // QA Debug Mode: Allow overriding organization_id via URL parameters.
+    const urlParams = new URLSearchParams(window.location.search);
+    const isDebugMode = urlParams.get('debug_mode') === 'true';
+    const debugOrgId = urlParams.get('debug_org_id');
+
+    if (isDebugMode && debugOrgId) {
+        finalPayload.organization_id = debugOrgId;
+        console.warn(`[API Helper] DEBUG MODE: Overriding organization_id with '${debugOrgId}' for function '${functionName}'.`);
+        toast.custom((t) => (
+            React.createElement('div', { className: `${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-yellow-100 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 p-4`},
+              React.createElement('div', { className: 'flex-1 w-0' },
+                  React.createElement('p', { className: 'text-sm font-medium text-yellow-800' }, 'Modalità Debug Attiva'),
+                  React.createElement('p', { className: 'mt-1 text-sm text-yellow-700' }, '`organization_id` è stato forzato nel payload.')
               )
-          ), { id: 'debug-org-id-toast' });
-      }
-  }
-
-
-  try {
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(finalPayload),
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        let errorJson: any = null;
-        let diagnosticDataForToast: string | undefined = undefined;
-
-        // Logga la risposta di errore completa in modo strutturato.
-        try {
-            errorJson = JSON.parse(errorText);
-            console.error(`[API Helper] Errore da '${functionName}' (${response.status}). Risposta completa:`);
-            // Usiamo console.dir per un output navigabile nell'inspector del browser.
-            console.dir(errorJson);
-        } catch (e) {
-            console.error(`[API Helper] Errore non-JSON da '${functionName}' (${response.status}):`, errorText);
+            )
+        ), { id: 'debug-mode-toast' });
+    } else if (!finalPayload.organization_id) { // Only add if not already present
+        const orgId = getOrganizationIdFromStorage();
+        if (!orgId) {
+            const errorMsg = 'ID Organizzazione non impostato. Impossibile completare la richiesta. Ricarica la pagina o effettua nuovamente il login.';
+            console.error(`[API Helper] CRITICAL: organization_id is missing for function '${functionName}'.`, { payload });
+            showErrorToast(errorMsg);
+            throw new Error(errorMsg);
         }
-        
-        // Prepara i dati diagnostici da mostrare all'utente, dando priorità al campo 'diagnostic' del backend.
-        if (errorJson) {
-            if (errorJson.diagnostic) {
-                diagnosticDataForToast = JSON.stringify(errorJson.diagnostic, null, 2);
-            } else {
-                diagnosticDataForToast = JSON.stringify(errorJson, null, 2);
+        finalPayload.organization_id = orgId;
+    }
+    
+    // 3. Get session and prepare headers.
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+        showErrorToast('Sessione utente non trovata o scaduta.');
+        throw new Error(sessionError?.message || 'Invalid session.');
+    }
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) throw new Error("Supabase URL or Anon Key not configured.");
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey
+    };
+    
+    // 4. Fetch logic with try/catch.
+    try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(finalPayload),
+        });
+
+        // 5. Advanced response handling.
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorJson: any = null;
+            try { errorJson = JSON.parse(errorText); } catch (e) { /* ignore if not JSON */ }
+            
+            console.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`);
+            console.dir(errorJson || errorText);
+
+            const isAuthError = response.status === 401 || response.status === 403 || (errorText && errorText.includes("organization_id"));
+            
+            // 6. Automatic Retry Logic.
+            if (isAuthError && !isRetry) {
+                console.warn(`[API Helper] Auth error on '${functionName}'. Attempting session refresh and one retry...`);
+                await supabase.auth.refreshSession();
+                return invokeSupabaseFunction(functionName, payload, true); // Recursive call for retry
             }
-        } else {
-            diagnosticDataForToast = errorText;
-        }
-
-        const isAuthError = response.status === 401 || response.status === 403 || (errorText && (errorText.includes("MISSING_ORGANIZATION_ID") || errorText.includes("organization_id is required") || errorText.includes("non autenticato")));
-
-        if (isAuthError && !isRetry) {
-            console.warn(`[API Helper] Errore di autenticazione (${response.status}) su '${functionName}'. Tento un nuovo tentativo automatico...`);
-            return invokeSupabaseFunction(functionName, payload, true); // Esegui il retry
+            
+            // If retry fails or it's not an auth error, show toast and throw.
+            const userMessage = errorJson?.error || `Errore del server (${response.status})`;
+            showErrorToast(userMessage, errorJson?.diagnostic || errorJson || errorText);
+            throw new Error(userMessage);
         }
         
-        if (isAuthError || functionName.includes('calendar')) {
-             handleAuthErrorToast('final-error-toast', diagnosticDataForToast);
+        const data = await response.json();
+        console.log(`[API Helper] OK response from '${functionName}'. Full response:`);
+        console.dir(data); // Log success response as requested.
+
+        // Handle cases where the backend returns 200 OK but with an error payload.
+        if (data.error) {
+            console.warn(`[API Helper] Function '${functionName}' returned 200 OK but with an error payload.`);
+            showErrorToast(data.error, data.diagnostic || data);
+            throw new Error(data.error);
         }
 
-        throw new Error(errorJson?.error || errorJson?.message || `Errore del server (${response.status}): ${errorText}`);
-    }
+        return data;
 
-    const responseData = await response.json();
-    console.log(`[API Helper] Risposta OK da '${functionName}'.`);
-    
-    if (responseData && responseData.error) {
-        const errorMessage = responseData.error.toString().toLowerCase();
-        if (
-            errorMessage.includes("authenticate") ||
-            errorMessage.includes("token") ||
-            errorMessage.includes("non autenticato") ||
-            errorMessage.includes("accesso negato")
-        ) {
-            const diagnosticData = JSON.stringify(responseData.diagnostic || responseData, null, 2);
-            handleAuthErrorToast('logic-auth-error-toast', diagnosticData);
-        }
-        throw new Error(responseData.error);
+    } catch (error) {
+        console.error(`[API Helper] Network or unexpected error calling '${functionName}':`, error);
+        // Re-throw the error so the calling component can handle its own state (e.g., stop loading spinners).
+        throw error;
     }
-    
-    return responseData;
-
-  } catch(error) {
-      console.error(`[API Helper] Errore di rete o imprevisto durante la chiamata a '${functionName}':`, error);
-      throw error; // Rilancia l'errore per essere gestito dal componente chiamante
-  }
 }

@@ -223,7 +223,8 @@ export const Contacts: React.FC = () => {
             setGeneratedContent(data.email);
             toast.success('Email generata!', { id: toastId });
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            toast.error(`Errore durante la generazione.`, { id: toastId });
+            console.error(err);
         } finally {
             setIsGenerating(false);
         }
@@ -243,7 +244,8 @@ export const Contacts: React.FC = () => {
             setGeneratedContent(data.message);
             toast.success('Messaggio pronto!', { id: toastId });
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            toast.error(`Errore durante la creazione.`, { id: toastId });
+            console.error(err);
         } finally {
             setIsGenerating(false);
         }
@@ -262,7 +264,8 @@ export const Contacts: React.FC = () => {
             toast.success('Messaggio WhatsApp inviato!', { id: toastId });
             handleCloseModals();
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            toast.error(`Errore durante l'invio.`, { id: toastId });
+            console.error(err);
         } finally {
             setIsSaving(false);
         }

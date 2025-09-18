@@ -116,7 +116,8 @@ export const Forms: React.FC = () => {
 
         } catch (err: any) {
             console.error("Errore dettagliato generazione form:", err);
-            toast.error(`Impossibile generare il form: ${err.message}`, { id: toastId });
+            // The error toast is now handled by invokeSupabaseFunction, so we just log.
+            toast.dismiss(toastId);
         } finally {
             setIsLoading(false);
         }

@@ -56,7 +56,6 @@ const AuthStatusDisplay: React.FC<{
 export const GoogleAuthCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { loading: crmLoading } = useCrmData(); 
     
     // OTTIMIZZAZIONE: Stato strutturato per gestire UI e messaggi in modo pulito.
     const [authState, setAuthState] = useState<{
@@ -64,81 +63,50 @@ export const GoogleAuthCallback: React.FC = () => {
         message: string;
     }>({
         status: 'loading',
-        message: 'Caricamento delle informazioni dell\'account...',
+        message: 'Verifica dell\'autenticazione in corso...',
     });
     
     // OTTIMIZZAZIONE: useRef per prevenire esecuzioni multiple della logica di autenticazione.
     const exchangeAttempted = useRef(false);
 
     useEffect(() => {
-        // Log iniziale al montaggio del componente
-        console.log('[GoogleAuthCallback] Componente montato.');
-
-        if (crmLoading) {
-            console.log('[GoogleAuthCallback] In attesa dei dati CRM...');
-            return; // Attende che i dati dell'organizzazione siano caricati
-        }
-
         if (exchangeAttempted.current) {
-            console.warn('[GoogleAuthCallback] Tentativo di scambio già eseguito. Annullamento.');
             return; // Previene riesecuzioni
         }
         exchangeAttempted.current = true; // Marca il tentativo come eseguito
 
         const exchangeCodeForToken = async () => {
-            console.log('[GoogleAuthCallback] Avvio del processo di scambio del token.');
-            setAuthState({ status: 'loading', message: 'Verifica dell\'autenticazione...' });
-            
-            // --- OTTIMIZZAZIONE: Validazione robusta dello stato CSRF ---
             const code = searchParams.get('code');
             const state = searchParams.get('state');
             const storedState = localStorage.getItem('oauth_state');
             
-            console.log(`[GoogleAuthCallback] Parametri ricevuti - code: ${code ? 'OK' : 'MANCANTE'}, state: ${state ? `"${state}"` : 'MANCANTE'}`);
-            console.log(`[GoogleAuthCallback] Stato salvato in localStorage: "${storedState}"`);
-            
             if (!code || !state || state !== storedState) {
-                const errorMsg = 'Richiesta di autenticazione non valida o scaduta. Per favore, torna alle impostazioni e riprova.';
-                console.error(`[GoogleAuthCallback] ERRORE: Discrepanza di stato o parametri mancanti. Processo interrotto.`);
+                const errorMsg = 'Richiesta di autenticazione non valida o scaduta. Riprova.';
                 setAuthState({ status: 'error', message: errorMsg });
-                localStorage.removeItem('oauth_state'); // Pulisce comunque lo state vecchio
+                localStorage.removeItem('oauth_state');
                 return;
             }
             
             localStorage.removeItem('oauth_state');
-            console.log('[GoogleAuthCallback] Stato CSRF validato con successo e rimosso.');
-            
-            const payload = { code };
-            console.log('[GoogleAuthCallback] Dati pronti per l\'invocazione della funzione Supabase:', payload);
             setAuthState({ status: 'loading', message: 'Finalizzazione della connessione sicura...' });
             
             try {
-                // --- OTTIMIZZAZIONE: Gestione del timeout esplicito di 20 secondi ---
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Timeout della richiesta dopo 20 secondi. La connessione potrebbe essere lenta.')), 20000)
-                );
-
-                const invokePromise = invokeSupabaseFunction('google-token-exchange', payload);
-
-                const response: any = await Promise.race([invokePromise, timeoutPromise]);
+                // La organization_id viene aggiunta automaticamente dall'helper
+                await invokeSupabaseFunction('google-token-exchange', { code });
                 
-                console.log('[GoogleAuthCallback] Risposta ricevuta dalla funzione:', response);
-                
-                console.log('[GoogleAuthCallback] Successo! Scambio del token completato.');
-                setAuthState({ status: 'success', message: 'Account Google connesso con successo! Sarai reindirizzato a breve...' });
+                setAuthState({ status: 'success', message: 'Account Google connesso! Sarai reindirizzato...' });
                 toast.success('Integrazione Google Calendar attivata!');
                 setTimeout(() => navigate('/settings'), 2500);
 
             } catch (err: any) {
-                console.error('[GoogleAuthCallback] ERRORE nel blocco catch finale:', err);
-                setAuthState({ status: 'error', message: `Si è verificato un errore: ${err.message}` });
-                toast.error(`Connessione fallita: ${err.message}`);
+                setAuthState({ status: 'error', message: `Connessione fallita. Riprova dalle impostazioni.` });
+                // L'errore dettagliato viene mostrato dal toast di invokeSupabaseFunction
             }
         };
 
         exchangeCodeForToken();
 
-    }, [searchParams, navigate, crmLoading]);
+    }, [searchParams, navigate]);
 
     // --- OTTIMIZZAZIONE: UI reattiva basata sullo stato ---
     return <AuthStatusDisplay 
@@ -208,7 +176,8 @@ export const Settings: React.FC = () => {
             }
             
         } catch (err: any) {
-            toast.error(`Impossibile avviare la connessione: ${err.message}`, { duration: 10000 });
+             console.error(err);
+             // L'errore dettagliato viene già mostrato dal toast di invokeSupabaseFunction
         }
     };
     

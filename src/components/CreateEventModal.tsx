@@ -72,7 +72,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         
         if (isCalendarApiBlocked) {
             console.warn("Chiamata a get-google-calendar-events bloccata a causa di un errore critico precedente.");
-            toast.error("Funzionalità calendario disabilitata a causa di un errore. Ricarica la pagina.", { id: 'calendar-blocked-toast' });
+            toast.error("Funzionalità calendario disabilitata. Ricarica la pagina.", { id: 'calendar-blocked-toast' });
             return;
         }
 
@@ -97,18 +97,15 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 }));
                 setBusySlots(slots);
             } catch (err: any) {
-                 if (err.message && (err.message.includes('parametro mancante') || err.message.includes('400'))) {
+                 if (err.message && (err.message.includes('obbligatori'))) {
                      const errorMsg = "Errore critico dal backend: parametro mancante. Le chiamate al calendario sono state bloccate per questa sessione.";
                      console.error(errorMsg, err);
-                     toast.error("Errore di comunicazione con il calendario. Ricarica la pagina o contatta il supporto.", { duration: 6000 });
+                     toast.error("Errore di comunicazione col calendario. Ricarica la pagina.", { duration: 6000 });
                      setCalendarApiBlocked(true);
                  } else if (err.message && /token|google|autenticazione/i.test(err.message.toLowerCase())) {
                     console.error("Errore di sessione Google rilevato:", err);
-                    toast.error("La tua connessione a Google Calendar è scaduta. Riconnettiti dalle impostazioni.", { duration: 6000 });
-                    onActionSuccess();
+                    // L'errore dettagliato viene già mostrato dall'helper, non ne mostriamo un altro.
                     onClose();
-                 } else {
-                    toast.error(`Impossibile caricare la disponibilità: ${err.message}`);
                  }
                 setBusySlots([]);
             } finally {
@@ -117,7 +114,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         };
 
         fetchBusySlots();
-    }, [isOpen, isGoogleConnected, formData.date, isCalendarApiBlocked, onActionSuccess, onClose]);
+    }, [isOpen, isGoogleConnected, formData.date, isCalendarApiBlocked, onClose]);
 
     // Reset form when the modal is opened or the contact changes
     useEffect(() => {
@@ -225,7 +222,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             onClose();
 
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            toast.error(`Errore durante la creazione.`, { id: toastId });
+            console.error(err);
         } finally {
             setIsSaving(false);
         }

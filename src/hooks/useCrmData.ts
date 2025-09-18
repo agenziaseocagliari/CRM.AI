@@ -67,6 +67,7 @@ export const useCrmData = () => {
         setForms([]); setAutomations([]); setOrganizationSettings(null);
         setCrmEvents([]); setSubscription(null); setLedger([]);
         setIsCalendarLinked(false);
+        localStorage.removeItem('organization_id');
         return;
       }
 
@@ -102,7 +103,10 @@ export const useCrmData = () => {
       if (subscriptionResponse.error) throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);
       if (ledgerResponse.error) throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`);
       
-      setOrganization(orgResponse.data);
+      if (orgResponse.data) {
+        setOrganization(orgResponse.data);
+        localStorage.setItem('organization_id', orgResponse.data.id);
+      }
       setContacts(contactsResponse.data || []);
       setOpportunities(groupOpportunitiesByStage(opportunitiesResponse.data || []));
       setForms(formsResponse.data || []);

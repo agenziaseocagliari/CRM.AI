@@ -44,6 +44,7 @@ const App: React.FC = () => {
         navigate('/dashboard');
       }
       if (_event === 'SIGNED_OUT') {
+        localStorage.removeItem('organization_id');
         navigate('/');
       }
     });

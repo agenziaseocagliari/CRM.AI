@@ -113,7 +113,8 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
             toast.success('Evento annullato!', { id: toastId });
             onActionSuccess();
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`, { id: toastId });
+            toast.error(`Errore durante l'annullamento.`, { id: toastId });
+            console.error(err);
         } finally {
             setIsDeleting(null);
         }

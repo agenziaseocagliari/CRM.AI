@@ -68,9 +68,9 @@ export const Automations: React.FC = () => {
             setLastInteraction({ user: userMessage.text, ai: aiMessage.text });
 
         } catch (err: any) {
-            const errorMessage: Message = { sender: 'ai', text: `Mi dispiace, si è verificato un errore: ${err.message}` };
+            const errorMessage: Message = { sender: 'ai', text: `Mi dispiace, si è verificato un errore. Riprova più tardi.` };
             setMessages(prev => [...prev, errorMessage]);
-            toast.error(`Errore: ${err.message}`);
+            // Error toast is handled by the central helper
         } finally {
             setIsLoading(false);
         }

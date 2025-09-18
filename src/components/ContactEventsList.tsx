@@ -1,15 +1,14 @@
 // src/components/ContactEventsList.tsx
-import React, { useState, useMemo } from 'react';
-import { Contact, CrmEvent, EventReminder, OrganizationSettings } from '../types';
+import React, { useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { TrashIcon, ClockIcon, CheckCircleIcon, InfoIcon, WhatsAppIcon } from './ui/icons';
+
 import { invokeSupabaseFunction } from '../lib/api';
+import { Contact, CrmEvent, EventReminder } from '../types';
+import { CheckCircleIcon, ClockIcon, InfoIcon, TrashIcon, WhatsAppIcon } from './ui/icons';
 
 interface ContactEventsListProps {
     contact: Contact | null;
     events: CrmEvent[];
-    organizationId?: string;
-    organizationSettings: OrganizationSettings | null;
     onActionSuccess: () => void;
 }
 
@@ -88,7 +87,7 @@ const EventItem: React.FC<{
     );
 };
 
-export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, events, organizationId, organizationSettings, onActionSuccess }) => {
+export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, events, onActionSuccess }) => {
     const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
     const contactEvents = useMemo(() => {

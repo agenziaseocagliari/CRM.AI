@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Contact } from '../types';
+import { toast } from 'react-hot-toast';
+
 import { supabase } from '../lib/supabaseClient';
-import { Modal } from './ui/Modal';
-import { PlusIcon, EditIcon, TrashIcon, SparklesIcon, WhatsAppIcon, CalendarIcon } from './ui/icons';
-import toast from 'react-hot-toast';
-import { useCrmData } from '../hooks/useCrmData';
-import { LeadScoreBadge } from './ui/LeadScoreBadge';
 import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
+import { useCrmData } from '../hooks/useCrmData';
+import { Contact } from '../types';
+import { CalendarIcon, EditIcon, PlusIcon, SparklesIcon, TrashIcon, WhatsAppIcon } from './ui/icons';
+import { Modal } from './ui/Modal';
+import { LeadScoreBadge } from './ui/LeadScoreBadge';
 // FIX: Corrected import path for CreateEventModal.
 import { CreateEventModal } from './CreateEventModal';
 // FIX: Corrected import path for ContactEventsList.
@@ -477,8 +478,6 @@ export const Contacts: React.FC = () => {
                 <ContactEventsList
                     contact={selectedContact}
                     events={crmEvents}
-                    organizationId={organization?.id}
-                    organizationSettings={organizationSettings}
                     onActionSuccess={refetch}
                 />
             </Modal>

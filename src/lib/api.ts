@@ -26,10 +26,8 @@ const handleAuthErrorToast = (toastId?: string) => {
 
 /**
  * Helper centralizzato e sicuro per invocare le Supabase Functions.
- * La funzione gestisce automaticamente l'invio del token JWT dell'utente per
- * l'autenticazione lato backend. La logica per ottenere e rinfrescare i token
- * di servizi esterni (es. Google) è gestita interamente dalla funzione Edge,
- * garantendo massima sicurezza.
+ * Questa versione utilizza `fetch` in modo esplicito per garantire che l'header
+ * di autorizzazione JWT sia sempre inviato, come richiesto per le funzioni Edge sicure.
  * 
  * @param functionName Il nome della funzione Edge da chiamare.
  * @param payload Il corpo della richiesta (body) da inviare alla funzione.
@@ -38,40 +36,72 @@ const handleAuthErrorToast = (toastId?: string) => {
  */
 export async function invokeSupabaseFunction(
     functionName: string,
-    payload: object = {} // Il payload ora è opzionale
+    payload: object = {}
 ) {
-    // Il metodo `invoke` del client Supabase si occupa automaticamente di:
-    // 1. Recuperare la sessione utente corrente.
-    // 2. Inserire l'header `Authorization: Bearer <token>` nella richiesta.
-    // 3. Gestire il refresh del token JWT di Supabase se è scaduto.
-    console.log(`[API Helper] Invocazione di '${functionName}'...`);
-    // DEBUG: Log del payload per ispezionare i dati inviati
+    console.log(`[API Helper] Invocazione di '${functionName}' con fetch esplicito...`);
     console.log(`[API Helper] Payload inviato a '${functionName}':`, payload);
+
+    // 1. Recupera l'URL di Supabase e la sessione utente
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error("Le variabili d'ambiente VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY non sono configurate.");
+    }
     
-    const { data, error } = await supabase.functions.invoke(functionName, {
-        body: payload,
-    });
-
-    // Log per il debug della risposta, come richiesto
-    console.log(`[API Helper] Risposta da '${functionName}':`, {
-      data: data,
-      error: error,
-    });
-
-    if (error) {
-        // Errore di rete, CORS, o a livello di Supabase (es. funzione non trovata)
-        throw new Error(`Errore di rete o del server: ${error.message}`);
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+        throw new Error(`Errore nel recupero della sessione: ${sessionError.message}`);
+    }
+    if (!session) {
+        handleAuthErrorToast();
+        throw new Error("Sessione utente non trovata. Effettua nuovamente il login.");
     }
 
-    if (data && data.error) {
-        // Errore applicativo restituito dalla logica interna della funzione Edge.
-        // Controlliamo se è un errore di autenticazione per fornire un feedback specifico.
-        const errorMessage = data.error.toLowerCase();
+    // 2. Costruisce l'URL della funzione e gli header
+    const functionUrl = `${supabaseUrl}/functions/v1/${functionName}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+    };
+
+    // 3. Esegue la chiamata fetch
+    const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(payload),
+    });
+
+    // 4. Gestisce la risposta
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[API Helper] Errore HTTP da '${functionName}' (${response.status}):`, errorText);
+        
+        if (response.status === 401 || response.status === 403) {
+            handleAuthErrorToast();
+        }
+        
+        try {
+            const errorJson = JSON.parse(errorText);
+            throw new Error(errorJson.error || errorJson.message || `Errore del server (${response.status})`);
+        } catch (e) {
+            throw new Error(`Errore del server (${response.status}): ${errorText}`);
+        }
+    }
+    
+    const responseData = await response.json();
+
+    console.log(`[API Helper] Risposta da '${functionName}':`, { data: responseData });
+
+    // Gestisce errori applicativi restituiti in una risposta 200 OK
+    if (responseData && responseData.error) {
+        const errorMessage = responseData.error.toString().toLowerCase();
         if (errorMessage.includes("authenticate") || errorMessage.includes("token") || errorMessage.includes("non autenticato") || errorMessage.includes("accesso negato")) {
             handleAuthErrorToast();
         }
-        throw new Error(data.error);
+        throw new Error(responseData.error);
     }
     
-    return data;
+    return responseData;
 }

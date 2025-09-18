@@ -64,11 +64,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             }
             setIsFetchingSlots(true);
             try {
+                // DEBUG: Allineamento e logging del payload per `get-google-calendar-events`
                 const dateString = selectedDate.toISOString().split('T')[0];
-                // Chiamata semplificata: il backend gestisce l'autenticazione e l'ID organizzazione.
+                const payload = { date: dateString };
+                console.log('[DEBUG] Preparazione chiamata a get-google-calendar-events con payload:', payload);
+
                 const data = await invokeSupabaseFunction(
                     'get-google-calendar-events',
-                    { date: dateString }
+                    payload
                 );
                 setTimeSlots(generateTimeSlots(selectedDate, data.busySlots, duration));
             } catch (err: any) {

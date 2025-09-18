@@ -45,6 +45,8 @@ export async function invokeSupabaseFunction(
     // 2. Inserire l'header `Authorization: Bearer <token>` nella richiesta.
     // 3. Gestire il refresh del token JWT di Supabase se è scaduto.
     console.log(`[API Helper] Invocazione di '${functionName}'...`);
+    // DEBUG: Log del payload per ispezionare i dati inviati
+    console.log(`[API Helper] Payload inviato a '${functionName}':`, payload);
     
     const { data, error } = await supabase.functions.invoke(functionName, {
         body: payload,

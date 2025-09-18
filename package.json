@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "type-check": "tsc --noEmit",
+    "prune": "ts-prune"
   },
   "dependencies": {
     "@google/genai": "^1.17.0",
@@ -29,6 +31,7 @@
     "jsdom": "^24.1.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
+    "ts-prune": "^0.10.3",
     "typescript": "^5.4.5",
     "vite": "^7.1.5",
     "vitest": "^2.0.4"

@@ -1,9 +1,9 @@
-// Gli import devono essere sempre usati. Dopo ogni refactor/AI patch eseguire "batch clean up imports".
+// Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
 import React from 'react';
 import { toast } from 'react-hot-toast';
 
-import { OrganizationSettings } from '../types';
 import { supabase } from './supabaseClient';
+import { OrganizationSettings } from '../types';
 
 /**
  * Gestisce la visualizzazione di un toast di errore per la ri-autenticazione Google.

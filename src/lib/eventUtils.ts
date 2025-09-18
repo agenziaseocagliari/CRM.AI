@@ -1,4 +1,4 @@
-// File: src/lib/eventUtils.ts
+// Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
 
 export interface TimeSlot {
     time: string; // "HH:mm"

@@ -1,6 +1,21 @@
+// Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
 import { useState, useEffect, useCallback } from 'react';
+
 import { supabase } from '../lib/supabaseClient';
-import { Organization, Contact, Opportunity, OpportunitiesData, PipelineStage, Profile, Form, Automation, OrganizationSettings, CrmEvent, OrganizationSubscription, CreditLedgerEntry } from '../types';
+import { 
+    Automation,
+    Contact,
+    CreditLedgerEntry,
+    CrmEvent,
+    Form,
+    OpportunitiesData,
+    Opportunity,
+    Organization,
+    OrganizationSettings,
+    OrganizationSubscription,
+    PipelineStage,
+    Profile
+} from '../types';
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
   const emptyData: OpportunitiesData = {

@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Contact, Organization, OrganizationSettings } from '../types';
+// FIX: Added CrmEvent to imports for better type safety in the handleSave function.
+import { Contact, Organization, OrganizationSettings, CrmEvent } from '../types';
 import { invokeSupabaseFunction } from '../lib/api';
 import { generateTimeSlots, combineDateAndTime } from '../lib/eventUtils';
 import { Modal } from './ui/Modal';
@@ -110,7 +111,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 // --- End Guardian Logic ---
 
 
-                const data = await invokeSupabaseFunction('get-google-calendar-events', payload);
+                // FIX: Explicitly type the expected return value from invokeSupabaseFunction.
+                // This resolves the error where 'data' was inferred as 'void', ensuring
+                // that the 'events' property is accessible.
+                const data = await invokeSupabaseFunction('get-google-calendar-events', payload) as { events: any[] };
                 
                 const slots = data.events.map((event: any) => ({
                     start: event.start.dateTime,
@@ -215,13 +219,15 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
             let googleEventId: string | null = null;
             if (isGoogleConnected && formData.createGoogleEvent) {
+                 // FIX: Explicitly type the expected return value from invokeSupabaseFunction.
+                 // This prevents type inference errors and ensures 'googleEvent.googleEventId' can be accessed.
                  const googleEvent = await invokeSupabaseFunction('create-google-event', {
                     event_summary: formData.summary,
                     event_description: formData.description,
                     event_start_time: eventStartDate.toISOString(),
                     event_end_time: eventEndDate.toISOString(),
                     attendee_email: contact.email
-                });
+                }) as { googleEventId: string | null };
                 googleEventId = googleEvent.googleEventId;
             }
 
@@ -234,7 +240,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 google_event_id: googleEventId,
             };
 
-            const { crmEvent } = await invokeSupabaseFunction('create-crm-event', crmEventPayload);
+            // FIX: Explicitly type the expected return value from invokeSupabaseFunction.
+            // This allows destructuring 'crmEvent' from the response, resolving the type inference error.
+            const { crmEvent } = await invokeSupabaseFunction('create-crm-event', crmEventPayload) as { crmEvent: CrmEvent };
 
             if (formData.reminders.length > 0) {
                  await invokeSupabaseFunction('schedule-event-reminders', {

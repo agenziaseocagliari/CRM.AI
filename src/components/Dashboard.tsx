@@ -18,6 +18,8 @@ export const Dashboard: React.FC = () => {
   const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
   const [debugModalTitle, setDebugModalTitle] = useState('');
   const [debugModalContent, setDebugModalContent] = useState<any>(null);
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [webhookResponseContent, setWebhookResponseContent] = useState('');
   // --- END DEBUG INTERFACE STATE ---
 
   // FIX: Switched from `Object.values` to `Object.keys` to work around a type
@@ -109,6 +111,35 @@ export const Dashboard: React.FC = () => {
         "Azione: Pulisci Log di Debug",
         () => invokeSupabaseFunction('run-debug-query', { query_name: 'clear_logs' })
     );
+    
+    const handleTriggerN8nWebhook = async () => {
+        setIsLoading(true);
+        setWebhookResponseContent('Invio richiesta in corso...');
+        setIsWebhookModalOpen(true);
+
+        const url = 'https://n8n-5o4j.onrender.com/webhook/ai-studio-export';
+        const payload = {
+            "fileName": "supabase/functions/google-token-exchange/index.ts",
+            "content": "// test aggiornamento automazione edge function via workflow n8n",
+            "commitMessage": "Test full pipeline n8n da AI Studio"
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const responseBody = await response.text();
+            const output = `Status: ${response.status}\nStatus Text: ${response.statusText}\n---\nResponse Body:\n${responseBody}`;
+            setWebhookResponseContent(output.trim());
+        } catch (error: any) {
+            const output = `Si è verificato un errore durante l'invio della richiesta.\n---\nMessage: ${error.message}\n---\nControlla la console del browser per maggiori dettagli.`;
+            setWebhookResponseContent(output.trim());
+        } finally {
+            setIsLoading(false);
+        }
+    };
     // --- END DEBUG INTERFACE LOGIC ---
 
 
@@ -199,6 +230,13 @@ export const Dashboard: React.FC = () => {
                 >
                     {isLoading ? 'Caricamento...' : 'Clear Debug Logs'}
                 </button>
+                 <button
+                    onClick={handleTriggerN8nWebhook}
+                    disabled={isLoading}
+                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
+                >
+                    {isLoading ? 'Caricamento...' : 'Trigger n8n Webhook'}
+                </button>
             </div>
         </div>
         {/* --- END DEBUG INTERFACE UI --- */}
@@ -213,6 +251,17 @@ export const Dashboard: React.FC = () => {
             </div>
         </Modal>
         {/* --- END DEBUG MODAL --- */}
+        
+        {/* --- START N8N WEBHOOK MODAL --- */}
+        <Modal isOpen={isWebhookModalOpen} onClose={() => setIsWebhookModalOpen(false)} title="Risposta Webhook n8n">
+            <div className="bg-gray-900 text-white p-4 rounded-md max-h-[60vh] overflow-auto">
+                <pre><code>{webhookResponseContent}</code></pre>
+            </div>
+            <div className="flex justify-end pt-4 border-t mt-4">
+                <button type="button" onClick={() => setIsWebhookModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Chiudi</button>
+            </div>
+        </Modal>
+        {/* --- END N8N WEBHOOK MODAL --- */}
     </div>
   );
 };

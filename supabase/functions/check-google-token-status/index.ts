@@ -1,12 +1,12 @@
 // check-google-token-status - Deno + Supabase Edge Function
-// Version: 2025-09-19.1
+// Version: 2025-09-19.2 (CORS apikey fix)
 console.info('check-google-token-status function starting');
-
 Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    // AGGIUNGI QUI tutti gli header custom necessari dal frontend!
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
     'Access-Control-Max-Age': '86400'
   };
 
@@ -54,8 +54,7 @@ Deno.serve(async (req) => {
   console.info('Request received:', { method: req.method, body });
 
   const token = body?.token ?? null;
-
-  // (Facoltativo) Validazione tipo token
+  // (FACOLTATIVO) Validazione tipo token
   if (token && typeof token !== 'string') {
     console.warn('Invalid token type', typeof token);
     return new Response(JSON.stringify({
@@ -73,7 +72,7 @@ Deno.serve(async (req) => {
     status: 'OK',
     received: body,
     token_present: token !== null,
-    function_version: '2025-09-19.1',
+    function_version: '2025-09-19.2', // aggiorna se cambi codice!
     timestamp: new Date().toISOString()
   };
 
@@ -86,3 +85,4 @@ Deno.serve(async (req) => {
     }
   });
 });
+

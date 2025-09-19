@@ -1,0 +1,26 @@
+{
+  "description": "Test POST request per n8n - Google Token Exchange",
+  "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/functions/v1/google-token-exchange",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY"
+  },
+  "body": {
+    "code": "4/0AanRRvhYour_Google_Authorization_Code_Here",
+    "organization_id": "123456789",
+    "redirectUri": "https://your-app.com/auth/callback"
+  },
+  "notes": [
+    "Sostituisci YOUR_SUPABASE_PROJECT con il tuo project ID Supabase",
+    "Sostituisci YOUR_SUPABASE_ANON_KEY con la tua chiave anonima Supabase",
+    "Il 'code' deve essere un codice di autorizzazione valido da Google OAuth",
+    "L'organization_id deve esistere nella tua tabella organization_settings",
+    "Il redirectUri deve corrispondere a quello configurato in Google OAuth"
+  ],
+  "expected_response": {
+    "success": true,
+    "message": "Token scambiato e salvato correttamente."
+  },
+  "curl_example": "curl -X POST 'https://YOUR_SUPABASE_PROJECT.supabase.co/functions/v1/google-token-exchange' -H 'Content-Type: application/json' -H 'Authorization: Bearer YOUR_SUPABASE_ANON_KEY' -d '{\"code\": \"4/0AanRRvhYour_Code_Here\", \"organization_id\": \"123456789\", \"redirectUri\": \"https://your-app.com/auth/callback\"}'\n"
+}

@@ -1,3 +1,6 @@
+// FIX: Add Deno declaration to resolve TypeScript errors in the Supabase Edge Function environment.
+declare const Deno: any;
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +14,8 @@ Deno.serve(async (req)=>{
       headers: corsHeaders
     });
   }
-  const diagnostic = {
+  // FIX: Cast diagnostic object to 'any' to allow dynamic property assignment.
+  const diagnostic: any = {
     timestamp: new Date().toISOString(),
     function_name: 'get-google-calendar-events',
     environment: Deno.env.get('ENVIRONMENT') || 'production'

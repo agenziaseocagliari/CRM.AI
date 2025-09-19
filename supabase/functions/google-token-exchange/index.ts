@@ -1,6 +1,10 @@
+// FIX: Add Deno declaration to resolve TypeScript errors in the Supabase Edge Function environment.
+declare const Deno: any;
+
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-import { corsHeaders, handleCors, withCorsHeaders } from "../_shared/cors.ts";
+// FIX: Removed non-existent 'withCorsHeaders' from import.
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 function safeLog(label: string, obj: unknown) {
   try {
@@ -105,7 +109,8 @@ serve(async (req) => {
       safeLog("[google-token-exchange] ❌ Errore upsert Supabase:", dbError);
       throw dbError;
     }
-    safeLog("[google-token-exchange] 🟢 Upsert su Supabase completato.");
+    // FIX: Added the missing second argument to the safeLog function call.
+    safeLog("[google-token-exchange] 🟢 Upsert su Supabase completato.", "");
 
     // === [4] RISPOSTA ===
     const outObj = {
@@ -114,7 +119,8 @@ serve(async (req) => {
     };
     safeLog("[google-token-exchange] 📨 Risposta inviata al client:", outObj);
     return new Response(JSON.stringify(outObj), {
-      headers: withCorsHeaders({ "Content-Type": "application/json" }),
+      // FIX: Replaced non-existent 'withCorsHeaders' with spread syntax.
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200
     });
   } catch (error) {
@@ -125,9 +131,9 @@ serve(async (req) => {
         payload: parsedPayload
       }
     }), {
-      headers: withCorsHeaders({ "Content-Type": "application/json" }),
+      // FIX: Replaced non-existent 'withCorsHeaders' with spread syntax.
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500
     });
   }
 });
-

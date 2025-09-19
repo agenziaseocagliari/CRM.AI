@@ -1,4 +1,7 @@
 // File: supabase/functions/google-auth-url/index.ts
+// FIX: Add Deno declaration to resolve TypeScript errors in the Supabase Edge Function environment.
+declare const Deno: any;
+
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 // --- CORS Helper ---
 const corsHeaders = {

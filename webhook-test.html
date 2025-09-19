@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f4f5f7;
+            color: #172b4d;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #091e42;
+        }
+        button {
+            background-color: #0052cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #0065ff;
+        }
+        button:disabled {
+            background-color: #a5adba;
+            cursor: not-allowed;
+        }
+        #response-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f4f5f7;
+            border: 1px solid #dfe1e6;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            min-height: 100px;
+        }
+        h2 {
+            border-bottom: 1px solid #dfe1e6;
+            padding-bottom: 8px;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>n8n Webhook Test</h1>
+        <p>Click the button to send a POST request to the specified n8n webhook and view the result.</p>
+        <button id="sendRequestBtn">Send POST Request</button>
+        
+        <h2>Response Details</h2>
+        <pre id="response-container">Click the button to see the response here.</pre>
+    </div>
+
+    <script>
+        const sendButton = document.getElementById('sendRequestBtn');
+        const responseContainer = document.getElementById('response-container');
+
+        sendButton.addEventListener('click', async () => {
+            sendButton.disabled = true;
+            responseContainer.textContent = 'Sending request...';
+
+            const url = 'https://n8n-5o4j.onrender.com/webhook/ai-studio-export';
+            const payload = {
+                "fileName": "supabase/functions/google-token-exchange/index.ts",
+                "content": "// test aggiornamento automazione edge function via workflow n8n",
+                "commitMessage": "Test full pipeline n8n da AI Studio"
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const responseBody = await response.text();
+                
+                const output = `
+Status: ${response.status}
+Status Text: ${response.statusText}
+---
+Response Body:
+${responseBody}
+                `;
+
+                responseContainer.textContent = output.trim();
+
+            } catch (error) {
+                console.error('Error:', error);
+                const output = `
+An error occurred while sending the request.
+---
+Message: ${error.message}
+---
+Please check the browser console for more details.
+                `;
+                responseContainer.textContent = output.trim();
+            } finally {
+                sendButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

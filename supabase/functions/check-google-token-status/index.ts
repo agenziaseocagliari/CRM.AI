@@ -2,8 +2,8 @@
 // Version: 2025-09-19.3 (token diagnostic + CORS fix)
 console.info('check-google-token-status function starting');
 
-// FIX: Add Deno declaration to resolve TypeScript errors in the Supabase Edge Function environment.
-declare const Deno: any;
+// FIX: Removed the redundant 'declare const Deno' which caused a redeclaration error.
+// The Deno global is provided by the Supabase Edge Function runtime environment.
 
 Deno.serve(async (req) => {
   const corsHeaders = {

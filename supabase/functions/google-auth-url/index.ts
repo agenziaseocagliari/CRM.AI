@@ -1,47 +1,31 @@
 // File: supabase/functions/google-auth-url/index.ts
-// FIX: Add Deno declaration to resolve TypeScript errors in the Supabase Edge Function environment.
 declare const Deno: any;
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-// --- CORS Helper ---
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Max-Age": "86400"
-};
-function handleCors(req) {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: corsHeaders
-    });
-  }
-  return null;
-}
-// --- End CORS Helper ---
-serve(async (req)=>{
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { getOrganizationId } from "../_shared/supabase.ts";
+
+serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
+  
   try {
+    // Security enhancement: ensure user is authenticated before proceeding.
+    await getOrganizationId(req);
+
+    const { state } = await req.json();
+    if (!state) {
+      throw new Error("The 'state' parameter is required for CSRF protection.");
+    }
+
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
     if (!clientId || !redirectUri) {
-      const debugReport = `Report di Debug dalla Funzione: GOOGLE_CLIENT_ID: ${clientId ? 'Trovato' : '*** NON TROVATO ***'}. GOOGLE_REDIRECT_URI: ${redirectUri ? `Trovato ("${redirectUri}")` : '*** NON TROVATO ***'}. Causa: I secrets non sono stati caricati. Soluzione: Esegui un nuovo deploy di questa funzione usando la CLI di Supabase per forzare l'aggiornamento dei secrets.`;
-      // STRATEGIA AVANZATA: Ritorna sempre 200 OK ma con un payload di errore.
-      return new Response(JSON.stringify({
-        error: debugReport
-      }), {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        },
-        status: 200
-      });
+        const errorDetail = `GOOGLE_CLIENT_ID: ${clientId ? 'OK' : 'MISSING'}, GOOGLE_REDIRECT_URI: ${redirectUri ? 'OK' : 'MISSING'}`;
+        console.error(`Configuration error in google-auth-url: ${errorDetail}`);
+        throw new Error(`Server configuration error. Please contact support. Details: ${errorDetail}`);
     }
-    const { state } = await req.json();
-    if (!state) {
-      throw new Error("Il parametro 'state' è obbligatorio per la protezione CSRF.");
-    }
+
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set("redirect_uri", redirectUri);
@@ -50,28 +34,16 @@ serve(async (req)=>{
     authUrl.searchParams.set("state", state);
     authUrl.searchParams.set("access_type", "offline");
     authUrl.searchParams.set("prompt", "consent");
-    const urlString = authUrl.toString();
-    // Caso di successo: ritorna l'URL
-    return new Response(JSON.stringify({
-      url: urlString
-    }), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      },
-      status: 200
+    
+    return new Response(JSON.stringify({ url: authUrl.toString() }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
     });
   } catch (error) {
-    console.error("Errore imprevisto nella funzione 'google-auth-url':", error.message);
-    // STRATEGIA AVANZATA: Anche gli errori imprevisti ritornano 200 OK con un payload di errore.
-    return new Response(JSON.stringify({
-      error: error.message
-    }), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      },
-      status: 200
+    console.error("Error in 'google-auth-url':", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: error.message.includes("Authentication") ? 401 : 500,
     });
   }
 });

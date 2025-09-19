@@ -1,100 +1,47 @@
 // Google OAuth utilities for Supabase Edge Functions
-// FIX: Added a Deno global declaration to resolve TypeScript errors in the Supabase Edge Function environment.
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
 };
 
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 export interface GoogleTokens {
   access_token: string
   refresh_token: string
-  expires_in?: number // expires_in is for refresh, not always present
-  expiry_date?: number // This is what we'll use, calculated from expires_in
-  expires_at?: number // Legacy, keeping for compatibility
+  expires_in: number
+  expiry_date: number // Stored as Unix timestamp (seconds)
+  scope: string
+  token_type: string
 }
 
-// FIX: Refactored functions to accept a Supabase client instance, making them more modular.
-export async function getGoogleTokens(supabase: SupabaseClient, organizationId: string): Promise<GoogleTokens | null> {
-  try {
-    console.log('EDGE LOG: [getGoogleTokens] - 🔍 Getting Google tokens for organization:', organizationId)
-    
-    const { data: settings, error } = await supabase
+async function saveGoogleTokens(supabase: SupabaseClient, organizationId: string, tokens: GoogleTokens): Promise<void> {
+    const { error } = await supabase
       .from('organization_settings')
-      .select('google_auth_token')
+      .update({ google_auth_token: tokens }) // Store as JSONB directly
       .eq('organization_id', organizationId)
-      .single()
     
     if (error) {
-      console.error('EDGE LOG: [getGoogleTokens] - ❌ Error fetching settings:', error)
-      return null
+      console.error(`[google.ts] Failed to save tokens for org ${organizationId}:`, error)
+      throw new Error(`Database error while saving new Google tokens: ${error.message}`);
     }
-    
-    if (!settings?.google_auth_token) {
-      console.error('EDGE LOG: [getGoogleTokens] - ⚠️  No google_auth_token found in settings')
-      return null
-    }
-
-    // DIAGNOSTIC LOGGING - RAW TOKEN DEBUG
-    console.error('EDGE LOG: [getGoogleTokens] - 🔬 TOKEN RAW DEBUG:', {
-      typeof: typeof settings.google_auth_token,
-      rawValue: String(settings.google_auth_token).slice(0, 100),
-      fullLength: String(settings.google_auth_token).length,
-      isString: typeof settings.google_auth_token === 'string',
-      isNull: settings.google_auth_token === null,
-      isUndefined: settings.google_auth_token === undefined
-    })
-    
-    let tokens: GoogleTokens
-    try {
-      tokens = typeof settings.google_auth_token === 'string' ? JSON.parse(settings.google_auth_token) : settings.google_auth_token;
-      console.log('EDGE LOG: [getGoogleTokens] - ✅ Successfully parsed Google tokens')
-    } catch (parseError) {
-      console.error('EDGE LOG: [getGoogleTokens] - ❌ Error parsing google_auth_token:', parseError)
-      console.error('EDGE LOG: [getGoogleTokens] - 🔬 Raw token that failed parsing:', settings.google_auth_token)
-      return null
-    }
-    
-    // Check if token is expired
-    const expiryTimestamp = tokens.expiry_date || tokens.expires_at;
-    const now = Math.floor(Date.now() / 1000)
-    if (expiryTimestamp && expiryTimestamp < now) {
-      console.log('EDGE LOG: [getGoogleTokens] - 🔄 Token expired, attempting refresh...')
-      const refreshedTokens = await refreshGoogleToken(supabase, tokens.refresh_token, organizationId)
-      if (refreshedTokens) {
-        return refreshedTokens
-      }
-      console.error('EDGE LOG: [getGoogleTokens] - ❌ Failed to refresh expired token')
-      return null
-    }
-    
-    return tokens
-  } catch (error) {
-    console.error('EDGE LOG: [getGoogleTokens] - ❌ Unexpected error in getGoogleTokens:', error)
-    return null
-  }
+    console.log(`[google.ts] Successfully saved new tokens for org ${organizationId}.`)
 }
 
-// FIX: Refactored function to accept a Supabase client instance.
-export async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string, organizationId: string): Promise<GoogleTokens | null> {
-  try {
-    console.log('EDGE LOG: [refreshGoogleToken] - 🔄 Refreshing Google token for organization:', organizationId)
+
+async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string, organizationId: string): Promise<GoogleTokens> {
+    console.log(`[google.ts] Refreshing Google token for org ${organizationId}...`)
     
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID')
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')
-    
     if (!clientId || !clientSecret) {
-      console.error('EDGE LOG: [refreshGoogleToken] - ❌ Missing Google OAuth credentials in environment')
-      return null
+      throw new Error("Missing Google OAuth credentials in environment secrets.")
     }
     
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
@@ -103,50 +50,69 @@ export async function refreshGoogleToken(supabase: SupabaseClient, refreshToken:
       }),
     })
     
+    const data = await response.json();
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('EDGE LOG: [refreshGoogleToken] - ❌ Google token refresh failed:', response.status, errorText)
-      return null
+      console.error(`[google.ts] Google token refresh failed for org ${organizationId}:`, data)
+      throw new Error(`Google API error during token refresh: ${data.error_description || 'Unknown error'}`);
     }
-    
-    const data = await response.json()
     
     const newTokens: GoogleTokens = {
       access_token: data.access_token,
-      refresh_token: data.refresh_token || refreshToken, // Keep old refresh token if not provided
+      refresh_token: data.refresh_token || refreshToken,
+      expires_in: data.expires_in,
       expiry_date: Math.floor(Date.now() / 1000) + data.expires_in,
+      scope: data.scope,
+      token_type: data.token_type
     }
     
-    // Save the new tokens
     await saveGoogleTokens(supabase, organizationId, newTokens);
-    
-    console.log('EDGE LOG: [refreshGoogleToken] - ✅ Google token refreshed successfully')
-    return newTokens
-  } catch (error) {
-    console.error('EDGE LOG: [refreshGoogleToken] - ❌ Unexpected error in refreshGoogleToken:', error)
-    return null
-  }
+    return newTokens;
 }
 
-// FIX: Refactored function to accept a Supabase client instance.
-export async function saveGoogleTokens(supabase: SupabaseClient, organizationId: string, tokens: GoogleTokens): Promise<boolean> {
-  try {
-    console.log('EDGE LOG: [saveGoogleTokens] - 💾 Saving Google tokens for organization:', organizationId)
-    
-    const { error } = await supabase
+/**
+ * Retrieves a valid Google access token for an organization, refreshing it if necessary.
+ * Logs the token status before throwing any errors.
+ * @param supabase Admin Supabase client
+ * @param organizationId The organization's UUID
+ * @returns {Promise<string>} A valid Google access token.
+ */
+export async function getGoogleAccessToken(supabase: SupabaseClient, organizationId: string): Promise<string> {
+    const { data: settings, error: settingsError } = await supabase
       .from('organization_settings')
-      .update({ google_auth_token: JSON.stringify(tokens) })
+      .select('google_auth_token')
       .eq('organization_id', organizationId)
+      .single()
+
+    // Fulfill logging requirement: log the query result before throwing.
+    await supabase.from('debug_logs').insert({
+        function_name: 'getGoogleAccessToken',
+        log_level: settingsError ? 'ERROR' : 'DEBUG',
+        organization_id: organizationId,
+        content: {
+            message: 'Queried organization_settings for google_auth_token.',
+            has_token: !!settings?.google_auth_token,
+            db_error: settingsError ? settingsError.message : null,
+        }
+    });
+
+    if (settingsError) throw new Error(`Could not query settings for organization: ${settingsError.message}`);
+    if (!settings || !settings.google_auth_token) {
+      throw new Error("Google integration not found for this organization. Please connect your Google account in settings.");
+    }
+
+    const tokens = settings.google_auth_token as GoogleTokens;
+    if (!tokens.refresh_token) {
+        throw new Error("Stored Google token is invalid (missing refresh_token). Please reconnect your Google account.");
+    }
+
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const buffer = 60; // 60-second buffer
     
-    if (error) {
-      console.error('EDGE LOG: [saveGoogleTokens] - ❌ Error saving tokens:', error)
-      return false
+    if (tokens.expiry_date < (nowInSeconds + buffer)) {
+        console.log(`[google.ts] Token for org ${organizationId} has expired or is about to. Refreshing.`);
+        const refreshedTokens = await refreshGoogleToken(supabase, tokens.refresh_token, organizationId);
+        return refreshedTokens.access_token;
     }
     
-    console.log('EDGE LOG: [saveGoogleTokens] - ✅ Google tokens saved successfully')
-    return true
-  } catch (error) {
-    console.error('EDGE LOG: [saveGoogleTokens] - ❌ Unexpected error in saveGoogleTokens:', error)
-    return false
-  }
+    return tokens.access_token;
 }

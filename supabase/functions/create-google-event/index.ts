@@ -1,208 +1,47 @@
 // File: supabase/functions/create-google-event/index.ts
 
-declare const Deno: {
-  env: { get(key: string): string | undefined; };
-};
+declare const Deno: { env: { get(key: string): string | undefined; }; };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-// FIX: Replaced getGoogleAccessToken with getGoogleTokens and will extract the access token from the returned object.
-import { getGoogleTokens } from "../_shared/google.ts";
+import { getGoogleAccessToken } from "../_shared/google.ts";
 import { getOrganizationId } from "../_shared/supabase.ts";
-
-// CORS Headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-};
-
-function handleCors(req: Request): Response | null {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { 
-      headers: corsHeaders,
-      status: 200 
-    });
-  }
-  return null;
-}
-
-function createResponse(body: string, status: number = 200): Response {
-  return new Response(body, {
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-    },
-    status,
-  });
-}
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 serve(async (req) => {
-  console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Request received`);
-  
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
-  let diagnostic = {
-    timestamp: new Date().toISOString(),
-    stage: 'INITIALIZATION',
-    success: false,
-    diagnostics: {
-      request: {
-        method: req.method,
-        url: req.url,
-        headers: {
-          authorization: req.headers.get('authorization') ? '[PRESENT]' : null,
-          contentType: req.headers.get('content-type'),
-        },
-      },
-      authentication: null,
-      googleIntegration: null,
-      error: null,
-    },
-  };
-
   try {
-    // 1. Parse and validate request body
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Parsing request body...`);
-    diagnostic.stage = 'PARAMETER_VALIDATION';
-    
-    const eventData = await req.json();
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Event data received:`, eventData);
+    const { 
+        event_summary, 
+        event_description, 
+        event_start_time, 
+        event_end_time,
+        attendee_email,
+    } = await req.json();
 
-    // Validate required fields
-    if (!eventData.summary || !eventData.start || !eventData.end) {
-      const errorMsg = "Required fields missing: summary, start, and end are required";
-      diagnostic.diagnostics.error = {
-        message: errorMsg,
-        code: 'MISSING_REQUIRED_FIELDS',
-        context: { eventData }
-      };
-      console.error(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] ERROR - Required fields missing:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: errorMsg,
-        diagnostic 
-      }), 400);
+    if (!event_summary || !event_start_time || !event_end_time) {
+      throw new Error("Missing required fields: event_summary, event_start_time, and event_end_time are required.");
     }
 
-    // 2. Extract organization_id from JWT
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Extracting organization_id from JWT...`);
-    diagnostic.stage = 'ORGANIZATION_EXTRACTION';
-    
-    let organization_id;
-    try {
-      organization_id = await getOrganizationId(req);
-      diagnostic.diagnostics.authentication = {
-        hasAuthHeader: !!req.headers.get('authorization'),
-        organizationFound: !!organization_id,
-        organizationId: organization_id || null,
-      };
-      console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Organization ID extracted:`, { organization_id });
-    } catch (authError) {
-      diagnostic.diagnostics.authentication = {
-        hasAuthHeader: !!req.headers.get('authorization'),
-        organizationFound: false,
-        organizationId: null,
-        error: authError.message
-      };
-      diagnostic.diagnostics.error = {
-        message: authError.message,
-        code: 'ORGANIZATION_EXTRACTION_FAILED',
-        context: {
-          hasAuthHeader: !!req.headers.get('authorization'),
-        }
-      };
-      console.error(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] ERROR - Organization ID extraction failed:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: authError.message,
-        diagnostic 
-      }), 401);
-    }
-
-    // 3. Get Google access token
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Getting Google access token...`);
-    diagnostic.stage = 'GOOGLE_TOKEN_RETRIEVAL';
-    
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!serviceRoleKey) {
-      const errorMsg = "SUPABASE_SERVICE_ROLE_KEY is not set.";
-      diagnostic.diagnostics.error = {
-        message: errorMsg,
-        code: 'MISSING_SERVICE_ROLE_KEY',
-        context: {}
-      };
-      console.error(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] ERROR - Service role key missing`);
-      return createResponse(JSON.stringify({ 
-        error: errorMsg,
-        diagnostic 
-      }), 500);
-    }
-
+    if (!serviceRoleKey) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable.");
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
-    let googleAccessToken;
     
-    try {
-      // FIX: Call getGoogleTokens and extract the access_token.
-      const tokens = await getGoogleTokens(supabaseAdmin, organization_id);
-      if (!tokens || !tokens.access_token) {
-        throw new Error("Could not retrieve a valid Google access token. Please re-authenticate.");
-      }
-      googleAccessToken = tokens.access_token;
-      
-      diagnostic.diagnostics.googleIntegration = {
-        tokenRetrieved: !!googleAccessToken,
-        organizationId: organization_id,
-      };
-      console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Google token retrieved successfully for org:`, organization_id);
-    } catch (googleError) {
-      diagnostic.diagnostics.googleIntegration = {
-        tokenRetrieved: false,
-        organizationId: organization_id,
-        error: googleError.message
-      };
-      diagnostic.diagnostics.error = {
-        message: googleError.message,
-        code: 'GOOGLE_TOKEN_RETRIEVAL_FAILED',
-        context: {
-          organizationId: organization_id
-        }
-      };
-      console.error(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] ERROR - Google token retrieval failed:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: googleError.message,
-        diagnostic 
-      }), 401);
-    }
+    const organization_id = await getOrganizationId(req);
+    const googleAccessToken = await getGoogleAccessToken(supabaseAdmin, organization_id);
 
-    // 4. Create Google Calendar event
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Creating Google Calendar event...`);
-    diagnostic.stage = 'GOOGLE_API_CALL';
-    
-    // Build the Google Calendar event object
     const googleEvent = {
-      summary: eventData.summary,
-      description: eventData.description || '',
-      start: {
-        dateTime: eventData.start,
-        timeZone: eventData.timeZone || 'UTC',
-      },
-      end: {
-        dateTime: eventData.end,
-        timeZone: eventData.timeZone || 'UTC',
-      },
-      attendees: eventData.attendees || [],
-      reminders: {
-        useDefault: false,
-        overrides: eventData.reminders || [
-          { method: 'email', minutes: 24 * 60 },
-          { method: 'popup', minutes: 10 },
-        ],
-      },
+      summary: event_summary,
+      description: event_description || '',
+      start: { dateTime: event_start_time, timeZone: 'UTC' },
+      end: { dateTime: event_end_time, timeZone: 'UTC' },
+      attendees: attendee_email ? [{ email: attendee_email }] : [],
+      reminders: { useDefault: true },
     };
 
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Google event object:`, googleEvent);
-
-    const createResponse_google = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    const apiResponse = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${googleAccessToken}`,
@@ -211,61 +50,24 @@ serve(async (req) => {
       body: JSON.stringify(googleEvent),
     });
 
-    const createResponseData = await createResponse_google.json();
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Google API response:`, {
-      status: createResponse_google.status,
-      ok: createResponse_google.ok,
-      eventId: createResponseData.id
-    });
-
-    if (!createResponse_google.ok) {
-      diagnostic.diagnostics.error = {
-        message: `Failed to create Google Calendar event: ${createResponseData.error?.message || 'Unknown error'}`,
-        code: 'GOOGLE_API_ERROR',
-        context: {
-          googleApiStatus: createResponse_google.status,
-          googleApiError: createResponseData.error || createResponseData
-        }
-      };
-      console.error(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] ERROR - Google API call failed:`, diagnostic.diagnostics.error);
-      return createResponse(JSON.stringify({ 
-        error: `Failed to create calendar event: ${createResponseData.error?.message || 'Unknown error'}`,
-        diagnostic 
-      }), 500);
+    const responseData = await apiResponse.json();
+    if (!apiResponse.ok) {
+        throw new Error(`Google API error (${apiResponse.status}): ${responseData.error?.message || 'Unknown error'}`);
     }
-
-    // 5. Success
-    diagnostic.success = true;
-    diagnostic.stage = 'SUCCESS';
     
-    console.log(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] Success - Event created:`, {
-      eventId: createResponseData.id,
-      organizationId: organization_id
+    return new Response(JSON.stringify({ 
+        success: true, 
+        googleEventId: responseData.id 
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
     });
-
-    return createResponse(JSON.stringify({
-      success: true,
-      event: createResponseData,
-      diagnostic
-    }));
 
   } catch (error) {
-    diagnostic.diagnostics.error = {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    };
-    
-    console.error(`[${new Date().toISOString()}] [CREATE-GOOGLE-EVENT] GENERAL ERROR:`, {
-      stage: diagnostic.stage,
-      error: error.message,
-      stack: error.stack,
-      diagnostic
+    console.error("[create-google-event] Error:", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
     });
-    
-    return createResponse(JSON.stringify({ 
-      error: error.message,
-      diagnostic
-    }), 500);
   }
 });

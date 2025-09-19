@@ -119,9 +119,9 @@ export const Dashboard: React.FC = () => {
 
         const url = 'https://n8n-5o4j.onrender.com/webhook/ai-studio-export';
         const payload = {
-            "fileName": "supabase/functions/google-token-exchange/index.ts",
-            "content": "// test aggiornamento automazione edge function via workflow n8n",
-            "commitMessage": "Test full pipeline n8n da AI Studio"
+            "fileName": "supabase/functions/google-token-exchange/n8n-test-from-n8n.txt",
+            "content": "Test file da workflow n8n - funziona ora!",
+            "commitMessage": "Commit test dopo verifica directory esistente"
         };
 
         try {

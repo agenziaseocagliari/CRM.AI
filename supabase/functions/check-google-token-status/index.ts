@@ -1,6 +1,7 @@
 // check-google-token-status - Deno + Supabase Edge Function
-// Version: 2025-09-19.3 (token management enhanced)
+// Version: 2025-09-19.3 (token diagnostic + CORS fix)
 console.info('check-google-token-status function starting');
+
 Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -49,7 +50,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Logging diagnostico base
+  // Logging per diagnosi reale del payload
   console.info('Request received:', { method: req.method, body });
 
   const token = body?.token;
@@ -94,5 +95,6 @@ Deno.serve(async (req) => {
     }
   });
 });
+
 
 

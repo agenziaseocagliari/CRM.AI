@@ -1,11 +1,10 @@
 // check-google-token-status - Deno + Supabase Edge Function
-// Version: 2025-09-19.2 (CORS apikey fix)
+// Version: 2025-09-19.3 (token management enhanced)
 console.info('check-google-token-status function starting');
 Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    // AGGIUNGI QUI tutti gli header custom necessari dal frontend!
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
     'Access-Control-Max-Age': '86400'
   };
@@ -53,12 +52,16 @@ Deno.serve(async (req) => {
   // Logging diagnostico base
   console.info('Request received:', { method: req.method, body });
 
-  const token = body?.token ?? null;
-  // (FACOLTATIVO) Validazione tipo token
-  if (token && typeof token !== 'string') {
-    console.warn('Invalid token type', typeof token);
+  const token = body?.token;
+  let token_diagnostics = '';
+
+  if (token === undefined || token === null) {
+    token_diagnostics = 'Token is missing';
+  } else if (typeof token !== 'string') {
+    token_diagnostics = `Token type error: expected string, got ${typeof token}`;
+    console.warn(token_diagnostics);
     return new Response(JSON.stringify({
-      error: 'Invalid token type: expected string'
+      error: token_diagnostics
     }), {
       status: 400,
       headers: {
@@ -66,13 +69,19 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json'
       }
     });
+  } else if (token.trim() === '') {
+    token_diagnostics = 'Token is present but empty string';
+  } else {
+    token_diagnostics = 'Token is present and valid string';
   }
 
   const responsePayload = {
     status: 'OK',
     received: body,
-    token_present: token !== null,
-    function_version: '2025-09-19.2', // aggiorna se cambi codice!
+    token_present: !!token,
+    token_diagnostics,
+    token_length: token ? token.length : 0,
+    function_version: '2025-09-19.3',
     timestamp: new Date().toISOString()
   };
 
@@ -85,4 +94,5 @@ Deno.serve(async (req) => {
     }
   });
 });
+
 

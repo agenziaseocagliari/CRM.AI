@@ -92,15 +92,14 @@ export async function getGoogleAccessToken(supabase: SupabaseClient, organizatio
         throw new Error("Google Token Error: No settings record found for this organization. Please connect your account in settings.");
     }
     
-    if (!settings.google_auth_token) {
-        throw new Error("Google Token Error: Settings found, but the Google token is missing. Please connect your account in settings.");
+    // FIX: Enhanced validation to prevent crashes on malformed token data.
+    // This checks for null, non-objects, and missing refresh_token in a single, safe condition.
+    if (!settings.google_auth_token || typeof settings.google_auth_token !== 'object' || !settings.google_auth_token.refresh_token) {
+        throw new Error("Google Token Error: Stored token is invalid or incomplete (missing refresh_token). Please reconnect your Google account in settings.");
     }
 
     const tokens = settings.google_auth_token as GoogleTokens;
-    if (!tokens.refresh_token) {
-        throw new Error("Google Token Error: Stored token is invalid (missing refresh_token). Please reconnect your Google account.");
-    }
-
+    
     const nowInSeconds = Math.floor(Date.now() / 1000);
     const buffer = 60; // 60-second buffer to be safe
     

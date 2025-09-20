@@ -34,7 +34,7 @@ const sanitizeHeaders = (headers: Headers) => {
 
 
 /**
- * Creates a standardized, detailed error response for debugging.
+ * Creates a standardized, detailed error response for debugging and logs it.
  * @param error The caught Error object.
  * @param functionName The name of the function where the error occurred.
  * @param req The original Request object.
@@ -67,6 +67,26 @@ export async function createErrorResponse(
     };
     
     console.error(`[${functionName}] Error:`, error.message);
+
+    // --- Fallback Logging ---
+    // Attempt to log the critical error to the database for persistent debugging.
+    try {
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (serviceRoleKey) {
+            const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+            const organization_id = requestBody?.organization_id || user?.app_metadata?.organization_id || null;
+            
+            await supabaseAdmin.from('debug_logs').insert({
+                function_name: functionName,
+                log_level: 'CRITICAL',
+                organization_id: organization_id,
+                content: diagnosticPayload.diagnostic // Log the serializable diagnostic object
+            });
+        }
+    } catch (logError) {
+        console.error(`[${functionName}] FAILED TO WRITE TO DEBUG LOGS:`, logError.message);
+    }
+    // --- End Fallback Logging ---
 
     return new Response(JSON.stringify(diagnosticPayload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

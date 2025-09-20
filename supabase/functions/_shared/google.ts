@@ -71,7 +71,7 @@ async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string
 
 /**
  * Retrieves a valid Google access token for an organization, refreshing it if necessary.
- * Logs the token status before throwing any errors.
+ * Throws specific errors for different failure scenarios.
  * @param supabase Admin Supabase client
  * @param organizationId The organization's UUID
  * @returns {Promise<string>} A valid Google access token.
@@ -83,30 +83,26 @@ export async function getGoogleAccessToken(supabase: SupabaseClient, organizatio
       .eq('organization_id', organizationId)
       .single()
 
-    // Fulfill logging requirement: log the query result before throwing.
-    await supabase.from('debug_logs').insert({
-        function_name: 'getGoogleAccessToken',
-        log_level: settingsError ? 'ERROR' : 'DEBUG',
-        organization_id: organizationId,
-        content: {
-            message: 'Queried organization_settings for google_auth_token.',
-            has_token: !!settings?.google_auth_token,
-            db_error: settingsError ? settingsError.message : null,
-        }
-    });
+    // 'PGRST116' means 'exact one row not found', which is not a DB error in this case.
+    if (settingsError && settingsError.code !== 'PGRST116') {
+        throw new Error(`Database error querying for settings: ${settingsError.message}`);
+    }
 
-    if (settingsError) throw new Error(`Could not query settings for organization: ${settingsError.message}`);
-    if (!settings || !settings.google_auth_token) {
-      throw new Error("Google integration not found for this organization. Please connect your Google account in settings.");
+    if (!settings) {
+        throw new Error("Google Token Error: No settings record found for this organization. Please connect your account in settings.");
+    }
+    
+    if (!settings.google_auth_token) {
+        throw new Error("Google Token Error: Settings found, but the Google token is missing. Please connect your account in settings.");
     }
 
     const tokens = settings.google_auth_token as GoogleTokens;
     if (!tokens.refresh_token) {
-        throw new Error("Stored Google token is invalid (missing refresh_token). Please reconnect your Google account.");
+        throw new Error("Google Token Error: Stored token is invalid (missing refresh_token). Please reconnect your Google account.");
     }
 
     const nowInSeconds = Math.floor(Date.now() / 1000);
-    const buffer = 60; // 60-second buffer
+    const buffer = 60; // 60-second buffer to be safe
     
     if (tokens.expiry_date < (nowInSeconds + buffer)) {
         console.log(`[google.ts] Token for org ${organizationId} has expired or is about to. Refreshing.`);

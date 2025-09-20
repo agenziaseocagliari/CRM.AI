@@ -8,10 +8,11 @@ import { Card } from './ui/Card';
 import { CheckCircleIcon, DollarSignIcon, TrendingUpIcon, UsersIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 import { invokeSupabaseFunction } from '../lib/api';
+import toast from 'react-hot-toast';
 
 
 export const Dashboard: React.FC = () => {
-  const { opportunities, contacts } = useOutletContext<ReturnType<typeof useCrmData>>();
+  const { opportunities, contacts, organization } = useOutletContext<ReturnType<typeof useCrmData>>();
 
   // --- START DEBUG INTERFACE STATE ---
   const [isLoading, setIsLoading] = useState(false);
@@ -85,14 +86,24 @@ export const Dashboard: React.FC = () => {
         () => invokeSupabaseFunction('run-debug-query', { query_name: 'get_latest_logs' })
     );
 
-    const handleTriggerCheckToken = () => runDebugAction(
-        "Trigger: Check Token Status",
-        () => invokeSupabaseFunction('check-google-token-status', { 
-            organization_id: 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e' 
-        })
-    );
+    const handleTriggerCheckToken = () => {
+        if (!organization?.id) {
+            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
+            return;
+        }
+        runDebugAction(
+            "Trigger: Check Token Status",
+            () => invokeSupabaseFunction('check-google-token-status', { 
+                organization_id: organization.id 
+            })
+        );
+    };
 
     const handleTriggerCalendarEvents = () => {
+        if (!organization?.id) {
+            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
+            return;
+        }
         const timeMin = new Date();
         const timeMax = new Date();
         timeMax.setDate(timeMin.getDate() + 1);
@@ -100,7 +111,7 @@ export const Dashboard: React.FC = () => {
         runDebugAction(
             "Trigger: Get Google Calendar Events",
             () => invokeSupabaseFunction('get-google-calendar-events', { 
-                organization_id: 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e',
+                organization_id: organization.id,
                 timeMin: timeMin.toISOString(),
                 timeMax: timeMax.toISOString()
             })

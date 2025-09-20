@@ -18,14 +18,11 @@ serve(async (req) => {
     if (!supabaseUrl || !serviceRoleKey) throw new Error("Missing Supabase credentials in environment.");
     supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     
-    // 1. Authenticate user and get organization_id securely from JWT
+    // 1. Authenticate user and get organization_id securely from JWT. This is the source of truth.
     organization_id = await getOrganizationId(req);
 
-    const { code, organization_id: payload_org_id } = await req.json();
+    const { code } = await req.json();
     if (!code) throw new Error("Missing 'code' parameter.");
-    if (payload_org_id !== organization_id) {
-        throw new Error("Authorization mismatch: Organization ID in payload does not match authenticated user.");
-    }
 
     await supabaseAdmin.from('debug_logs').insert({
         function_name: 'google-token-exchange', organization_id,

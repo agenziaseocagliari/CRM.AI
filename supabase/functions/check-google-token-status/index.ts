@@ -1,100 +1,74 @@
-// check-google-token-status - Deno + Supabase Edge Function
-// Version: 2025-09-19.3 (token diagnostic + CORS fix)
-console.info('check-google-token-status function starting');
+// File: supabase/functions/check-google-token-status/index.ts
 
-// FIX: Removed the redundant 'declare const Deno' which caused a redeclaration error.
-// The Deno global is provided by the Supabase Edge Function runtime environment.
-
-Deno.serve(async (req) => {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
-    'Access-Control-Max-Age': '86400'
+// FIX: Added a Deno type declaration to resolve "Cannot find name 'Deno'" errors, which is necessary for TypeScript to recognize the Deno runtime environment globals in Supabase Edge Functions.
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
   };
+};
 
-  // CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders
-    });
-  }
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { getOrganizationId } from "../_shared/supabase.ts"; // For auth
 
-  // Solo POST permesso
-  if (req.method !== 'POST') {
-    console.warn('Method not allowed:', req.method);
-    return new Response(JSON.stringify({
-      error: 'Method not allowed'
-    }), {
-      status: 405,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
-    });
-  }
-
-  let body = null;
+serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+  
   try {
-    const txt = await req.text();
-    body = txt ? JSON.parse(txt) : {};
-  } catch (err) {
-    console.error('Invalid JSON body', err);
-    return new Response(JSON.stringify({
-      error: 'Invalid JSON body',
-      details: String(err)
-    }), {
-      status: 400,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
-    });
-  }
+    // Authenticate the user calling the function
+    const authenticated_org_id = await getOrganizationId(req);
 
-  // Logging per diagnosi reale del payload
-  console.info('Request received:', { method: req.method, body });
-
-  const token = body?.token;
-  let token_diagnostics = '';
-
-  if (token === undefined || token === null) {
-    token_diagnostics = 'Token is missing';
-  } else if (typeof token !== 'string') {
-    token_diagnostics = `Token type error: expected string, got ${typeof token}`;
-    console.warn(token_diagnostics);
-    return new Response(JSON.stringify({
-      error: token_diagnostics
-    }), {
-      status: 400,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
-    });
-  } else if (token.trim() === '') {
-    token_diagnostics = 'Token is present but empty string';
-  } else {
-    token_diagnostics = 'Token is present and valid string';
-  }
-
-  const responsePayload = {
-    status: 'OK',
-    received: body,
-    token_present: !!token,
-    token_diagnostics,
-    token_length: token ? token.length : 0,
-    function_version: '2025-09-19.3',
-    timestamp: new Date().toISOString()
-  };
-
-  return new Response(JSON.stringify(responsePayload), {
-    status: 200,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-      'Connection': 'keep-alive'
+    const { organization_id } = await req.json();
+    if (!organization_id) {
+      throw new Error("Il parametro 'organization_id' è obbligatorio.");
     }
-  });
+    
+    // For security, a user can only check their own org's token status
+    if (authenticated_org_id !== organization_id) {
+        throw new Error("Autorizzazione negata. Puoi controllare solo lo stato della tua organizzazione.");
+    }
+    
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY not set.");
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+    
+    const { data: settings, error } = await supabaseAdmin
+      .from('organization_settings')
+      .select('google_auth_token')
+      .eq('organization_id', organization_id)
+      .single();
+
+    if (error) throw error;
+    
+    const token = settings?.google_auth_token;
+    let diagnostics = {};
+
+    if (!token) {
+        diagnostics = { status: 'NOT_FOUND', message: 'Nessun token Google trovato per questa organizzazione.' };
+    } else {
+        diagnostics = {
+            status: 'FOUND',
+            has_access_token: !!token.access_token,
+            has_refresh_token: !!token.refresh_token,
+            scope: token.scope,
+            token_type: token.token_type,
+            is_expired: token.expiry_date ? new Date(token.expiry_date * 1000) < new Date() : 'unknown',
+            expiry_date_utc: token.expiry_date ? new Date(token.expiry_date * 1000).toISOString() : 'not_set'
+        };
+    }
+
+    return new Response(JSON.stringify({ success: true, diagnostics }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+    
+  } catch (err) {
+    console.error("Errore in check-google-token-status:", err.message);
+    return new Response(JSON.stringify({ error: err.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
 });

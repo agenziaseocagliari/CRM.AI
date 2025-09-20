@@ -1,0 +1,438 @@
+
+{
+  "lastSync": "2024-08-01T10:00:00.000Z",
+  "files": [
+    {
+      "path": "metadata.json",
+      "hash": "sha1-3141f6c4",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "index.html",
+      "hash": "sha1-56221c64",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "package.json",
+      "hash": "sha1-244e6878",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "vite.config.ts",
+      "hash": "sha1-2f540b71",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "tsconfig.json",
+      "hash": "sha1-477085c7",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "tsconfig.node.json",
+      "hash": "sha1-38e9c608",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "tailwind.config.js",
+      "hash": "sha1-e8d1976",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "postcss.config.js",
+      "hash": "sha1-52210433",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/index.css",
+      "hash": "sha1-2478810c",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/index.tsx",
+      "hash": "sha1-23192f14",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/App.tsx",
+      "hash": "sha1-6d75ebfd",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/types.ts",
+      "hash": "sha1-55c9d5d3",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Sidebar.tsx",
+      "hash": "sha1-23d1d520",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "hash": "sha1-7e8220f8",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Dashboard.tsx",
+      "hash": "sha1-47cb5025",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Opportunities.tsx",
+      "hash": "sha1-6780c7fc",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Contacts.tsx",
+      "hash": "sha1-7bfd58ba",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/ui/Card.tsx",
+      "hash": "sha1-7090333",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/ui/icons.tsx",
+      "hash": "sha1-3146b3f9",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/ui/Modal.tsx",
+      "hash": "sha1-33100222",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Login.tsx",
+      "hash": "sha1-477f1f00",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Forms.tsx",
+      "hash": "sha1-50e5088f",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Automations.tsx",
+      "hash": "sha1-4235e27a",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/HomePage.tsx",
+      "hash": "sha1-7c093a89",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/lib/supabaseClient.ts",
+      "hash": "sha1-4edff81c",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/hooks/useCrmData.ts",
+      "hash": "sha1-2f7b8895",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/PublicForm.tsx",
+      "hash": "sha1-2f5451a9",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "vercel.json",
+      "hash": "sha1-234b6b15",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/shared/cors.ts",
+      "hash": "sha1-7bd59b43",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/generate-email-content/index.ts",
+      "hash": "sha1-23f20f12",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/MainLayout.tsx",
+      "hash": "sha1-2b6d61bd",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Settings.tsx",
+      "hash": "sha1-49b8004f",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/ui/LeadScoreBadge.tsx",
+      "hash": "sha1-1d5d1c32",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/import_map.json",
+      "hash": "sha1-35b8801d",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/process-automation-request/index.ts",
+      "hash": "sha1-16327663",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/send-welcome-email/index.ts",
+      "hash": "sha1-4a5c6020",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/generate-form-fields/index.ts",
+      "hash": "sha1-1c5c50c0",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/score-contact-lead/index.ts",
+      "hash": "sha1-7890b0e5",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/generate-whatsapp-message/index.ts",
+      "hash": "sha1-3d735071",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/send-whatsapp-message/index.ts",
+      "hash": "sha1-64d1f2b1",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/lib/countryCodes.ts",
+      "hash": "sha1-1dd73024",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/google-auth-url/index.ts",
+      "hash": "sha1-24838e1b",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/google-token-exchange/index.ts",
+      "hash": "sha1-155e8940",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/create-google-event/index.ts",
+      "hash": "sha1-58d04423",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/_shared/cors.ts",
+      "hash": "sha1-7bd59b43",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/PrivacyPolicy.tsx",
+      "hash": "sha1-2d7c5b6b",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/TermsOfService.tsx",
+      "hash": "sha1-61066edb",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/consume-credits/index.ts",
+      "hash": "sha1-561bcf95",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/UsageDashboard.tsx",
+      "hash": "sha1-5b91b970",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/CreateEventModal.tsx",
+      "hash": "sha1-2f638166",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/get-google-calendar-events/index.ts",
+      "hash": "sha1-6d7390fd",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/CalendarView.tsx",
+      "hash": "sha1-51235198",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/ContactEventsList.tsx",
+      "hash": "sha1-7e86e580",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/get-all-crm-events/index.ts",
+      "hash": "sha1-6831d102",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/delete-google-event/index.ts",
+      "hash": "sha1-38ef348f",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/schedule-event-reminders/index.ts",
+      "hash": "sha1-255d4949",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/process-scheduled-reminders/index.ts",
+      "hash": "sha1-1e9b25da",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/send-email/index.ts",
+      "hash": "sha1-71e1ef14",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/Meetings.tsx",
+      "hash": "sha1-638c4c3e",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/DayEventsModal.tsx",
+      "hash": "sha1-285b0d00",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/update-google-event/index.ts",
+      "hash": "sha1-24057863",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/create-crm-event/index.ts",
+      "hash": "sha1-16858e70",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/lib/eventUtils.ts",
+      "hash": "sha1-47752fc5",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/lib/api.ts",
+      "hash": "sha1-2cc6640c",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/_shared/google.ts",
+      "hash": "sha1-7871b658",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/_shared/supabase.ts",
+      "hash": "sha1-6e949ed",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "src/components/ConnectCalendarPrompt.tsx",
+      "hash": "sha1-2ed14d02",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/check-google-token-status/index.ts",
+      "hash": "sha1-5d9c7921",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/test-org-settings/index.ts",
+      "hash": "sha1-1e96a40a",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/run-debug-query/index.ts",
+      "hash": "sha1-5be06616",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "webhook-test.html",
+      "hash": "sha1-525a8370",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "path": "supabase/functions/_shared/diagnostics.ts",
+      "hash": "sha1-2f7b8895",
+      "status": "new",
+      "lastModified": "2024-08-01T10:00:00.000Z"
+    }
+  ]
+}

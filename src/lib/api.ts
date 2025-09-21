@@ -182,17 +182,27 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         return data;
 
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('Errore del server') || error.message.includes('ID Organizzazione non impostato'))) {
-            throw error;
+        // This catch block handles three types of errors:
+        // 1. True network errors from `fetch` (e.g., DNS, CORS, no connection). These are typically TypeErrors.
+        // 2. JSON parsing errors if the success response from the server is malformed.
+        // 3. Application-level errors that were already processed and re-thrown from the `if (!response.ok)` block.
+        
+        // Our goal is to only generate a *new* generic diagnostic report and toast for case #1 and #2.
+        // Case #3 errors already have a specific, useful message from the backend and have been toasted.
+
+        if (error instanceof TypeError) {
+            console.error(`[API Helper] Network or Parsing Error calling '${functionName}':`, error);
+            const diagnosticReport = createDiagnosticReport(
+                'Errore di Rete o Comunicazione',
+                functionName,
+                "La richiesta non ha raggiunto il server o la risposta non era valida.",
+                error
+            );
+            showErrorToast('Errore di rete. Controlla la connessione e riprova.', diagnosticReport);
         }
-        console.error(`[API Helper] Network or unexpected error calling '${functionName}':`, error);
-        const diagnosticReport = createDiagnosticReport(
-            'Errore di rete o imprevisto.',
-            functionName,
-            "Nessuna risposta dal backend.",
-            error as Error
-        );
-        showErrorToast('Errore di rete o imprevisto. Controlla la console per i dettagli.', diagnosticReport);
+        
+        // In all cases, we re-throw the error so the calling component's own try/catch block
+        // can handle it and update the UI state accordingly (e.g., show an error message in the component).
         throw error;
     }
 }

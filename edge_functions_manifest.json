@@ -1,0 +1,159 @@
+
+{
+  "functions": [
+    {
+      "name": "check-google-token-status",
+      "path": "supabase/functions/check-google-token-status/index.ts",
+      "description": "Verifica lo stato di un token Google OAuth per una data organizzazione.",
+      "deploy": true,
+      "tags": ["google", "debug", "auth"]
+    },
+    {
+      "name": "consume-credits",
+      "path": "supabase/functions/consume-credits/index.ts",
+      "description": "Funzione intermediaria che chiama la RPC per scalare i crediti di un'organizzazione.",
+      "deploy": true,
+      "tags": ["billing", "credits"]
+    },
+    {
+      "name": "create-crm-event",
+      "path": "supabase/functions/create-crm-event/index.ts",
+      "description": "Crea un nuovo evento nel database del CRM.",
+      "deploy": true,
+      "tags": ["crm", "calendar", "event"]
+    },
+    {
+      "name": "create-google-event",
+      "path": "supabase/functions/create-google-event/index.ts",
+      "description": "Crea un evento su Google Calendar utilizzando le credenziali OAuth dell'utente.",
+      "deploy": true,
+      "tags": ["google", "calendar", "event"]
+    },
+    {
+      "name": "delete-google-event",
+      "path": "supabase/functions/delete-google-event/index.ts",
+      "description": "Annulla un evento su Google Calendar e aggiorna lo stato nel CRM.",
+      "deploy": true,
+      "tags": ["google", "calendar", "event"]
+    },
+    {
+      "name": "generate-email-content",
+      "path": "supabase/functions/generate-email-content/index.ts",
+      "description": "Genera il contenuto di un'email utilizzando l'AI di Gemini.",
+      "deploy": true,
+      "tags": ["ai", "gemini", "email"]
+    },
+    {
+      "name": "generate-form-fields",
+      "path": "supabase/functions/generate-form-fields/index.ts",
+      "description": "Genera una struttura di campi per un form in formato JSON tramite l'AI di Gemini.",
+      "deploy": true,
+      "tags": ["ai", "gemini", "form"]
+    },
+    {
+      "name": "generate-whatsapp-message",
+      "path": "supabase/functions/generate-whatsapp-message/index.ts",
+      "description": "Genera il testo per un messaggio WhatsApp utilizzando l'AI di Gemini.",
+      "deploy": true,
+      "tags": ["ai", "gemini", "whatsapp"]
+    },
+    {
+      "name": "get-all-crm-events",
+      "path": "supabase/functions/get-all-crm-events/index.ts",
+      "description": "Recupera tutti gli eventi e i relativi promemoria per un'organizzazione.",
+      "deploy": true,
+      "tags": ["crm", "calendar", "event"]
+    },
+    {
+      "name": "get-google-calendar-events",
+      "path": "supabase/functions/get-google-calendar-events/index.ts",
+      "description": "Recupera gli eventi da Google Calendar per un dato intervallo di tempo.",
+      "deploy": true,
+      "tags": ["google", "calendar", "event"]
+    },
+    {
+      "name": "google-auth-url",
+      "path": "supabase/functions/google-auth-url/index.ts",
+      "description": "Genera l'URL di autorizzazione per il flusso Google OAuth.",
+      "deploy": true,
+      "tags": ["google", "auth"]
+    },
+    {
+      "name": "google-token-exchange",
+      "path": "supabase/functions/google-token-exchange/index.ts",
+      "description": "Scambia un codice di autorizzazione Google per un access e refresh token.",
+      "deploy": true,
+      "tags": ["google", "auth"]
+    },
+    {
+      "name": "process-automation-request",
+      "path": "supabase/functions/process-automation-request/index.ts",
+      "description": "Processa una richiesta in linguaggio naturale per definire un'automazione tramite AI.",
+      "deploy": true,
+      "tags": ["ai", "gemini", "automation"]
+    },
+    {
+      "name": "process-scheduled-reminders",
+      "path": "supabase/functions/process-scheduled-reminders/index.ts",
+      "description": "Funzione Cron per inviare i promemoria degli eventi schedulati.",
+      "deploy": true,
+      "tags": ["cron", "scheduler", "reminder"]
+    },
+    {
+      "name": "run-debug-query",
+      "path": "supabase/functions/run-debug-query/index.ts",
+      "description": "Esegue query predefinite per il debug (es. leggi/pulisci log).",
+      "deploy": true,
+      "tags": ["debug"]
+    },
+    {
+      "name": "schedule-event-reminders",
+      "path": "supabase/functions/schedule-event-reminders/index.ts",
+      "description": "Salva i promemoria per un evento nel database per essere processati dal Cron Job.",
+      "deploy": true,
+      "tags": ["scheduler", "reminder"]
+    },
+    {
+      "name": "score-contact-lead",
+      "path": "supabase/functions/score-contact-lead/index.ts",
+      "description": "Valuta e assegna un punteggio (lead score) a un nuovo contatto tramite AI.",
+      "deploy": true,
+      "tags": ["ai", "gemini", "crm", "lead"]
+    },
+    {
+      "name": "send-email",
+      "path": "supabase/functions/send-email/index.ts",
+      "description": "Invia un'email generica tramite l'API di Brevo.",
+      "deploy": true,
+      "tags": ["email", "brevo"]
+    },
+    {
+      "name": "send-welcome-email",
+      "path": "supabase/functions/send-welcome-email/index.ts",
+      "description": "Triggerato alla creazione di un nuovo contatto, invia un'email di benvenuto.",
+      "deploy": true,
+      "tags": ["trigger", "email", "brevo"]
+    },
+    {
+      "name": "send-whatsapp-message",
+      "path": "supabase/functions/send-whatsapp-message/index.ts",
+      "description": "Invia un messaggio WhatsApp tramite l'API di Twilio.",
+      "deploy": true,
+      "tags": ["whatsapp", "twilio"]
+    },
+    {
+      "name": "test-org-settings",
+      "path": "supabase/functions/test-org-settings/index.ts",
+      "description": "Recupera le impostazioni di un'organizzazione a scopo di test.",
+      "deploy": true,
+      "tags": ["debug"]
+    },
+    {
+      "name": "update-google-event",
+      "path": "supabase/functions/update-google-event/index.ts",
+      "description": "Aggiorna un evento esistente su Google Calendar.",
+      "deploy": true,
+      "tags": ["google", "calendar", "event"]
+    }
+  ]
+}

@@ -188,7 +188,7 @@ export const Settings: React.FC = () => {
         try {
             const result = await invokeSupabaseFunction('check-google-token-status', { organization_id: organization.id });
             setDiagResult(result.diagnostics);
-        } catch (err) {
+        } catch (err: any) {
             setDiagResult({ error: 'Impossibile completare la diagnostica.', details: err.message });
         } finally {
             setIsCheckingToken(false);

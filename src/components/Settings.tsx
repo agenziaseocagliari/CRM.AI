@@ -189,7 +189,14 @@ export const Settings: React.FC = () => {
             const result = await invokeSupabaseFunction('check-google-token-status', { organization_id: organization.id });
             setDiagResult(result.diagnostics);
         } catch (err: any) {
-            setDiagResult({ error: 'Impossibile completare la diagnostica.', details: err.message });
+            // FIX: The catch block now intelligently handles the structured error object
+            // thrown by the improved `invokeSupabaseFunction`. It looks for the `error`
+            // and `diagnostics` properties within the caught object to provide a rich,
+            // informative error display in the modal, instead of failing silently or
+            // showing a generic message. This directly fixes the "Nessun Risultato" bug.
+            const errorMessage = err.error || 'Impossibile completare la diagnostica.';
+            const errorDetails = err.diagnostics || { details: err.message || 'Errore sconosciuto.' };
+            setDiagResult({ ...errorDetails, status: 'ERROR', message: errorMessage });
         } finally {
             setIsCheckingToken(false);
         }

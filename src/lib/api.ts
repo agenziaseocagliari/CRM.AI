@@ -165,7 +165,10 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             const userMessage = errorJson?.error || `Errore del server (${response.status})`;
             const diagnosticReport = createDiagnosticReport(userMessage, functionName, errorJson || errorText);
             showErrorToast(userMessage, diagnosticReport);
-            throw new Error(userMessage);
+            // FIX: Throw the entire JSON object instead of just the message. This preserves
+            // the rich diagnostic information from the backend, allowing the calling
+            // component to display a more detailed and useful error message in the UI.
+            throw errorJson || { error: userMessage, diagnostics: { details: errorText } };
         }
         
         const data = await response.json();
@@ -176,12 +179,14 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             console.warn(`[API Helper] Function '${functionName}' returned 200 OK but with an error payload.`);
             const diagnosticReport = createDiagnosticReport(data.error, functionName, data);
             showErrorToast(data.error, diagnosticReport);
-            throw new Error(data.error);
+            // FIX: Also throw the full data object here to ensure components
+            // can access the diagnostic details from a 200 OK error response.
+            throw data;
         }
 
         return data;
 
-    } catch (error) {
+    } catch (error: any) {
         // This catch block handles three types of errors:
         // 1. True network errors from `fetch` (e.g., DNS, CORS, no connection). These are typically TypeErrors.
         // 2. JSON parsing errors if the success response from the server is malformed.
@@ -189,8 +194,9 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         
         // Our goal is to only generate a *new* generic diagnostic report and toast for case #1 and #2.
         // Case #3 errors already have a specific, useful message from the backend and have been toasted.
-
-        if (error instanceof TypeError) {
+        
+        // We check if the error already has our custom structure. If not, it's a network/parse error.
+        if (typeof error.error === 'undefined' && error instanceof Error) {
             console.error(`[API Helper] Network or Parsing Error calling '${functionName}':`, error);
             const diagnosticReport = createDiagnosticReport(
                 'Errore di Rete o Comunicazione',

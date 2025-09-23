@@ -53,7 +53,10 @@ export async function createErrorResponse(
     const diagnosticPayload = {
         success: false,
         error: error.message,
-        diagnostic: {
+        // FIX: Renamed 'diagnostic' to 'diagnostics' for consistency across all API responses.
+        // This ensures the frontend client can reliably find the diagnostic data object
+        // under the same key for both success and error scenarios.
+        diagnostics: {
             timestamp: new Date().toISOString(),
             function_name: functionName,
             environment: Deno.env.get("VERCEL_ENV") || 'development',
@@ -80,7 +83,7 @@ export async function createErrorResponse(
                 function_name: functionName,
                 log_level: 'CRITICAL',
                 organization_id: organization_id,
-                content: diagnosticPayload.diagnostic // Log the serializable diagnostic object
+                content: diagnosticPayload.diagnostics // Log the serializable diagnostic object
             });
         }
     } catch (logError) {

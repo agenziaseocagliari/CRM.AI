@@ -18,16 +18,11 @@ serve(async (req) => {
     if (!supabaseUrl || !serviceRoleKey) throw new Error("Missing Supabase credentials in environment.");
     supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     
-    // 1. Authenticate user and get organization_id securely from JWT. This is the source of truth.
+    // 1. Authenticate user and get organization_id securely from JWT.
     organization_id = await getOrganizationId(req);
 
     const { code } = await req.json();
     if (!code) throw new Error("Missing 'code' parameter.");
-
-    await supabaseAdmin.from('debug_logs').insert({
-        function_name: 'google-token-exchange', organization_id,
-        content: { step: 'start', message: 'Payload validated. Starting token exchange.' }
-    });
     
     // 2. Exchange authorization code for tokens with Google
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
@@ -46,35 +41,34 @@ serve(async (req) => {
 
     const tokens = await tokenResponse.json();
     
-    await supabaseAdmin.from('debug_logs').insert({
-        function_name: 'google-token-exchange', organization_id,
-        log_level: tokenResponse.ok ? 'INFO' : 'ERROR',
-        content: { step: 'google_api_call', status: tokenResponse.status, response: tokens }
-    });
-
     if (!tokenResponse.ok) {
       throw new Error(`Error from Google (${tokenResponse.status}): ${tokens.error_description || tokens.error}`);
     }
 
-    // 3. Save tokens to the database
+    // 3. **CRITICAL VALIDATION**: Ensure we have the necessary tokens before saving.
+    // The refresh_token is essential for long-term access.
+    if (!tokens.access_token || !tokens.refresh_token) {
+        console.error(`[google-token-exchange] Incomplete token received from Google for org ${organization_id}:`, tokens);
+        throw new Error("Risposta da Google incompleta. Il 'refresh_token' è mancante. Prova a revocare l'accesso a 'Guardian AI CRM' dal tuo account Google e a riconnetterti.");
+    }
+
+    // 4. Save the complete token object to the database
     const tokenDataToStore = {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in,
       scope: tokens.scope,
       token_type: tokens.token_type,
+      // Calculate expiry date immediately for future checks
       expiry_date: Math.floor(Date.now() / 1000) + tokens.expires_in
     };
 
     const { error: dbError } = await supabaseAdmin
         .from('organization_settings')
-        .upsert({ organization_id, google_auth_token: tokenDataToStore }, { onConflict: 'organization_id' });
-
-    await supabaseAdmin.from('debug_logs').insert({
-        function_name: 'google-token-exchange', organization_id,
-        log_level: dbError ? 'ERROR' : 'INFO',
-        content: { step: 'db_upsert', success: !dbError, error: dbError?.message }
-    });
+        .upsert({ 
+            organization_id, 
+            google_auth_token: tokenDataToStore // Upsert the entire object
+        }, { onConflict: 'organization_id' });
 
     if (dbError) throw dbError;
 
@@ -83,13 +77,14 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("[google-token-exchange] Error:", error.message);
+    // Log detailed error to a debugging table if available
     if (supabaseAdmin && organization_id) {
         await supabaseAdmin.from('debug_logs').insert({
             function_name: 'google-token-exchange', organization_id,
             log_level: 'ERROR', content: { step: 'catch_block', error: error.message, stack: error.stack }
-        });
+        }).catch(e => console.error("Failed to write to debug_logs:", e));
     }
-    console.error("[google-token-exchange] Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

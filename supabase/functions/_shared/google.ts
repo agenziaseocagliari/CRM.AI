@@ -41,7 +41,7 @@ async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string
     
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: { 'Content-Type': 'application/x-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
@@ -53,12 +53,16 @@ async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string
     const data = await response.json();
     if (!response.ok) {
       console.error(`[google.ts] Google token refresh failed for org ${organizationId}:`, data)
+      // Se il refresh token non è valido, l'utente deve autenticarsi di nuovo.
+      if (data.error === 'invalid_grant') {
+        throw new Error("Autorizzazione Google scaduta o revocata. Per favore, riconnetti il tuo account Google nelle impostazioni.");
+      }
       throw new Error(`Google API error during token refresh: ${data.error_description || 'Unknown error'}`);
     }
     
     const newTokens: GoogleTokens = {
       access_token: data.access_token,
-      refresh_token: data.refresh_token || refreshToken,
+      refresh_token: data.refresh_token || refreshToken, // Google non sempre restituisce un nuovo refresh token
       expires_in: data.expires_in,
       expiry_date: Math.floor(Date.now() / 1000) + data.expires_in,
       scope: data.scope,
@@ -71,7 +75,7 @@ async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string
 
 /**
  * Retrieves a valid Google access token for an organization, refreshing it if necessary.
- * Throws specific errors for different failure scenarios.
+ * Throws specific, user-friendly errors for different failure scenarios.
  * @param supabase Admin Supabase client
  * @param organizationId The organization's UUID
  * @returns {Promise<string>} A valid Google access token.
@@ -83,30 +87,36 @@ export async function getGoogleAccessToken(supabase: SupabaseClient, organizatio
       .eq('organization_id', organizationId)
       .single()
 
-    // 'PGRST116' means 'exact one row not found', which is not a DB error in this case.
     if (settingsError && settingsError.code !== 'PGRST116') {
         throw new Error(`Database error querying for settings: ${settingsError.message}`);
     }
 
-    if (!settings) {
-        throw new Error("Google Token Error: No settings record found for this organization. Please connect your account in settings.");
+    if (!settings || !settings.google_auth_token) {
+        throw new Error("Token Google non trovato per questa organizzazione. Vai su Impostazioni e collega il tuo account Google.");
     }
     
-    // FIX: Enhanced validation to prevent crashes on malformed token data.
-    // This checks for null, non-objects, and missing refresh_token in a single, safe condition.
-    if (!settings.google_auth_token || typeof settings.google_auth_token !== 'object' || !settings.google_auth_token.refresh_token) {
-        throw new Error("Google Token Error: Stored token is invalid or incomplete (missing refresh_token). Please reconnect your Google account in settings.");
+    // Validazione robusta per prevenire crash su dati malformati.
+    if (typeof settings.google_auth_token !== 'object' || Array.isArray(settings.google_auth_token)) {
+        throw new Error("Il formato del token Google salvato non è valido. Ricollega il tuo account Google nelle impostazioni.");
     }
 
     const tokens = settings.google_auth_token as GoogleTokens;
+
+    if (!tokens.refresh_token) {
+         throw new Error("Il token salvato è incompleto (manca il refresh_token). Ricollega il tuo account Google per consentire l'accesso offline.");
+    }
     
     const nowInSeconds = Math.floor(Date.now() / 1000);
     const buffer = 60; // 60-second buffer to be safe
     
-    if (tokens.expiry_date < (nowInSeconds + buffer)) {
+    if (!tokens.expiry_date || tokens.expiry_date < (nowInSeconds + buffer)) {
         console.log(`[google.ts] Token for org ${organizationId} has expired or is about to. Refreshing.`);
         const refreshedTokens = await refreshGoogleToken(supabase, tokens.refresh_token, organizationId);
         return refreshedTokens.access_token;
+    }
+    
+    if(!tokens.access_token) {
+        throw new Error("Il token salvato è incompleto (manca l'access_token), ma non è ancora scaduto. Riprova o ricollega l'account.");
     }
     
     return tokens.access_token;

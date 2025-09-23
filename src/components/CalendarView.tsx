@@ -1,14 +1,17 @@
 // src/components/CalendarView.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { CrmEvent } from '../types';
 import { DayEventsModal } from './DayEventsModal';
-import { PlusIcon } from './ui/icons';
+import { InfoIcon, PlusIcon } from './ui/icons';
 import { ConnectCalendarPrompt } from './ConnectCalendarPrompt';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
+import { invokeSupabaseFunction } from '../lib/api';
+import { Link } from 'react-router-dom';
+
 
 const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
@@ -40,10 +43,35 @@ const CalendarHeader: React.FC<{
 
 export const CalendarView: React.FC = () => {
     const crmData = useOutletContext<ReturnType<typeof useCrmData>>();
-    const { crmEvents, loading, isCalendarLinked } = crmData;
+    const { crmEvents, loading, isCalendarLinked, refetch } = crmData;
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [googleConnectionError, setGoogleConnectionError] = useState<string | null>(null);
+
+    // Controlla la validità del token all'avvio
+    useEffect(() => {
+        const checkTokenValidity = async () => {
+            if (isCalendarLinked) {
+                try {
+                    // Usiamo una funzione leggera per testare la connessione
+                    const timeMin = new Date();
+                    const timeMax = new Date();
+                    timeMax.setHours(timeMin.getHours() + 1);
+                    await invokeSupabaseFunction('get-google-calendar-events', { 
+                        timeMin: timeMin.toISOString(), 
+                        timeMax: timeMax.toISOString() 
+                    });
+                    setGoogleConnectionError(null);
+                } catch (error: any) {
+                    console.error("Errore di connessione a Google Calendar rilevato:", error);
+                    setGoogleConnectionError("La connessione con Google Calendar ha un problema. Potrebbe essere necessario riconnettere il tuo account.");
+                }
+            }
+        };
+        checkTokenValidity();
+    }, [isCalendarLinked]);
+
 
     const handlePrevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
     const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
@@ -77,15 +105,9 @@ export const CalendarView: React.FC = () => {
         return crmEvents.reduce((acc, event) => {
             if (event.status === 'cancelled' || !event.event_start_time) return acc;
             
-            // **FIX CRITICO FUSO ORARIO**: Converte la stringa ISO (UTC) dal database
-            // in un oggetto Date e poi costruisce la chiave YYYY-MM-DD usando
-            // i metodi locali del browser (getFullYear, getMonth, getDate).
-            // Questo risolve il bug per cui un evento creato nelle prime ore del mattino
-            // (es. 01:00 in Italia) veniva visualizzato nel giorno precedente a causa
-            // della conversione in UTC.
             const localDate = new Date(event.event_start_time);
             const year = localDate.getFullYear();
-            const month = String(localDate.getMonth() + 1).padStart(2, '0'); // I mesi sono 0-based
+            const month = String(localDate.getMonth() + 1).padStart(2, '0');
             const day = String(localDate.getDate()).padStart(2, '0');
             const dateKey = `${year}-${month}-${day}`;
 
@@ -93,7 +115,6 @@ export const CalendarView: React.FC = () => {
                 acc[dateKey] = [];
             }
             acc[dateKey].push(event);
-            // Ordina gli eventi per ora di inizio
             acc[dateKey].sort((a, b) => new Date(a.event_start_time).getTime() - new Date(b.event_start_time).getTime());
             return acc;
         }, {} as Record<string, CrmEvent[]>);
@@ -105,25 +126,16 @@ export const CalendarView: React.FC = () => {
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
 
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error('Utente non autenticato.');
-
-            const { data, error } = await supabase.functions.invoke('google-auth-url', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
-                body: { state },
-            });
+            const { url } = await invokeSupabaseFunction('google-auth-url', { state });
             
-            if (error) throw new Error(error.message);
-            if (data.error) throw new Error(data.error);
-
-            if (data.url) {
-                window.location.href = data.url;
+            if (url) {
+                window.location.href = url;
             } else {
-                throw new Error("La funzione ha restituito una risposta inaspettata.");
+                throw new Error("La funzione non ha restituito un URL valido.");
             }
             
         } catch (err: any) {
-            toast.error(`Impossibile avviare la connessione: ${err.message}`, { duration: 10000 });
+            // L'errore dettagliato è già gestito e mostrato da invokeSupabaseFunction
             setIsConnecting(false);
         }
     };
@@ -137,6 +149,18 @@ export const CalendarView: React.FC = () => {
     return (
         <>
             <div className="p-4 bg-white rounded-lg shadow">
+                 {googleConnectionError && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-800 text-sm rounded-md flex items-start space-x-2">
+                        <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <span>
+                            {googleConnectionError}
+                            {' '}
+                            <Link to="/settings" className="font-bold underline hover:text-red-900">
+                                Vai alle impostazioni per risolvere.
+                            </Link>
+                        </span>
+                    </div>
+                )}
                 <CalendarHeader 
                     currentDate={currentDate} 
                     onPrevMonth={handlePrevMonth}
@@ -199,7 +223,14 @@ export const CalendarView: React.FC = () => {
                 isOpen={!!selectedDate}
                 onClose={() => setSelectedDate(null)}
                 date={selectedDate}
-                crmData={crmData}
+                crmData={{...crmData, refetch: async () => {
+                    await refetch();
+                    // Dopo aver creato un evento, ricontrolla la validità del token
+                    // e pulisci l'errore se la nuova azione ha avuto successo.
+                    if (isCalendarLinked) {
+                        setGoogleConnectionError(null);
+                    }
+                }}}
             />
         </>
     );

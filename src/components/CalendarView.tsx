@@ -44,18 +44,25 @@ export const CalendarView: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
-    const [googleConnectionError, setGoogleConnectionError] = useState<string | null>(null);
+    
+    // FIX: Replaced simple error state with a robust state machine to prevent refresh loops.
+    const [connectionStatus, setConnectionStatus] = useState<'idle' | 'checking' | 'valid' | 'error'>('idle');
 
-    // Controlla la validità del token all'avvio
-    // FIX: Aggiunto `googleConnectionError` alle dipendenze e una condizione per non
-    // rieseguire il controllo se un errore è già stato rilevato. Questo interrompe
-    // il loop infinito di chiamate API in caso di token non valido.
+    // Effect to check token validity once per component lifecycle.
     useEffect(() => {
+        // Reset state if calendar connection status changes (e.g., user disconnects in settings)
+        if (!isCalendarLinked) {
+            setConnectionStatus('idle');
+            return;
+        }
+
         const checkTokenValidity = async () => {
-            // Esegui solo se collegato E se non c'è già un errore.
-            if (isCalendarLinked && !googleConnectionError) {
+            // This check now only runs if the component is in its initial 'idle' state.
+            // Once it moves to 'checking', 'valid', or 'error', it will not run again, breaking the loop.
+            if (isCalendarLinked && connectionStatus === 'idle') {
+                setConnectionStatus('checking');
                 try {
-                    // Usiamo una funzione leggera per testare la connessione
+                    // Use a lightweight function to test the connection
                     const timeMin = new Date();
                     const timeMax = new Date();
                     timeMax.setHours(timeMin.getHours() + 1);
@@ -63,15 +70,16 @@ export const CalendarView: React.FC = () => {
                         timeMin: timeMin.toISOString(), 
                         timeMax: timeMax.toISOString() 
                     });
-                    setGoogleConnectionError(null);
+                    setConnectionStatus('valid');
                 } catch (error: any) {
                     console.error("Errore di connessione a Google Calendar rilevato:", error);
-                    setGoogleConnectionError("La connessione con Google Calendar ha un problema. Potrebbe essere necessario riconnettere il tuo account.");
+                    // The detailed error toast is shown by the API helper, we just set the UI state.
+                    setConnectionStatus('error');
                 }
             }
         };
         checkTokenValidity();
-    }, [isCalendarLinked, googleConnectionError]);
+    }, [isCalendarLinked, connectionStatus]);
 
 
     const handlePrevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -150,11 +158,11 @@ export const CalendarView: React.FC = () => {
     return (
         <>
             <div className="p-4 bg-white rounded-lg shadow">
-                 {googleConnectionError && (
+                 {connectionStatus === 'error' && (
                     <div className="mb-4 p-3 bg-red-50 text-red-800 text-sm rounded-md flex items-start space-x-2">
                         <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                         <span>
-                            {googleConnectionError}
+                            La connessione con Google Calendar ha un problema. Potrebbe essere necessario riconnettere il tuo account.
                             {' '}
                             <Link to="/settings" className="font-bold underline hover:text-red-900">
                                 Vai alle impostazioni per risolvere.
@@ -226,10 +234,9 @@ export const CalendarView: React.FC = () => {
                 date={selectedDate}
                 crmData={{...crmData, refetch: async () => {
                     await refetch();
-                    // Dopo aver creato un evento, ricontrolla la validità del token
-                    // e pulisci l'errore se la nuova azione ha avuto successo.
+                    // After a successful action, reset the connection check state to allow re-validation.
                     if (isCalendarLinked) {
-                        setGoogleConnectionError(null);
+                        setConnectionStatus('idle');
                     }
                 }}}
             />

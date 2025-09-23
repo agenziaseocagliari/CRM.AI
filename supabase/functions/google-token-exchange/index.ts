@@ -1,3 +1,5 @@
+// File: supabase/functions/google-token-exchange/index.ts
+
 declare const Deno: any;
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -52,22 +54,24 @@ serve(async (req) => {
         throw new Error("Risposta da Google incompleta. Il 'refresh_token' è mancante. Prova a revocare l'accesso a 'Guardian AI CRM' dal tuo account Google e a riconnetterti.");
     }
 
-    // 4. Save the complete token object to the database
+    // 4. Structure the complete token object to be stored in a single JSON field.
     const tokenDataToStore = {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in,
       scope: tokens.scope,
       token_type: tokens.token_type,
-      // Calculate expiry date immediately for future checks
+      // Calculate expiry date immediately for future checks. Stored as Unix timestamp (seconds).
       expiry_date: Math.floor(Date.now() / 1000) + tokens.expires_in
     };
 
+    // 5. Save the token object to the database, overwriting any previous values.
+    // This modern approach uses a single JSONB field, deprecating legacy separate columns.
     const { error: dbError } = await supabaseAdmin
         .from('organization_settings')
         .upsert({ 
             organization_id, 
-            google_auth_token: tokenDataToStore // Upsert the entire object
+            google_auth_token: tokenDataToStore // Upsert the entire object into the JSON field
         }, { onConflict: 'organization_id' });
 
     if (dbError) throw dbError;
@@ -78,13 +82,21 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("[google-token-exchange] Error:", error.message);
-    // Log detailed error to a debugging table if available
+    
+    // Log detailed error to a debugging table for persistent diagnostics.
     if (supabaseAdmin && organization_id) {
         await supabaseAdmin.from('debug_logs').insert({
-            function_name: 'google-token-exchange', organization_id,
-            log_level: 'ERROR', content: { step: 'catch_block', error: error.message, stack: error.stack }
+            function_name: 'google-token-exchange',
+            organization_id: organization_id,
+            log_level: 'ERROR',
+            content: { 
+                step: 'catch_block', 
+                error: error.message, 
+                stack: error.stack 
+            }
         }).catch(e => console.error("Failed to write to debug_logs:", e));
     }
+    
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

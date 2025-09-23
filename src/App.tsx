@@ -65,7 +65,11 @@ const App: React.FC = () => {
       );
   }
   
-  if (loading || (session && crmData.loading)) {
+  // FIX: Removed `crmData.loading` check to prevent the entire component tree
+  // from unmounting during data re-fetches. This is a critical fix to prevent
+  // state loss in child components and avoid re-render loops. The loading state
+  // is now handled gracefully within MainLayout and its children.
+  if (loading) {
     return <div className="flex h-screen items-center justify-center">Caricamento in corso...</div>;
   }
 

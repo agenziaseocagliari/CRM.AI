@@ -11,23 +11,25 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
-    const { organization, loading, error } = crmData;
+    const { organization, error } = crmData;
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
         // La navigazione alla homepage viene gestita dal listener in App.tsx
     };
-
-    if (loading) {
-        return <div className="flex items-center justify-center h-screen">Caricamento dati...</div>;
-    }
     
+    // An error from the core data hook is critical. Display an error page.
     if (error) {
         // Non mostriamo l'errore di configurazione qui, poiché viene già gestito in App.tsx.
         // Mostriamo un errore generico per altri problemi.
         return <div className="flex items-center justify-center h-screen text-red-500">{error}</div>;
     }
 
+    // FIX: Removed the top-level loading check. The main layout skeleton now
+    // renders immediately, and the `Outlet` receives the `crmData` context,
+    // which includes the loading state. Child components will be responsible
+    // for showing their own loading indicators. This prevents the entire
+    // layout from unmounting and causing state-loss-related bugs.
     return (
         <div className="flex h-screen bg-gray-100 text-text-primary">
             <Sidebar />

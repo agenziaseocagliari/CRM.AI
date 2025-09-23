@@ -1,5 +1,5 @@
 // src/components/CalendarView.tsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext, Link } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
@@ -47,43 +47,49 @@ export const CalendarView: React.FC = () => {
     
     // Definitive state machine to prevent infinite loops.
     const [connectionStatus, setConnectionStatus] = useState<'idle' | 'checking' | 'valid' | 'error'>('idle');
+    // Ref to track status across re-renders without causing them.
+    const statusRef = useRef(connectionStatus);
 
-    // This effect runs ONLY when `isCalendarLinked` changes (e.g., after initial data load, or user connects/disconnects).
-    // It will NOT re-run when `connectionStatus` changes, which is the key to breaking the loop.
+    useEffect(() => {
+        statusRef.current = connectionStatus;
+    }, [connectionStatus]);
+
+    // This effect is the core of the fix. It is immune to re-render loops.
     useEffect(() => {
         if (isCalendarLinked) {
-            // As soon as we know it's linked, we start checking.
-            setConnectionStatus('checking');
+            // CRITICAL GUARD: Only start the check if we are in the initial 'idle' state.
+            // This prevents re-triggering the API call on subsequent re-renders if a check
+            // is already in progress or has already completed (either success or error).
+            if (statusRef.current === 'idle') {
+                setConnectionStatus('checking');
 
-            const checkTokenValidity = async () => {
-                try {
-                    // Use a lightweight function to test the connection. This will try to get an access token.
-                    // If it fails for any reason (expired, revoked, not found), it will throw a specific error.
-                    const timeMin = new Date();
-                    const timeMax = new Date();
-                    timeMax.setHours(timeMin.getHours() + 1); // Check a small window
-                    await invokeSupabaseFunction('get-google-calendar-events', { 
-                        timeMin: timeMin.toISOString(), 
-                        timeMax: timeMax.toISOString() 
-                    });
-                    // If the call succeeds, the token is valid.
-                    setConnectionStatus('valid');
-                } catch (error: any) {
-                    // If the call fails for any reason, we enter a permanent error state.
-                    console.error("Errore di connessione a Google Calendar rilevato:", error);
-                    // The detailed error toast is already shown by the API helper. We just set the UI state.
-                    setConnectionStatus('error');
-                }
-            };
-            
-            checkTokenValidity();
+                const checkTokenValidity = async () => {
+                    try {
+                        const timeMin = new Date();
+                        const timeMax = new Date();
+                        timeMax.setHours(timeMin.getHours() + 1);
+                        await invokeSupabaseFunction('get-google-calendar-events', { 
+                            timeMin: timeMin.toISOString(), 
+                            timeMax: timeMax.toISOString() 
+                        });
+                        // Success: Move to a final 'valid' state.
+                        setConnectionStatus('valid');
+                    } catch (error: any) {
+                        console.error("Errore di connessione a Google Calendar rilevato:", error);
+                        // Failure: Move to a final 'error' state. No more checks will be performed.
+                        setConnectionStatus('error');
+                    }
+                };
+                
+                checkTokenValidity();
+            }
         } else {
-            // If the user is not linked, we reset to the initial state.
+            // If the user is not linked (or disconnects), reset to 'idle'.
+            // This allows a new check to occur if they connect/re-connect later.
             setConnectionStatus('idle');
         }
-        // Disabling the lint rule is crucial here to prevent adding `connectionStatus` as a dependency,
-        // which would re-introduce the loop.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // This effect is ONLY triggered by an actual change in the `isCalendarLinked` status.
+    // It is immune to loops caused by its own state updates.
     }, [isCalendarLinked]);
 
 
@@ -154,7 +160,9 @@ export const CalendarView: React.FC = () => {
         }
     };
     
-    if (loading) return <div className="text-center p-8">Caricamento calendario...</div>;
+    // The main data loading is handled by the parent layout, so we don't need a full-screen loader here.
+    // This component will just be invisible until the `loading` flag is false.
+    if (loading) return null;
     
     if (!isCalendarLinked) {
         return <ConnectCalendarPrompt onConnect={handleGoogleConnect} isLoading={isConnecting} />;

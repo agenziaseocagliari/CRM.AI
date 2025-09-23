@@ -55,7 +55,7 @@ async function refreshGoogleToken(supabase: SupabaseClient, refreshToken: string
       console.error(`[google.ts] Google token refresh failed for org ${organizationId}:`, data)
       // Se il refresh token non è valido, l'utente deve autenticarsi di nuovo.
       if (data.error === 'invalid_grant') {
-        throw new Error("Autorizzazione Google scaduta o revocata. Per favore, riconnetti il tuo account Google nelle impostazioni.");
+        throw new Error("Autorizzazione Google scaduta. Riconnetti il tuo account.");
       }
       throw new Error(`Google API error during token refresh: ${data.error_description || 'Unknown error'}`);
     }
@@ -92,7 +92,7 @@ export async function getGoogleAccessToken(supabase: SupabaseClient, organizatio
     }
 
     if (!settings || !settings.google_auth_token) {
-        throw new Error("Token Google non trovato per questa organizzazione. Vai su Impostazioni e collega il tuo account Google.");
+        throw new Error("Token Google non trovato. Vai su Impostazioni per collegare il tuo account.");
     }
     
     // Validazione robusta per prevenire crash su dati malformati.
@@ -116,7 +116,7 @@ export async function getGoogleAccessToken(supabase: SupabaseClient, organizatio
     }
     
     if(!tokens.access_token) {
-        throw new Error("Il token salvato è incompleto (manca l'access_token), ma non è ancora scaduto. Riprova o ricollega l'account.");
+        throw new Error("Il token di accesso è mancante ma non è ancora scaduto. Riprova o ricollega l'account.");
     }
     
     return tokens.access_token;

@@ -45,41 +45,46 @@ export const CalendarView: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
     
-    // FIX: Replaced simple error state with a robust state machine to prevent refresh loops.
+    // Definitive state machine to prevent infinite loops.
     const [connectionStatus, setConnectionStatus] = useState<'idle' | 'checking' | 'valid' | 'error'>('idle');
 
-    // Effect to check token validity once per component lifecycle.
+    // This effect runs ONLY when `isCalendarLinked` changes (e.g., after initial data load, or user connects/disconnects).
+    // It will NOT re-run when `connectionStatus` changes, which is the key to breaking the loop.
     useEffect(() => {
-        // Reset state if calendar connection status changes (e.g., user disconnects in settings)
-        if (!isCalendarLinked) {
-            setConnectionStatus('idle');
-            return;
-        }
+        if (isCalendarLinked) {
+            // As soon as we know it's linked, we start checking.
+            setConnectionStatus('checking');
 
-        const checkTokenValidity = async () => {
-            // This check now only runs if the component is in its initial 'idle' state.
-            // Once it moves to 'checking', 'valid', or 'error', it will not run again, breaking the loop.
-            if (isCalendarLinked && connectionStatus === 'idle') {
-                setConnectionStatus('checking');
+            const checkTokenValidity = async () => {
                 try {
-                    // Use a lightweight function to test the connection
+                    // Use a lightweight function to test the connection. This will try to get an access token.
+                    // If it fails for any reason (expired, revoked, not found), it will throw a specific error.
                     const timeMin = new Date();
                     const timeMax = new Date();
-                    timeMax.setHours(timeMin.getHours() + 1);
+                    timeMax.setHours(timeMin.getHours() + 1); // Check a small window
                     await invokeSupabaseFunction('get-google-calendar-events', { 
                         timeMin: timeMin.toISOString(), 
                         timeMax: timeMax.toISOString() 
                     });
+                    // If the call succeeds, the token is valid.
                     setConnectionStatus('valid');
                 } catch (error: any) {
+                    // If the call fails for any reason, we enter a permanent error state.
                     console.error("Errore di connessione a Google Calendar rilevato:", error);
-                    // The detailed error toast is shown by the API helper, we just set the UI state.
+                    // The detailed error toast is already shown by the API helper. We just set the UI state.
                     setConnectionStatus('error');
                 }
-            }
-        };
-        checkTokenValidity();
-    }, [isCalendarLinked, connectionStatus]);
+            };
+            
+            checkTokenValidity();
+        } else {
+            // If the user is not linked, we reset to the initial state.
+            setConnectionStatus('idle');
+        }
+        // Disabling the lint rule is crucial here to prevent adding `connectionStatus` as a dependency,
+        // which would re-introduce the loop.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isCalendarLinked]);
 
 
     const handlePrevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -162,12 +167,17 @@ export const CalendarView: React.FC = () => {
                     <div className="mb-4 p-3 bg-red-50 text-red-800 text-sm rounded-md flex items-start space-x-2">
                         <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                         <span>
-                            La connessione con Google Calendar ha un problema. Potrebbe essere necessario riconnettere il tuo account.
+                            La connessione con Google Calendar ha un problema. Le funzionalità del calendario sono limitate.
                             {' '}
                             <Link to="/settings" className="font-bold underline hover:text-red-900">
-                                Vai alle impostazioni per risolvere.
+                                Vai alle impostazioni per riconnettere il tuo account.
                             </Link>
                         </span>
+                    </div>
+                )}
+                 {connectionStatus === 'checking' && (
+                    <div className="mb-4 p-3 bg-blue-50 text-blue-800 text-sm rounded-md animate-pulse">
+                        Verifica connessione con Google Calendar in corso...
                     </div>
                 )}
                 <CalendarHeader 
@@ -234,9 +244,9 @@ export const CalendarView: React.FC = () => {
                 date={selectedDate}
                 crmData={{...crmData, refetch: async () => {
                     await refetch();
-                    // After a successful action, reset the connection check state to allow re-validation.
+                    // After a successful action (like creating an event), re-verify the connection.
                     if (isCalendarLinked) {
-                        setConnectionStatus('idle');
+                        setConnectionStatus('checking');
                     }
                 }}}
             />

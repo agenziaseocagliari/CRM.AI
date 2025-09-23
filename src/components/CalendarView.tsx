@@ -1,16 +1,13 @@
 // src/components/CalendarView.tsx
 import React, { useState, useMemo, useEffect } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { CrmEvent } from '../types';
 import { DayEventsModal } from './DayEventsModal';
 import { InfoIcon, PlusIcon } from './ui/icons';
 import { ConnectCalendarPrompt } from './ConnectCalendarPrompt';
-import { supabase } from '../lib/supabaseClient';
-import { toast } from 'react-hot-toast';
 import { invokeSupabaseFunction } from '../lib/api';
-import { Link } from 'react-router-dom';
 
 
 const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];

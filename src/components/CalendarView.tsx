@@ -47,9 +47,13 @@ export const CalendarView: React.FC = () => {
     const [googleConnectionError, setGoogleConnectionError] = useState<string | null>(null);
 
     // Controlla la validità del token all'avvio
+    // FIX: Aggiunto `googleConnectionError` alle dipendenze e una condizione per non
+    // rieseguire il controllo se un errore è già stato rilevato. Questo interrompe
+    // il loop infinito di chiamate API in caso di token non valido.
     useEffect(() => {
         const checkTokenValidity = async () => {
-            if (isCalendarLinked) {
+            // Esegui solo se collegato E se non c'è già un errore.
+            if (isCalendarLinked && !googleConnectionError) {
                 try {
                     // Usiamo una funzione leggera per testare la connessione
                     const timeMin = new Date();
@@ -67,7 +71,7 @@ export const CalendarView: React.FC = () => {
             }
         };
         checkTokenValidity();
-    }, [isCalendarLinked]);
+    }, [isCalendarLinked, googleConnectionError]);
 
 
     const handlePrevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));

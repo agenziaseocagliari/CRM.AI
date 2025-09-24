@@ -84,18 +84,18 @@ export async function getGoogleAccessToken(supabase: SupabaseClient, organizatio
     }
 
     if (!settings || !settings.google_auth_token) {
-        throw new Error("Token Google non disponibile: Collega il tuo account Google nelle Impostazioni.");
+        throw new Error("Google token not available: Token not found. Please connect your Google account in Settings.");
     }
     
     if (typeof settings.google_auth_token !== 'object' || Array.isArray(settings.google_auth_token)) {
-        throw new Error("Formato del token non valido. Ricollega il tuo account Google nelle Impostazioni.");
+        throw new Error("Invalid token format. Please re-connect your Google account in Settings.");
     }
 
     const tokens = settings.google_auth_token as GoogleTokens;
 
     // CRITICAL: A refresh token is absolutely required for long-term access.
     if (!tokens.refresh_token) {
-         throw new Error("Token incompleto (refresh_token mancante). Ricollega il tuo account Google per autorizzare l'accesso offline.");
+         throw new Error("Incomplete token (missing refresh_token). Please re-connect your Google account to authorize offline access.");
     }
     
     const nowInSeconds = Math.floor(Date.now() / 1000);
@@ -107,7 +107,7 @@ export async function getGoogleAccessToken(supabase: SupabaseClient, organizatio
     }
     
     if(!tokens.access_token) {
-        throw new Error("Il token di accesso è mancante ma non è scaduto. Riprova o ricollega l'account.");
+        throw new Error("The access token is missing but is not expired. Please try again or re-connect your account.");
     }
     
     return tokens.access_token;

@@ -91,7 +91,16 @@ export const GoogleAuthCallback: React.FC = () => {
                 await invokeSupabaseFunction('google-token-exchange', { code });
                 setAuthState({ status: 'success', message: 'Account Google connesso! Sarai reindirizzato...' });
                 toast.success('Integrazione Google Calendar attivata!');
-                setTimeout(() => navigate('/settings'), 2500);
+                setTimeout(() => {
+                    // CRITICAL FIX: After a successful token exchange, we must force a full
+                    // page reload. This ensures that the main data hook (`useCrmData`)
+                    // is re-initialized and fetches the new `google_auth_token` from the
+                    // database. Without this, the frontend state remains stale, causing
+                    // subsequent API calls to fail because they are made with an outdated
+                    // `isCalendarLinked` status.
+                    navigate('/settings', { replace: true });
+                    setTimeout(() => window.location.reload(), 100);
+                }, 2500);
             } catch (err: any) {
                 setAuthState({ status: 'error', message: `Connessione fallita. Riprova dalle impostazioni.` });
             }

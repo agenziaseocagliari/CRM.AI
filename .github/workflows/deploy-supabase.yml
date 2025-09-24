@@ -1,23 +1,35 @@
 name: Deploy Supabase Edge Functions
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Clean previous supabase CLI
+
+      - name: Clean previous supabase CLI (file or directory)
         run: rm -rf supabase
+
       - name: Download and set up Supabase CLI
         run: |
           curl -sL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar -xz
           sudo mv supabase /usr/local/bin/supabase
+
       - name: Login to Supabase CLI
         run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Link Supabase project
         run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-      - name: Deploy Edge Functions
-        run: supabase functions deploy
+
+      - name: Deploy ALL Edge Functions (robusto)
+        run: |
+          for fn in supabase/functions/*; do
+            if [ -d "$fn" ]; then
+              supabase functions deploy "$(basename $fn)"
+            fi
+          done

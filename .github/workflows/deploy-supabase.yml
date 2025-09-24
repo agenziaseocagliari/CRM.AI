@@ -12,7 +12,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Supabase CLI
+      - name: Clean previous supabase CLI
+        run: rm -f supabase
+
+      - name: Download and set up Supabase CLI
         run: |
           curl -sL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar -xz
           sudo mv supabase /usr/local/bin/supabase

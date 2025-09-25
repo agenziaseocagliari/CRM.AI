@@ -34,7 +34,7 @@ serve(async (req) => {
 
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { "Content-Type": "application/x-form-urlencoded" },
       body: new URLSearchParams({
         code, client_id: clientId, client_secret: clientSecret,
         redirect_uri: redirectUri, grant_type: 'authorization_code'

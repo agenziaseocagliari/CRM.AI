@@ -254,7 +254,7 @@ export const CalendarView: React.FC = () => {
                     await refetch();
                     // After a successful action (like creating an event), re-verify the connection.
                     if (isCalendarLinked) {
-                        setConnectionStatus('checking');
+                        setConnectionStatus('idle'); // Reset to allow a new check
                     }
                 }}}
             />

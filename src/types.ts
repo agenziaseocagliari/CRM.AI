@@ -70,12 +70,26 @@ export interface Automation {
     created_at: string;
 }
 
+// FIX: Added a dedicated interface for Google OAuth tokens to ensure type safety
+// and facilitate structured data handling instead of relying on a JSON string.
+export interface GoogleTokens {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  expiry_date: number; // Unix timestamp in seconds
+  scope: string;
+  token_type: string;
+}
+
+
 export interface OrganizationSettings {
     organization_id: string;
     brevo_api_key: string | null;
     twilio_account_sid: string | null;
     twilio_auth_token: string | null;
-    google_auth_token: string | null; // This will be a JSON string
+    // FIX: Changed the type from `string | null` to the structured `GoogleTokens | null`
+    // to align with the new robust token management strategy.
+    google_auth_token: GoogleTokens | null;
 }
 
 export interface EventReminder {

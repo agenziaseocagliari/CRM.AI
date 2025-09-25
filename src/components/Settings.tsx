@@ -146,12 +146,18 @@ export const Settings: React.FC = () => {
         setIsSaving(true);
         
         try {
+            // FIX: Preserve the existing google_auth_token to prevent it from being
+            // overwritten with NULL when saving other API keys. This is the root cause
+            // of the "Token not found" error after saving settings.
+            const currentGoogleToken = organizationSettings?.google_auth_token || null;
+
             const { error } = await supabase.from('organization_settings').upsert(
                 {
                     organization_id: organization.id,
                     brevo_api_key: brevoApiKey,
                     twilio_account_sid: twilioSid,
                     twilio_auth_token: twilioToken,
+                    google_auth_token: currentGoogleToken, // Preserve existing token
                 },
                 { onConflict: 'organization_id' }
             );

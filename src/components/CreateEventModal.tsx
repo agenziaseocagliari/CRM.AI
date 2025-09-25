@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 // FIX: Corrected the import for Link from 'react-router-dom' to resolve module export errors.
 import { Link } from 'react-router-dom';
 
-import { Contact, Organization, OrganizationSettings, CrmEvent } from '../types';
+import { Contact, Organization, CrmEvent } from '../types';
 import { invokeSupabaseFunction } from '../lib/api';
 import { generateTimeSlots, combineDateAndTime } from '../lib/eventUtils';
 import { Modal } from './ui/Modal';
@@ -22,7 +22,8 @@ interface CreateEventModalProps {
     onClose: () => void;
     contact: Contact | null;
     organization: Organization | null;
-    organizationSettings: OrganizationSettings | null;
+    // FIX: Replaced `organizationSettings` with `isCalendarLinked` to use the correct state property for Google Calendar connection status. This resolves the type error.
+    isCalendarLinked: boolean;
     onActionSuccess: () => void;
 }
 
@@ -57,7 +58,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     onClose,
     contact,
     organization,
-    organizationSettings,
+    isCalendarLinked,
     onActionSuccess,
 }) => {
     const [formData, setFormData] = useState<EventFormData>(initialFormState);
@@ -67,7 +68,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     const [isCalendarApiBlocked, setCalendarApiBlocked] = useState(false);
     const [googleConnectionError, setGoogleConnectionError] = useState<string | null>(null);
 
-    const isGoogleConnected = !!organizationSettings?.google_auth_token;
+    const isGoogleConnected = isCalendarLinked;
 
     // Fetch busy slots from Google Calendar when the date changes
     useEffect(() => {

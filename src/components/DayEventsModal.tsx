@@ -32,7 +32,7 @@ const EventListItem: React.FC<{ event: CrmEvent, contacts: Contact[] }> = ({ eve
 
 
 export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose, date, crmData }) => {
-    const { crmEvents, contacts, organization, organizationSettings, refetch } = crmData;
+    const { crmEvents, contacts, organization, refetch, isCalendarLinked } = crmData;
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -89,7 +89,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
                 onClose={() => setIsCreateModalOpen(false)}
                 contact={selectedContact}
                 organization={organization}
-                organizationSettings={organizationSettings}
+                isCalendarLinked={isCalendarLinked}
                 onActionSuccess={handleSaveSuccess}
                 // Potremmo passare la data preselezionata in futuro
             />}

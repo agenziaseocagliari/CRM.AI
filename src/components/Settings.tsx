@@ -119,7 +119,7 @@ export const GoogleAuthCallback: React.FC = () => {
 type SettingsTab = 'integrations' | 'billing';
 
 export const Settings: React.FC = () => {
-    const { organization, organizationSettings, subscription, ledger, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const { organization, organizationSettings, subscription, ledger, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
     const [activeTab, setActiveTab] = useState<SettingsTab>('integrations');
     const [brevoApiKey, setBrevoApiKey] = useState('');
     const [twilioSid, setTwilioSid] = useState('');
@@ -129,8 +129,6 @@ export const Settings: React.FC = () => {
     const [isCheckingToken, setIsCheckingToken] = useState(false);
     const [isDiagModalOpen, setIsDiagModalOpen] = useState(false);
     const [diagResult, setDiagResult] = useState<any>(null);
-
-    const isGoogleConnected = !!organizationSettings?.google_auth_token;
 
     useEffect(() => {
         if (organizationSettings) {
@@ -146,18 +144,12 @@ export const Settings: React.FC = () => {
         setIsSaving(true);
         
         try {
-            // FIX: Preserve the existing google_auth_token to prevent it from being
-            // overwritten with NULL when saving other API keys. This is the root cause
-            // of the "Token not found" error after saving settings.
-            const currentGoogleToken = organizationSettings?.google_auth_token || null;
-
             const { error } = await supabase.from('organization_settings').upsert(
                 {
                     organization_id: organization.id,
                     brevo_api_key: brevoApiKey,
                     twilio_account_sid: twilioSid,
                     twilio_auth_token: twilioToken,
-                    google_auth_token: currentGoogleToken, // Preserve existing token
                 },
                 { onConflict: 'organization_id' }
             );
@@ -187,11 +179,13 @@ export const Settings: React.FC = () => {
     const handleGoogleDisconnect = async () => {
         if (!organization || !window.confirm("Sei sicuro? Questo interromperà la sincronizzazione con Google Calendar.")) return;
         try {
-            await supabase.from('organization_settings').update({ google_auth_token: null }).eq('organization_id', organization.id);
+            // La disconnessione ora invoca una funzione dedicata per una pulizia completa
+            await invokeSupabaseFunction('google-disconnect', { organization_id: organization.id });
             toast.success("Account Google disconnesso.");
             refetch();
         } catch (err: any) {
-            toast.error(`Errore: ${err.message}`);
+            // L'errore viene già mostrato dal gestore API
+            console.error(err);
         }
     };
     
@@ -263,7 +257,7 @@ export const Settings: React.FC = () => {
                         <div className="bg-white p-6 rounded-lg shadow">
                             <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Integrazione Google Calendar</h2>
                             <div className="mt-4">
-                                {isGoogleConnected ? (
+                                {isCalendarLinked ? (
                                     <div className="flex items-center justify-between">
                                         <p className="text-green-700 font-medium flex items-center"><CheckCircleIcon className="w-5 h-5 mr-2"/> Connesso</p>
                                         <div className="flex items-center space-x-2">

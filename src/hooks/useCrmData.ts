@@ -82,7 +82,7 @@ export const useCrmData = () => {
       }
       const { organization_id } = profileData;
 
-      const [eventsResponse, orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse, settingsResponse, subscriptionResponse, ledgerResponse] = await Promise.all([
+      const [eventsResponse, orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse, settingsResponse, subscriptionResponse, ledgerResponse, googleCredsResponse] = await Promise.all([
         invokeSupabaseFunction('get-all-crm-events', { organization_id }),
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
@@ -91,7 +91,8 @@ export const useCrmData = () => {
         supabase.from('automations').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         supabase.from('organization_settings').select('*').eq('organization_id', organization_id).maybeSingle<OrganizationSettings>(),
         supabase.from('organization_subscriptions').select('*').eq('organization_id', organization_id).maybeSingle<OrganizationSubscription>(),
-        supabase.from('credit_ledger').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }).limit(20)
+        supabase.from('credit_ledger').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }).limit(20),
+        supabase.from('google_credentials').select('organization_id').eq('organization_id', organization_id).maybeSingle()
       ]);
 
       if (orgResponse.error) throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);
@@ -102,6 +103,7 @@ export const useCrmData = () => {
       if (settingsResponse.error) throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);
       if (subscriptionResponse.error) throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);
       if (ledgerResponse.error) throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`);
+      if (googleCredsResponse.error) throw new Error(`Errore nel caricamento delle credenziali Google: ${googleCredsResponse.error.message}`);
       
       if (orgResponse.data) {
         setOrganization(orgResponse.data);
@@ -115,7 +117,7 @@ export const useCrmData = () => {
       setCrmEvents(eventsResponse?.events || []);
       setSubscription(subscriptionResponse.data);
       setLedger(ledgerResponse.data || []);
-      setIsCalendarLinked(!!settingsResponse.data?.google_auth_token);
+      setIsCalendarLinked(!!googleCredsResponse.data);
 
     } catch (err: any) {
       setError(err.message);

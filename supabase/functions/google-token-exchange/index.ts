@@ -3,30 +3,57 @@
 declare const Deno: any;
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
-import { getOrganizationId } from "../_shared/supabase.ts";
+
+// Helper per estrarre in modo sicuro user_id e organization_id dal token JWT.
+async function getAuthContext(req: Request, supabase: SupabaseClient): Promise<{ userId: string, organizationId: string }> {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Missing Authorization header.");
+
+    const jwt = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+    if (userError) throw new Error(`Authentication failed: ${userError.message}`);
+    if (!user) throw new Error("User not found for the provided token.");
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) throw new Error(`Could not retrieve user profile: ${profileError.message}`);
+    if (!profile || !profile.organization_id) throw new Error("User profile is incomplete or not associated with an organization.");
+
+    return { userId: user.id, organizationId: profile.organization_id };
+}
+
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
-  let supabaseAdmin;
-  let organization_id;
+  let supabaseAdmin: SupabaseClient;
+  let organizationId: string | null = null;
   
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) throw new Error("Missing Supabase credentials in environment.");
+    
+    // Utilizziamo un client con service_role per bypassare RLS in modo sicuro.
+    // La sicurezza è garantita dal fatto che operiamo solo sull'organization_id
+    // legato all'utente autenticato dal suo token JWT.
     supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     
-    // 1. Authenticate user and get organization_id securely from JWT.
-    organization_id = await getOrganizationId(req);
+    // 1. Autentica l'utente e ottieni ID utente e organizzazione
+    const { userId, organizationId: orgId } = await getAuthContext(req, supabaseAdmin);
+    organizationId = orgId; // Assegna all'ambito esterno per il logging degli errori
 
     const { code } = await req.json();
-    if (!code) throw new Error("Missing 'code' parameter.");
+    if (!code) throw new Error("Missing 'code' parameter in payload.");
     
-    // 2. Exchange authorization code for tokens with Google
+    // 2. Scambia il codice di autorizzazione con i token di Google
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
     const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
@@ -42,58 +69,54 @@ serve(async (req) => {
     });
 
     const tokens = await tokenResponse.json();
-    
     if (!tokenResponse.ok) {
       throw new Error(`Error from Google (${tokenResponse.status}): ${tokens.error_description || tokens.error}`);
     }
 
-    // 3. **CRITICAL VALIDATION**: Ensure we have the necessary tokens before saving.
-    // The refresh_token is essential for long-term access.
+    // 3. Validazione critica del payload ricevuto da Google
     if (!tokens.access_token || !tokens.refresh_token) {
-        console.error(`[google-token-exchange] Incomplete token received from Google for org ${organization_id}:`, tokens);
-        throw new Error("Risposta da Google incompleta. Il 'refresh_token' è mancante. Prova a revocare l'accesso a 'Guardian AI CRM' dal tuo account Google e a riconnetterti.");
+        console.error(`[google-token-exchange] Incomplete token for org ${organizationId}:`, tokens);
+        throw new Error("Risposta da Google incompleta. Il 'refresh_token' è mancante. Prova a revocare l'accesso e a riconnetterti.");
     }
 
-    // 4. Structure the complete token object to be stored in a single JSON field.
-    const tokenDataToStore = {
+    // 4. Prepara il record da salvare nella tabella `google_credentials`
+    const credentialRecord = {
+      organization_id: organizationId,
+      user_id: userId, // Salva l'ID dell'utente che ha effettuato l'autorizzazione
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
-      expires_in: tokens.expires_in,
       scope: tokens.scope,
-      token_type: tokens.token_type,
-      // Calculate expiry date immediately for future checks. Stored as Unix timestamp (seconds).
       expiry_date: Math.floor(Date.now() / 1000) + tokens.expires_in
     };
 
-    // 5. Save the token object to the database, overwriting any previous values.
-    // This modern approach uses a single JSONB field, deprecating legacy separate columns.
-    const { error: dbError } = await supabaseAdmin
+    // 5. Salva le credenziali nella tabella dedicata
+    const { error: upsertError } = await supabaseAdmin
+        .from('google_credentials')
+        .upsert(credentialRecord, { onConflict: 'organization_id' });
+
+    if (upsertError) throw upsertError;
+    
+    // 6. (Azione di migrazione) Pulisci il vecchio campo in organization_settings
+    await supabaseAdmin
         .from('organization_settings')
-        .upsert({ 
-            organization_id, 
-            google_auth_token: tokenDataToStore // Upsert the entire object into the JSON field
-        }, { onConflict: 'organization_id' });
+        .update({ google_auth_token: null })
+        .eq('organization_id', organizationId);
 
-    if (dbError) throw dbError;
 
-    return new Response(JSON.stringify({ success: true, message: "Token exchanged and saved successfully." }), {
+    return new Response(JSON.stringify({ success: true, message: "Token scambiato e salvato correttamente." }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     console.error("[google-token-exchange] Error:", error.message);
     
-    // Log detailed error to a debugging table for persistent diagnostics.
-    if (supabaseAdmin && organization_id) {
+    // Logga l'errore nel database per una diagnostica persistente
+    if (supabaseAdmin && organizationId) {
         await supabaseAdmin.from('debug_logs').insert({
             function_name: 'google-token-exchange',
-            organization_id: organization_id,
+            organization_id: organizationId,
             log_level: 'ERROR',
-            content: { 
-                step: 'catch_block', 
-                error: error.message, 
-                stack: error.stack 
-            }
+            content: { step: 'catch_block', error: error.message, stack: error.stack }
         }).catch(e => console.error("Failed to write to debug_logs:", e));
     }
     

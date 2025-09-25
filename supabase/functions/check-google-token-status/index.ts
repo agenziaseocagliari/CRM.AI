@@ -11,6 +11,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { getOrganizationId } from "../_shared/supabase.ts";
 import { createErrorResponse } from "../_shared/diagnostics.ts";
+import { GoogleCredential } from "../_shared/google.ts";
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -36,29 +37,28 @@ serve(async (req) => {
     if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY not set.");
     const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
     
-    const { data: settings, error } = await supabaseAdmin
-      .from('organization_settings')
-      .select('google_auth_token')
+    // Query sulla nuova tabella `google_credentials`
+    const { data: credential, error } = await supabaseAdmin
+      .from('google_credentials')
+      .select('*')
       .eq('organization_id', organization_id)
-      .single();
+      .single<GoogleCredential>();
 
     // 'PGRST116' means 'exact one row not found', which is not a fatal DB error here.
     if (error && error.code !== 'PGRST116') throw error;
     
-    const token = settings?.google_auth_token;
     let diagnostics = {};
 
-    if (!token) {
-        diagnostics = { status: 'NOT_FOUND', message: 'Nessun token Google trovato per questa organizzazione.' };
+    if (!credential) {
+        diagnostics = { status: 'NOT_FOUND', message: 'Nessuna credenziale Google trovata per questa organizzazione.' };
     } else {
         diagnostics = {
             status: 'FOUND',
-            has_access_token: !!token.access_token,
-            has_refresh_token: !!token.refresh_token,
-            scope: token.scope,
-            token_type: token.token_type,
-            is_expired: token.expiry_date ? new Date(token.expiry_date * 1000) < new Date() : 'unknown',
-            expiry_date_utc: token.expiry_date ? new Date(token.expiry_date * 1000).toISOString() : 'not_set'
+            has_access_token: !!credential.access_token,
+            has_refresh_token: !!credential.refresh_token,
+            scope: credential.scope,
+            is_expired: credential.expiry_date ? new Date(credential.expiry_date * 1000) < new Date() : 'unknown',
+            expiry_date_utc: credential.expiry_date ? new Date(credential.expiry_date * 1000).toISOString() : 'not_set'
         };
     }
 

@@ -34,21 +34,25 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   let supabaseAdmin: SupabaseClient;
-  let organizationId: string | null = null;
+  let organizationIdForLogging: string | null = null;
   
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) throw new Error("Missing Supabase credentials in environment.");
     
-    // Utilizziamo un client con service_role per bypassare RLS in modo sicuro.
-    // La sicurezza è garantita dal fatto che operiamo solo sull'organization_id
-    // legato all'utente autenticato dal suo token JWT.
     supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     
     // 1. Autentica l'utente e ottieni ID utente e organizzazione
-    const { userId, organizationId: orgId } = await getAuthContext(req, supabaseAdmin);
-    organizationId = orgId; // Assegna all'ambito esterno per il logging degli errori
+    const { userId, organizationId } = await getAuthContext(req, supabaseAdmin);
+    organizationIdForLogging = organizationId;
+    
+    // --- STEP 1 & 6 (Checklist): Log mandatory fields ---
+    if (!userId || !organizationId) {
+        console.error('CRITICAL: Missing userId or organizationId.', { userId, organizationId });
+        throw new Error('User ID or Organization ID could not be determined. Upsert aborted.');
+    }
+    console.log('Authentication context OK:', { userId, organizationId });
 
     const { code } = await req.json();
     if (!code) throw new Error("Missing 'code' parameter in payload.");
@@ -73,28 +77,44 @@ serve(async (req) => {
       throw new Error(`Error from Google (${tokenResponse.status}): ${tokens.error_description || tokens.error}`);
     }
 
-    // 3. Validazione critica del payload ricevuto da Google
+    // 3. Validazione critica e logging del payload ricevuto da Google
     if (!tokens.access_token || !tokens.refresh_token) {
         console.error(`[google-token-exchange] Incomplete token for org ${organizationId}:`, tokens);
         throw new Error("Risposta da Google incompleta. Il 'refresh_token' è mancante. Prova a revocare l'accesso e a riconnetterti.");
     }
+    
+    const expiry_date = Math.floor(Date.now() / 1000) + tokens.expires_in;
+    console.log('Tokens received from Google:', {
+        has_access_token: !!tokens.access_token,
+        has_refresh_token: !!tokens.refresh_token,
+        scope: tokens.scope,
+        expiry_date: new Date(expiry_date * 1000).toISOString()
+    });
 
     // 4. Prepara il record da salvare nella tabella `google_credentials`
     const credentialRecord = {
       organization_id: organizationId,
-      user_id: userId, // Salva l'ID dell'utente che ha effettuato l'autorizzazione
+      user_id: userId,
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       scope: tokens.scope,
-      expiry_date: Math.floor(Date.now() / 1000) + tokens.expires_in
+      expiry_date: expiry_date
     };
+    
+    // --- STEP 2 (Checklist): Log payload before upsert ---
+    console.log('Payload for upsert:', credentialRecord);
 
     // 5. Salva le credenziali nella tabella dedicata
     const { error: upsertError } = await supabaseAdmin
         .from('google_credentials')
         .upsert(credentialRecord, { onConflict: 'organization_id' });
 
-    if (upsertError) throw upsertError;
+    // --- STEP 3 (Checklist): Corrected upsert error handling ---
+    if (upsertError) {
+        console.error('Upsert error:', upsertError);
+        throw new Error(`Failed to save Google credentials: ${upsertError.message}`);
+    }
+    console.log('Upsert OK for organization:', organizationId);
     
     // 6. (Azione di migrazione) Pulisci il vecchio campo in organization_settings
     await supabaseAdmin
@@ -102,25 +122,26 @@ serve(async (req) => {
         .update({ google_auth_token: null })
         .eq('organization_id', organizationId);
 
-
-    return new Response(JSON.stringify({ success: true, message: "Token scambiato e salvato correttamente." }), {
+    // --- STEP 4 (Checklist): Return success response ---
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("[google-token-exchange] Error:", error.message);
+    console.error("[google-token-exchange] Final catch block error:", error.message);
     
     // Logga l'errore nel database per una diagnostica persistente
-    if (supabaseAdmin && organizationId) {
+    if (supabaseAdmin && organizationIdForLogging) {
         await supabaseAdmin.from('debug_logs').insert({
             function_name: 'google-token-exchange',
-            organization_id: organizationId,
+            organization_id: organizationIdForLogging,
             log_level: 'ERROR',
             content: { step: 'catch_block', error: error.message, stack: error.stack }
         }).catch(e => console.error("Failed to write to debug_logs:", e));
     }
     
-    return new Response(JSON.stringify({ error: error.message }), {
+    // --- STEP 4 (Checklist): Return failure response ---
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

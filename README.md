@@ -1,28 +1,4 @@
-
 # Guardian AI CRM
-
-## Ripristino e sincronizzazione inversa directory CI/CD
-
-**IMPORTANTE:**
-Se la directory `.github/workflows/` viene cancellata o modificata da AI Studio, eseguire il ripristino locale e il sync inverso come segue:
-
-```bash
-git fetch origin
-git checkout origin/main -- .github/workflows/
-git add .github/workflows/
-git commit -m "fix: ripristino directory workflows persa"
-git push origin main
-```
-
-Oppure usare lo script automatico:
-```bash
-bash restore-github-workflows.sh
-```
-
-**Avviso per il team:**
-Dopo ogni modifica ai file workflow su GitHub o locale, ricordarsi di fare pull su AI Studio e NON modificare mai la directory `.github/workflows/` da ambiente cloud IDE.
-
-## Policy gestione CI/CD e automazione
 
 Guardian AI CRM è una piattaforma avanzata e AI-nativa progettata per ottimizzare le vendite, il marketing e la gestione dei clienti attraverso automazione intelligente e analisi approfondite.
 

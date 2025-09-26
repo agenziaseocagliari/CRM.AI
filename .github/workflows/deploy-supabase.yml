@@ -68,10 +68,10 @@ jobs:
           set -o pipefail
           {
             echo "--- Deploying Edge Functions ---"
-            npx supabase functions deploy --project-ref $SUPABASE_PROJECT_ID --non-interactive
+            npx supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
 
             echo "--- Deploying Database Migrations ---"
-            npx supabase db push --project-ref $SUPABASE_PROJECT_ID --non-interactive
+            npx supabase db push --project-ref $SUPABASE_PROJECT_ID
           } 2>&1 | tee deploy.log
 
       - name: Check Deploy Status

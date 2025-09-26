@@ -6,7 +6,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
-// Helper per estrarre in modo sicuro user_id e organization_id dal token JWT.
+// Helper to extract user_id and organization_id from the JWT.
 async function getAuthContext(req: Request, supabase: SupabaseClient): Promise<{ userId: string, organizationId: string }> {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing Authorization header.");
@@ -43,21 +43,14 @@ serve(async (req) => {
     
     supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     
-    // 1. Autentica l'utente e ottieni ID utente e organizzazione
-    const { userId, organizationId } = await getAuthContext(req, supabaseAdmin);
-    organizationIdForLogging = organizationId;
-    
-    // --- STEP 1 & 6 (Checklist): Log mandatory fields ---
-    if (!userId || !organizationId) {
-        console.error('CRITICAL: Missing userId or organizationId.', { userId, organizationId });
-        throw new Error('User ID or Organization ID could not be determined. Upsert aborted.');
-    }
-    console.log('Authentication context OK:', { userId, organizationId });
+    // Get authenticated user and organization IDs
+    const { userId: user_id, organizationId: organization_id } = await getAuthContext(req, supabaseAdmin);
+    organizationIdForLogging = organization_id;
 
     const { code } = await req.json();
     if (!code) throw new Error("Missing 'code' parameter in payload.");
     
-    // 2. Scambia il codice di autorizzazione con i token di Google
+    // Exchange authorization code for Google tokens
     const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
     const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
@@ -77,60 +70,83 @@ serve(async (req) => {
       throw new Error(`Error from Google (${tokenResponse.status}): ${tokens.error_description || tokens.error}`);
     }
 
-    // 3. Validazione critica e logging del payload ricevuto da Google
-    if (!tokens.access_token || !tokens.refresh_token) {
-        console.error(`[google-token-exchange] Incomplete token for org ${organizationId}:`, tokens);
-        throw new Error("Risposta da Google incompleta. Il 'refresh_token' è mancante. Prova a revocare l'accesso e a riconnetterti.");
-    }
-    
+    // 1. Verify, extract, and log all required fields
+    const access_token = tokens.access_token;
+    const refresh_token = tokens.refresh_token;
     const expiry_date = Math.floor(Date.now() / 1000) + tokens.expires_in;
-    console.log('Tokens received from Google:', {
-        has_access_token: !!tokens.access_token,
-        has_refresh_token: !!tokens.refresh_token,
-        scope: tokens.scope,
-        expiry_date: new Date(expiry_date * 1000).toISOString()
+
+    console.log('--- Mandatory Fields Verification ---');
+    console.log({
+        user_id,
+        organization_id,
+        access_token: access_token ? 'OK' : 'MISSING',
+        refresh_token: refresh_token ? 'OK' : 'MISSING',
+        expiry_date,
     });
 
-    // 4. Prepara il record da salvare nella tabella `google_credentials`
-    const credentialRecord = {
-      organization_id: organizationId,
-      user_id: userId,
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      scope: tokens.scope,
-      expiry_date: expiry_date
+    if (!user_id || !organization_id) {
+        const errorMsg = 'CRITICAL: User ID or Organization ID could not be determined. Upsert aborted.';
+        console.error(errorMsg, { user_id, organization_id });
+        throw new Error(errorMsg);
+    }
+     if (!access_token || !refresh_token) {
+        const errorMsg = "Risposta da Google incompleta. Il 'refresh_token' è mancante. Prova a revocare l'accesso e a riconnetterti.";
+        console.error(errorMsg, { has_access_token: !!access_token, has_refresh_token: !!refresh_token });
+        throw new Error(errorMsg);
+    }
+    
+    // 2. Log the final payload passed to the upsert operation
+    console.log('Payload upsert:', {
+        user_id,
+        organization_id,
+        access_token,
+        refresh_token,
+        expiry_date
+    });
+
+    // 3. Correct the upsert call with schema-compliant field names
+    const upsertData = {
+      user_id,
+      organization_id,
+      google_access_token: access_token,
+      google_refresh_token: refresh_token,
+      expires_at: expiry_date,
+      updated_at: new Date().toISOString()
+      // `created_at` is omitted to let the database handle it with a default value.
     };
     
-    // --- STEP 2 (Checklist): Log payload before upsert ---
-    console.log('Payload for upsert:', credentialRecord);
+    const { data, error } = await supabaseAdmin
+      .from('google_credentials')
+      .upsert(upsertData, { onConflict: 'organization_id' })
+      .select()
+      .single();
 
-    // 5. Salva le credenziali nella tabella dedicata
-    const { error: upsertError } = await supabaseAdmin
-        .from('google_credentials')
-        .upsert(credentialRecord, { onConflict: 'organization_id' });
-
-    // --- STEP 3 (Checklist): Corrected upsert error handling ---
-    if (upsertError) {
-        console.error('Upsert error:', upsertError);
-        throw new Error(`Failed to save Google credentials: ${upsertError.message}`);
+    // 4. Handle response and return success/failure
+    if (error) {
+      console.error('Errore nell’upsert:', error);
+      throw new Error(error.message || 'Errore upsert Google credentials');
     }
-    console.log('Upsert OK for organization:', organizationId);
-    
-    // 6. (Azione di migrazione) Pulisci il vecchio campo in organization_settings
+
+    if (data) {
+        console.log('Upsert OK, data:', data);
+    } else {
+        console.warn('Upsert succeeded but returned no data. This is unexpected.');
+    }
+
+    // (Migration Action) Clean up the old field from organization_settings if it exists
     await supabaseAdmin
         .from('organization_settings')
         .update({ google_auth_token: null })
-        .eq('organization_id', organizationId);
+        .eq('organization_id', organization_id);
 
-    // --- STEP 4 (Checklist): Return success response ---
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+
   } catch (error) {
     console.error("[google-token-exchange] Final catch block error:", error.message);
     
-    // Logga l'errore nel database per una diagnostica persistente
     if (supabaseAdmin && organizationIdForLogging) {
         await supabaseAdmin.from('debug_logs').insert({
             function_name: 'google-token-exchange',
@@ -140,7 +156,6 @@ serve(async (req) => {
         }).catch(e => console.error("Failed to write to debug_logs:", e));
     }
     
-    // --- STEP 4 (Checklist): Return failure response ---
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

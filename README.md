@@ -17,3 +17,10 @@ L'integrazione con Google Calendar utilizza un flusso OAuth 2.0 sicuro per l'aut
 - **Flusso del Token:** Al primo collegamento, l'applicazione riceve un `access_token` (a breve scadenza) e un `refresh_token` (a lunga scadenza). Il `refresh_token` viene utilizzato in modo sicuro dal backend per richiedere nuovi `access_token` in modo automatico, senza che l'utente debba ricollegarsi.
 - **Stabilità:** Per garantire che l'integrazione rimanga attiva, è fondamentale **non revocare l'accesso a "Guardian AI CRM"** dalle impostazioni di sicurezza del proprio account Google.
 - **Riconnessione:** Se l'integrazione smette di funzionare (ad esempio, dopo una revoca manuale o la scadenza del `refresh_token`), è sufficiente tornare alla pagina `Impostazioni`, disconnettere l'account e ricollegarlo.
+
+## Sincronizzazione sicura directory workflow (.github/workflows)
+
+- Tutte le modifiche ai workflow GitHub Actions si fanno da GitHub (web) o da ambiente locale/codespaces, MAI da AI Studio.
+- Prima di lavorare su AI Studio, eseguire sempre `git pull origin main` per portare le ultime versioni del codice e della directory `.github/workflows/`.
+- Non modificare/cancellare la directory `.github/` in AI Studio. Se accidentalmente eliminata, ripetere subito `git pull origin main` per ripristinarla.
+- Al prossimo push, AI Studio manterrà la directory intatta: la cancellerà solo se localmente non esiste.

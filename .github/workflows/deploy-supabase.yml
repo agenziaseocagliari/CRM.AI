@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true
 
       - name: Install Supabase CLI
-        run: npm install -g supabase@latest
+        run: npm install supabase --save-dev
 
       - name: Deploy Supabase (Edge Functions & Migrations)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -68,10 +68,10 @@ jobs:
           set -o pipefail
           {
             echo "--- Deploying Edge Functions ---"
-            supabase functions deploy --project-ref $SUPABASE_PROJECT_ID --non-interactive
+            npx supabase functions deploy --project-ref $SUPABASE_PROJECT_ID --non-interactive
 
             echo "--- Deploying Database Migrations ---"
-            supabase db push --project-ref $SUPABASE_PROJECT_ID --non-interactive
+            npx supabase db push --project-ref $SUPABASE_PROJECT_ID --non-interactive
           } 2>&1 | tee deploy.log
 
       - name: Check Deploy Status

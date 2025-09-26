@@ -2,13 +2,13 @@
 
 Guardian AI CRM è una piattaforma avanzata e AI-nativa progettata per ottimizzare le vendite, il marketing e la gestione dei clienti attraverso automazione intelligente e analisi approfondite.
 
-# Policy CI/CD su Google AI Studio
+# Policy CI/CD
 
-Tutte le pipeline e i workflow di automazione sono gestiti e versionati esclusivamente nella directory:
-`.github_workflow_backup`
+Il workflow di Continuous Integration e Continuous Deployment (CI/CD) è gestito da GitHub Actions.
 
-Evita qualsiasi modifica o creazione di file YAML in `.github/workflows` per prevenire errori e conflitti con i sistemi di sync AI Studio e GitHub.
-Aggiorna sempre la documentazione e comunica la regola operativa a chiunque lavori sul progetto.
+- **File di Configurazione:** Il file di workflow principale è `.github/workflows/deploy-supabase.yml`.
+- **Standard:** Questo file deve essere mantenuto in questa directory per garantire che GitHub Actions lo rilevi ed esegua automaticamente ad ogni push o pull request sul branch `main`.
+- **Modifiche:** Qualsiasi modifica alla pipeline di deploy deve essere effettuata direttamente su questo file e committata nel repository. La vecchia directory `.github_workflow_backup` è obsoleta e non deve essere utilizzata.
 
 # Gestione Autenticazione Google OAuth
 

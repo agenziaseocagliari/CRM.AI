@@ -46,21 +46,27 @@ jobs:
         continue-on-error: true
       - name: Install Supabase CLI
         run: npm install supabase --save-dev
-      - name: Deploy Supabase (Edge Functions & Migrations)
+      - name: Deploy Supabase Edge Functions
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: deploy_to_supabase
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          set -o pipefail
-          {
-            echo "--- Deploying Edge Functions ---"
-            npx supabase functions deploy
-            echo "--- Deploying Database Migrations ---"
-            npx supabase db push
-          } 2>&1 | tee deploy.log
+          echo "--- Deploying Edge Functions ---"
+          npx supabase functions deploy
+      - name: Apply DB migrations via Supabase API
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          for file in supabase/migrations/*.sql; do
+            curl -X POST "https://${SUPABASE_PROJECT_ID}.supabase.co/rest/v1/rpc/apply_migration" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              --data "{\"sql\": \"$(cat $file | sed 's/"/\\"/g')\"}"
+          done
       - name: Check Deploy Status
         if: success() && steps.deploy_to_supabase.conclusion == 'success'
         run: echo "✅ Deploy completato!"

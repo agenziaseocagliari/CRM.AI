@@ -15,9 +15,14 @@ serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  console.log(`[${ACTION_TYPE}] Edge Function invoked.`);
+
   try {
     // organization_id viene ora recuperato in modo sicuro dal token JWT
     const organization_id = await getOrganizationId(req);
+    
+    const payload = await req.json();
+    console.log(`[${ACTION_TYPE}] Payload received:`, payload);
 
     const {
       contact_id,
@@ -26,7 +31,7 @@ serve(async (req) => {
       event_start_time,
       event_end_time,
       google_event_id
-    } = await req.json();
+    } = payload;
 
     if (!contact_id || !event_summary || !event_start_time || !event_end_time) {
       throw new Error("Parametri `contact_id`, `event_summary`, `event_start_time`, e `event_end_time` sono obbligatori.");
@@ -62,6 +67,8 @@ serve(async (req) => {
       .single();
 
     if (insertError) throw insertError;
+    
+    console.log(`[${ACTION_TYPE}] CRM event created successfully:`, newEvent);
 
     return new Response(JSON.stringify({ crmEvent: newEvent }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -69,7 +76,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Errore in create-crm-event:", error.message);
+    console.error(`Errore in ${ACTION_TYPE}:`, error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

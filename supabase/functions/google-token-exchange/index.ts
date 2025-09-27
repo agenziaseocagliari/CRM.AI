@@ -8,6 +8,7 @@ import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 // Helper to extract user_id and organization_id from the JWT.
 async function getAuthContext(req: Request, supabase: SupabaseClient): Promise<{ userId: string, organizationId: string }> {
+    console.log('[getAuthContext] Helper invoked.');
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing Authorization header.");
 
@@ -16,11 +17,15 @@ async function getAuthContext(req: Request, supabase: SupabaseClient): Promise<{
     if (userError) throw new Error(`Authentication failed: ${userError.message}`);
     if (!user) throw new Error("User not found for the provided token.");
 
+    console.log(`[getAuthContext] Auth context: User ID ${user.id}, Email: ${user.email}`);
+    
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
       .single();
+
+    console.log('[getAuthContext] Profile select result:', { data: profile, error: profileError });
 
     if (profileError) throw new Error(`Could not retrieve user profile: ${profileError.message}`);
     if (!profile || !profile.organization_id) throw new Error("User profile is incomplete or not associated with an organization.");
@@ -32,6 +37,8 @@ async function getAuthContext(req: Request, supabase: SupabaseClient): Promise<{
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
+
+  console.log('[google-token-exchange] Edge Function invoked.');
 
   let supabaseAdmin: SupabaseClient;
   let organizationIdForLogging: string | null = null;
@@ -46,8 +53,10 @@ serve(async (req) => {
     // Get authenticated user and organization IDs
     const { userId: user_id, organizationId: organization_id } = await getAuthContext(req, supabaseAdmin);
     organizationIdForLogging = organization_id;
-
-    const { code } = await req.json();
+    
+    const payload = await req.json();
+    console.log('[google-token-exchange] Payload received:', payload);
+    const { code } = payload;
     if (!code) throw new Error("Missing 'code' parameter in payload.");
     
     // Exchange authorization code for Google tokens

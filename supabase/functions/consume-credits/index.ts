@@ -12,8 +12,12 @@ serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  console.log(`[consume-credits] Edge Function invoked.`);
+
   try {
-    const { organization_id, action_type } = await req.json();
+    const payload = await req.json();
+    console.log(`[consume-credits] Payload received:`, payload);
+    const { organization_id, action_type } = payload;
 
     if (!organization_id) throw new Error("`organization_id` è obbligatorio.");
     if (!action_type) throw new Error("`action_type` è obbligatorio.");
@@ -36,6 +40,8 @@ serve(async (req) => {
         p_organization_id: organization_id,
         p_action_type: action_type
     });
+    
+    console.log(`[consume-credits] RPC 'consume_credits_rpc' result:`, { data, error });
 
     if (error) {
         console.error("Errore durante l'esecuzione della funzione RPC:", error);

@@ -1,0 +1,91 @@
+
+on:on:
+
+  push:  push:
+
+    branches:    branches:
+
+      - main      - main
+
+jobs:jobs:
+
+  restore:  restore:
+
+    runs-on: ubuntu-latest    runs-on: ubuntu-latest
+
+    steps:    steps:
+
+      - uses: actions/checkout@v4      - uses: actions/checkout@v4
+
+      - name: Restore .github/workflows if missing      - name: Restore .github/workflows if missing
+
+        run: |        run: |
+
+          if [ ! -d ".github/workflows" ]; then          if [ ! -d ".github/workflows" ]; then
+
+            git fetch origin main            git fetch origin main
+
+            git checkout origin/main -- .github/workflows            git checkout origin/main -- .github/workflows
+
+            if [ "$(git status --porcelain | grep .github/workflows)" ]; then            if [ "$(git status --porcelain | grep .github/workflows)" ]; then
+
+              git config --global user.name "Auto Restore Bot"              git config --global user.name "Auto Restore Bot"
+
+              git config --global user.email "autobot@example.com"              git config --global user.email "autobot@example.com"
+
+              git add .github/workflows              git add .github/workflows
+
+              git commit -m "restore: auto-restore workflow dir lost from cloud AI Studio"              git commit -m "restore: auto-restore workflow dir lost from cloud AI Studio"
+
+name: Restore Workflows Directory
+on:
+  push:
+    branches:
+      - main
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore .github/workflows if missing
+        run: |
+          if [ ! -d ".github/workflows" ]; then
+            git fetch origin main
+            git checkout origin/main -- .github/workflows
+            if [ "$(git status --porcelain | grep .github/workflows)" ]; then
+              git config --global user.name "Auto Restore Bot"
+              git config --global user.email "autobot@example.com"
+              git add .github/workflows
+              git commit -m "restore: auto-restore workflow dir lost from cloud AI Studio"
+              git push origin main
+            fi
+          fi
+name: Restore Workflows Directory
+on:
+  push:
+    branches:
+      - main
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore .github/workflows if missing
+        run: |
+          if [ ! -d ".github/workflows" ]; then
+            git fetch origin main
+            git checkout origin/main -- .github/workflows
+            if [ "$(git status --porcelain | grep .github/workflows)" ]; then
+              git config --global user.name "Auto Restore Bot"
+              git config --global user.email "autobot@example.com"
+              git add .github/workflows
+              git commit -m "restore: auto-restore workflow dir lost from cloud AI Studio"
+              git push origin main
+            fi
+          fi
+              git push origin main              git push origin main
+
+            fi            fi
+
+          fi          fi
+

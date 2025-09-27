@@ -1,57 +1,43 @@
-// File: supabase/functions/_shared/supabase.ts
+// Import required modules
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
 
-declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-  };
-};
-
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+// Create Supabase client with service role key
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
 /**
- * Extracts the organization ID from the user's profile based on the JWT in the request.
- * This is the secure way to identify the organization for any operation.
- * @param {Request} req - The incoming request object.
- * @returns {Promise<string>} The organization ID.
- * @throws {Error} If authentication fails or the organization cannot be determined.
+ * Helper function to get organization_id for a given user
+ * @param userId - The user ID from authentication
+ * @returns Promise<string> - The organization_id
  */
-export async function getOrganizationId(req: Request): Promise<string> {
-  console.log(`[getOrganizationId] Function invoked.`);
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Missing Supabase URL or Anon Key environment variables.");
-  }
+export async function getOrganizationId(userId: string): Promise<string> {
+  console.log(`[getOrganizationId] Fetching organization for user: ${userId}`)
   
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    throw new Error("Missing Authorization header.");
-  }
-
-  const jwt = authHeader.replace("Bearer ", "");
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-  
-  const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
-  if (userError) throw new Error(`Authentication failed: ${userError.message}`);
-  if (!user) throw new Error("User not found for the provided token.");
-
-  console.log(`[getOrganizationId] Auth context: User ID ${user.id}, Email: ${user.email}`);
-  
-  const { data: profile, error: profileError } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('organization_id')
-    .eq('id', user.id)
-    .single();
-
-  console.log('[getOrganizationId] Profile select result:', { data: profile, error: profileError });
-
-  if (profileError) throw new Error(`Could not retrieve user profile: ${profileError.message}`);
-  if (!profile || !profile.organization_id) {
-    throw new Error("User profile is incomplete or not associated with an organization.");
+    .eq('id', userId)
+  
+  console.log('[getOrganizationId] Profile query result:', data, 'Error:', error)
+  
+  if (error) {
+    console.error(`[getOrganizationId] Database error: ${error.message}`)
+    throw new Error(`Could not retrieve user profile: ${error.message}`)
   }
-
-  console.log(`[getOrganizationId] Successfully retrieved organization_id: ${profile.organization_id}`);
-
-  return profile.organization_id;
+  
+  if (!data || data.length === 0) {
+    console.error('[getOrganizationId] No profile found for user')
+    throw new Error('User profile not found')
+  }
+  
+  const profile = data[0]
+  
+  if (!profile.organization_id) {
+    console.error('[getOrganizationId] Profile found but organization_id is missing')
+    throw new Error('User profile is incomplete or not associated with an organization.')
+  }
+  
+  console.log(`[getOrganizationId] Successfully retrieved organization_id: ${profile.organization_id}`)
+  return profile.organization_id
 }

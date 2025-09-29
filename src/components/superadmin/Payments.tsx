@@ -1,6 +1,6 @@
 import React from 'react';
 import toast from 'react-hot-toast';
-import { useSuperAdminData, Transaction, PaymentStatus } from '../../hooks/useSuperAdminData';
+import { useSuperAdminData, PaymentStatus } from '../../hooks/useSuperAdminData';
 
 const statusStyles: Record<PaymentStatus, string> = {
     Paid: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',

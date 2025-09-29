@@ -8,7 +8,7 @@ type SortKey = keyof AuditLog | 'timestamp';
 export const AuditLogs: React.FC = () => {
     const { auditLogs, loading } = useSuperAdminData();
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'timestamp', direction: 'descending' });
 
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -25,8 +25,8 @@ export const AuditLogs: React.FC = () => {
 
         if (sortConfig !== null) {
             logs.sort((a, b) => {
-                const aValue = a[sortConfig.key as keyof AuditLog];
-                const bValue = b[sortConfig.key as keyof AuditLog];
+                const aValue = a[sortConfig.key as keyof AuditLog] ?? '';
+                const bValue = b[sortConfig.key as keyof AuditLog] ?? '';
 
                 if (aValue < bValue) {
                     return sortConfig.direction === 'ascending' ? -1 : 1;

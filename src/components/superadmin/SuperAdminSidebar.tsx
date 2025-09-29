@@ -5,7 +5,6 @@ import {
     DashboardIcon, 
     UsersIcon, 
     CreditCardIcon, 
-    ChartBarIcon, 
     DocumentMagnifyingGlassIcon, 
     SparklesIcon 
 } from '../ui/icons';

@@ -41,11 +41,11 @@ export const Customers: React.FC = () => {
         const { org, status } = confirmAction;
         
         try {
-            await updateCustomerStatus(org.id, status);
+            await updateCustomerStatus(org.id, status, reason);
             toast.success(`Stato di ${org.name} aggiornato!`);
-            console.log(`Azione "Sospensione" eseguita per ${org.name} con motivo: ${reason || 'Nessun motivo'}`);
         } catch (e) {
-            toast.error(`Errore durante l'aggiornamento.`);
+            // The API helper in the hook already shows a detailed error toast.
+            console.error(`Failed to update status for ${org.name}`, e);
         } finally {
             setIsConfirming(false);
             setConfirmAction(null);

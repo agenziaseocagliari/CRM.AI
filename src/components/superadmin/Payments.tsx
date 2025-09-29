@@ -1,6 +1,6 @@
 import React from 'react';
 import toast from 'react-hot-toast';
-import { useSuperAdminData, PaymentStatus } from '../../hooks/useSuperAdminData';
+import { useSuperAdminData, PaymentStatus, Transaction } from '../../hooks/useSuperAdminData';
 
 const statusStyles: Record<PaymentStatus, string> = {
     Paid: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
@@ -9,17 +9,20 @@ const statusStyles: Record<PaymentStatus, string> = {
 };
 
 export const Payments: React.FC = () => {
-    const { transactions, loading, refetch } = useSuperAdminData();
+    const { transactions, loading, refundPayment } = useSuperAdminData();
 
-    const handleAction = async (action: string, orgName: string) => {
-        const promise = new Promise(resolve => setTimeout(resolve, 1000));
+    const handleRefund = (txn: Transaction) => {
+        const promise = refundPayment(txn.id);
         toast.promise(promise, {
-            loading: `${action}...`,
-            success: `Azione completata per ${orgName}!`,
-            error: `Errore durante l'azione.`,
+            loading: `Esecuzione rimborso per ${txn.organizationName}...`,
+            success: `Rimborso completato! I dati verranno aggiornati.`,
+            error: `Errore durante il rimborso.`,
         });
-        await promise;
-        refetch();
+    };
+
+    const handleModify = () => {
+        // FIX: Replaced `toast.info` with a standard `toast()` call, as `react-hot-toast` does not have a dedicated `.info` method. This resolves the TypeScript error.
+        toast("La modifica della subscription non è ancora implementata.");
     };
 
     return (
@@ -51,8 +54,8 @@ export const Payments: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                     <button onClick={() => handleAction('Rimborso', txn.organizationName)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Rimborso</button>
-                                     <button onClick={() => handleAction('Modifica subscription', txn.organizationName)} className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Modifica</button>
+                                     <button onClick={() => handleRefund(txn)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Rimborso</button>
+                                     <button onClick={handleModify} className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Modifica</button>
                                 </td>
                             </tr>
                         ))}

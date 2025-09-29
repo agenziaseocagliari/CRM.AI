@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { invokeSupabaseFunction } from '../lib/api';
 
 // Types
 export type OrganizationStatus = 'active' | 'trial' | 'suspended';
@@ -46,61 +47,6 @@ export interface AuditLog {
     targetId?: string;
 }
 
-// Mock Data Generation (Initial Data Source)
-const generateInitialOrganizations = (): AdminOrganization[] => Array.from({ length: 150 }, (_, i) => {
-    const statuses: OrganizationStatus[] = ['active', 'trial', 'suspended'];
-    const status = statuses[i % statuses.length];
-    
-    return {
-        id: `org_${i + 1}`,
-        name: `Azienda Cliente ${i + 1}`,
-        adminEmail: `admin${i+1}@cliente.com`,
-        status,
-        paymentStatus: status === 'active' ? 'Paid' : status === 'trial' ? 'Pending' : 'Failed',
-        plan: ['Free', 'Pro', 'Enterprise'][i % 3] as AdminOrganization['plan'],
-        memberCount: Math.floor(Math.random() * 50) + 1,
-        createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
-    };
-});
-
-const generateInitialTransactions = (orgs: AdminOrganization[]): Transaction[] => Array.from({ length: 200 }, (_, i) => {
-    const org = orgs[i % orgs.length];
-    return {
-        id: `txn_${i + 1}`,
-        organizationName: org.name,
-        amount: parseFloat((Math.random() * 500 + 50).toFixed(2)),
-        date: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
-        status: org.paymentStatus === 'Failed' && Math.random() > 0.5 ? 'Failed' : 'Paid',
-    }
-});
-
-const initialStats: AdminStat = {
-    totalSignups: 150,
-    totalRevenue: 250890,
-    activeUsers: 123,
-    newSignupsThisWeek: 12,
-    churnRiskCount: 8,
-};
-
-const initialNotifications: Notification[] = [
-    { id: '1', type: 'AI Recommendation', message: 'Cliente "Azienda Cliente 3" a rischio churn. Contattare.', timestamp: new Date().toISOString() },
-    { id: '2', type: 'System Alert', message: 'Backup completato con successo.', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
-    { id: '3', type: 'Admin Action', message: 'Hai sospeso l\'account "Azienda Cliente 2".', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-];
-
-const generateInitialAuditLogs = (orgs: AdminOrganization[]): AuditLog[] => Array.from({ length: 50 }, (_, i) => {
-    const actions = ['Sospeso account', 'Rimborsato pagamento', 'Attivato prova', 'Cambiato piano'];
-    const org = orgs[i % orgs.length];
-    return {
-        id: `log_${i + 1}`,
-        timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        adminEmail: 'superadmin@guardianai.com',
-        action: actions[i % actions.length],
-        targetId: org.id,
-    }
-});
-
-
 // Hook
 export const useSuperAdminData = () => {
     const [loading, setLoading] = useState(true);
@@ -110,51 +56,58 @@ export const useSuperAdminData = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-    const fetchData = useCallback(() => {
-        setLoading(true);
-        // We generate new data on each fetch to simulate getting fresh data from a server
-        const newOrgs = generateInitialOrganizations();
-        const newTransactions = generateInitialTransactions(newOrgs);
-        const newLogs = generateInitialAuditLogs(newOrgs);
+    const fetchData = useCallback(async () => {
+        // Don't set loading=true on subsequent refetches to avoid UI flicker
+        try {
+            const [
+                statsData,
+                orgsData,
+                transactionsData,
+                logsData,
+                notificationsData,
+            ] = await Promise.all([
+                invokeSupabaseFunction('get-superadmin-stats'),
+                invokeSupabaseFunction('get-superadmin-customers'),
+                invokeSupabaseFunction('get-superadmin-payments'),
+                invokeSupabaseFunction('get-superadmin-audit-logs'),
+                invokeSupabaseFunction('get-superadmin-notifications'),
+            ]);
 
-        setTimeout(() => {
-            setOrganizations(newOrgs);
-            setTransactions(newTransactions);
-            setStats(initialStats);
-            setNotifications(initialNotifications);
-            setAuditLogs(newLogs);
+            setStats(statsData.stats || null);
+            setOrganizations(orgsData.customers || []);
+            setTransactions(transactionsData.payments || []);
+            setAuditLogs(logsData.logs || []);
+            setNotifications(notificationsData.notifications || []);
+
+        } catch (error) {
+            console.error("Failed to fetch super admin data", error);
+            // Error toast is handled by invokeSupabaseFunction
+        } finally {
             setLoading(false);
-        }, 500);
+        }
     }, []);
     
     // Initial data load effect
     useEffect(() => {
+        setLoading(true);
         fetchData();
     }, [fetchData]);
 
-    const updateCustomerStatus = useCallback(async (customerId: string, status: OrganizationStatus) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        let updatedCustomer: AdminOrganization | undefined;
-
-        setOrganizations(currentOrgs => {
-            const newOrgs = currentOrgs.map(org => {
-                if (org.id === customerId) {
-                    updatedCustomer = {
-                        ...org,
-                        status,
-                        paymentStatus: status === 'suspended' ? 'Failed' : status === 'trial' ? 'Pending' : 'Paid'
-                    };
-                    return updatedCustomer;
-                }
-                return org;
-            });
-            return newOrgs;
+    const updateCustomerStatus = useCallback(async (customerId: string, status: OrganizationStatus, reason?: string) => {
+        await invokeSupabaseFunction('update-organization-status', {
+            organizationId: customerId,
+            status,
+            reason,
         });
+        await fetchData();
+    }, [fetchData]);
 
-        // The component will re-render due to state change.
-        // We can still return a promise that resolves with the updated data.
-        return { success: true, customer: updatedCustomer };
-    }, []);
+    const refundPayment = useCallback(async (transactionId: string) => {
+        await invokeSupabaseFunction('refund-payment', {
+            transaction_id: transactionId,
+        });
+        await fetchData();
+    }, [fetchData]);
 
     return {
         organizations,
@@ -165,5 +118,6 @@ export const useSuperAdminData = () => {
         loading,
         refetch: fetchData,
         updateCustomerStatus,
+        refundPayment,
     };
 };

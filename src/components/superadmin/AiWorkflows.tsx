@@ -1,6 +1,7 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { SparklesIcon, TrendingDownIcon, TemplateIcon } from '../ui/icons';
+import { invokeSupabaseFunction } from '../../lib/api';
 
 const WorkflowCard: React.FC<{
     title: string;
@@ -28,11 +29,14 @@ const WorkflowCard: React.FC<{
 export const AiWorkflows: React.FC = () => {
 
     const handleTriggerWorkflow = (workflowName: string) => {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1500));
+        const promise = invokeSupabaseFunction('trigger-ai-workflow', {
+            workflow_name: workflowName,
+        });
+
         toast.promise(promise, {
             loading: `Avvio del workflow "${workflowName}"...`,
-            success: `Workflow "${workflowName}" avviato con successo!`,
-            error: `Errore nell'avvio del workflow.`,
+            success: (data) => data?.message || `Workflow "${workflowName}" avviato con successo!`,
+            error: (err) => err?.error || `Errore nell'avvio del workflow.`,
         });
     };
 

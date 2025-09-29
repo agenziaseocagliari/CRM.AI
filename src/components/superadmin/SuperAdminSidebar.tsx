@@ -31,7 +31,7 @@ const NavItem: React.FC<{ to: string; icon: React.ReactNode; label: string; }> =
 
 export const SuperAdminSidebar: React.FC = () => {
   return (
-    <aside className="w-64 bg-sidebar text-white dark:bg-dark-sidebar flex flex-col p-4">
+    <aside className="w-64 bg-sidebar text-white dark:bg-dark-sidebar flex flex-col p-4 flex-shrink-0 h-screen sticky top-0">
       <div className="flex items-center mb-8 px-2">
         <GuardianIcon className="w-8 h-8 text-primary dark:text-dark-primary" />
         <h1 className="text-2xl font-bold ml-2">Guardian AI</h1>
@@ -45,8 +45,7 @@ export const SuperAdminSidebar: React.FC = () => {
           <NavItem to="customers" icon={<UsersIcon className="w-6 h-6" />} label="Clienti" />
           <NavItem to="payments" icon={<CreditCardIcon className="w-6 h-6" />} label="Pagamenti" />
           <NavItem to="ai-workflows" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow AI" />
-          <NavItem to="#" icon={<ChartBarIcon className="w-6 h-6" />} label="Statistiche" />
-          <NavItem to="#" icon={<DocumentMagnifyingGlassIcon className="w-6 h-6" />} label="Audit Logs" />
+          <NavItem to="audit-logs" icon={<DocumentMagnifyingGlassIcon className="w-6 h-6" />} label="Audit Logs" />
         </ul>
       </nav>
         <div className="mt-auto px-2">

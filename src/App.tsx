@@ -28,6 +28,8 @@ import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard
 import { Customers as SuperAdminCustomers } from './components/superadmin/Customers';
 import { Payments as SuperAdminPayments } from './components/superadmin/Payments';
 import { AiWorkflows as SuperAdminAiWorkflows } from './components/superadmin/AiWorkflows';
+import { AuditLogs as SuperAdminAuditLogs } from './components/superadmin/AuditLogs';
+
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -131,7 +133,7 @@ const App: React.FC = () => {
             <Route path="customers" element={<SuperAdminCustomers />} />
             <Route path="payments" element={<SuperAdminPayments />} />
             <Route path="ai-workflows" element={<SuperAdminAiWorkflows />} />
-            {/* Add other admin routes here */}
+            <Route path="audit-logs" element={<SuperAdminAuditLogs />} />
         </Route>
         
         <Route path="*" element={<Navigate to={session ? "/dashboard" : "/"} />} />

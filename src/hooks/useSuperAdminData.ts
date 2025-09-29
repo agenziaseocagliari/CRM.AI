@@ -31,6 +31,22 @@ export interface SuperAdminStats {
     churnRiskCount: number;
 }
 
+// FIX: Added Notification and AuditLog types to be exported and used across the super admin panel.
+export interface Notification {
+    id: string;
+    type: 'AI Recommendation' | 'System Alert' | 'New Signup';
+    message: string;
+    timestamp: string;
+}
+
+export interface AuditLog {
+    id: string;
+    timestamp: string;
+    adminEmail: string;
+    action: string;
+    targetId?: string;
+}
+
 const mockOrganizations: AdminOrganization[] = [
     { id: 'org_1', name: 'Innovate Inc.', adminEmail: 'admin@innovate.com', status: 'active', paymentStatus: 'Paid', plan: 'Pro', memberCount: 12, createdAt: '2023-01-15' },
     { id: 'org_2', name: 'Data Solutions', adminEmail: 'contact@data-sol.com', status: 'trial', paymentStatus: 'Pending', plan: 'Pro', memberCount: 5, createdAt: '2023-08-20' },
@@ -56,6 +72,20 @@ const mockStats: SuperAdminStats = {
     churnRiskCount: 15,
 };
 
+// FIX: Added mock data for notifications and audit logs.
+const mockNotifications: Notification[] = [
+    { id: 'notif_1', type: 'AI Recommendation', message: 'Customer "Innovate Inc." shows high churn risk. Recommend intervention.', timestamp: new Date(Date.now() - 3600000).toISOString() },
+    { id: 'notif_2', type: 'System Alert', message: 'Database backup completed successfully.', timestamp: new Date(Date.now() - 7200000).toISOString() },
+    { id: 'notif_3', type: 'New Signup', message: 'New organization "Future Tech" has just signed up for a trial.', timestamp: new Date(Date.now() - 86400000).toISOString() },
+];
+
+const mockAuditLogs: AuditLog[] = [
+    { id: 'log_1', timestamp: new Date(Date.now() - 100000).toISOString(), adminEmail: 'super@admin.com', action: 'Suspended Organization', targetId: 'org_4' },
+    { id: 'log_2', timestamp: new Date(Date.now() - 200000).toISOString(), adminEmail: 'super@admin.com', action: 'Upgraded Plan', targetId: 'org_3' },
+    { id: 'log_3', timestamp: new Date(Date.now() - 300000).toISOString(), adminEmail: 'devops@admin.com', action: 'Ran Churn Analysis Workflow' },
+    { id: 'log_4', timestamp: new Date(Date.now() - 400000).toISOString(), adminEmail: 'super@admin.com', action: 'Viewed Customer Details', targetId: 'org_1' },
+    { id: 'log_5', timestamp: new Date(Date.now() - 500000).toISOString(), adminEmail: 'super@admin.com', action: 'Refunded Payment', targetId: 'txn_3' },
+];
 
 const simulateApiCall = <T>(data: T, delay = 500): Promise<T> => 
     new Promise(resolve => setTimeout(() => resolve(data), delay));
@@ -65,19 +95,27 @@ export const useSuperAdminData = () => {
     const [organizations, setOrganizations] = useState<AdminOrganization[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [stats, setStats] = useState<SuperAdminStats | null>(null);
+    // FIX: Added state for notifications and audit logs.
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [orgs, trans, statsData] = await Promise.all([
+            // FIX: Fetch notifications and audit logs along with other data.
+            const [orgs, trans, statsData, notifs, logs] = await Promise.all([
                 simulateApiCall(mockOrganizations),
                 simulateApiCall(mockTransactions),
                 simulateApiCall(mockStats, 800),
+                simulateApiCall(mockNotifications, 600),
+                simulateApiCall(mockAuditLogs, 700),
             ]);
             setOrganizations(orgs);
             setTransactions(trans);
             setStats(statsData);
+            setNotifications(notifs);
+            setAuditLogs(logs);
         } catch (error) {
             console.error("Failed to fetch super admin data", error);
         } finally {
@@ -89,5 +127,6 @@ export const useSuperAdminData = () => {
         fetchData();
     }, [fetchData]);
 
-    return { organizations, transactions, stats, loading, refetch: fetchData };
+    // FIX: Returned notifications and auditLogs from the hook.
+    return { organizations, transactions, stats, notifications, auditLogs, loading, refetch: fetchData };
 };

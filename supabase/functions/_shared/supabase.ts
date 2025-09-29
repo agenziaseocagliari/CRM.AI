@@ -1,3 +1,10 @@
+// FIX: Added Deno type declaration to resolve errors when accessing environment variables.
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
 // Import required modules
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
 

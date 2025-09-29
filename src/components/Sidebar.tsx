@@ -1,7 +1,7 @@
 import React from 'react';
 // FIX: Corrected the import for NavLink from 'react-router-dom' to resolve module export errors.
 import { NavLink } from 'react-router-dom';
-import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon } from './ui/icons';
+import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon, AdminPanelIcon } from './ui/icons';
 
 const NavItem: React.FC<{
   to: string;
@@ -78,6 +78,11 @@ export const Sidebar: React.FC = () => {
                 to="/settings"
                 icon={<SettingsIcon className="w-6 h-6" />}
                 label="Impostazioni"
+            />
+             <NavItem
+                to="/super-admin"
+                icon={<AdminPanelIcon className="w-6 h-6" />}
+                label="Super Admin"
             />
         </ul>
       </div>

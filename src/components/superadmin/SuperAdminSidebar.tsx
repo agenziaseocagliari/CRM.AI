@@ -1,0 +1,59 @@
+import React from 'react';
+import { NavLink, Link } from 'react-router-dom';
+import { 
+    GuardianIcon, 
+    DashboardIcon, 
+    UsersIcon, 
+    CreditCardIcon, 
+    ChartBarIcon, 
+    DocumentMagnifyingGlassIcon, 
+    SparklesIcon 
+} from '../ui/icons';
+
+const NavItem: React.FC<{ to: string; icon: React.ReactNode; label: string; }> = ({ to, icon, label }) => {
+    const activeClass = 'bg-primary text-white dark:bg-dark-primary';
+    const inactiveClass = 'text-gray-300 hover:bg-sidebar-hover hover:text-white dark:hover:bg-dark-sidebar-hover';
+
+    return (
+        <li>
+            <NavLink
+                to={to}
+                className={({ isActive }) =>
+                    `flex items-center p-3 my-1 rounded-lg cursor-pointer transition-colors ${isActive ? activeClass : inactiveClass}`
+                }
+            >
+                {icon}
+                <span className="ml-3 font-medium">{label}</span>
+            </NavLink>
+        </li>
+    );
+};
+
+export const SuperAdminSidebar: React.FC = () => {
+  return (
+    <aside className="w-64 bg-sidebar text-white dark:bg-dark-sidebar flex flex-col p-4">
+      <div className="flex items-center mb-8 px-2">
+        <GuardianIcon className="w-8 h-8 text-primary dark:text-dark-primary" />
+        <h1 className="text-2xl font-bold ml-2">Guardian AI</h1>
+      </div>
+       <div className="mb-4 px-2">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Super Admin</p>
+      </div>
+      <nav className="flex-grow">
+        <ul>
+          <NavItem to="dashboard" icon={<DashboardIcon className="w-6 h-6" />} label="Dashboard" />
+          <NavItem to="customers" icon={<UsersIcon className="w-6 h-6" />} label="Clienti" />
+          <NavItem to="payments" icon={<CreditCardIcon className="w-6 h-6" />} label="Pagamenti" />
+          <NavItem to="ai-workflows" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow AI" />
+          <NavItem to="#" icon={<ChartBarIcon className="w-6 h-6" />} label="Statistiche" />
+          <NavItem to="#" icon={<DocumentMagnifyingGlassIcon className="w-6 h-6" />} label="Audit Logs" />
+        </ul>
+      </nav>
+        <div className="mt-auto px-2">
+            <Link to="/dashboard" className="text-sm text-gray-400 hover:text-white dark:hover:text-dark-text-primary">
+                &larr; Torna al CRM
+            </Link>
+        </div>
+    </aside>
+  );
+};

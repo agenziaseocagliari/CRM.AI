@@ -1,3 +1,12 @@
+// FIX: Added Deno type declaration to resolve errors when accessing environment variables.
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
+// FIX: Imported the 'serve' function from Deno's standard library to handle HTTP requests.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsHeaders } from '../_shared/cors.ts'
 import { supabase } from '../_shared/supabase.ts'
 import { getOrganizationId } from '../_shared/supabase.ts'
@@ -21,7 +30,7 @@ serve(async (req) => {
     // Exchange code for tokens with Google
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: { 'Content-Type': 'application/x-form-urlencoded' },
       body: new URLSearchParams({
         code,
         client_id: Deno.env.get('GOOGLE_CLIENT_ID')!,

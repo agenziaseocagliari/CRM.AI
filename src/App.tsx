@@ -22,6 +22,13 @@ import { TermsOfService } from './components/TermsOfService';
 import { CalendarView } from './components/CalendarView';
 import { Meetings } from './components/Meetings';
 
+// Super Admin Imports
+import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
+import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
+import { Customers as SuperAdminCustomers } from './components/superadmin/Customers';
+import { Payments as SuperAdminPayments } from './components/superadmin/Payments';
+import { AiWorkflows as SuperAdminAiWorkflows } from './components/superadmin/AiWorkflows';
+
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +59,16 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, location.pathname]);
+  
+  // Apply theme from local storage on initial load
+  useEffect(() => {
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
 
   if (crmData.error?.includes('VITE_SUPABASE')) {
       return (
@@ -102,6 +119,19 @@ const App: React.FC = () => {
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />
           <Route path="settings" element={<Settings />} />
+        </Route>
+        
+        {/* Super Admin Routes */}
+        <Route 
+            path="/super-admin"
+            element={session ? <SuperAdminLayout /> : <Navigate to="/login" replace />}
+        >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<SuperAdminDashboard />} />
+            <Route path="customers" element={<SuperAdminCustomers />} />
+            <Route path="payments" element={<SuperAdminPayments />} />
+            <Route path="ai-workflows" element={<SuperAdminAiWorkflows />} />
+            {/* Add other admin routes here */}
         </Route>
         
         <Route path="*" element={<Navigate to={session ? "/dashboard" : "/"} />} />

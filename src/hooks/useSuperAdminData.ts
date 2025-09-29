@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// Types for Super Admin Data
+// Types
 export type OrganizationStatus = 'active' | 'trial' | 'suspended';
 export type PaymentStatus = 'Paid' | 'Pending' | 'Failed';
 
 export interface AdminOrganization {
-  id: string;
-  name: string;
-  adminEmail: string;
-  status: OrganizationStatus;
-  paymentStatus: PaymentStatus;
-  plan: 'Free' | 'Pro' | 'Enterprise';
-  memberCount: number;
-  createdAt: string;
+    id: string;
+    name: string;
+    adminEmail: string;
+    status: OrganizationStatus;
+    paymentStatus: PaymentStatus;
+    plan: 'Free' | 'Pro' | 'Enterprise';
+    memberCount: number;
+    createdAt: string;
 }
 
 export interface Transaction {
@@ -23,7 +23,7 @@ export interface Transaction {
     status: PaymentStatus;
 }
 
-export interface SuperAdminStats {
+export interface AdminStat {
     totalSignups: number;
     totalRevenue: number;
     activeUsers: number;
@@ -31,10 +31,9 @@ export interface SuperAdminStats {
     churnRiskCount: number;
 }
 
-// FIX: Added Notification and AuditLog types to be exported and used across the super admin panel.
 export interface Notification {
     id: string;
-    type: 'AI Recommendation' | 'System Alert' | 'New Signup';
+    type: 'AI Recommendation' | 'System Alert' | 'Admin Action';
     message: string;
     timestamp: string;
 }
@@ -47,86 +46,124 @@ export interface AuditLog {
     targetId?: string;
 }
 
-const mockOrganizations: AdminOrganization[] = [
-    { id: 'org_1', name: 'Innovate Inc.', adminEmail: 'admin@innovate.com', status: 'active', paymentStatus: 'Paid', plan: 'Pro', memberCount: 12, createdAt: '2023-01-15' },
-    { id: 'org_2', name: 'Data Solutions', adminEmail: 'contact@data-sol.com', status: 'trial', paymentStatus: 'Pending', plan: 'Pro', memberCount: 5, createdAt: '2023-08-20' },
-    { id: 'org_3', name: 'Marketing Masters', adminEmail: 'ceo@marketingmasters.io', status: 'active', paymentStatus: 'Paid', plan: 'Enterprise', memberCount: 50, createdAt: '2022-11-30' },
-    { id: 'org_4', name: 'Suspended Co.', adminEmail: 'manager@suspended.co', status: 'suspended', paymentStatus: 'Failed', plan: 'Pro', memberCount: 8, createdAt: '2023-03-10' },
-    { id: 'org_5', name: 'New Gen Tech', adminEmail: 'support@newgen.tech', status: 'active', paymentStatus: 'Paid', plan: 'Pro', memberCount: 25, createdAt: '2023-07-01' },
-    { id: 'org_6', name: 'Trial Testers', adminEmail: 'test@trial.com', status: 'trial', paymentStatus: 'Pending', plan: 'Free', memberCount: 1, createdAt: '2023-09-05' },
-];
+// Mock Data Generation (Initial Data Source)
+const generateInitialOrganizations = (): AdminOrganization[] => Array.from({ length: 150 }, (_, i) => {
+    const statuses: OrganizationStatus[] = ['active', 'trial', 'suspended'];
+    const status = statuses[i % statuses.length];
+    
+    return {
+        id: `org_${i + 1}`,
+        name: `Azienda Cliente ${i + 1}`,
+        adminEmail: `admin${i+1}@cliente.com`,
+        status,
+        paymentStatus: status === 'active' ? 'Paid' : status === 'trial' ? 'Pending' : 'Failed',
+        plan: ['Free', 'Pro', 'Enterprise'][i % 3] as AdminOrganization['plan'],
+        memberCount: Math.floor(Math.random() * 50) + 1,
+        createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+});
 
-const mockTransactions: Transaction[] = [
-    { id: 'txn_1', organizationName: 'Innovate Inc.', amount: 99.00, date: '2023-09-01', status: 'Paid' },
-    { id: 'txn_2', organizationName: 'Marketing Masters', amount: 299.00, date: '2023-09-01', status: 'Paid' },
-    { id: 'txn_3', organizationName: 'Suspended Co.', amount: 99.00, date: '2023-08-15', status: 'Failed' },
-    { id: 'txn_4', organizationName: 'New Gen Tech', amount: 99.00, date: '2023-08-28', status: 'Paid' },
-    { id: 'txn_5', organizationName: 'Innovate Inc.', amount: 99.00, date: '2023-08-01', status: 'Paid' },
-];
+const generateInitialTransactions = (orgs: AdminOrganization[]): Transaction[] => Array.from({ length: 200 }, (_, i) => {
+    const org = orgs[i % orgs.length];
+    return {
+        id: `txn_${i + 1}`,
+        organizationName: org.name,
+        amount: parseFloat((Math.random() * 500 + 50).toFixed(2)),
+        date: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
+        status: org.paymentStatus === 'Failed' && Math.random() > 0.5 ? 'Failed' : 'Paid',
+    }
+});
 
-const mockStats: SuperAdminStats = {
-    totalSignups: 1250,
-    totalRevenue: 45800,
-    activeUsers: 980,
-    newSignupsThisWeek: 42,
-    churnRiskCount: 15,
+const initialStats: AdminStat = {
+    totalSignups: 150,
+    totalRevenue: 250890,
+    activeUsers: 123,
+    newSignupsThisWeek: 12,
+    churnRiskCount: 8,
 };
 
-// FIX: Added mock data for notifications and audit logs.
-const mockNotifications: Notification[] = [
-    { id: 'notif_1', type: 'AI Recommendation', message: 'Customer "Innovate Inc." shows high churn risk. Recommend intervention.', timestamp: new Date(Date.now() - 3600000).toISOString() },
-    { id: 'notif_2', type: 'System Alert', message: 'Database backup completed successfully.', timestamp: new Date(Date.now() - 7200000).toISOString() },
-    { id: 'notif_3', type: 'New Signup', message: 'New organization "Future Tech" has just signed up for a trial.', timestamp: new Date(Date.now() - 86400000).toISOString() },
+const initialNotifications: Notification[] = [
+    { id: '1', type: 'AI Recommendation', message: 'Cliente "Azienda Cliente 3" a rischio churn. Contattare.', timestamp: new Date().toISOString() },
+    { id: '2', type: 'System Alert', message: 'Backup completato con successo.', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
+    { id: '3', type: 'Admin Action', message: 'Hai sospeso l\'account "Azienda Cliente 2".', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
 ];
 
-const mockAuditLogs: AuditLog[] = [
-    { id: 'log_1', timestamp: new Date(Date.now() - 100000).toISOString(), adminEmail: 'super@admin.com', action: 'Suspended Organization', targetId: 'org_4' },
-    { id: 'log_2', timestamp: new Date(Date.now() - 200000).toISOString(), adminEmail: 'super@admin.com', action: 'Upgraded Plan', targetId: 'org_3' },
-    { id: 'log_3', timestamp: new Date(Date.now() - 300000).toISOString(), adminEmail: 'devops@admin.com', action: 'Ran Churn Analysis Workflow' },
-    { id: 'log_4', timestamp: new Date(Date.now() - 400000).toISOString(), adminEmail: 'super@admin.com', action: 'Viewed Customer Details', targetId: 'org_1' },
-    { id: 'log_5', timestamp: new Date(Date.now() - 500000).toISOString(), adminEmail: 'super@admin.com', action: 'Refunded Payment', targetId: 'txn_3' },
-];
+const generateInitialAuditLogs = (orgs: AdminOrganization[]): AuditLog[] => Array.from({ length: 50 }, (_, i) => {
+    const actions = ['Sospeso account', 'Rimborsato pagamento', 'Attivato prova', 'Cambiato piano'];
+    const org = orgs[i % orgs.length];
+    return {
+        id: `log_${i + 1}`,
+        timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+        adminEmail: 'superadmin@guardianai.com',
+        action: actions[i % actions.length],
+        targetId: org.id,
+    }
+});
 
-const simulateApiCall = <T>(data: T, delay = 500): Promise<T> => 
-    new Promise(resolve => setTimeout(() => resolve(data), delay));
 
-
+// Hook
 export const useSuperAdminData = () => {
+    const [loading, setLoading] = useState(true);
     const [organizations, setOrganizations] = useState<AdminOrganization[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState<SuperAdminStats | null>(null);
-    // FIX: Added state for notifications and audit logs.
+    const [stats, setStats] = useState<AdminStat | null>(null);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-    const [loading, setLoading] = useState(true);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(() => {
         setLoading(true);
-        try {
-            // FIX: Fetch notifications and audit logs along with other data.
-            const [orgs, trans, statsData, notifs, logs] = await Promise.all([
-                simulateApiCall(mockOrganizations),
-                simulateApiCall(mockTransactions),
-                simulateApiCall(mockStats, 800),
-                simulateApiCall(mockNotifications, 600),
-                simulateApiCall(mockAuditLogs, 700),
-            ]);
-            setOrganizations(orgs);
-            setTransactions(trans);
-            setStats(statsData);
-            setNotifications(notifs);
-            setAuditLogs(logs);
-        } catch (error) {
-            console.error("Failed to fetch super admin data", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        // We generate new data on each fetch to simulate getting fresh data from a server
+        const newOrgs = generateInitialOrganizations();
+        const newTransactions = generateInitialTransactions(newOrgs);
+        const newLogs = generateInitialAuditLogs(newOrgs);
 
+        setTimeout(() => {
+            setOrganizations(newOrgs);
+            setTransactions(newTransactions);
+            setStats(initialStats);
+            setNotifications(initialNotifications);
+            setAuditLogs(newLogs);
+            setLoading(false);
+        }, 500);
+    }, []);
+    
+    // Initial data load effect
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    // FIX: Returned notifications and auditLogs from the hook.
-    return { organizations, transactions, stats, notifications, auditLogs, loading, refetch: fetchData };
+    const updateCustomerStatus = useCallback(async (customerId: string, status: OrganizationStatus) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        let updatedCustomer: AdminOrganization | undefined;
+
+        setOrganizations(currentOrgs => {
+            const newOrgs = currentOrgs.map(org => {
+                if (org.id === customerId) {
+                    updatedCustomer = {
+                        ...org,
+                        status,
+                        paymentStatus: status === 'suspended' ? 'Failed' : status === 'trial' ? 'Pending' : 'Paid'
+                    };
+                    return updatedCustomer;
+                }
+                return org;
+            });
+            return newOrgs;
+        });
+
+        // The component will re-render due to state change.
+        // We can still return a promise that resolves with the updated data.
+        return { success: true, customer: updatedCustomer };
+    }, []);
+
+    return {
+        organizations,
+        transactions,
+        stats,
+        notifications,
+        auditLogs,
+        loading,
+        refetch: fetchData,
+        updateCustomerStatus,
+    };
 };

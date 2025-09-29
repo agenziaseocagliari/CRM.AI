@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useSuperAdminData, AdminOrganization, OrganizationStatus } from '../../hooks/useSuperAdminData';
 import { CustomerDetailModal } from './CustomerDetailModal';
+import { ConfirmationModal } from '../ui/ConfirmationModal';
 
 const statusStyles: Record<OrganizationStatus, string> = {
     active: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
@@ -17,25 +18,48 @@ const paymentStatusStyles: Record<AdminOrganization['paymentStatus'], string> = 
 
 
 export const Customers: React.FC = () => {
-    const { organizations, loading, refetch } = useSuperAdminData();
+    const { organizations, loading, refetch, updateCustomerStatus } = useSuperAdminData();
     const [filter, setFilter] = useState<OrganizationStatus | 'all'>('all');
     const [selectedCustomer, setSelectedCustomer] = useState<AdminOrganization | null>(null);
+
+    const [confirmAction, setConfirmAction] = useState<{ org: AdminOrganization; status: OrganizationStatus } | null>(null);
+    const [isConfirming, setIsConfirming] = useState(false);
 
     const filteredOrganizations = useMemo(() => {
         if (filter === 'all') return organizations;
         return organizations.filter(org => org.status === filter);
     }, [organizations, filter]);
 
-    const handleAction = async (action: string, orgName: string) => {
-        const promise = new Promise(resolve => setTimeout(resolve, 1000));
-        toast.promise(promise, {
-            loading: `${action}...`,
-            success: `${orgName} ${action.toLowerCase().endsWith('a') ? 'sospesa' : 'sospeso'} con successo!`,
-            error: `Errore durante l'azione.`,
-        });
-        await promise;
-        refetch(); // Ricarica i dati per vedere i cambiamenti
+    const handleOpenConfirm = (org: AdminOrganization, status: OrganizationStatus) => {
+        setConfirmAction({ org, status });
     };
+
+    const handleConfirmStatusChange = async (reason?: string) => {
+        if (!confirmAction) return;
+        setIsConfirming(true);
+
+        const { org, status } = confirmAction;
+        
+        try {
+            await updateCustomerStatus(org.id, status);
+            toast.success(`Stato di ${org.name} aggiornato!`);
+            console.log(`Azione "Sospensione" eseguita per ${org.name} con motivo: ${reason || 'Nessun motivo'}`);
+        } catch (e) {
+            toast.error(`Errore durante l'aggiornamento.`);
+        } finally {
+            setIsConfirming(false);
+            setConfirmAction(null);
+        }
+    };
+    
+    const handleActivateTrial = (org: AdminOrganization) => {
+        const promise = updateCustomerStatus(org.id, 'trial');
+        toast.promise(promise, {
+            loading: `Attivazione prova per ${org.name}...`,
+            success: `Prova attivata per ${org.name}!`,
+            error: `Errore durante l'attivazione.`,
+        });
+    }
 
     return (
         <>
@@ -83,8 +107,8 @@ export const Customers: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                         <button onClick={() => setSelectedCustomer(org)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Visualizza</button>
-                                        <button onClick={() => handleAction('Sospendi', org.name)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Sospendi</button>
-                                        <button onClick={() => handleAction('Attiva prova', org.name)} className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">Attiva Prova</button>
+                                        <button onClick={() => handleOpenConfirm(org, 'suspended')} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Sospendi</button>
+                                        <button onClick={() => handleActivateTrial(org)} className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">Attiva Prova</button>
                                     </td>
                                 </tr>
                             ))}
@@ -98,6 +122,17 @@ export const Customers: React.FC = () => {
                 onClose={() => setSelectedCustomer(null)}
                 customer={selectedCustomer}
                 onActionSuccess={refetch}
+            />
+
+            <ConfirmationModal
+                isOpen={!!confirmAction && confirmAction.status === 'suspended'}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={handleConfirmStatusChange}
+                title={`Conferma Sospensione`}
+                message={<span>Sei sicuro di voler sospendere l'account <strong>{confirmAction?.org.name}</strong>? L'utente non potrà accedere al servizio.</span>}
+                isConfirming={isConfirming}
+                requiresReason={true}
+                confirmText="Sospendi Account"
             />
         </>
     );

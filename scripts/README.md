@@ -6,6 +6,55 @@ Questa directory contiene script per automatizzare verifiche e manutenzione del 
 
 ## 📜 Script Disponibili
 
+### verify-role-cleanup.sh
+
+Script di verifica completa per assicurare che non ci siano riferimenti problematici a ruoli PostgreSQL nel database.
+
+**Uso**:
+```bash
+./scripts/verify-role-cleanup.sh
+```
+
+**Cosa Verifica**:
+1. ✅ Nessun riferimento a `TO super_admin`
+2. ✅ Nessun riferimento a `TO authenticated`
+3. ✅ Nessun riferimento a `TO service_role`
+4. ✅ Nessun statement `SET ROLE`
+5. ✅ Nessun statement `CREATE/ALTER/DROP ROLE`
+6. ✅ Nessun `GRANT` a ruoli DB non esistenti
+7. ✅ Nessun parametro `role=` in connection strings
+8. ✅ Tutte le policy RLS usano `TO public`
+
+**Output**:
+```
+✅ ALL CHECKS PASSED!
+The codebase is clean and ready for deployment.
+No problematic PostgreSQL role references found.
+```
+
+**Exit Codes**:
+- `0`: Tutti i check passati
+- `1`: Errori trovati che devono essere corretti
+
+---
+
+### verify-rls-policies.sh
+
+Script di verifica specifico per le RLS policies e la loro compliance con le best practices.
+
+**Uso**:
+```bash
+./scripts/verify-rls-policies.sh
+```
+
+**Cosa Verifica**:
+1. ✅ Policy usano solo `TO public`
+2. ✅ Filtri custom claim (`profiles.role`) implementati
+3. ✅ Naming convention migration files
+4. ✅ Nessuna policy eccessivamente permissiva
+
+---
+
 ### verify-sync.sh
 
 Script di verifica automatica della sincronizzazione GitHub ↔️ Supabase.
@@ -70,7 +119,28 @@ Failed: 0
 
 ---
 
+### test-superadmin.sh
+
+Script per testare le funzionalità Super Admin delle edge functions.
+
+**Uso**:
+```bash
+./scripts/test-superadmin.sh
+```
+
+**Cosa Testa**:
+- Deployment delle 8 edge functions super admin
+- Verifica security checks
+- Test endpoint availability
+
+---
+
 ## 🔧 Quando Usare gli Script
+
+### Prima di Ogni Deploy
+- `verify-role-cleanup.sh` - Verifica pulizia riferimenti ruoli DB
+- `verify-rls-policies.sh` - Verifica compliance RLS policies
+- `verify-sync.sh` - Verifica sincronizzazione completa
 
 ### Quotidiano
 - Prima di fare commit importanti

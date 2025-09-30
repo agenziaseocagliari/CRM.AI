@@ -45,6 +45,45 @@ Tutte le operazioni sensibili ora passano attraverso API edge con validazione ba
 
 ### 2. ✅ Schema Database e RLS Policies
 
+**Migration Strategy - Robust Table Dependencies**:
+
+The Super Admin migration uses a defensive strategy to handle table dependencies:
+
+```sql
+-- Policy operations wrapped in DO blocks with table existence checks
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'organization_credits'
+    ) THEN
+        DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;
+        CREATE POLICY "Super admins can view all organization credits" ON organization_credits
+            FOR SELECT
+            USING (...);
+    END IF;
+END $$;
+```
+
+**Why This Approach?**
+
+This strategy prevents SQLSTATE 42P01 errors (undefined_table) when:
+- Running migrations in fresh environments (PR branches, dev, staging)
+- Migration order is not strictly sequential
+- Tables have been dropped or not yet created
+- Running migrations during rollback scenarios
+
+**Migration Dependencies**:
+
+The super admin migration (`20250930000000_create_superadmin_schema.sql`) safely references:
+- `profiles` - Extended with `role` column (creates if not exists)
+- `organizations` - Policies added only if table exists
+- `organization_credits` - Policies added only if table exists (created in `20240911000000_credits_schema.sql`)
+- `credit_consumption_logs` - Policies added only if table exists (created in `20240911000000_credits_schema.sql`)
+
+This ensures the migration can run successfully regardless of which tables are present.
+
 **Nuove Tabelle**:
 ```sql
 -- Audit trail
@@ -483,6 +522,45 @@ LIMIT 50;
 ---
 
 ## 🎓 Best Practices
+
+### Migration Best Practices ✅
+
+**1. Always Check Table Existence for Policy Operations**
+```sql
+-- ✅ GOOD: Check table exists before modifying policies
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'my_table'
+    ) THEN
+        DROP POLICY IF EXISTS "my_policy" ON my_table;
+        CREATE POLICY "my_policy" ON my_table FOR SELECT USING (...);
+    END IF;
+END $$;
+
+-- ❌ BAD: Direct policy operations without checking
+DROP POLICY IF EXISTS "my_policy" ON my_table;  -- FAILS if table doesn't exist!
+```
+
+**2. Migration Ordering**
+- Use timestamp-based naming: `YYYYMMDDHHMMSS_description.sql`
+- Table creation migrations should have earlier timestamps
+- Policy/constraint modifications should have later timestamps
+- Document dependencies in migration comments
+
+**3. Idempotent Migrations**
+- Use `CREATE TABLE IF NOT EXISTS`
+- Use `CREATE INDEX IF NOT EXISTS`
+- Use `DROP POLICY IF EXISTS` (but only after checking table exists!)
+- Use `CREATE OR REPLACE FUNCTION`
+
+**4. Test Migration Scenarios**
+- Fresh database (no tables)
+- Partial schema (some tables missing)
+- Full schema (all tables present)
+- Re-running same migration (should be idempotent)
 
 ### DO ✅
 

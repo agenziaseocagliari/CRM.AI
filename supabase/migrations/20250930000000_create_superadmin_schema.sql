@@ -81,102 +81,142 @@ CREATE POLICY "Super admins can insert audit logs" ON superadmin_logs
 -- 5. Update RLS Policies for sensitive tables
 -- =====================================================
 -- Update profiles table policies to allow super admin access
-DROP POLICY IF EXISTS "Super admins can view all profiles" ON profiles;
-CREATE POLICY "Super admins can view all profiles" ON profiles
-    FOR SELECT
-    USING (
-        role = 'super_admin' OR
-        id = auth.uid()
-    );
+-- Wrapped in DO block to ensure table exists before modifying policies
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'profiles'
+    ) THEN
+        DROP POLICY IF EXISTS "Super admins can view all profiles" ON profiles;
+        CREATE POLICY "Super admins can view all profiles" ON profiles
+            FOR SELECT
+            USING (
+                role = 'super_admin' OR
+                id = auth.uid()
+            );
 
-DROP POLICY IF EXISTS "Super admins can update all profiles" ON profiles;
-CREATE POLICY "Super admins can update all profiles" ON profiles
-    FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'super_admin'
-        )
-    );
+        DROP POLICY IF EXISTS "Super admins can update all profiles" ON profiles;
+        CREATE POLICY "Super admins can update all profiles" ON profiles
+            FOR UPDATE
+            USING (
+                EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE profiles.id = auth.uid()
+                    AND profiles.role = 'super_admin'
+                )
+            );
+    END IF;
+END $$;
 
 -- Update organizations table policies to allow super admin access
-DROP POLICY IF EXISTS "Super admins can view all organizations" ON organizations;
-CREATE POLICY "Super admins can view all organizations" ON organizations
-    FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'super_admin'
-        ) OR
-        id IN (
-            SELECT organization_id FROM profiles WHERE id = auth.uid()
-        )
-    );
+-- Wrapped in DO block to ensure table exists before modifying policies
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'organizations'
+    ) THEN
+        DROP POLICY IF EXISTS "Super admins can view all organizations" ON organizations;
+        CREATE POLICY "Super admins can view all organizations" ON organizations
+            FOR SELECT
+            USING (
+                EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE profiles.id = auth.uid()
+                    AND profiles.role = 'super_admin'
+                ) OR
+                id IN (
+                    SELECT organization_id FROM profiles WHERE id = auth.uid()
+                )
+            );
 
-DROP POLICY IF EXISTS "Super admins can update all organizations" ON organizations;
-CREATE POLICY "Super admins can update all organizations" ON organizations
-    FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'super_admin'
-        )
-    );
+        DROP POLICY IF EXISTS "Super admins can update all organizations" ON organizations;
+        CREATE POLICY "Super admins can update all organizations" ON organizations
+            FOR UPDATE
+            USING (
+                EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE profiles.id = auth.uid()
+                    AND profiles.role = 'super_admin'
+                )
+            );
 
-DROP POLICY IF EXISTS "Super admins can insert organizations" ON organizations;
-CREATE POLICY "Super admins can insert organizations" ON organizations
-    FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'super_admin'
-        )
-    );
+        DROP POLICY IF EXISTS "Super admins can insert organizations" ON organizations;
+        CREATE POLICY "Super admins can insert organizations" ON organizations
+            FOR INSERT
+            WITH CHECK (
+                EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE profiles.id = auth.uid()
+                    AND profiles.role = 'super_admin'
+                )
+            );
+    END IF;
+END $$;
 
 -- Update organization_credits policies for super admin access
-DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;
-CREATE POLICY "Super admins can view all organization credits" ON organization_credits
-    FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'super_admin'
-        ) OR
-        organization_id IN (
-            SELECT organization_id FROM profiles WHERE id = auth.uid()
-        )
-    );
+-- Wrapped in DO block to ensure table exists before modifying policies
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'organization_credits'
+    ) THEN
+        DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;
+        CREATE POLICY "Super admins can view all organization credits" ON organization_credits
+            FOR SELECT
+            USING (
+                EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE profiles.id = auth.uid()
+                    AND profiles.role = 'super_admin'
+                ) OR
+                organization_id IN (
+                    SELECT organization_id FROM profiles WHERE id = auth.uid()
+                )
+            );
 
-DROP POLICY IF EXISTS "Super admins can update all organization credits" ON organization_credits;
-CREATE POLICY "Super admins can update all organization credits" ON organization_credits
-    FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'super_admin'
-        )
-    );
+        DROP POLICY IF EXISTS "Super admins can update all organization credits" ON organization_credits;
+        CREATE POLICY "Super admins can update all organization credits" ON organization_credits
+            FOR UPDATE
+            USING (
+                EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE profiles.id = auth.uid()
+                    AND profiles.role = 'super_admin'
+                )
+            );
+    END IF;
+END $$;
 
 -- Update credit_consumption_logs policies for super admin access
-DROP POLICY IF EXISTS "Super admins can view all credit consumption logs" ON credit_consumption_logs;
-CREATE POLICY "Super admins can view all credit consumption logs" ON credit_consumption_logs
-    FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'super_admin'
-        ) OR
-        organization_id IN (
-            SELECT organization_id FROM profiles WHERE id = auth.uid()
-        )
-    );
+-- Wrapped in DO block to ensure table exists before modifying policies
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'credit_consumption_logs'
+    ) THEN
+        DROP POLICY IF EXISTS "Super admins can view all credit consumption logs" ON credit_consumption_logs;
+        CREATE POLICY "Super admins can view all credit consumption logs" ON credit_consumption_logs
+            FOR SELECT
+            USING (
+                EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE profiles.id = auth.uid()
+                    AND profiles.role = 'super_admin'
+                ) OR
+                organization_id IN (
+                    SELECT organization_id FROM profiles WHERE id = auth.uid()
+                )
+            );
+    END IF;
+END $$;
 
 -- =====================================================
 -- 6. Create helper function to check super admin role

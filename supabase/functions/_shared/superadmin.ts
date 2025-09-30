@@ -6,7 +6,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
-import { getUserIdFromJWT } from './supabase.ts';
+import { getUserIdFromJWT, getUserFromJWT } from './supabase.ts';
 
 interface SuperAdminValidationResult {
   isValid: boolean;
@@ -29,7 +29,7 @@ interface AuditLogParams {
 
 /**
  * Validates that the current user has super_admin role
- * AGGIORNATO: Usa getUserIdFromJWT per estrazione sicura dell'user ID dal JWT
+ * AGGIORNATO: Usa custom JWT claim user_role invece di query al database
  * @param req The incoming request
  * @returns Validation result with user info or error
  */
@@ -37,79 +37,60 @@ export async function validateSuperAdmin(req: Request): Promise<SuperAdminValida
   console.log('[validateSuperAdmin] START - Validating super admin access');
   
   try {
-    // Step 1: Estrai userId dal JWT usando helper centralizzato
-    // Questo garantisce validazione coerente con tutte le altre edge functions
-    const userId = await getUserIdFromJWT(req);
-    console.log('[validateSuperAdmin] User ID extracted from JWT:', userId);
+    // Step 1: Estrai full user object dal JWT con custom claims
+    // Il custom_access_token_hook aggiunge user_role al JWT
+    const user = await getUserFromJWT(req);
+    console.log('[validateSuperAdmin] User extracted from JWT:', {
+      userId: user.id,
+      email: user.email,
+      userRole: (user as any).user_role
+    });
 
-    // Step 2: Crea client Supabase con service role per query RLS-bypassing
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    // Step 2: Verifica che il custom claim user_role sia super_admin
+    const userRole = (user as any).user_role;
     
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('[validateSuperAdmin] ERROR: Missing Supabase configuration');
-      return { isValid: false, error: 'Server configuration error' };
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Step 3: Verifica ruolo super_admin dal profilo utente
-    console.log('[validateSuperAdmin] Querying profile for user:', userId);
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role, id, email, full_name')
-      .eq('id', userId)
-      .single();
-
-    if (profileError) {
-      console.error('[validateSuperAdmin] ERROR: Failed to fetch user profile:', {
-        error: profileError,
-        userId: userId,
-        code: profileError.code,
-        message: profileError.message,
-        hint: profileError.hint
+    if (!userRole) {
+      console.error('[validateSuperAdmin] ERROR: user_role claim not found in JWT', {
+        userId: user.id,
+        email: user.email,
+        hint: 'Ensure custom_access_token_hook is configured in Supabase Auth'
       });
-      return { isValid: false, error: 'Failed to verify user permissions' };
-    }
-
-    if (!profile) {
-      console.error('[validateSuperAdmin] ERROR: Profile not found for user:', userId);
       return { 
         isValid: false, 
-        error: 'User profile not found. Please contact support with your user ID: ' + userId 
+        error: 'Permission check failed. JWT custom claim user_role not found. Please re-login or contact support.' 
       };
     }
 
-    console.log('[validateSuperAdmin] Profile found:', {
-      userId: profile.id,
-      email: profile.email,
-      role: profile.role,
-      fullName: profile.full_name
+    console.log('[validateSuperAdmin] user_role claim found:', {
+      userId: user.id,
+      email: user.email,
+      userRole: userRole
     });
 
-    // Step 4: Verifica che il ruolo sia super_admin
-    if (profile.role !== 'super_admin') {
+    // Step 3: Verifica che il ruolo sia super_admin
+    if (userRole !== 'super_admin') {
       console.warn('[validateSuperAdmin] UNAUTHORIZED: Access denied', {
-        userId: profile.id,
-        email: profile.email,
-        role: profile.role,
+        userId: user.id,
+        email: user.email,
+        userRole: userRole,
         requiredRole: 'super_admin'
       });
       return { 
         isValid: false, 
-        error: `Insufficient permissions. Super Admin role required. Current role: ${profile.role}` 
+        error: `Insufficient permissions. Super Admin role required. Current role: ${userRole}` 
       };
     }
 
     console.log('[validateSuperAdmin] SUCCESS - Super admin validated:', {
-      userId: profile.id,
-      email: profile.email
+      userId: user.id,
+      email: user.email,
+      userRole: userRole
     });
 
     return {
       isValid: true,
-      userId: profile.id,
-      email: profile.email,
+      userId: user.id,
+      email: user.email,
     };
   } catch (error: any) {
     console.error('[validateSuperAdmin] EXCEPTION:', {

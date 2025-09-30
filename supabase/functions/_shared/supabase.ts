@@ -60,6 +60,54 @@ export async function getUserIdFromJWT(req: Request): Promise<string> {
 }
 
 /**
+ * Estrae il full user object dal JWT token con custom claims inclusi.
+ * @param req - The request object
+ * @returns Promise<User> - The full user object from JWT with custom claims
+ * @throws Error se il token è mancante, invalido o l'utente non è autenticato
+ * 
+ * NOTA: Questa funzione ritorna l'intero oggetto User dal JWT, includendo
+ * i custom claims come user_role e organization_id aggiunti dal custom_access_token_hook.
+ * Accedi ai custom claims tramite: user.user_role, user.organization_id
+ */
+export async function getUserFromJWT(req: Request): Promise<any> {
+  console.log('[getUserFromJWT] START - Extracting full user object from JWT')
+  
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) {
+    console.error('[getUserFromJWT] ERROR: Authorization header missing')
+    throw new Error('Authorization header is required. Please ensure you are logged in.')
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+  console.log('[getUserFromJWT] Token extracted (first 20 chars):', token.substring(0, 20) + '...')
+
+  // Usa il client con anon key per verificare il JWT (RLS-aware)
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+  
+  const { data: { user }, error } = await supabaseClient.auth.getUser(token)
+
+  if (error || !user) {
+    console.error('[getUserFromJWT] JWT verification failed:', {
+      error: error?.message,
+      hasUser: !!user,
+      tokenPreview: token.substring(0, 20) + '...'
+    })
+    throw new Error(`Invalid or expired JWT token: ${error?.message || 'User not found'}`)
+  }
+
+  console.log('[getUserFromJWT] SUCCESS - User verified from JWT:', {
+    userId: user.id,
+    email: user.email,
+    userRole: (user as any).user_role,
+    organizationId: (user as any).organization_id,
+    timestamp: new Date().toISOString()
+  })
+
+  return user
+}
+
+/**
  * Helper function to get organization_id for a given user
  * @param userId - The user ID from authentication (JWT 'sub' claim)
  * @returns Promise<string> - The organization_id

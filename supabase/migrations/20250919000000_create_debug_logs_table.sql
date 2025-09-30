@@ -22,6 +22,7 @@ ALTER TABLE debug_logs ENABLE ROW LEVEL SECURITY;
 -- Create policy for organization access
 CREATE POLICY "Users can view debug logs for their organization" ON debug_logs
     FOR SELECT
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE id = auth.uid()
@@ -29,6 +30,8 @@ CREATE POLICY "Users can view debug logs for their organization" ON debug_logs
         OR user_id = auth.uid()
     );
 
-CREATE POLICY "Service role can insert debug logs" ON debug_logs
+-- Only authenticated users can insert debug logs (typically via edge functions)
+CREATE POLICY "Authenticated users can insert debug logs" ON debug_logs
     FOR INSERT
-    WITH CHECK (true);
+    TO public
+    WITH CHECK (auth.uid() IS NOT NULL);

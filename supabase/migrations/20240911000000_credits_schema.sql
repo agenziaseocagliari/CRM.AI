@@ -54,6 +54,7 @@ ALTER TABLE credit_consumption_logs ENABLE ROW LEVEL SECURITY;
 -- Create policies for organization_credits
 CREATE POLICY "Users can view credits for their organization" ON organization_credits
     FOR SELECT
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE id = auth.uid()
@@ -63,6 +64,7 @@ CREATE POLICY "Users can view credits for their organization" ON organization_cr
 -- Create policies for credit_consumption_logs
 CREATE POLICY "Users can view consumption logs for their organization" ON credit_consumption_logs
     FOR SELECT
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE id = auth.uid()

@@ -27,6 +27,7 @@ ALTER TABLE event_reminders ENABLE ROW LEVEL SECURITY;
 -- Create policy for organization access
 CREATE POLICY "Users can view reminders in their organization" ON event_reminders
     FOR SELECT
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE id = auth.uid()
@@ -35,6 +36,7 @@ CREATE POLICY "Users can view reminders in their organization" ON event_reminder
 
 CREATE POLICY "Users can insert reminders in their organization" ON event_reminders
     FOR INSERT
+    TO public
     WITH CHECK (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE id = auth.uid()
@@ -43,6 +45,7 @@ CREATE POLICY "Users can insert reminders in their organization" ON event_remind
 
 CREATE POLICY "Users can update reminders in their organization" ON event_reminders
     FOR UPDATE
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE id = auth.uid()
@@ -51,6 +54,7 @@ CREATE POLICY "Users can update reminders in their organization" ON event_remind
 
 CREATE POLICY "Users can delete reminders in their organization" ON event_reminders
     FOR DELETE
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE id = auth.uid()

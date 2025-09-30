@@ -57,11 +57,16 @@ export const useCrmData = () => {
     setError(null);
 
     try {
+      // Step 1: Get JWT session and extract user
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if(sessionError) throw sessionError;
+      if(sessionError) {
+        console.error('[useCrmData] Session error:', sessionError);
+        throw sessionError;
+      }
       const user = session?.user;
       
       if (!user) {
+        console.log('[useCrmData] No user session found, clearing state');
         setLoading(false);
         setOrganization(null); setContacts([]); setOpportunities(groupOpportunitiesByStage([]));
         setForms([]); setAutomations([]); setOrganizationSettings(null);
@@ -71,16 +76,51 @@ export const useCrmData = () => {
         return;
       }
 
+      // Step 2: Log JWT user details for debugging
+      console.log('[useCrmData] User authenticated from JWT:', {
+        userId: user.id,
+        email: user.email,
+        jwtSub: user.id, // This is the 'sub' claim from JWT
+        timestamp: new Date().toISOString()
+      });
+
+      // Step 3: Query profile using JWT user.id (which matches the 'sub' claim)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
         .single<Pick<Profile, 'organization_id'>>();
       
+      // Step 4: Enhanced error handling with diagnostic information
       if (profileError || !profileData) {
-        throw new Error("Impossibile trovare il profilo dell'utente o l'organizzazione associata.");
+        console.error('[useCrmData] Profile lookup failed:', {
+          error: profileError,
+          queriedUserId: user.id,
+          userEmail: user.email,
+          profileData: profileData,
+          errorCode: profileError?.code,
+          errorMessage: profileError?.message,
+          errorDetails: profileError?.details,
+          hint: profileError?.hint
+        });
+        
+        // Provide detailed error message with actual values used
+        const errorMsg = `Impossibile trovare il profilo dell'utente o l'organizzazione associata.\n\n` +
+          `Debug Info:\n` +
+          `- User ID (da JWT): ${user.id}\n` +
+          `- Email: ${user.email}\n` +
+          `- Errore DB: ${profileError?.message || 'Profilo non trovato'}\n` +
+          `- Codice: ${profileError?.code || 'N/A'}\n\n` +
+          `Azione suggerita: Contattare il supporto con questi dettagli o ricaricare la pagina.`;
+        
+        throw new Error(errorMsg);
       }
+      
       const { organization_id } = profileData;
+      console.log('[useCrmData] Profile found successfully:', {
+        userId: user.id,
+        organizationId: organization_id
+      });
 
       const [eventsResponse, orgResponse, contactsResponse, opportunitiesResponse, formsResponse, automationsResponse, settingsResponse, subscriptionResponse, ledgerResponse, googleCredsResponse] = await Promise.all([
         invokeSupabaseFunction('get-all-crm-events', { organization_id }),
@@ -94,6 +134,8 @@ export const useCrmData = () => {
         supabase.from('credit_ledger').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }).limit(20),
         supabase.from('google_credentials').select('organization_id').eq('organization_id', organization_id).maybeSingle()
       ]);
+
+      console.log('[useCrmData] Data fetch completed for organization:', organization_id);
 
       if (orgResponse.error) throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);
       if (contactsResponse.error) throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);
@@ -120,6 +162,12 @@ export const useCrmData = () => {
       setIsCalendarLinked(!!googleCredsResponse.data);
 
     } catch (err: any) {
+      console.error('[useCrmData] Error in fetchData:', {
+        error: err,
+        message: err.message,
+        stack: err.stack,
+        timestamp: new Date().toISOString()
+      });
       setError(err.message);
       console.error(err);
     } finally {

@@ -29,6 +29,15 @@ jobs:
       - name: Run TypeScript lint
         run: npm run lint
 
+      - name: Verify PostgreSQL role references
+        run: bash scripts/verify-role-cleanup.sh
+
+      - name: Verify API role usage
+        run: npm run verify:role
+
+      - name: Lint for API role patterns
+        run: npm run lint:role
+
   deploy-edge-functions:
     name: Deploy Edge Functions to Supabase
     runs-on: ubuntu-latest

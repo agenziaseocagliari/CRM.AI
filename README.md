@@ -42,10 +42,15 @@ Il progetto include documentazione tecnica comprehensiva:
 - **[SUPER_ADMIN_IMPLEMENTATION.md](./SUPER_ADMIN_IMPLEMENTATION.md)** - 🆕 Implementazione strategia Super Admin Security
 - **[MIGRATION_ROBUSTNESS_GUIDE.md](./MIGRATION_ROBUSTNESS_GUIDE.md)** - 🛡️ Guida robustezza migration e RLS policies
 - **[docs/RLS_POLICY_GUIDE.md](./docs/RLS_POLICY_GUIDE.md)** - 📘 Guida completa strategia RLS policies con esempi
+- **[API_ROLE_MANAGEMENT_GUIDE.md](./API_ROLE_MANAGEMENT_GUIDE.md)** - 🔐 Guida completa gestione ruoli JWT-based (previene errori "role does not exist")
+- **[ROLE_MANAGEMENT_VERIFICATION_REPORT.md](./ROLE_MANAGEMENT_VERIFICATION_REPORT.md)** - ✅ Report verifica compliance gestione ruoli
 
 ### 🛠️ Automazione
 - **[scripts/verify-sync.sh](./scripts/verify-sync.sh)** - Script automatico per verificare sincronizzazione
 - **[scripts/test-superadmin.sh](./scripts/test-superadmin.sh)** - 🆕 Test suite per Super Admin security
+- **[scripts/verify-role-cleanup.sh](./scripts/verify-role-cleanup.sh)** - 🔍 Verifica riferimenti ruoli PostgreSQL
+- **[scripts/verify-api-role-usage.sh](./scripts/verify-api-role-usage.sh)** - 🔍 Verifica utilizzo ruoli nelle API calls
+- **[scripts/lint-api-role-usage.sh](./scripts/lint-api-role-usage.sh)** - 🔍 Lint per pattern problematici gestione ruoli
 - **[scripts/README.md](./scripts/README.md)** - Documentazione script di verifica
 - **[.github/workflows/deploy-supabase.yml](./.github/workflows/deploy-supabase.yml)** - CI/CD automatico per deploy
 
@@ -60,6 +65,15 @@ Il progetto include documentazione tecnica comprehensiva:
 ```bash
 # Esegui verifiche automatiche
 ./scripts/verify-sync.sh
+
+# Verifica gestione ruoli (previene errori "role does not exist")
+npm run verify:role
+
+# Lint codice per pattern problematici gestione ruoli
+npm run lint:role
+
+# Esegui tutte le verifiche
+npm run verify:all
 ```
 
 ### Development

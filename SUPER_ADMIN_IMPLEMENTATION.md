@@ -112,11 +112,38 @@ CREATE INDEX idx_profiles_role ON profiles(role);
 
 **RLS Policies Implementate**:
 
+**⚠️ IMPORTANT: RLS Policy Strategy**
+
+All RLS policies follow a strict security pattern:
+- **Always use `TO public`** - Never use `TO authenticated`, `TO super_admin`, or other internal Postgres roles
+- **Always filter by custom profile claims** - Use `profiles.role = 'super_admin'` for authorization
+- **Compatible with JWT custom claims** - Works seamlessly with Edge Functions and modern Supabase architecture
+- **Zero role errors** - Eliminates `"role does not exist"` errors (SQLSTATE 22023, 42704)
+
+**Example Policy Pattern**:
+```sql
+CREATE POLICY "Super admins can view all organizations" ON organizations
+    FOR SELECT
+    TO public  -- ✅ Always use public
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role = 'super_admin'  -- ✅ Custom claim filter
+        )
+    );
+```
+
+**Policies Applied To**:
+
 1. **superadmin_logs**: Solo super admin possono leggere/scrivere
 2. **profiles**: Super admin possono vedere e modificare tutti i profili
 3. **organizations**: Super admin hanno accesso completo (CRUD)
 4. **organization_credits**: Super admin possono modificare crediti
 5. **credit_consumption_logs**: Super admin possono vedere tutti i log
+6. **crm_events**: Utenti vedono eventi della loro organizzazione
+7. **event_reminders**: Utenti vedono reminder della loro organizzazione
+8. **debug_logs**: Utenti vedono log della loro organizzazione
 
 **Helper Functions**:
 ```sql

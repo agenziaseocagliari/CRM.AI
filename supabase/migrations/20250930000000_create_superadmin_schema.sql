@@ -58,6 +58,7 @@ ALTER TABLE superadmin_logs ENABLE ROW LEVEL SECURITY;
 -- Only super admins can view audit logs
 CREATE POLICY "Super admins can view all audit logs" ON superadmin_logs
     FOR SELECT
+    TO public
     USING (
         EXISTS (
             SELECT 1 FROM profiles
@@ -69,6 +70,7 @@ CREATE POLICY "Super admins can view all audit logs" ON superadmin_logs
 -- Only super admins can insert audit logs (via edge functions)
 CREATE POLICY "Super admins can insert audit logs" ON superadmin_logs
     FOR INSERT
+    TO public
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM profiles
@@ -92,6 +94,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can view all profiles" ON profiles;
         CREATE POLICY "Super admins can view all profiles" ON profiles
             FOR SELECT
+            TO public
             USING (
                 role = 'super_admin' OR
                 id = auth.uid()
@@ -100,6 +103,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can update all profiles" ON profiles;
         CREATE POLICY "Super admins can update all profiles" ON profiles
             FOR UPDATE
+            TO public
             USING (
                 EXISTS (
                     SELECT 1 FROM profiles
@@ -122,6 +126,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can view all organizations" ON organizations;
         CREATE POLICY "Super admins can view all organizations" ON organizations
             FOR SELECT
+            TO public
             USING (
                 EXISTS (
                     SELECT 1 FROM profiles
@@ -136,6 +141,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can update all organizations" ON organizations;
         CREATE POLICY "Super admins can update all organizations" ON organizations
             FOR UPDATE
+            TO public
             USING (
                 EXISTS (
                     SELECT 1 FROM profiles
@@ -147,6 +153,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can insert organizations" ON organizations;
         CREATE POLICY "Super admins can insert organizations" ON organizations
             FOR INSERT
+            TO public
             WITH CHECK (
                 EXISTS (
                     SELECT 1 FROM profiles
@@ -169,6 +176,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;
         CREATE POLICY "Super admins can view all organization credits" ON organization_credits
             FOR SELECT
+            TO public
             USING (
                 EXISTS (
                     SELECT 1 FROM profiles
@@ -183,6 +191,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can update all organization credits" ON organization_credits;
         CREATE POLICY "Super admins can update all organization credits" ON organization_credits
             FOR UPDATE
+            TO public
             USING (
                 EXISTS (
                     SELECT 1 FROM profiles
@@ -205,6 +214,7 @@ BEGIN
         DROP POLICY IF EXISTS "Super admins can view all credit consumption logs" ON credit_consumption_logs;
         CREATE POLICY "Super admins can view all credit consumption logs" ON credit_consumption_logs
             FOR SELECT
+            TO public
             USING (
                 EXISTS (
                     SELECT 1 FROM profiles

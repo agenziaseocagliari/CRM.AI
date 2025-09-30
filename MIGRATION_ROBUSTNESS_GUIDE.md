@@ -193,10 +193,47 @@ BEGIN
     ) THEN
         -- Policy operations here
         DROP POLICY IF EXISTS "policy_name" ON your_table;
-        CREATE POLICY "policy_name" ON your_table ...;
+        CREATE POLICY "policy_name" ON your_table
+            FOR SELECT
+            TO public  -- ⚠️ ALWAYS use TO public
+            USING (...);
     END IF;
 END $$;
 ```
+
+### 1.1. ⚠️ CRITICAL: Always Use TO public for RLS Policies
+
+**Best Practice: Never use internal Postgres roles in RLS policies**
+
+❌ **DON'T DO THIS:**
+```sql
+-- These cause "role does not exist" errors
+CREATE POLICY "my_policy" ON my_table FOR SELECT TO authenticated USING (...);
+CREATE POLICY "my_policy" ON my_table FOR SELECT TO super_admin USING (...);
+CREATE POLICY "my_policy" ON my_table FOR SELECT TO service_role USING (...);
+```
+
+✅ **DO THIS INSTEAD:**
+```sql
+-- Always use TO public with custom profile claim filters
+CREATE POLICY "Super admins can view all" ON my_table
+    FOR SELECT
+    TO public  -- ✅ Correct
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role = 'super_admin'  -- ✅ Custom claim filter
+        )
+    );
+```
+
+**Why?**
+- ✅ No "role does not exist" errors (SQLSTATE 22023, 42704)
+- ✅ Compatible with JWT custom claims
+- ✅ Works with Edge Functions and modern Supabase architecture
+- ✅ Consistent authorization pattern across all tables
+- ✅ Easy to test and debug
 
 ### 2. Verifica Esistenza Colonna
 

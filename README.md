@@ -40,6 +40,7 @@ Il progetto include documentazione tecnica comprehensiva:
 - **[SUPERVISION_REPORT.md](./SUPERVISION_REPORT.md)** - Report analisi architettura e best practices
 - **[SYNC_CHECKLIST.md](./SYNC_CHECKLIST.md)** - Checklist per verifiche periodiche GitHub ↔️ Supabase
 - **[SUPER_ADMIN_IMPLEMENTATION.md](./SUPER_ADMIN_IMPLEMENTATION.md)** - 🆕 Implementazione strategia Super Admin Security
+- **[MIGRATION_ROBUSTNESS_GUIDE.md](./MIGRATION_ROBUSTNESS_GUIDE.md)** - 🛡️ Guida robustezza migration e RLS policies
 
 ### 🛠️ Automazione
 - **[scripts/verify-sync.sh](./scripts/verify-sync.sh)** - Script automatico per verificare sincronizzazione
@@ -137,12 +138,41 @@ Per dettagli completi, vedi [EDGE_FUNCTIONS_API.md](./EDGE_FUNCTIONS_API.md)
 
 ## 🔒 Sicurezza
 
+### Row Level Security (RLS) Strategy
+
+**⚠️ CRITICAL POLICY PATTERN:**
+
+All RLS policies follow a strict security pattern:
+- **Always use `TO public`** - Never use `TO authenticated`, `TO super_admin`, or other internal Postgres roles
+- **Always filter by custom profile claims** - Use `profiles.role = 'super_admin'` for authorization
+- **Zero role errors** - Eliminates `"role does not exist"` errors (SQLSTATE 22023, 42704)
+
+**Example:**
+```sql
+CREATE POLICY "Super admins can view all" ON organizations
+    FOR SELECT
+    TO public  -- ✅ Always use public
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role = 'super_admin'  -- ✅ Custom claim
+        )
+    );
+```
+
+### General Security
 - ✅ Row Level Security (RLS) abilitato su tutte le tabelle
 - ✅ JWT Authentication per tutte le API
 - ✅ Service Role Key isolato server-side
 - ✅ Secrets gestiti tramite Supabase Edge Functions Secrets
 - ✅ Security audit automatizzato nel workflow CI/CD
 - ✅ Nessun secret hardcoded nel codice
+- ✅ RLS policies use only `TO public` with custom profile filters
+
+**📚 For complete RLS policy documentation, see:**
+- [MIGRATION_ROBUSTNESS_GUIDE.md](./MIGRATION_ROBUSTNESS_GUIDE.md) - RLS policy best practices
+- [SUPER_ADMIN_IMPLEMENTATION.md](./SUPER_ADMIN_IMPLEMENTATION.md) - Super Admin security implementation
 
 ---
 

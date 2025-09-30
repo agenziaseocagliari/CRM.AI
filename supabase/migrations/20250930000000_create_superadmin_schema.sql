@@ -300,9 +300,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =====================================================
 -- 8. Grant necessary permissions
 -- =====================================================
--- Grant execute permission on helper functions to authenticated users
-GRANT EXECUTE ON FUNCTION is_super_admin() TO authenticated;
-GRANT EXECUTE ON FUNCTION log_superadmin_action(TEXT, TEXT, TEXT, TEXT, JSONB, TEXT, TEXT, TEXT, TEXT) TO authenticated;
+-- Grant execute permission on helper functions to public (authenticated users will use these)
+-- Note: Using TO public with RLS ensures only authenticated users can execute these functions
+GRANT EXECUTE ON FUNCTION is_super_admin() TO public;
+GRANT EXECUTE ON FUNCTION log_superadmin_action(TEXT, TEXT, TEXT, TEXT, JSONB, TEXT, TEXT, TEXT, TEXT) TO public;
 
 -- =====================================================
 -- 9. Add comments for documentation

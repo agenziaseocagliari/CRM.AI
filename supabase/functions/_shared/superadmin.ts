@@ -1,9 +1,12 @@
 /**
  * Super Admin Utilities
  * Provides validation, authorization, and audit logging for Super Admin operations
+ * 
+ * UPDATED: Now uses centralized getUserIdFromJWT helper for consistent JWT validation
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
+import { getUserIdFromJWT } from './supabase.ts';
 
 interface SuperAdminValidationResult {
   isValid: boolean;
@@ -26,77 +29,104 @@ interface AuditLogParams {
 
 /**
  * Validates that the current user has super_admin role
+ * AGGIORNATO: Usa getUserIdFromJWT per estrazione sicura dell'user ID dal JWT
  * @param req The incoming request
  * @returns Validation result with user info or error
  */
 export async function validateSuperAdmin(req: Request): Promise<SuperAdminValidationResult> {
+  console.log('[validateSuperAdmin] START - Validating super admin access');
+  
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return { isValid: false, error: 'Missing authorization header' };
-    }
+    // Step 1: Estrai userId dal JWT usando helper centralizzato
+    // Questo garantisce validazione coerente con tutte le altre edge functions
+    const userId = await getUserIdFromJWT(req);
+    console.log('[validateSuperAdmin] User ID extracted from JWT:', userId);
 
-    // Extract JWT token
-    const token = authHeader.replace('Bearer ', '');
-    if (!token) {
-      return { isValid: false, error: 'Invalid authorization token' };
-    }
-
-    // Create Supabase client with the user's token
+    // Step 2: Crea client Supabase con service role per query RLS-bypassing
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     
     if (!supabaseUrl || !supabaseKey) {
-      console.error('[Super Admin] Missing Supabase configuration');
+      console.error('[validateSuperAdmin] ERROR: Missing Supabase configuration');
       return { isValid: false, error: 'Server configuration error' };
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify the JWT token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      console.error('[Super Admin] Authentication failed:', authError);
-      return { isValid: false, error: 'Authentication failed' };
-    }
-
-    // Check if user has super_admin role
+    // Step 3: Verifica ruolo super_admin dal profilo utente
+    console.log('[validateSuperAdmin] Querying profile for user:', userId);
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role, id')
-      .eq('id', user.id)
+      .select('role, id, email, full_name')
+      .eq('id', userId)
       .single();
 
-    if (profileError || !profile) {
-      console.error('[Super Admin] Failed to fetch user profile:', profileError);
+    if (profileError) {
+      console.error('[validateSuperAdmin] ERROR: Failed to fetch user profile:', {
+        error: profileError,
+        userId: userId,
+        code: profileError.code,
+        message: profileError.message,
+        hint: profileError.hint
+      });
       return { isValid: false, error: 'Failed to verify user permissions' };
     }
 
-    if (profile.role !== 'super_admin') {
-      console.warn(`[Super Admin] Access denied for user ${user.email} with role ${profile.role}`);
-      return { isValid: false, error: 'Insufficient permissions. Super Admin role required.' };
+    if (!profile) {
+      console.error('[validateSuperAdmin] ERROR: Profile not found for user:', userId);
+      return { 
+        isValid: false, 
+        error: 'User profile not found. Please contact support with your user ID: ' + userId 
+      };
     }
+
+    console.log('[validateSuperAdmin] Profile found:', {
+      userId: profile.id,
+      email: profile.email,
+      role: profile.role,
+      fullName: profile.full_name
+    });
+
+    // Step 4: Verifica che il ruolo sia super_admin
+    if (profile.role !== 'super_admin') {
+      console.warn('[validateSuperAdmin] UNAUTHORIZED: Access denied', {
+        userId: profile.id,
+        email: profile.email,
+        role: profile.role,
+        requiredRole: 'super_admin'
+      });
+      return { 
+        isValid: false, 
+        error: `Insufficient permissions. Super Admin role required. Current role: ${profile.role}` 
+      };
+    }
+
+    console.log('[validateSuperAdmin] SUCCESS - Super admin validated:', {
+      userId: profile.id,
+      email: profile.email
+    });
 
     return {
       isValid: true,
-      userId: user.id,
-      email: user.email,
+      userId: profile.id,
+      email: profile.email,
     };
-  } catch (error) {
-    console.error('[Super Admin] Validation error:', error);
-    return { isValid: false, error: 'Internal validation error' };
+  } catch (error: any) {
+    console.error('[validateSuperAdmin] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return { 
+      isValid: false, 
+      error: `Internal validation error: ${error.message}` 
+    };
   }
 }
 
 /**
  * Logs a super admin action to the audit trail
+ * AGGIORNATO: Logging più dettagliato per debugging e audit
  * @param params Audit log parameters
  * @param userId The user ID performing the action
  * @param userEmail The email of the user performing the action
@@ -106,55 +136,117 @@ export async function logSuperAdminAction(
   userId: string,
   userEmail: string
 ): Promise<void> {
+  console.log('[logSuperAdminAction] START - Logging super admin action:', {
+    action: params.action,
+    operationType: params.operationType,
+    targetType: params.targetType,
+    targetId: params.targetId,
+    result: params.result || 'SUCCESS',
+    userId,
+    userEmail
+  });
+  
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const logEntry = {
+      admin_user_id: userId,
+      admin_email: userEmail,
+      action: params.action,
+      operation_type: params.operationType,
+      target_type: params.targetType || null,
+      target_id: params.targetId || null,
+      details: params.details || null,
+      result: params.result || 'SUCCESS',
+      error_message: params.errorMessage || null,
+      ip_address: params.ipAddress || null,
+      user_agent: params.userAgent || null,
+    };
+
+    console.log('[logSuperAdminAction] Inserting log entry:', logEntry);
+
     const { error } = await supabase
       .from('superadmin_logs')
-      .insert({
-        admin_user_id: userId,
-        admin_email: userEmail,
-        action: params.action,
-        operation_type: params.operationType,
-        target_type: params.targetType || null,
-        target_id: params.targetId || null,
-        details: params.details || null,
-        result: params.result || 'SUCCESS',
-        error_message: params.errorMessage || null,
-        ip_address: params.ipAddress || null,
-        user_agent: params.userAgent || null,
-      });
+      .insert(logEntry);
 
     if (error) {
-      console.error('[Super Admin] Failed to log action:', error);
+      console.error('[logSuperAdminAction] ERROR: Failed to insert log:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        logEntry
+      });
+    } else {
+      console.log('[logSuperAdminAction] SUCCESS - Log entry created');
     }
-  } catch (error) {
-    console.error('[Super Admin] Error logging action:', error);
+  } catch (error: any) {
+    console.error('[logSuperAdminAction] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      params
+    });
   }
 }
 
 /**
  * Extracts client information from request for audit logging
+ * AGGIORNATO: Logging migliorato per debugging
  * @param req The incoming request
  */
 export function extractClientInfo(req: Request): { ipAddress?: string; userAgent?: string } {
-  return {
-    ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
-    userAgent: req.headers.get('user-agent') || undefined,
-  };
+  const ipAddress = req.headers.get('x-forwarded-for') || 
+                    req.headers.get('x-real-ip') || 
+                    req.headers.get('cf-connecting-ip') || 
+                    undefined;
+  const userAgent = req.headers.get('user-agent') || undefined;
+  
+  console.log('[extractClientInfo] Client information:', {
+    ipAddress: ipAddress || 'N/A',
+    userAgent: userAgent ? userAgent.substring(0, 50) + '...' : 'N/A'
+  });
+  
+  return { ipAddress, userAgent };
 }
 
 /**
  * Creates a standardized super admin error response
+ * AGGIORNATO: Include diagnostics dettagliati
  * @param message Error message
  * @param statusCode HTTP status code
+ * @param diagnostics Optional diagnostic information
  */
-export function createSuperAdminErrorResponse(message: string, statusCode: number = 403): Response {
+export function createSuperAdminErrorResponse(
+  message: string, 
+  statusCode: number = 403,
+  diagnostics?: Record<string, any>
+): Response {
+  console.error('[createSuperAdminErrorResponse] Creating error response:', {
+    message,
+    statusCode,
+    diagnostics,
+    timestamp: new Date().toISOString()
+  });
+  
+  const responseBody: any = { error: message };
+  
+  if (diagnostics) {
+    responseBody.diagnostics = {
+      ...diagnostics,
+      timestamp: new Date().toISOString(),
+      suggestion: statusCode === 403 
+        ? 'Verify you have super_admin role assigned in your profile'
+        : statusCode === 401
+        ? 'Check your JWT token is valid and not expired'
+        : 'Contact support if the issue persists'
+    };
+  }
+  
   return new Response(
-    JSON.stringify({ error: message }),
+    JSON.stringify(responseBody),
     {
       status: statusCode,
       headers: { 'Content-Type': 'application/json' },
@@ -164,9 +256,15 @@ export function createSuperAdminErrorResponse(message: string, statusCode: numbe
 
 /**
  * Creates a standardized super admin success response
+ * AGGIORNATO: Include metadata di debug
  * @param data Response data
  */
 export function createSuperAdminSuccessResponse(data: any): Response {
+  console.log('[createSuperAdminSuccessResponse] Creating success response:', {
+    dataKeys: Object.keys(data),
+    timestamp: new Date().toISOString()
+  });
+  
   return new Response(
     JSON.stringify(data),
     {

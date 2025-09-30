@@ -1,10 +1,13 @@
 /**
  * Super Admin Manage Payments
  * Lists and manages payment transactions
+ * 
+ * AGGIORNATO: Usa nuovo helper getUserIdFromJWT + logging avanzato
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
   validateSuperAdmin,
   logSuperAdminAction,
@@ -19,12 +22,24 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  console.log('[superadmin-manage-payments] START - Function invoked');
+
   try {
-    // Validate super admin access
+    // Step 1: Validate super admin access
     const validation = await validateSuperAdmin(req);
     if (!validation.isValid) {
-      return createSuperAdminErrorResponse(validation.error || 'Unauthorized', 403);
+      console.error('[superadmin-manage-payments] Validation failed:', validation.error);
+      return createSuperAdminErrorResponse(
+        validation.error || 'Unauthorized', 
+        403,
+        { function: 'superadmin-manage-payments' }
+      );
     }
+
+    console.log('[superadmin-manage-payments] Super admin validated:', {
+      userId: validation.userId,
+      email: validation.email
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -33,11 +48,21 @@ Deno.serve(async (req) => {
     // Parse request body
     const { action, transactionId, status, limit = 50, offset = 0 } = await req.json().catch(() => ({}));
 
+    console.log('[superadmin-manage-payments] Request parameters:', {
+      action,
+      transactionId,
+      status,
+      limit,
+      offset
+    });
+
     // Get client info for audit logging
     const clientInfo = extractClientInfo(req);
 
     // If action is provided, handle payment operations
     if (action === 'refund' && transactionId) {
+      console.log('[superadmin-manage-payments] Processing refund for transaction:', transactionId);
+      
       // Placeholder for refund logic
       await logSuperAdminAction(
         {
@@ -53,11 +78,14 @@ Deno.serve(async (req) => {
         validation.email!
       );
 
+      console.log('[superadmin-manage-payments] Refund processed successfully');
       return createSuperAdminSuccessResponse({ 
         message: 'Refund processed successfully',
         transactionId,
       });
     }
+
+    console.log('[superadmin-manage-payments] Fetching payment transactions...');
 
     // Fetch payment transactions from credit consumption logs
     const { data: creditLogs, error: logsError } = await supabase
@@ -77,7 +105,13 @@ Deno.serve(async (req) => {
       .range(offset, offset + limit - 1);
 
     if (logsError) {
-      console.error('[Super Admin Manage Payments] Error:', logsError);
+      console.error('[superadmin-manage-payments] Error fetching logs:', {
+        error: logsError.message,
+        code: logsError.code,
+        details: logsError.details,
+        hint: logsError.hint
+      });
+      
       await logSuperAdminAction(
         {
           action: 'List Payments',
@@ -91,8 +125,14 @@ Deno.serve(async (req) => {
         validation.userId!,
         validation.email!
       );
-      return createSuperAdminErrorResponse('Failed to fetch payments', 500);
+      return createSuperAdminErrorResponse(
+        'Failed to fetch payments: ' + logsError.message, 
+        500,
+        { function: 'superadmin-manage-payments', dbError: logsError.code }
+      );
     }
+
+    console.log('[superadmin-manage-payments] Fetching organization credits...');
 
     // Also fetch organization credits for revenue calculation
     const { data: orgCredits, error: creditsError } = await supabase
@@ -106,6 +146,10 @@ Deno.serve(async (req) => {
           name
         )
       `);
+
+    if (creditsError) {
+      console.warn('[superadmin-manage-payments] Error fetching org credits:', creditsError.message);
+    }
 
     // Transform data to match expected payment format
     const payments = (orgCredits || []).map((org: any, index: number) => {
@@ -135,6 +179,12 @@ Deno.serve(async (req) => {
       filteredPayments = payments.filter((p: any) => p.status === status);
     }
 
+    console.log('[superadmin-manage-payments] Data prepared:', {
+      totalPayments: payments.length,
+      filteredPayments: filteredPayments.length,
+      creditLogs: creditLogs?.length || 0
+    });
+
     // Log the action
     await logSuperAdminAction(
       {
@@ -149,12 +199,21 @@ Deno.serve(async (req) => {
       validation.email!
     );
 
+    console.log('[superadmin-manage-payments] SUCCESS - Returning payments');
     return createSuperAdminSuccessResponse({ 
       payments: filteredPayments,
       creditLogs: creditLogs || [],
     });
-  } catch (error) {
-    console.error('[Super Admin Manage Payments] Error:', error);
-    return createSuperAdminErrorResponse('Internal server error', 500);
+  } catch (error: any) {
+    console.error('[superadmin-manage-payments] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return createSuperAdminErrorResponse(
+      'Internal server error: ' + error.message, 
+      500,
+      { function: 'superadmin-manage-payments', error: error.message }
+    );
   }
 });

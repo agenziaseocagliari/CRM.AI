@@ -41,6 +41,7 @@ Il progetto include documentazione tecnica comprehensiva:
 - **[SYNC_CHECKLIST.md](./SYNC_CHECKLIST.md)** - Checklist per verifiche periodiche GitHub ↔️ Supabase
 - **[SUPER_ADMIN_IMPLEMENTATION.md](./SUPER_ADMIN_IMPLEMENTATION.md)** - 🆕 Implementazione strategia Super Admin Security
 - **[MIGRATION_ROBUSTNESS_GUIDE.md](./MIGRATION_ROBUSTNESS_GUIDE.md)** - 🛡️ Guida robustezza migration e RLS policies
+- **[docs/RLS_POLICY_GUIDE.md](./docs/RLS_POLICY_GUIDE.md)** - 📘 Guida completa strategia RLS policies con esempi
 
 ### 🛠️ Automazione
 - **[scripts/verify-sync.sh](./scripts/verify-sync.sh)** - Script automatico per verificare sincronizzazione

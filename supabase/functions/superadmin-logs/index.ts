@@ -1,10 +1,13 @@
 /**
  * Super Admin Logs
  * Retrieves audit logs with filtering and pagination
+ * 
+ * AGGIORNATO: Usa nuovo helper getUserIdFromJWT + logging avanzato
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
   validateSuperAdmin,
   logSuperAdminAction,
@@ -19,12 +22,24 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  console.log('[superadmin-logs] START - Function invoked');
+
   try {
-    // Validate super admin access
+    // Step 1: Validate super admin access
     const validation = await validateSuperAdmin(req);
     if (!validation.isValid) {
-      return createSuperAdminErrorResponse(validation.error || 'Unauthorized', 403);
+      console.error('[superadmin-logs] Validation failed:', validation.error);
+      return createSuperAdminErrorResponse(
+        validation.error || 'Unauthorized', 
+        403,
+        { function: 'superadmin-logs' }
+      );
     }
+
+    console.log('[superadmin-logs] Super admin validated:', {
+      userId: validation.userId,
+      email: validation.email
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -41,6 +56,17 @@ Deno.serve(async (req) => {
       limit = 100, 
       offset = 0 
     } = await req.json().catch(() => ({}));
+
+    console.log('[superadmin-logs] Query parameters:', {
+      search,
+      operationType,
+      targetType,
+      result,
+      startDate,
+      endDate,
+      limit,
+      offset
+    });
 
     // Get client info for audit logging
     const clientInfo = extractClientInfo(req);
@@ -72,10 +98,17 @@ Deno.serve(async (req) => {
       query = query.lte('created_at', endDate);
     }
 
+    console.log('[superadmin-logs] Executing query...');
     const { data: logs, error, count } = await query;
 
     if (error) {
-      console.error('[Super Admin Logs] Error:', error);
+      console.error('[superadmin-logs] Database error:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
       await logSuperAdminAction(
         {
           action: 'View Audit Logs',
@@ -89,8 +122,18 @@ Deno.serve(async (req) => {
         validation.userId!,
         validation.email!
       );
-      return createSuperAdminErrorResponse('Failed to fetch audit logs', 500);
+      return createSuperAdminErrorResponse(
+        'Failed to fetch audit logs: ' + error.message, 
+        500,
+        { function: 'superadmin-logs', dbError: error.code }
+      );
     }
+
+    console.log('[superadmin-logs] Query successful:', {
+      logsCount: logs?.length || 0,
+      totalCount: count,
+      filters: { search, operationType, targetType, result, startDate, endDate }
+    });
 
     // Transform logs to match expected format
     const transformedLogs = (logs || []).map((log: any) => ({
@@ -125,14 +168,23 @@ Deno.serve(async (req) => {
       validation.email!
     );
 
+    console.log('[superadmin-logs] SUCCESS - Returning audit logs');
     return createSuperAdminSuccessResponse({ 
       logs: transformedLogs,
       total: count || transformedLogs.length,
       offset,
       limit,
     });
-  } catch (error) {
-    console.error('[Super Admin Logs] Error:', error);
-    return createSuperAdminErrorResponse('Internal server error', 500);
+  } catch (error: any) {
+    console.error('[superadmin-logs] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return createSuperAdminErrorResponse(
+      'Internal server error: ' + error.message, 
+      500,
+      { function: 'superadmin-logs', error: error.message }
+    );
   }
 });

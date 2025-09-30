@@ -1,10 +1,13 @@
 /**
  * Super Admin Create Organization
  * Creates a new organization with initial setup
+ * 
+ * AGGIORNATO: Usa nuovo helper getUserIdFromJWT + logging avanzato
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
   validateSuperAdmin,
   logSuperAdminAction,
@@ -19,12 +22,24 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  console.log('[superadmin-create-org] START - Function invoked');
+
   try {
-    // Validate super admin access
+    // Step 1: Validate super admin access
     const validation = await validateSuperAdmin(req);
     if (!validation.isValid) {
-      return createSuperAdminErrorResponse(validation.error || 'Unauthorized', 403);
+      console.error('[superadmin-create-org] Validation failed:', validation.error);
+      return createSuperAdminErrorResponse(
+        validation.error || 'Unauthorized', 
+        403,
+        { function: 'superadmin-create-org' }
+      );
     }
+
+    console.log('[superadmin-create-org] Super admin validated:', {
+      userId: validation.userId,
+      email: validation.email
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -33,7 +48,15 @@ Deno.serve(async (req) => {
     // Parse request body
     const { name, adminEmail, plan = 'free', initialCredits = 100 } = await req.json();
 
+    console.log('[superadmin-create-org] Request parameters:', {
+      name,
+      adminEmail,
+      plan,
+      initialCredits
+    });
+
     if (!name || !adminEmail) {
+      console.error('[superadmin-create-org] Missing required parameters');
       return createSuperAdminErrorResponse('name and adminEmail are required', 400);
     }
 
@@ -41,6 +64,7 @@ Deno.serve(async (req) => {
     const clientInfo = extractClientInfo(req);
 
     // Check if organization with this name already exists
+    console.log('[superadmin-create-org] Checking for existing organization...');
     const { data: existingOrg } = await supabase
       .from('organizations')
       .select('id')
@@ -48,10 +72,16 @@ Deno.serve(async (req) => {
       .single();
 
     if (existingOrg) {
-      return createSuperAdminErrorResponse('Organization with this name already exists', 400);
+      console.warn('[superadmin-create-org] Organization already exists:', name);
+      return createSuperAdminErrorResponse(
+        'Organization with this name already exists', 
+        400,
+        { function: 'superadmin-create-org', organizationName: name }
+      );
     }
 
     // Create organization
+    console.log('[superadmin-create-org] Creating organization...');
     const { data: newOrg, error: orgError } = await supabase
       .from('organizations')
       .insert({ name })
@@ -59,7 +89,13 @@ Deno.serve(async (req) => {
       .single();
 
     if (orgError || !newOrg) {
-      console.error('[Super Admin Create Org] Error creating organization:', orgError);
+      console.error('[superadmin-create-org] Error creating organization:', {
+        error: orgError?.message,
+        code: orgError?.code,
+        details: orgError?.details,
+        hint: orgError?.hint
+      });
+      
       await logSuperAdminAction(
         {
           action: 'Create Organization',
@@ -73,10 +109,20 @@ Deno.serve(async (req) => {
         validation.userId!,
         validation.email!
       );
-      return createSuperAdminErrorResponse('Failed to create organization', 500);
+      return createSuperAdminErrorResponse(
+        'Failed to create organization: ' + orgError?.message, 
+        500,
+        { function: 'superadmin-create-org', dbError: orgError?.code }
+      );
     }
 
+    console.log('[superadmin-create-org] Organization created:', {
+      id: newOrg.id,
+      name: newOrg.name
+    });
+
     // Create organization credits
+    console.log('[superadmin-create-org] Creating organization credits...');
     const { data: credits, error: creditsError } = await supabase
       .from('organization_credits')
       .insert({
@@ -91,8 +137,15 @@ Deno.serve(async (req) => {
       .single();
 
     if (creditsError) {
-      console.error('[Super Admin Create Org] Error creating credits:', creditsError);
+      console.error('[superadmin-create-org] Error creating credits:', {
+        error: creditsError.message,
+        code: creditsError.code,
+        details: creditsError.details,
+        hint: creditsError.hint
+      });
+      
       // Rollback organization creation
+      console.log('[superadmin-create-org] Rolling back organization creation...');
       await supabase.from('organizations').delete().eq('id', newOrg.id);
       
       await logSuperAdminAction(
@@ -108,8 +161,18 @@ Deno.serve(async (req) => {
         validation.userId!,
         validation.email!
       );
-      return createSuperAdminErrorResponse('Failed to create organization credits', 500);
+      return createSuperAdminErrorResponse(
+        'Failed to create organization credits: ' + creditsError.message, 
+        500,
+        { function: 'superadmin-create-org', dbError: creditsError.code }
+      );
     }
+
+    console.log('[superadmin-create-org] Credits created:', {
+      organizationId: credits.organization_id,
+      plan: credits.plan_name,
+      credits: credits.total_credits
+    });
 
     // Note: Admin user creation should be handled separately via Supabase Auth
     // This function only creates the organization structure
@@ -135,13 +198,22 @@ Deno.serve(async (req) => {
       validation.email!
     );
 
+    console.log('[superadmin-create-org] SUCCESS - Organization created');
     return createSuperAdminSuccessResponse({
       organization: newOrg,
       credits,
       message: 'Organization created successfully. Admin user should be invited separately.',
     });
-  } catch (error) {
-    console.error('[Super Admin Create Org] Error:', error);
-    return createSuperAdminErrorResponse('Internal server error', 500);
+  } catch (error: any) {
+    console.error('[superadmin-create-org] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return createSuperAdminErrorResponse(
+      'Internal server error: ' + error.message, 
+      500,
+      { function: 'superadmin-create-org', error: error.message }
+    );
   }
 });

@@ -1,10 +1,13 @@
 /**
  * Super Admin Update Organization
  * Updates organization settings, credits, and status
+ * 
+ * AGGIORNATO: Usa nuovo helper getUserIdFromJWT + logging avanzato
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
   validateSuperAdmin,
   logSuperAdminAction,
@@ -19,12 +22,24 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  console.log('[superadmin-update-organization] START - Function invoked');
+
   try {
-    // Validate super admin access
+    // Step 1: Validate super admin access
     const validation = await validateSuperAdmin(req);
     if (!validation.isValid) {
-      return createSuperAdminErrorResponse(validation.error || 'Unauthorized', 403);
+      console.error('[superadmin-update-organization] Validation failed:', validation.error);
+      return createSuperAdminErrorResponse(
+        validation.error || 'Unauthorized', 
+        403,
+        { function: 'superadmin-update-organization' }
+      );
     }
+
+    console.log('[superadmin-update-organization] Super admin validated:', {
+      adminUserId: validation.userId,
+      adminEmail: validation.email
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -33,7 +48,15 @@ Deno.serve(async (req) => {
     // Parse request body
     const { organizationId, updates, status, reason } = await req.json();
 
+    console.log('[superadmin-update-organization] Request parameters:', {
+      organizationId,
+      hasUpdates: !!updates,
+      status,
+      hasReason: !!reason
+    });
+
     if (!organizationId) {
+      console.error('[superadmin-update-organization] Missing organizationId');
       return createSuperAdminErrorResponse('organizationId is required', 400);
     }
 
@@ -43,11 +66,17 @@ Deno.serve(async (req) => {
     let result: any = {};
 
     // Fetch current organization data for logging
+    console.log('[superadmin-update-organization] Fetching current organization data...');
     const { data: currentOrg } = await supabase
       .from('organizations')
       .select('*, organization_credits(*)')
       .eq('id', organizationId)
       .single();
+
+    console.log('[superadmin-update-organization] Current organization:', {
+      id: currentOrg?.id,
+      name: currentOrg?.name
+    });
 
     // Update organization basic info if provided
     if (updates && typeof updates === 'object') {
@@ -61,6 +90,7 @@ Deno.serve(async (req) => {
       }
 
       if (Object.keys(orgUpdateData).length > 0) {
+        console.log('[superadmin-update-organization] Updating organization fields:', orgUpdateData);
         const { data: updatedOrg, error } = await supabase
           .from('organizations')
           .update(orgUpdateData)
@@ -69,7 +99,13 @@ Deno.serve(async (req) => {
           .single();
 
         if (error) {
-          console.error('[Super Admin Update Organization] Error updating org:', error);
+          console.error('[superadmin-update-organization] Error updating org:', {
+            error: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          });
+          
           await logSuperAdminAction(
             {
               action: 'Update Organization',
@@ -84,10 +120,15 @@ Deno.serve(async (req) => {
             validation.userId!,
             validation.email!
           );
-          return createSuperAdminErrorResponse('Failed to update organization', 500);
+          return createSuperAdminErrorResponse(
+            'Failed to update organization: ' + error.message, 
+            500,
+            { function: 'superadmin-update-organization', dbError: error.code, organizationId }
+          );
         }
 
         result.organization = updatedOrg;
+        console.log('[superadmin-update-organization] Organization updated successfully');
       }
     }
 
@@ -103,6 +144,7 @@ Deno.serve(async (req) => {
         creditsUpdate.plan_name = updates.plan_name;
       }
 
+      console.log('[superadmin-update-organization] Updating credits:', creditsUpdate);
       const { data: updatedCredits, error: creditsError } = await supabase
         .from('organization_credits')
         .update(creditsUpdate)
@@ -111,7 +153,13 @@ Deno.serve(async (req) => {
         .single();
 
       if (creditsError) {
-        console.error('[Super Admin Update Organization] Error updating credits:', creditsError);
+        console.error('[superadmin-update-organization] Error updating credits:', {
+          error: creditsError.message,
+          code: creditsError.code,
+          details: creditsError.details,
+          hint: creditsError.hint
+        });
+        
         await logSuperAdminAction(
           {
             action: 'Update Organization Credits',
@@ -126,10 +174,15 @@ Deno.serve(async (req) => {
           validation.userId!,
           validation.email!
         );
-        return createSuperAdminErrorResponse('Failed to update organization credits', 500);
+        return createSuperAdminErrorResponse(
+          'Failed to update organization credits: ' + creditsError.message, 
+          500,
+          { function: 'superadmin-update-organization', dbError: creditsError.code, organizationId }
+        );
       }
 
       result.credits = updatedCredits;
+      console.log('[superadmin-update-organization] Credits updated successfully');
     }
 
     // Handle status updates with reason
@@ -139,6 +192,7 @@ Deno.serve(async (req) => {
         reason: reason || 'No reason provided',
         updatedAt: new Date().toISOString(),
       };
+      console.log('[superadmin-update-organization] Status updated:', result.statusUpdate);
     }
 
     // Log the action with before/after data
@@ -162,9 +216,18 @@ Deno.serve(async (req) => {
       validation.email!
     );
 
+    console.log('[superadmin-update-organization] SUCCESS - Organization updated');
     return createSuperAdminSuccessResponse(result);
-  } catch (error) {
-    console.error('[Super Admin Update Organization] Error:', error);
-    return createSuperAdminErrorResponse('Internal server error', 500);
+  } catch (error: any) {
+    console.error('[superadmin-update-organization] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return createSuperAdminErrorResponse(
+      'Internal server error: ' + error.message, 
+      500,
+      { function: 'superadmin-update-organization', error: error.message }
+    );
   }
 });

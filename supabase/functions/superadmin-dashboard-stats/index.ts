@@ -1,10 +1,13 @@
 /**
  * Super Admin Dashboard Stats
  * Provides comprehensive statistics for the super admin dashboard
+ * 
+ * AGGIORNATO: Usa nuovo helper getUserIdFromJWT + logging avanzato
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
   validateSuperAdmin,
   logSuperAdminAction,
@@ -19,12 +22,30 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  console.log('[superadmin-dashboard-stats] START - Function invoked');
+  console.log('[superadmin-dashboard-stats] Request method:', req.method);
+  console.log('[superadmin-dashboard-stats] Request headers:', {
+    hasAuthorization: !!req.headers.get('Authorization'),
+    hasApiKey: !!req.headers.get('apikey'),
+    contentType: req.headers.get('Content-Type')
+  });
+
   try {
-    // Validate super admin access
+    // Step 1: Validate super admin access with new centralized helper
     const validation = await validateSuperAdmin(req);
     if (!validation.isValid) {
-      return createSuperAdminErrorResponse(validation.error || 'Unauthorized', 403);
+      console.error('[superadmin-dashboard-stats] Validation failed:', validation.error);
+      return createSuperAdminErrorResponse(
+        validation.error || 'Unauthorized', 
+        403,
+        { function: 'superadmin-dashboard-stats', userId: validation.userId }
+      );
     }
+
+    console.log('[superadmin-dashboard-stats] Super admin validated:', {
+      userId: validation.userId,
+      email: validation.email
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -32,6 +53,8 @@ Deno.serve(async (req) => {
 
     // Get client info for audit logging
     const clientInfo = extractClientInfo(req);
+
+    console.log('[superadmin-dashboard-stats] Fetching statistics...');
 
     // Fetch all required statistics in parallel
     const [
@@ -59,6 +82,14 @@ Deno.serve(async (req) => {
         .select('id')
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     ]);
+
+    console.log('[superadmin-dashboard-stats] Query results:', {
+      usersCount: usersResult.count,
+      organizationsCount: organizationsResult.count,
+      creditsCount: creditsResult.data?.length || 0,
+      eventsCount: eventsResult.count,
+      recentSignupsCount: recentSignupsResult.data?.length || 0
+    });
 
     // Calculate statistics
     const totalUsers = usersResult.count || 0;
@@ -100,6 +131,8 @@ Deno.serve(async (req) => {
       totalEvents,
     };
 
+    console.log('[superadmin-dashboard-stats] Statistics calculated:', stats);
+
     // Log the action
     await logSuperAdminAction(
       {
@@ -114,9 +147,18 @@ Deno.serve(async (req) => {
       validation.email!
     );
 
+    console.log('[superadmin-dashboard-stats] SUCCESS - Returning stats');
     return createSuperAdminSuccessResponse({ stats });
-  } catch (error) {
-    console.error('[Super Admin Dashboard Stats] Error:', error);
-    return createSuperAdminErrorResponse('Internal server error', 500);
+  } catch (error: any) {
+    console.error('[superadmin-dashboard-stats] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return createSuperAdminErrorResponse(
+      'Internal server error: ' + error.message, 
+      500,
+      { function: 'superadmin-dashboard-stats', error: error.message }
+    );
   }
 });

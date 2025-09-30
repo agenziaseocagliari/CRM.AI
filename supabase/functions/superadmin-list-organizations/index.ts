@@ -1,10 +1,13 @@
 /**
  * Super Admin List Organizations
  * Lists all organizations with filtering, pagination, and credit information
+ * 
+ * AGGIORNATO: Usa nuovo helper getUserIdFromJWT + logging avanzato
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
   validateSuperAdmin,
   logSuperAdminAction,
@@ -19,12 +22,24 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  console.log('[superadmin-list-organizations] START - Function invoked');
+
   try {
-    // Validate super admin access
+    // Step 1: Validate super admin access
     const validation = await validateSuperAdmin(req);
     if (!validation.isValid) {
-      return createSuperAdminErrorResponse(validation.error || 'Unauthorized', 403);
+      console.error('[superadmin-list-organizations] Validation failed:', validation.error);
+      return createSuperAdminErrorResponse(
+        validation.error || 'Unauthorized', 
+        403,
+        { function: 'superadmin-list-organizations' }
+      );
     }
+
+    console.log('[superadmin-list-organizations] Super admin validated:', {
+      userId: validation.userId,
+      email: validation.email
+    });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -32,6 +47,14 @@ Deno.serve(async (req) => {
 
     // Parse request body for filters
     const { search, status, plan, limit = 50, offset = 0 } = await req.json().catch(() => ({}));
+
+    console.log('[superadmin-list-organizations] Query parameters:', {
+      search,
+      status,
+      plan,
+      limit,
+      offset
+    });
 
     // Get client info for audit logging
     const clientInfo = extractClientInfo(req);
@@ -66,10 +89,17 @@ Deno.serve(async (req) => {
       query = query.ilike('name', `%${search}%`);
     }
 
+    console.log('[superadmin-list-organizations] Executing query...');
     const { data: organizations, error } = await query;
 
     if (error) {
-      console.error('[Super Admin List Organizations] Error:', error);
+      console.error('[superadmin-list-organizations] Database error:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
       await logSuperAdminAction(
         {
           action: 'List Organizations',
@@ -83,8 +113,16 @@ Deno.serve(async (req) => {
         validation.userId!,
         validation.email!
       );
-      return createSuperAdminErrorResponse('Failed to fetch organizations', 500);
+      return createSuperAdminErrorResponse(
+        'Failed to fetch organizations: ' + error.message, 
+        500,
+        { function: 'superadmin-list-organizations', dbError: error.code }
+      );
     }
+
+    console.log('[superadmin-list-organizations] Query successful:', {
+      organizationsCount: organizations?.length || 0
+    });
 
     // Transform data to match expected format
     const customers = (organizations || []).map((org: any) => {
@@ -131,6 +169,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('[superadmin-list-organizations] Transformed and filtered:', {
+      totalOrgs: customers.length,
+      filteredOrgs: filteredCustomers.length,
+      filters: { search, status, plan }
+    });
+
     // Log the action
     await logSuperAdminAction(
       {
@@ -145,9 +189,18 @@ Deno.serve(async (req) => {
       validation.email!
     );
 
+    console.log('[superadmin-list-organizations] SUCCESS - Returning organizations');
     return createSuperAdminSuccessResponse({ customers: filteredCustomers });
-  } catch (error) {
-    console.error('[Super Admin List Organizations] Error:', error);
-    return createSuperAdminErrorResponse('Internal server error', 500);
+  } catch (error: any) {
+    console.error('[superadmin-list-organizations] EXCEPTION:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return createSuperAdminErrorResponse(
+      'Internal server error: ' + error.message, 
+      500,
+      { function: 'superadmin-list-organizations', error: error.message }
+    );
   }
 });

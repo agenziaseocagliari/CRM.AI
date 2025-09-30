@@ -176,6 +176,14 @@ check_edge_functions() {
             "process-scheduled-reminders"
             "test-org-settings"
             "run-debug-query"
+            "superadmin-dashboard-stats"
+            "superadmin-list-users"
+            "superadmin-update-user"
+            "superadmin-list-organizations"
+            "superadmin-update-organization"
+            "superadmin-manage-payments"
+            "superadmin-create-org"
+            "superadmin-logs"
         )
         
         # Check each expected function

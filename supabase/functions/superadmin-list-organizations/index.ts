@@ -1,0 +1,153 @@
+/**
+ * Super Admin List Organizations
+ * Lists all organizations with filtering, pagination, and credit information
+ */
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
+import { corsHeaders } from '../_shared/cors.ts';
+import {
+  validateSuperAdmin,
+  logSuperAdminAction,
+  extractClientInfo,
+  createSuperAdminErrorResponse,
+  createSuperAdminSuccessResponse,
+} from '../_shared/superadmin.ts';
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    // Validate super admin access
+    const validation = await validateSuperAdmin(req);
+    if (!validation.isValid) {
+      return createSuperAdminErrorResponse(validation.error || 'Unauthorized', 403);
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Parse request body for filters
+    const { search, status, plan, limit = 50, offset = 0 } = await req.json().catch(() => ({}));
+
+    // Get client info for audit logging
+    const clientInfo = extractClientInfo(req);
+
+    // Build query to get organizations with credits and member count
+    let query = supabase
+      .from('organizations')
+      .select(`
+        id,
+        name,
+        created_at,
+        updated_at,
+        organization_credits (
+          plan_name,
+          total_credits,
+          credits_remaining,
+          cycle_start_date,
+          cycle_end_date
+        ),
+        profiles (
+          id,
+          email,
+          full_name,
+          role
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    // Apply filters
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+
+    const { data: organizations, error } = await query;
+
+    if (error) {
+      console.error('[Super Admin List Organizations] Error:', error);
+      await logSuperAdminAction(
+        {
+          action: 'List Organizations',
+          operationType: 'READ',
+          targetType: 'ORGANIZATION',
+          details: { search, status, plan },
+          result: 'FAILURE',
+          errorMessage: error.message,
+          ...clientInfo,
+        },
+        validation.userId!,
+        validation.email!
+      );
+      return createSuperAdminErrorResponse('Failed to fetch organizations', 500);
+    }
+
+    // Transform data to match expected format
+    const customers = (organizations || []).map((org: any) => {
+      const credits = org.organization_credits?.[0] || {};
+      const adminProfile = org.profiles?.find((p: any) => p.role === 'admin') || org.profiles?.[0];
+      
+      // Determine status based on credits
+      let orgStatus: 'active' | 'trial' | 'suspended' = 'active';
+      if (credits.credits_remaining === 0) {
+        orgStatus = 'suspended';
+      } else if (credits.plan_name === 'free') {
+        orgStatus = 'trial';
+      }
+
+      // Determine payment status (simplified)
+      let paymentStatus: 'Paid' | 'Pending' | 'Failed' = 'Paid';
+      if (credits.plan_name === 'free') {
+        paymentStatus = 'Pending';
+      }
+
+      return {
+        id: org.id,
+        name: org.name,
+        adminEmail: adminProfile?.email || 'N/A',
+        status: orgStatus,
+        paymentStatus,
+        plan: credits.plan_name === 'enterprise' ? 'Enterprise' : 
+              credits.plan_name === 'pro' ? 'Pro' : 'Free',
+        memberCount: org.profiles?.length || 0,
+        createdAt: org.created_at,
+        creditsRemaining: credits.credits_remaining || 0,
+        totalCredits: credits.total_credits || 0,
+      };
+    });
+
+    // Apply status filter if provided
+    let filteredCustomers = customers;
+    if (status) {
+      filteredCustomers = customers.filter((c: any) => c.status === status);
+    }
+    if (plan) {
+      filteredCustomers = filteredCustomers.filter((c: any) => 
+        c.plan.toLowerCase() === plan.toLowerCase()
+      );
+    }
+
+    // Log the action
+    await logSuperAdminAction(
+      {
+        action: 'List Organizations',
+        operationType: 'READ',
+        targetType: 'ORGANIZATION',
+        details: { count: filteredCustomers.length, filters: { search, status, plan } },
+        result: 'SUCCESS',
+        ...clientInfo,
+      },
+      validation.userId!,
+      validation.email!
+    );
+
+    return createSuperAdminSuccessResponse({ customers: filteredCustomers });
+  } catch (error) {
+    console.error('[Super Admin List Organizations] Error:', error);
+    return createSuperAdminErrorResponse('Internal server error', 500);
+  }
+});

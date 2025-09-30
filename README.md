@@ -39,9 +39,11 @@ Il progetto include documentazione tecnica comprehensiva:
 - **[EDGE_FUNCTIONS_API.md](./EDGE_FUNCTIONS_API.md)** - Documentazione completa API per tutte le 22 edge functions
 - **[SUPERVISION_REPORT.md](./SUPERVISION_REPORT.md)** - Report analisi architettura e best practices
 - **[SYNC_CHECKLIST.md](./SYNC_CHECKLIST.md)** - Checklist per verifiche periodiche GitHub ↔️ Supabase
+- **[SUPER_ADMIN_IMPLEMENTATION.md](./SUPER_ADMIN_IMPLEMENTATION.md)** - 🆕 Implementazione strategia Super Admin Security
 
 ### 🛠️ Automazione
 - **[scripts/verify-sync.sh](./scripts/verify-sync.sh)** - Script automatico per verificare sincronizzazione
+- **[scripts/test-superadmin.sh](./scripts/test-superadmin.sh)** - 🆕 Test suite per Super Admin security
 - **[scripts/README.md](./scripts/README.md)** - Documentazione script di verifica
 - **[.github/workflows/deploy-supabase.yml](./.github/workflows/deploy-supabase.yml)** - CI/CD automatico per deploy
 
@@ -82,6 +84,15 @@ git push origin main
 supabase functions deploy --no-verify-jwt
 ```
 
+### Super Admin Testing
+```bash
+# Test sicurezza Super Admin
+export SUPABASE_URL='https://your-project.supabase.co'
+export SUPABASE_ANON_KEY='your-anon-key'
+export SUPER_ADMIN_JWT='your-super-admin-jwt-token'
+./scripts/test-superadmin.sh
+```
+
 ---
 
 ## 🎯 Architettura
@@ -108,7 +119,8 @@ supabase functions deploy --no-verify-jwt
 - **WhatsApp**: Twilio
 - **Automation**: n8n (optional)
 
-### Edge Functions (22 totali)
+### Edge Functions (30 totali)
+- 🛡️ **Super Admin** (8) - NEW!
 - Autenticazione & OAuth (3)
 - Gestione Calendario (7)
 - Sistema Crediti (1)
@@ -118,6 +130,8 @@ supabase functions deploy --no-verify-jwt
 - Utility (2)
 
 Per dettagli completi, vedi [EDGE_FUNCTIONS_API.md](./EDGE_FUNCTIONS_API.md)
+
+**🆕 Super Admin Functions**: Sistema completo di gestione con validazione JWT, RLS policies, e audit logging per operazioni sensibili (gestione utenti, organizzazioni, crediti, pagamenti). Vedi [SUPER_ADMIN_IMPLEMENTATION.md](./SUPER_ADMIN_IMPLEMENTATION.md).
 
 ---
 

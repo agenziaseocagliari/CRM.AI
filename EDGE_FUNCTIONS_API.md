@@ -19,6 +19,16 @@ Content-Type: application/json
 
 ## 📋 Indice Functions per Categoria
 
+### 🛡️ Super Admin (NEW)
+- [superadmin-dashboard-stats](#superadmin-dashboard-stats)
+- [superadmin-list-users](#superadmin-list-users)
+- [superadmin-update-user](#superadmin-update-user)
+- [superadmin-list-organizations](#superadmin-list-organizations)
+- [superadmin-update-organization](#superadmin-update-organization)
+- [superadmin-manage-payments](#superadmin-manage-payments)
+- [superadmin-create-org](#superadmin-create-org)
+- [superadmin-logs](#superadmin-logs)
+
 ### Autenticazione & OAuth
 - [google-auth-url](#google-auth-url)
 - [google-token-exchange](#google-token-exchange)
@@ -54,6 +64,391 @@ Content-Type: application/json
 ### Utility
 - [test-org-settings](#test-org-settings)
 - [run-debug-query](#run-debug-query)
+
+---
+
+## 🛡️ Super Admin Functions
+
+**⚠️ IMPORTANTE**: Tutte le Super Admin functions richiedono che l'utente autenticato abbia il ruolo `super_admin` nel database. L'accesso non autorizzato restituisce un errore 403.
+
+**Sicurezza**:
+- Validazione multi-livello: JWT + verifica ruolo su database
+- Audit logging automatico per ogni operazione
+- RLS policies applicate a livello database
+- Rate limiting raccomandato in produzione
+
+---
+
+### superadmin-dashboard-stats
+
+Recupera statistiche aggregate per la dashboard Super Admin.
+
+**Endpoint**: `POST /functions/v1/superadmin-dashboard-stats`
+
+**Request Body**: Nessuno richiesto (può essere `{}`)
+
+**Response**:
+```json
+{
+  "stats": {
+    "totalSignups": 150,
+    "totalRevenue": 9850,
+    "activeUsers": 89,
+    "newSignupsThisWeek": 12,
+    "churnRiskCount": 5,
+    "totalOrganizations": 45,
+    "totalEvents": 1234
+  }
+}
+```
+
+**Errori**:
+- `403`: Utente non autorizzato (non super_admin)
+- `500`: Errore server interno
+
+**Esempio cURL**:
+```bash
+curl -X POST https://[project].supabase.co/functions/v1/superadmin-dashboard-stats \
+  -H "Authorization: Bearer [jwt-token]" \
+  -H "apikey: [supabase-anon-key]" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+---
+
+### superadmin-list-users
+
+Lista tutti gli utenti con filtri e paginazione.
+
+**Endpoint**: `POST /functions/v1/superadmin-list-users`
+
+**Request Body**:
+```json
+{
+  "search": "john",
+  "role": "admin",
+  "organizationId": "uuid-optional",
+  "limit": 50,
+  "offset": 0
+}
+```
+
+**Response**:
+```json
+{
+  "users": [
+    {
+      "id": "user-uuid",
+      "email": "john@example.com",
+      "full_name": "John Doe",
+      "role": "admin",
+      "organization_id": "org-uuid",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "organizations": {
+        "id": "org-uuid",
+        "name": "Acme Corp"
+      }
+    }
+  ]
+}
+```
+
+**Errori**:
+- `403`: Utente non autorizzato
+- `500`: Errore server
+
+---
+
+### superadmin-update-user
+
+Aggiorna profilo utente (ruolo, organizzazione, etc.).
+
+**Endpoint**: `POST /functions/v1/superadmin-update-user`
+
+**Request Body**:
+```json
+{
+  "userId": "user-uuid",
+  "updates": {
+    "full_name": "John Smith",
+    "role": "super_admin",
+    "organization_id": "new-org-uuid"
+  }
+}
+```
+
+**Campi aggiornabili**: `full_name`, `role`, `organization_id`
+
+**Response**:
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "email": "john@example.com",
+    "full_name": "John Smith",
+    "role": "super_admin",
+    "organization_id": "new-org-uuid"
+  }
+}
+```
+
+**Errori**:
+- `400`: userId mancante o updates non validi
+- `403`: Utente non autorizzato
+- `500`: Errore nell'aggiornamento
+
+---
+
+### superadmin-list-organizations
+
+Lista tutte le organizzazioni con dettagli crediti e membri.
+
+**Endpoint**: `POST /functions/v1/superadmin-list-organizations`
+
+**Request Body**:
+```json
+{
+  "search": "acme",
+  "status": "active",
+  "plan": "pro",
+  "limit": 50,
+  "offset": 0
+}
+```
+
+**Response**:
+```json
+{
+  "customers": [
+    {
+      "id": "org-uuid",
+      "name": "Acme Corp",
+      "adminEmail": "admin@acme.com",
+      "status": "active",
+      "paymentStatus": "Paid",
+      "plan": "Pro",
+      "memberCount": 5,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "creditsRemaining": 500,
+      "totalCredits": 1000
+    }
+  ]
+}
+```
+
+**Filtri disponibili**:
+- `search`: Cerca per nome organizzazione
+- `status`: `active`, `trial`, `suspended`
+- `plan`: `free`, `pro`, `enterprise`
+
+---
+
+### superadmin-update-organization
+
+Aggiorna organizzazione (nome, crediti, piano, status).
+
+**Endpoint**: `POST /functions/v1/superadmin-update-organization`
+
+**Request Body**:
+```json
+{
+  "organizationId": "org-uuid",
+  "updates": {
+    "name": "New Name",
+    "credits": 2000,
+    "plan_name": "enterprise"
+  },
+  "status": "active",
+  "reason": "Credits added for premium plan"
+}
+```
+
+**Response**:
+```json
+{
+  "organization": { ... },
+  "credits": { ... },
+  "statusUpdate": {
+    "status": "active",
+    "reason": "Credits added for premium plan",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Errori**:
+- `400`: organizationId mancante
+- `403`: Utente non autorizzato
+- `500`: Errore nell'aggiornamento
+
+---
+
+### superadmin-manage-payments
+
+Gestisce pagamenti e transazioni (lista, refund).
+
+**Endpoint**: `POST /functions/v1/superadmin-manage-payments`
+
+**Request Body (Lista)**:
+```json
+{
+  "status": "Paid",
+  "limit": 50,
+  "offset": 0
+}
+```
+
+**Request Body (Refund)**:
+```json
+{
+  "action": "refund",
+  "transactionId": "payment-uuid"
+}
+```
+
+**Response (Lista)**:
+```json
+{
+  "payments": [
+    {
+      "id": "payment-uuid",
+      "organizationName": "Acme Corp",
+      "organizationId": "org-uuid",
+      "amount": 49,
+      "date": "2024-01-01T00:00:00Z",
+      "status": "Paid",
+      "plan": "pro",
+      "credits": 1000
+    }
+  ],
+  "creditLogs": [ ... ]
+}
+```
+
+**Response (Refund)**:
+```json
+{
+  "message": "Refund processed successfully",
+  "transactionId": "payment-uuid"
+}
+```
+
+---
+
+### superadmin-create-org
+
+Crea nuova organizzazione con setup iniziale.
+
+**Endpoint**: `POST /functions/v1/superadmin-create-org`
+
+**Request Body**:
+```json
+{
+  "name": "New Organization",
+  "adminEmail": "admin@neworg.com",
+  "plan": "pro",
+  "initialCredits": 1000
+}
+```
+
+**Response**:
+```json
+{
+  "organization": {
+    "id": "new-org-uuid",
+    "name": "New Organization",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  "credits": {
+    "organization_id": "new-org-uuid",
+    "plan_name": "pro",
+    "total_credits": 1000,
+    "credits_remaining": 1000
+  },
+  "message": "Organization created successfully. Admin user should be invited separately."
+}
+```
+
+**Errori**:
+- `400`: name o adminEmail mancanti, o organizzazione già esistente
+- `403`: Utente non autorizzato
+- `500`: Errore nella creazione
+
+**Note**: L'utente admin deve essere invitato separatamente tramite Supabase Auth.
+
+---
+
+### superadmin-logs
+
+Recupera audit logs con filtri avanzati.
+
+**Endpoint**: `POST /functions/v1/superadmin-logs`
+
+**Request Body**:
+```json
+{
+  "search": "update",
+  "operationType": "UPDATE",
+  "targetType": "USER",
+  "result": "SUCCESS",
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-12-31T23:59:59Z",
+  "limit": 100,
+  "offset": 0
+}
+```
+
+**Parametri filtro**:
+- `search`: Cerca in email admin, azione, target ID
+- `operationType`: `CREATE`, `UPDATE`, `DELETE`, `READ`, `EXECUTE`
+- `targetType`: `USER`, `ORGANIZATION`, `PAYMENT`, `SYSTEM`
+- `result`: `SUCCESS`, `FAILURE`, `PARTIAL`
+- `startDate`, `endDate`: Range temporale
+
+**Response**:
+```json
+{
+  "logs": [
+    {
+      "id": "12345",
+      "timestamp": "2024-01-01T12:00:00Z",
+      "adminEmail": "superadmin@example.com",
+      "action": "Update User",
+      "targetId": "user-uuid",
+      "operationType": "UPDATE",
+      "targetType": "USER",
+      "result": "SUCCESS",
+      "details": { ... },
+      "errorMessage": null,
+      "ipAddress": "192.168.1.1",
+      "userAgent": "Mozilla/5.0..."
+    }
+  ],
+  "total": 150,
+  "offset": 0,
+  "limit": 100
+}
+```
+
+**Esempio n8n Webhook**:
+```javascript
+// N8n HTTP Request Node
+{
+  "method": "POST",
+  "url": "https://[project].supabase.co/functions/v1/superadmin-logs",
+  "headers": {
+    "Authorization": "Bearer {{$json.jwt_token}}",
+    "apikey": "{{$json.supabase_anon_key}}",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "operationType": "UPDATE",
+    "limit": 50
+  }
+}
+```
 
 ---
 

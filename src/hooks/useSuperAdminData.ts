@@ -64,20 +64,42 @@ export const useSuperAdminData = () => {
                 orgsData,
                 transactionsData,
                 logsData,
-                notificationsData,
             ] = await Promise.all([
-                invokeSupabaseFunction('get-superadmin-stats'),
-                invokeSupabaseFunction('get-superadmin-customers'),
-                invokeSupabaseFunction('get-superadmin-payments'),
-                invokeSupabaseFunction('get-superadmin-audit-logs'),
-                invokeSupabaseFunction('get-superadmin-notifications'),
+                invokeSupabaseFunction('superadmin-dashboard-stats'),
+                invokeSupabaseFunction('superadmin-list-organizations'),
+                invokeSupabaseFunction('superadmin-manage-payments'),
+                invokeSupabaseFunction('superadmin-logs'),
             ]);
 
             setStats(statsData.stats || null);
             setOrganizations(orgsData.customers || []);
             setTransactions(transactionsData.payments || []);
             setAuditLogs(logsData.logs || []);
-            setNotifications(notificationsData.notifications || []);
+            
+            // Generate notifications based on data
+            const newNotifications: Notification[] = [];
+            
+            // Check for churn risk
+            if (statsData.stats?.churnRiskCount > 0) {
+                newNotifications.push({
+                    id: 'churn-risk',
+                    type: 'AI Recommendation',
+                    message: `${statsData.stats.churnRiskCount} organizations at risk of churn (zero credits)`,
+                    timestamp: new Date().toISOString(),
+                });
+            }
+            
+            // Check for new signups
+            if (statsData.stats?.newSignupsThisWeek > 0) {
+                newNotifications.push({
+                    id: 'new-signups',
+                    type: 'System Alert',
+                    message: `${statsData.stats.newSignupsThisWeek} new signups this week`,
+                    timestamp: new Date().toISOString(),
+                });
+            }
+            
+            setNotifications(newNotifications);
 
         } catch (error) {
             console.error("Failed to fetch super admin data", error);
@@ -94,7 +116,7 @@ export const useSuperAdminData = () => {
     }, [fetchData]);
 
     const updateCustomerStatus = useCallback(async (customerId: string, status: OrganizationStatus, reason?: string) => {
-        await invokeSupabaseFunction('update-organization-status', {
+        await invokeSupabaseFunction('superadmin-update-organization', {
             organizationId: customerId,
             status,
             reason,
@@ -103,8 +125,9 @@ export const useSuperAdminData = () => {
     }, [fetchData]);
 
     const refundPayment = useCallback(async (transactionId: string) => {
-        await invokeSupabaseFunction('refund-payment', {
-            transaction_id: transactionId,
+        await invokeSupabaseFunction('superadmin-manage-payments', {
+            action: 'refund',
+            transactionId,
         });
         await fetchData();
     }, [fetchData]);

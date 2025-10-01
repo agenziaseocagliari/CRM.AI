@@ -69,10 +69,17 @@ const App: React.FC = () => {
     }
   }, [session, jwtClaims, userRole, navigate]);
 
-  // Handle navigation after sign in/out
+  // Handle navigation after sign in/out with role-based routing
   useEffect(() => {
     if (session && location.pathname === '/login') {
-      navigate('/dashboard');
+      // Role-based redirect after login
+      if (userRole === 'super_admin') {
+        console.log('🔐 [App] Super Admin logged in - redirecting to /super-admin/dashboard');
+        navigate('/super-admin/dashboard');
+      } else {
+        console.log('👤 [App] Standard user logged in - redirecting to /dashboard');
+        navigate('/dashboard');
+      }
     } else if (!session && location.pathname !== '/login' && location.pathname !== '/') {
       // Only redirect to login if on a protected route
       const publicPaths = ['/', '/login', '/forgot-password', '/reset-password', '/form/', '/privacy-policy', '/terms-of-service'];
@@ -82,7 +89,27 @@ const App: React.FC = () => {
         navigate('/');
       }
     }
-  }, [session, location.pathname, navigate]);
+  }, [session, location.pathname, navigate, userRole]);
+  
+  // Role-based route guard: prevent cross-role access
+  useEffect(() => {
+    if (loading || !session) return;
+    
+    const isSuperAdminRoute = location.pathname.startsWith('/super-admin');
+    const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/settings'].some(
+      path => location.pathname.startsWith(path)
+    );
+    
+    if (userRole === 'super_admin' && isStandardCrmRoute) {
+      console.warn('⚠️ [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
+      toast.error('Come Super Admin, devi usare la dashboard dedicata.', { duration: 3000 });
+      navigate('/super-admin/dashboard', { replace: true });
+    } else if (userRole !== 'super_admin' && isSuperAdminRoute) {
+      console.warn('⚠️ [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
+      toast.error('Non hai i permessi per accedere a questa sezione.', { duration: 3000 });
+      navigate('/dashboard', { replace: true });
+    }
+  }, [session, userRole, location.pathname, loading, navigate]);
   
   // Apply theme from local storage on initial load
   useEffect(() => {
@@ -121,9 +148,21 @@ const App: React.FC = () => {
       {session && <DebugPanel />}
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={session ? <Navigate to="/dashboard" /> : <Login />} />
-        <Route path="/forgot-password" element={session ? <Navigate to="/dashboard" /> : <ForgotPassword />} />
-        <Route path="/reset-password" element={session ? <Navigate to="/dashboard" /> : <ResetPassword />} />
+        <Route path="/login" element={
+          session 
+            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace /> 
+            : <Login />
+        } />
+        <Route path="/forgot-password" element={
+          session 
+            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace /> 
+            : <ForgotPassword />
+        } />
+        <Route path="/reset-password" element={
+          session 
+            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace /> 
+            : <ResetPassword />
+        } />
         
         <Route path="/form/:formId" element={<PublicForm />} />
 
@@ -162,7 +201,13 @@ const App: React.FC = () => {
             <Route path="audit-logs" element={<SuperAdminAuditLogs />} />
         </Route>
         
-        <Route path="*" element={<Navigate to={session ? "/dashboard" : "/"} />} />
+        <Route path="*" element={
+          <Navigate to={
+            session 
+              ? (userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard')
+              : '/'
+          } replace />
+        } />
       </Routes>
     </>
   );

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 // FIX: Corrected the import for NavLink from 'react-router-dom' to resolve module export errors.
 import { NavLink } from 'react-router-dom';
 import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon, AdminPanelIcon } from './ui/icons';
-import { supabase } from '../lib/supabaseClient';
-import { diagnoseJWT } from '../lib/jwtUtils';
+import { useAuth } from '../contexts/AuthContext';
 
 const NavItem: React.FC<{
   to: string;
@@ -29,39 +28,7 @@ const NavItem: React.FC<{
 };
 
 export const Sidebar: React.FC = () => {
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-
-  useEffect(() => {
-    const checkSuperAdminRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        const diagnostics = diagnoseJWT(session.access_token);
-        const role = diagnostics.claims?.user_role;
-        if (role === 'super_admin') {
-          setIsSuperAdmin(true);
-        }
-      }
-    };
-
-    checkSuperAdminRole();
-
-    // Listen for auth state changes to update the role
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.access_token) {
-          const diagnostics = diagnoseJWT(session.access_token);
-          const role = diagnostics.claims?.user_role;
-          setIsSuperAdmin(role === 'super_admin');
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setIsSuperAdmin(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const { isSuperAdmin } = useAuth();
 
   return (
     <aside className="w-64 bg-sidebar text-white flex flex-col p-4">

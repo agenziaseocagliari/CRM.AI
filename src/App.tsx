@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 // FIX: Corrected imports for Routes, Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Session } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
 
-import { supabase } from './lib/supabaseClient';
 import { useCrmData } from './hooks/useCrmData';
-import { diagnoseJWT } from './lib/jwtUtils';
+import { useAuth } from './contexts/AuthContext';
 
 import { MainLayout } from './components/MainLayout';
 import { Dashboard } from './components/Dashboard';
@@ -36,74 +34,52 @@ import { AuditLogs as SuperAdminAuditLogs } from './components/superadmin/AuditL
 
 
 const App: React.FC = () => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [jwtWarningShown, setJwtWarningShown] = useState(false);
+  const { session, userRole, loading, jwtClaims } = useAuth();
   const crmData = useCrmData();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // JWT Health Check
+  // JWT Health Check - warn if user_role is missing
   useEffect(() => {
-    const checkJWTHealth = async () => {
-      if (!session?.access_token || jwtWarningShown) return;
-      
-      const diag = diagnoseJWT(session.access_token);
-      
-      // Show warning if user_role is missing
-      if (diag.isValid && !diag.hasUserRole) {
-        setJwtWarningShown(true);
-        
-        toast.error(
-          (t) => (
-            <div className="space-y-2">
-              <p className="font-semibold">⚠️ TOKEN DEFECT RILEVATO</p>
-              <p className="text-sm">Il tuo JWT non contiene il claim user_role.</p>
-              <p className="text-xs text-gray-600">
-                Vai su Impostazioni → Debug JWT per più informazioni
-              </p>
-              <button
-                onClick={() => {
-                  toast.dismiss(t.id);
-                  navigate('/settings');
-                }}
-                className="text-xs text-blue-600 underline"
-              >
-                Vai a Impostazioni
-              </button>
-            </div>
-          ),
-          { duration: 10000 }
-        );
-      }
-    };
-    
-    checkJWTHealth();
-  }, [session, jwtWarningShown, navigate]);
+    if (session && jwtClaims && !userRole) {
+      toast.error(
+        (t) => (
+          <div className="space-y-2">
+            <p className="font-semibold">⚠️ TOKEN DEFECT RILEVATO</p>
+            <p className="text-sm">Il tuo JWT non contiene il claim user_role.</p>
+            <p className="text-xs text-gray-600">
+              Vai su Impostazioni → Debug JWT per più informazioni
+            </p>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                navigate('/settings');
+              }}
+              className="text-xs text-blue-600 underline"
+            >
+              Vai a Impostazioni
+            </button>
+          </div>
+        ),
+        { duration: 10000, id: 'jwt-defect' }
+      );
+    }
+  }, [session, jwtClaims, userRole, navigate]);
 
+  // Handle navigation after sign in/out
   useEffect(() => {
-    const getSession = async () => {
-      // FIX: Correctly call getSession which is a valid Supabase auth method.
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setLoading(false);
-    };
-    getSession();
-
-    // FIX: Correctly call onAuthStateChange which is a valid Supabase auth method.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (_event === 'SIGNED_IN' && location.pathname === '/login') {
-        navigate('/dashboard');
-      }
-      if (_event === 'SIGNED_OUT') {
-        localStorage.removeItem('organization_id');
+    if (session && location.pathname === '/login') {
+      navigate('/dashboard');
+    } else if (!session && location.pathname !== '/login' && location.pathname !== '/') {
+      // Only redirect to login if on a protected route
+      const publicPaths = ['/', '/login', '/forgot-password', '/reset-password', '/form/', '/privacy-policy', '/terms-of-service'];
+      const isPublicPath = publicPaths.some(path => location.pathname.startsWith(path));
+      if (!isPublicPath) {
+        console.log('🔒 [App] Redirecting to login - no session on protected route');
         navigate('/');
       }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+    }
+  }, [session, location.pathname, navigate]);
   
   // Apply theme from local storage on initial load
   useEffect(() => {

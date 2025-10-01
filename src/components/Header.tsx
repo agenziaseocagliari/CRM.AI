@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Organization } from '../types';
 import { BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
-import { supabase } from '../lib/supabaseClient';
-import { diagnoseJWT } from '../lib/jwtUtils';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
   organization: Organization | null;
@@ -10,40 +9,12 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
-  const [currentRole, setCurrentRole] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const checkRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        const diagnostics = diagnoseJWT(session.access_token);
-        setCurrentRole(diagnostics.claims?.user_role || null);
-        setUserEmail(diagnostics.claims?.email || null);
-      }
-    };
-    
-    checkRole();
-    
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.access_token) {
-        const diagnostics = diagnoseJWT(session.access_token);
-        setCurrentRole(diagnostics.claims?.user_role || null);
-        setUserEmail(diagnostics.claims?.email || null);
-      } else {
-        setCurrentRole(null);
-        setUserEmail(null);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
+  const { userRole, userEmail } = useAuth();
   
   const getRoleDisplay = () => {
-    if (!currentRole) return { text: 'Ruolo non definito', color: 'bg-gray-100 text-gray-600' };
+    if (!userRole) return { text: 'Ruolo non definito', color: 'bg-gray-100 text-gray-600' };
     
-    switch (currentRole) {
+    switch (userRole) {
       case 'super_admin':
         return { text: '🔐 Super Admin', color: 'bg-purple-100 text-purple-700' };
       case 'admin':
@@ -51,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
       case 'user':
         return { text: '👤 Utente Standard', color: 'bg-green-100 text-green-700' };
       default:
-        return { text: `📋 ${currentRole}`, color: 'bg-gray-100 text-gray-700' };
+        return { text: `📋 ${userRole}`, color: 'bg-gray-100 text-gray-700' };
     }
   };
   

@@ -98,7 +98,9 @@ const isJwtClaimError = (response.status === 403 || response.status === 401) &&
                        /user_role not found|JWT custom claim|custom claim.*not found|logout and login again|Please logout and login|role was recently changed/i.test(errorMessage);
 
 if (isJwtClaimError) {
-    // Mostra toast con pulsante "Vai al Login"
+    const userMessage = '⚠️ Il tuo ruolo utente è stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverà il problema.';
+    
+    // Mostra toast con pulsante "Logout" prominente
     showErrorToast(userMessage, diagnosticReport, { 
         requiresLogout: true,
         isJwtError: true 
@@ -115,7 +117,7 @@ if (isJwtClaimError) {
 }
 ```
 
-**Risultato:** L'utente vede un messaggio chiaro con un pulsante per fare logout e login.
+**Risultato:** L'utente vede un messaggio dettagliato con istruzioni passo-passo e un pulsante di logout prominente (rosso con emoji 🚪).
 
 ---
 
@@ -264,27 +266,17 @@ graph TD
 Il JWT è **crittograficamente firmato** da Supabase Auth al momento della generazione. Non può essere modificato lato client o backend senza invalidarlo. I custom claims vengono aggiunti solo durante:
 
 1. **Nuovo login** (generazione nuovo token)
-2. **Token refresh** (generazione nuovo token con claims aggiornati)
-3. **Manuale via `supabase.auth.refreshSession()`**
+2. **Token refresh manuale via `supabase.auth.refreshSession()`** - MA solo se il refresh token stesso è stato generato DOPO il cambio ruolo
+
+**⚠️ IMPORTANTE:** Chiamare `refreshSession()` NON risolve il problema del ruolo obsoleto se:
+- Il refresh token è stato creato PRIMA del cambio ruolo nel database
+- Il refresh token stesso contiene i vecchi custom claims
+- In questo caso, l'unico modo per ottenere i nuovi custom claims è fare un **logout completo e login nuovamente**
 
 Questo è un comportamento **intenzionale per sicurezza**:
 - Previene manomissioni del ruolo lato client
 - Garantisce che il ruolo sia sempre sincronizzato con il database al momento della generazione del token
 - Il ruolo è firmato crittograficamente e verificabile dal backend
-
-### Possibile Miglioramento Futuro
-
-Se è critico che i ruoli si aggiornino immediatamente, si potrebbe:
-
-1. **Forzare refresh del token quando il ruolo cambia:**
-   ```typescript
-   // Dopo aver cambiato il ruolo nel DB
-   await supabase.auth.refreshSession();
-   ```
-
-2. **Notifica push all'utente** via WebSocket quando il ruolo cambia, suggerendo di refreshare la pagina
-
-3. **Auto-refresh periodico del token** ogni 5-10 minuti invece di ogni ora
 
 ---
 
@@ -310,4 +302,4 @@ Dopo un cambio di ruolo, verifica che:
 ---
 
 **Autore:** GitHub Copilot + Team Guardian AI CRM  
-**Ultima Modifica:** 2025-01-20
+**Ultima Modifica:** 2025-01-21 (Migliorato messaggio di errore JWT)

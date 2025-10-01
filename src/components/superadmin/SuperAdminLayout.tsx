@@ -1,71 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { SuperAdminSidebar } from './SuperAdminSidebar';
 import { SuperAdminHeader } from './SuperAdminHeader';
-import { supabase } from '../../lib/supabaseClient';
-import { diagnoseJWT } from '../../lib/jwtUtils';
+import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export const SuperAdminLayout: React.FC = () => {
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-  const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const { isSuperAdmin, userRole, loading } = useAuth();
   const navigate = useNavigate();
   
   useEffect(() => {
-    const checkAuthorization = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        const diagnostics = diagnoseJWT(session.access_token);
-        const role = diagnostics.claims?.user_role;
-        setCurrentRole(role || null);
-        
-        if (role === 'super_admin') {
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-          toast.error(
-            (t) => (
-              <div className="space-y-2">
-                <p className="font-semibold">🚫 Accesso Negato</p>
-                <p className="text-sm">
-                  Il tuo ruolo attuale è: <strong>{role || 'non definito'}</strong>
-                </p>
-                <p className="text-xs text-gray-600">
-                  Per accedere alla dashboard Super Admin devi:
-                </p>
-                <ol className="text-xs text-gray-600 list-decimal list-inside">
-                  <li>Effettuare logout completo</li>
-                  <li>Effettuare login con account Super Admin</li>
-                </ol>
-                <button
-                  onClick={() => {
-                    toast.dismiss(t.id);
-                    navigate('/dashboard');
-                  }}
-                  className="mt-2 text-xs bg-primary text-white px-3 py-1 rounded hover:bg-indigo-700"
-                >
-                  Vai alla Dashboard
-                </button>
-              </div>
-            ),
-            { duration: 10000 }
-          );
-          
-          // Redirect to dashboard after a short delay
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
-        }
-      } else {
-        setIsAuthorized(false);
-        navigate('/login');
-      }
-    };
+    if (loading) return;
     
-    checkAuthorization();
-  }, [navigate]);
+    // Log the authorization check
+    console.log('🔒 [SuperAdminLayout] Authorization check:', {
+      userRole,
+      isSuperAdmin,
+      timestamp: new Date().toISOString(),
+    });
+    
+    if (!isSuperAdmin) {
+      console.warn('⚠️ [SuperAdminLayout] UNAUTHORIZED ACCESS ATTEMPT!');
+      console.warn('⚠️ [SuperAdminLayout] User role:', userRole || 'NULL');
+      console.warn('⚠️ [SuperAdminLayout] Expected: super_admin');
+      
+      toast.error(
+        (t) => (
+          <div className="space-y-2">
+            <p className="font-semibold">🚫 Accesso Negato</p>
+            <p className="text-sm">
+              Il tuo ruolo attuale è: <strong>{userRole || 'non definito'}</strong>
+            </p>
+            <p className="text-xs text-gray-600">
+              Per accedere alla dashboard Super Admin devi:
+            </p>
+            <ol className="text-xs text-gray-600 list-decimal list-inside">
+              <li>Effettuare logout completo</li>
+              <li>Effettuare login con account Super Admin</li>
+            </ol>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                navigate('/dashboard');
+              }}
+              className="mt-2 text-xs bg-primary text-white px-3 py-1 rounded hover:bg-indigo-700"
+            >
+              Vai alla Dashboard
+            </button>
+          </div>
+        ),
+        { duration: 10000, id: 'super-admin-denied' }
+      );
+      
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    }
+  }, [isSuperAdmin, userRole, loading, navigate]);
   
-  if (isAuthorized === null) {
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -76,7 +70,7 @@ export const SuperAdminLayout: React.FC = () => {
     );
   }
   
-  if (!isAuthorized) {
+  if (!isSuperAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="max-w-md p-8 bg-white rounded-lg shadow-lg">
@@ -84,14 +78,13 @@ export const SuperAdminLayout: React.FC = () => {
             <div className="text-6xl mb-4">🚫</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Accesso Negato</h2>
             <p className="text-gray-600 mb-4">
-              Il tuo ruolo attuale (<strong>{currentRole || 'non definito'}</strong>) non ha accesso a questa sezione.
+              Il tuo ruolo attuale (<strong>{userRole || 'non definito'}</strong>) non ha accesso a questa sezione.
             </p>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left mb-4">
               <p className="text-sm font-semibold text-yellow-800 mb-2">📋 Come accedere:</p>
               <ol className="text-xs text-yellow-700 list-decimal list-inside space-y-1">
                 <li>Effettua logout completo dall'account corrente</li>
-                <li>Nella schermata di login, seleziona "Super Admin"</li>
-                <li>Accedi con le credenziali di amministratore</li>
+                <li>Accedi con le credenziali Super Admin</li>
               </ol>
             </div>
             <button

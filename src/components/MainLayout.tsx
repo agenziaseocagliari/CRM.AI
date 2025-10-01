@@ -14,11 +14,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
     const { organization, error } = crmData;
 
     const handleLogout = async () => {
-        // Clear all storage to ensure no auto-login
+        console.log('👋 [MainLayout] Logging out - clearing all session data');
+        // Clear all storage to ensure no auto-login or stale state
         localStorage.clear();
         sessionStorage.clear();
         await supabase.auth.signOut();
-        // La navigazione alla homepage viene gestita dal listener in App.tsx
+        // La navigazione viene gestita dall'AuthContext che rileva SIGNED_OUT
     };
     
     // An error from the core data hook is critical. Display an error page.

@@ -23,7 +23,20 @@ export const Login: React.FC = () => {
     const [showLoginHistory, setShowLoginHistory] = useState(false);
     const [failedAttempts, setFailedAttempts] = useState(0);
     const [isDelayed, setIsDelayed] = useState(false);
+    const [sessionExpired, setSessionExpired] = useState(false);
     const navigate = useNavigate();
+
+    // Check if redirected due to session expiry
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('session_expired') === 'true') {
+            setSessionExpired(true);
+            toast.error('La tua sessione è scaduta. Effettua nuovamente il login.', { 
+                duration: 5000,
+                id: 'session-expired'
+            });
+        }
+    }, []);
 
     // Check JWT after login and detect login method
     useEffect(() => {
@@ -189,6 +202,25 @@ export const Login: React.FC = () => {
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    {sessionExpired && (
+                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                            <div className="flex items-start">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-semibold text-red-800">
+                                        Sessione Scaduta o Non Valida
+                                    </h3>
+                                    <div className="mt-2 text-sm text-red-700">
+                                        <p>La tua sessione è scaduta o non valida. Effettua nuovamente il login con le tue credenziali.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <form className="space-y-6" onSubmit={handleAuthAction}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">

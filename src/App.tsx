@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 
 import { useCrmData } from './hooks/useCrmData';
 import { useAuth } from './contexts/AuthContext';
+import { supabase } from './lib/supabaseClient';
 
 import { MainLayout } from './components/MainLayout';
 import { Dashboard } from './components/Dashboard';
@@ -42,32 +43,60 @@ const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // JWT Health Check - warn if user_role is missing
+  // JWT Health Check - warn if user_role is missing and force logout
   useEffect(() => {
     if (session && jwtClaims && !userRole) {
+      console.error('❌ [App] JWT TOKEN DEFECT: user_role is missing from JWT');
+      
       toast.error(
         (t) => (
-          <div className="space-y-2">
-            <p className="font-semibold">⚠️ TOKEN DEFECT RILEVATO</p>
-            <p className="text-sm">Il tuo JWT non contiene il claim user_role.</p>
+          <div className="space-y-3">
+            <p className="font-semibold text-lg">⚠️ Sessione Non Valida</p>
+            <p className="text-sm">
+              La tua sessione è scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
+              <span className="font-bold">superadmin</span> o del tuo account.
+            </p>
             <p className="text-xs text-gray-600">
-              Vai su Impostazioni → Debug JWT per più informazioni
+              IMPORTANTE: Ricaricare la pagina non risolverà il problema. È necessario un nuovo login.
             </p>
             <button
-              onClick={() => {
+              onClick={async () => {
                 toast.dismiss(t.id);
-                navigate('/settings');
+                localStorage.clear();
+                sessionStorage.clear();
+                await supabase.auth.signOut();
+                window.location.href = '/login?session_expired=true';
               }}
-              className="text-xs text-blue-600 underline"
+              className="w-full mt-2 bg-red-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-700"
             >
-              Vai a Impostazioni
+              🚪 Logout e Torna al Login
             </button>
           </div>
         ),
-        { duration: 10000, id: 'jwt-defect' }
+        { duration: Infinity, id: 'jwt-defect-force-logout' }
       );
     }
-  }, [session, jwtClaims, userRole, navigate]);
+  }, [session, jwtClaims, userRole]);
+
+  // Prevent page reload with invalid session - warn user
+  useEffect(() => {
+    if (!session || !userRole) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // If user_role is missing, warn before reload
+      if (session && !userRole) {
+        e.preventDefault();
+        e.returnValue = 'La tua sessione non è valida. Ricaricare non risolverà il problema. Devi effettuare il logout e login.';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [session, userRole]);
 
   // Handle navigation after sign in/out with role-based routing
   useEffect(() => {

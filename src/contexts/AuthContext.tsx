@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Parse JWT and extract claims
-  const parseJWTFromSession = (session: Session | null) => {
+  const parseJWTFromSession = async (session: Session | null) => {
     if (!session?.access_token) {
       console.log('🔑 [AuthContext] No session or access token - clearing claims');
       setJwtClaims(null);
@@ -47,10 +47,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         hasUserRole: !!claims.user_role,
       });
 
-      // Warn if user_role is missing
+      // CRITICAL: Force logout if user_role is missing
       if (!claims.user_role) {
-        console.warn('⚠️ [AuthContext] JWT TOKEN DEFECT: user_role claim is MISSING from JWT!');
-        console.warn('⚠️ [AuthContext] User must logout and login again to get proper token');
+        console.error('❌ [AuthContext] CRITICAL: user_role claim is MISSING from JWT!');
+        console.error('❌ [AuthContext] This session is INVALID. Forcing logout...');
+        
+        // Force immediate logout
+        localStorage.clear();
+        sessionStorage.clear();
+        await supabase.auth.signOut();
+        
+        // Don't set claims - they're invalid
+        setJwtClaims(null);
+        return;
       }
 
       // FIX: Set organization_id to "ALL" for super_admin users
@@ -72,21 +81,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🔑 [AuthContext] Initializing auth context...');
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      parseJWTFromSession(session);
+      await parseJWTFromSession(session);
       setLoading(false);
     };
 
     initAuth();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔑 [AuthContext] Auth state changed:', event);
       
       setSession(session);
-      parseJWTFromSession(session);
-
+      
       if (event === 'SIGNED_IN') {
         console.log('✅ [AuthContext] User signed in');
+        await parseJWTFromSession(session);
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 [AuthContext] User signed out - clearing all claims');
         setJwtClaims(null);
@@ -94,7 +103,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.clear();
         sessionStorage.clear();
       } else if (event === 'TOKEN_REFRESHED') {
-        console.log('🔄 [AuthContext] Token refreshed - re-parsing claims');
+        console.log('🔄 [AuthContext] Token refreshed - re-parsing claims and validating');
+        await parseJWTFromSession(session);
+      } else {
+        await parseJWTFromSession(session);
       }
     });
 
@@ -114,14 +126,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isAdmin = userRole === 'admin' || isSuperAdmin;
   const isUser = userRole === 'user';
 
-  // Log role mismatch warnings
+  // Log role mismatch warnings and force logout if needed
   useEffect(() => {
-    if (session && !userRole) {
+    if (session && !userRole && !loading) {
       console.error('❌ [AuthContext] CRITICAL: User is logged in but user_role is NULL!');
       console.error('❌ [AuthContext] This means JWT does not contain user_role claim.');
-      console.error('❌ [AuthContext] UI will not render correctly. User must re-login.');
+      console.error('❌ [AuthContext] Forcing logout to prevent invalid session usage.');
+      
+      // Force logout immediately
+      const forceLogout = async () => {
+        localStorage.clear();
+        sessionStorage.clear();
+        await supabase.auth.signOut();
+      };
+      
+      forceLogout();
     }
-  }, [session, userRole]);
+  }, [session, userRole, loading]);
 
   const value: AuthContextType = {
     session,

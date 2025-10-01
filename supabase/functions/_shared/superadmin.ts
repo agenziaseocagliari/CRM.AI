@@ -29,7 +29,7 @@ interface AuditLogParams {
 
 /**
  * Validates that the current user has super_admin role
- * AGGIORNATO: Usa custom JWT claim user_role invece di query al database
+ * ENHANCED: Uses JWT claim with database fallback for resilience
  * @param req The incoming request
  * @returns Validation result with user info or error
  */
@@ -37,43 +37,88 @@ export async function validateSuperAdmin(req: Request): Promise<SuperAdminValida
   console.log('[validateSuperAdmin] START - Validating super admin access');
   
   try {
-    // Step 1: Estrai full user object dal JWT con custom claims
-    // Il custom_access_token_hook aggiunge user_role al JWT
+    // Step 1: Extract full user object from JWT with custom claims
+    // The custom_access_token_hook adds user_role to the JWT
     const user = await getUserFromJWT(req);
     console.log('[validateSuperAdmin] User extracted from JWT:', {
       userId: user.id,
       email: user.email,
-      userRole: (user as any).user_role
+      userRole: (user as any).user_role,
+      hasUserRoleClaim: !!(user as any).user_role
     });
 
-    // Step 2: Verifica che il custom claim user_role sia super_admin
-    const userRole = (user as any).user_role;
+    // Step 2: Check if user_role custom claim exists
+    let userRole = (user as any).user_role;
     
+    // FALLBACK MECHANISM: If JWT claim is missing, query the database
     if (!userRole) {
-      console.error('[validateSuperAdmin] ERROR: user_role claim not found in JWT', {
+      console.warn('[validateSuperAdmin] WARNING: user_role claim not found in JWT - attempting database fallback', {
         userId: user.id,
         email: user.email,
-        hint: 'Ensure custom_access_token_hook is configured in Supabase Auth'
+        hint: 'This suggests custom_access_token_hook may not be configured or is failing'
       });
-      return { 
-        isValid: false, 
-        error: 'JWT custom claim user_role not found. Please logout and login again to refresh your session.' 
-      };
+      
+      // Query database as fallback
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const { data: profile, error: dbError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (dbError) {
+        console.error('[validateSuperAdmin] DATABASE FALLBACK FAILED:', {
+          userId: user.id,
+          email: user.email,
+          error: dbError.message,
+          code: dbError.code
+        });
+        return { 
+          isValid: false, 
+          error: 'JWT custom claim user_role not found and database fallback failed. Please logout and login again to refresh your session.',
+          userId: user.id
+        };
+      }
+      
+      if (!profile || !profile.role) {
+        console.error('[validateSuperAdmin] DATABASE FALLBACK: No profile or role found', {
+          userId: user.id,
+          email: user.email,
+          hasProfile: !!profile
+        });
+        return { 
+          isValid: false, 
+          error: 'User profile or role not found in database. Please contact support.',
+          userId: user.id
+        };
+      }
+      
+      userRole = profile.role;
+      console.warn('[validateSuperAdmin] DATABASE FALLBACK SUCCESS: Retrieved role from database', {
+        userId: user.id,
+        email: user.email,
+        userRole: userRole,
+        warning: 'JWT should contain user_role claim - check custom_access_token_hook configuration'
+      });
+    } else {
+      console.log('[validateSuperAdmin] user_role claim found in JWT:', {
+        userId: user.id,
+        email: user.email,
+        userRole: userRole
+      });
     }
 
-    console.log('[validateSuperAdmin] user_role claim found:', {
-      userId: user.id,
-      email: user.email,
-      userRole: userRole
-    });
-
-    // Step 3: Verifica che il ruolo sia super_admin
+    // Step 3: Verify the role is super_admin
     if (userRole !== 'super_admin') {
       console.warn('[validateSuperAdmin] UNAUTHORIZED: Access denied', {
         userId: user.id,
         email: user.email,
         userRole: userRole,
-        requiredRole: 'super_admin'
+        requiredRole: 'super_admin',
+        wasFromJWT: !!(user as any).user_role
       });
       return { 
         isValid: false, 
@@ -85,7 +130,8 @@ export async function validateSuperAdmin(req: Request): Promise<SuperAdminValida
     console.log('[validateSuperAdmin] SUCCESS - Super admin validated:', {
       userId: user.id,
       email: user.email,
-      userRole: userRole
+      userRole: userRole,
+      source: (user as any).user_role ? 'JWT' : 'Database Fallback'
     });
 
     return {

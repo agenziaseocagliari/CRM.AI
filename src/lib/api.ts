@@ -2,6 +2,7 @@ import React from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase } from './supabaseClient';
 import { diagnoseJWT } from './jwtUtils';
+import { diagnosticLogger } from './diagnosticLogger';
 
 /**
  * Retrieves the current organization ID from localStorage.
@@ -204,6 +205,13 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
                 console.error(`[API Helper] JWT Custom Claim Error detected on '${functionName}'. Token is outdated or missing custom claims.`);
                 console.error(`[API Helper] IMPORTANT: Session refresh will NOT fix this issue. User must perform a FULL LOGOUT and LOGIN.`);
                 
+                diagnosticLogger.critical('api', `JWT Custom Claim Error on ${functionName}`, {
+                    endpoint: functionName,
+                    statusCode: response.status,
+                    errorMessage: errorMessage,
+                    userId: session?.user?.id,
+                });
+                
                 const userMessage = '⚠️ Il tuo ruolo utente è stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverà il problema.';
                 const diagnosticReport = createDiagnosticReport(
                     userMessage, 
@@ -248,6 +256,13 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             
             const userMessage = errorJson?.error || `Errore del server (${response.status})`;
             const diagnosticReport = createDiagnosticReport(userMessage, functionName, errorJson || errorText);
+            
+            diagnosticLogger.error('api', `API error on ${functionName}`, {
+                endpoint: functionName,
+                statusCode: response.status,
+                errorMessage: userMessage,
+            });
+            
             showErrorToast(userMessage, diagnosticReport);
             // FIX: Throw the entire JSON object instead of just the message. This preserves
             // the rich diagnostic information from the backend, allowing the calling

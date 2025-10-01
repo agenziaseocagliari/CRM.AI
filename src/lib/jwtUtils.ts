@@ -25,6 +25,9 @@ export interface JWTDiagnostics {
   rawToken: string;
   errors: string[];
   warnings: string[];
+  timestamp?: string;
+  tokenAge?: number; // seconds since token was issued
+  timeUntilExpiry?: number; // seconds until expiry
 }
 
 /**
@@ -73,6 +76,7 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
     rawToken: token,
     errors: [],
     warnings: [],
+    timestamp: new Date().toISOString(),
   };
 
   // Check token format
@@ -97,6 +101,15 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
   diagnostics.claims = claims;
   diagnostics.isValid = true;
 
+  // Calculate token age and expiry time
+  const now = Math.floor(Date.now() / 1000);
+  if (claims.iat) {
+    diagnostics.tokenAge = now - claims.iat;
+  }
+  if (claims.exp) {
+    diagnostics.timeUntilExpiry = claims.exp - now;
+  }
+
   // Check for user_role claim
   if (!claims.user_role) {
     diagnostics.errors.push('CRITICAL: user_role claim is missing from JWT');
@@ -108,7 +121,6 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
 
   // Check token expiration
   if (claims.exp) {
-    const now = Math.floor(Date.now() / 1000);
     if (claims.exp < now) {
       diagnostics.errors.push('Token is expired');
     } else {
@@ -183,6 +195,7 @@ export function checkSessionJWT(session: any): JWTDiagnostics {
       rawToken: '',
       errors: ['No session or access_token found'],
       warnings: [],
+      timestamp: new Date().toISOString(),
     };
   }
 

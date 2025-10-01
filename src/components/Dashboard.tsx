@@ -9,6 +9,7 @@ import { CheckCircleIcon, DollarSignIcon, TrendingUpIcon, UsersIcon } from './ui
 import { Modal } from './ui/Modal';
 import { invokeSupabaseFunction } from '../lib/api';
 import toast from 'react-hot-toast';
+import { SessionHealthIndicator } from './SessionHealthIndicator';
 
 
 export const Dashboard: React.FC = () => {
@@ -159,6 +160,9 @@ export const Dashboard: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
       </div>
+      
+      {/* Session Health Indicator */}
+      <SessionHealthIndicator mode="full" autoCheck={true} checkInterval={5} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card title="Fatturato Totale" value={`€${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />

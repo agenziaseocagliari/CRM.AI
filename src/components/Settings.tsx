@@ -8,6 +8,7 @@ import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons';
 import { UsageDashboard } from './UsageDashboard';
 import { invokeSupabaseFunction } from '../lib/api';
 import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
+import { JWTViewer } from './JWTViewer';
 
 // --- Componente Helper per UI di Stato ---
 const AuthStatusDisplay: React.FC<{
@@ -116,7 +117,7 @@ export const GoogleAuthCallback: React.FC = () => {
     />;
 };
 
-type SettingsTab = 'integrations' | 'billing';
+type SettingsTab = 'integrations' | 'billing' | 'debug';
 
 export const Settings: React.FC = () => {
     const { organization, organizationSettings, subscription, ledger, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
@@ -129,6 +130,7 @@ export const Settings: React.FC = () => {
     const [isCheckingToken, setIsCheckingToken] = useState(false);
     const [isDiagModalOpen, setIsDiagModalOpen] = useState(false);
     const [diagResult, setDiagResult] = useState<any>(null);
+    const [showJWTViewer, setShowJWTViewer] = useState(false);
 
     useEffect(() => {
         if (organizationSettings) {
@@ -226,6 +228,7 @@ export const Settings: React.FC = () => {
                     <nav className="flex space-x-2" aria-label="Tabs">
                         <TabButton tab="integrations" label="Integrazioni" />
                         <TabButton tab="billing" label="Billing & Usage" />
+                        <TabButton tab="debug" label="🔧 Debug JWT" />
                     </nav>
                 </div>
 
@@ -279,6 +282,28 @@ export const Settings: React.FC = () => {
                 )}
                 
                 {activeTab === 'billing' && <UsageDashboard subscription={subscription} ledger={ledger} />}
+                
+                {activeTab === 'debug' && (
+                    <div className="space-y-6">
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">🔐 Debug JWT Token</h2>
+                            <p className="text-gray-600 mb-4">
+                                Questa sezione ti permette di visualizzare e diagnosticare il tuo JWT token.
+                                Utile per verificare la presenza del claim <code className="bg-gray-100 px-2 py-1 rounded">user_role</code>.
+                            </p>
+                            {showJWTViewer ? (
+                                <JWTViewer onClose={() => setShowJWTViewer(false)} />
+                            ) : (
+                                <button
+                                    onClick={() => setShowJWTViewer(true)}
+                                    className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+                                >
+                                    🔍 Visualizza JWT Token
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <Modal isOpen={isDiagModalOpen} onClose={() => setIsDiagModalOpen(false)} title="Diagnostica Connessione Google">

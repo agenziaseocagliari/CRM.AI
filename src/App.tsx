@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Session } from '@supabase/supabase-js';
+import toast from 'react-hot-toast';
 
 import { supabase } from './lib/supabaseClient';
 import { useCrmData } from './hooks/useCrmData';
+import { diagnoseJWT } from './lib/jwtUtils';
 
 import { MainLayout } from './components/MainLayout';
 import { Dashboard } from './components/Dashboard';
@@ -34,9 +36,48 @@ import { AuditLogs as SuperAdminAuditLogs } from './components/superadmin/AuditL
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [jwtWarningShown, setJwtWarningShown] = useState(false);
   const crmData = useCrmData();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // JWT Health Check
+  useEffect(() => {
+    const checkJWTHealth = async () => {
+      if (!session?.access_token || jwtWarningShown) return;
+      
+      const diag = diagnoseJWT(session.access_token);
+      
+      // Show warning if user_role is missing
+      if (diag.isValid && !diag.hasUserRole) {
+        setJwtWarningShown(true);
+        
+        toast.error(
+          (t) => (
+            <div className="space-y-2">
+              <p className="font-semibold">⚠️ TOKEN DEFECT RILEVATO</p>
+              <p className="text-sm">Il tuo JWT non contiene il claim user_role.</p>
+              <p className="text-xs text-gray-600">
+                Vai su Impostazioni → Debug JWT per più informazioni
+              </p>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  navigate('/settings');
+                }}
+                className="text-xs text-blue-600 underline"
+              >
+                Vai a Impostazioni
+              </button>
+            </div>
+          ),
+          { duration: 10000 }
+        );
+      }
+    };
+    
+    checkJWTHealth();
+  }, [session, jwtWarningShown, navigate]);
 
   useEffect(() => {
     const getSession = async () => {

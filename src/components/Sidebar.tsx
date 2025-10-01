@@ -36,7 +36,8 @@ export const Sidebar: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
         const diagnostics = diagnoseJWT(session.access_token);
-        if (diagnostics.claims?.user_role === 'super_admin') {
+        const role = diagnostics.claims?.user_role;
+        if (role === 'super_admin') {
           setIsSuperAdmin(true);
         }
       }
@@ -49,7 +50,8 @@ export const Sidebar: React.FC = () => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.access_token) {
           const diagnostics = diagnoseJWT(session.access_token);
-          setIsSuperAdmin(diagnostics.claims?.user_role === 'super_admin');
+          const role = diagnostics.claims?.user_role;
+          setIsSuperAdmin(role === 'super_admin');
         }
       } else if (event === 'SIGNED_OUT') {
         setIsSuperAdmin(false);

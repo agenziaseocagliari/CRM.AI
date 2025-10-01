@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "lint:role": "bash scripts/lint-api-role-usage.sh",
     "verify:role": "bash scripts/verify-api-role-usage.sh",
-    "verify:all": "bash scripts/verify-role-cleanup.sh && bash scripts/verify-api-role-usage.sh"
+    "verify:jwt": "npx tsx scripts/verify-jwt-custom-claims.ts",
+    "verify:all": "bash scripts/verify-role-cleanup.sh && bash scripts/verify-api-role-usage.sh && npm run verify:jwt"
   },
   "dependencies": {
     "@google/genai": "^1.17.0",

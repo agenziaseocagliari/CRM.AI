@@ -68,6 +68,8 @@ export async function getUserIdFromJWT(req: Request): Promise<string> {
  * NOTA: Questa funzione ritorna l'intero oggetto User dal JWT, includendo
  * i custom claims come user_role e organization_id aggiunti dal custom_access_token_hook.
  * Accedi ai custom claims tramite: user.user_role, user.organization_id
+ * 
+ * ENHANCED: Now includes comprehensive diagnostics for JWT claim debugging
  */
 export async function getUserFromJWT(req: Request): Promise<any> {
   console.log('[getUserFromJWT] START - Extracting full user object from JWT')
@@ -80,6 +82,36 @@ export async function getUserFromJWT(req: Request): Promise<any> {
 
   const token = authHeader.replace('Bearer ', '')
   console.log('[getUserFromJWT] Token extracted (first 20 chars):', token.substring(0, 20) + '...')
+
+  // Decode JWT payload for diagnostics (without verification)
+  try {
+    const parts = token.split('.')
+    if (parts.length === 3) {
+      const payload = parts[1]
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+      const jsonPayload = JSON.parse(atob(base64))
+      
+      console.log('[getUserFromJWT] JWT Payload Diagnostics:', {
+        hasUserRole: 'user_role' in jsonPayload,
+        hasOrganizationId: 'organization_id' in jsonPayload,
+        userRole: jsonPayload.user_role || 'NOT_FOUND',
+        organizationId: jsonPayload.organization_id || 'NOT_FOUND',
+        exp: jsonPayload.exp,
+        iat: jsonPayload.iat,
+        tokenAge: jsonPayload.iat ? Math.floor((Date.now() / 1000) - jsonPayload.iat) : 'UNKNOWN',
+        isExpired: jsonPayload.exp ? (jsonPayload.exp < Date.now() / 1000) : 'UNKNOWN'
+      })
+      
+      // Warning if custom claims are missing
+      if (!jsonPayload.user_role) {
+        console.warn('[getUserFromJWT] ⚠️  WARNING: user_role custom claim is MISSING from JWT')
+        console.warn('[getUserFromJWT] This indicates custom_access_token_hook may not be properly configured')
+        console.warn('[getUserFromJWT] To fix: Configure hook in Supabase Dashboard > Authentication > Hooks')
+      }
+    }
+  } catch (decodeError) {
+    console.warn('[getUserFromJWT] Could not decode JWT for diagnostics:', decodeError)
+  }
 
   // Usa il client con anon key per verificare il JWT (RLS-aware)
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -101,8 +133,17 @@ export async function getUserFromJWT(req: Request): Promise<any> {
     email: user.email,
     userRole: (user as any).user_role,
     organizationId: (user as any).organization_id,
+    hasUserRoleClaim: !!(user as any).user_role,
+    hasOrganizationIdClaim: !!(user as any).organization_id,
     timestamp: new Date().toISOString()
   })
+  
+  // Additional diagnostic warning
+  if (!(user as any).user_role) {
+    console.error('[getUserFromJWT] 🚨 CRITICAL: User object does NOT contain user_role claim')
+    console.error('[getUserFromJWT] 🔧 ACTION REQUIRED: Verify custom_access_token_hook is configured')
+    console.error('[getUserFromJWT] 📖 See: JWT_CUSTOM_CLAIMS_IMPLEMENTATION.md for setup instructions')
+  }
 
   return user
 }

@@ -57,7 +57,7 @@ export async function validateSuperAdmin(req: Request): Promise<SuperAdminValida
       });
       return { 
         isValid: false, 
-        error: 'Permission check failed. JWT custom claim user_role not found. Please re-login or contact support.' 
+        error: 'JWT custom claim user_role not found. Please logout and login again to refresh your session.' 
       };
     }
 
@@ -77,7 +77,8 @@ export async function validateSuperAdmin(req: Request): Promise<SuperAdminValida
       });
       return { 
         isValid: false, 
-        error: `Insufficient permissions. Super Admin role required. Current role: ${userRole}` 
+        error: `Access denied. Super Admin role required. Your current role is: ${userRole}. Please logout and login again if your role was recently changed.`,
+        userId: user.id
       };
     }
 
@@ -195,7 +196,7 @@ export function extractClientInfo(req: Request): { ipAddress?: string; userAgent
 
 /**
  * Creates a standardized super admin error response
- * AGGIORNATO: Include diagnostics dettagliati
+ * AGGIORNATO: Include diagnostics dettagliati + CORS headers
  * @param message Error message
  * @param statusCode HTTP status code
  * @param diagnostics Optional diagnostic information
@@ -226,18 +227,28 @@ export function createSuperAdminErrorResponse(
     };
   }
   
+  // Import CORS headers
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  };
+  
   return new Response(
     JSON.stringify(responseBody),
     {
       status: statusCode,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      },
     }
   );
 }
 
 /**
  * Creates a standardized super admin success response
- * AGGIORNATO: Include metadata di debug
+ * AGGIORNATO: Include metadata di debug + CORS headers
  * @param data Response data
  */
 export function createSuperAdminSuccessResponse(data: any): Response {
@@ -246,11 +257,21 @@ export function createSuperAdminSuccessResponse(data: any): Response {
     timestamp: new Date().toISOString()
   });
   
+  // Import CORS headers
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  };
+  
   return new Response(
     JSON.stringify(data),
     {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      },
     }
   );
 }

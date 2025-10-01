@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { diagnoseJWT, JWTClaims } from '../lib/jwtUtils';
+import { diagnosticLogger } from '../lib/diagnosticLogger';
 
 interface AuthContextType {
   session: Session | null;
@@ -31,12 +32,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const parseJWTFromSession = async (session: Session | null) => {
     if (!session?.access_token) {
       console.log('🔑 [AuthContext] No session or access token - clearing claims');
+      diagnosticLogger.info('session', 'No session or access token - clearing claims');
       setJwtClaims(null);
       return;
     }
 
     const diagnostics = diagnoseJWT(session.access_token);
     const claims = diagnostics.claims;
+
+    // Log diagnostics
+    diagnosticLogger.info('jwt', 'JWT parsed from session', {
+      hasUserRole: diagnostics.hasUserRole,
+      userRole: claims?.user_role,
+      organizationId: claims?.organization_id,
+      tokenAge: diagnostics.tokenAge,
+      timeUntilExpiry: diagnostics.timeUntilExpiry,
+    });
 
     if (claims) {
       console.log('🔑 [AuthContext] JWT Claims parsed:', {
@@ -52,6 +63,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('❌ [AuthContext] CRITICAL: user_role claim is MISSING from JWT!');
         console.error('❌ [AuthContext] This session is INVALID. Forcing logout...');
         
+        diagnosticLogger.critical('jwt', 'Missing user_role claim - forcing logout', {
+          userId: claims.sub,
+          email: claims.email,
+        }, diagnostics);
+        
         // Force immediate logout
         localStorage.clear();
         sessionStorage.clear();
@@ -65,12 +81,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // FIX: Set organization_id to "ALL" for super_admin users
       if (claims.user_role === 'super_admin') {
         console.log('🔐 [AuthContext] Super Admin detected - setting organization_id to "ALL"');
+        diagnosticLogger.info('session', 'Super Admin detected - setting organization_id to ALL', {
+          userId: claims.sub,
+          userRole: claims.user_role,
+        });
         localStorage.setItem('organization_id', 'ALL');
       }
 
       setJwtClaims(claims);
     } else {
       console.error('❌ [AuthContext] Failed to parse JWT claims');
+      diagnosticLogger.error('jwt', 'Failed to parse JWT claims', {
+        hasSession: !!session,
+        hasAccessToken: !!session?.access_token,
+      });
       setJwtClaims(null);
     }
   };
@@ -90,20 +114,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔑 [AuthContext] Auth state changed:', event);
+      diagnosticLogger.info('auth', `Auth state changed: ${event}`, {
+        userId: session?.user?.id,
+      });
       
       setSession(session);
       
       if (event === 'SIGNED_IN') {
         console.log('✅ [AuthContext] User signed in');
+        diagnosticLogger.info('auth', 'User signed in', {
+          userId: session?.user?.id,
+          email: session?.user?.email,
+        });
         await parseJWTFromSession(session);
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 [AuthContext] User signed out - clearing all claims');
+        diagnosticLogger.info('auth', 'User signed out - clearing all claims');
         setJwtClaims(null);
         // Clear all storage
         localStorage.clear();
         sessionStorage.clear();
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('🔄 [AuthContext] Token refreshed - re-parsing claims and validating');
+        diagnosticLogger.info('auth', 'Token refreshed - re-parsing claims and validating', {
+          userId: session?.user?.id,
+        });
         await parseJWTFromSession(session);
       } else {
         await parseJWTFromSession(session);
@@ -132,6 +167,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('❌ [AuthContext] CRITICAL: User is logged in but user_role is NULL!');
       console.error('❌ [AuthContext] This means JWT does not contain user_role claim.');
       console.error('❌ [AuthContext] Forcing logout to prevent invalid session usage.');
+      
+      diagnosticLogger.critical('session', 'User logged in but user_role is NULL - forcing logout', {
+        userId: session.user?.id,
+        email: session.user?.email,
+      });
       
       // Force logout immediately
       const forceLogout = async () => {

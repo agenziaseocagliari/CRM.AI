@@ -1,0 +1,277 @@
+/**
+ * Diagnostic Logger
+ * 
+ * Centralized logging system for JWT and session diagnostics.
+ * Provides structured logging, error tracking, and integration points for monitoring services.
+ */
+
+import { JWTDiagnostics } from './jwtUtils';
+
+export type LogLevel = 'info' | 'warn' | 'error' | 'critical';
+
+export interface DiagnosticLogEntry {
+  timestamp: string;
+  level: LogLevel;
+  category: 'jwt' | 'session' | 'auth' | 'api' | 'healthcheck';
+  message: string;
+  context?: {
+    userId?: string;
+    userRole?: string;
+    organizationId?: string;
+    endpoint?: string;
+    statusCode?: number;
+    errorCode?: string;
+    [key: string]: any;
+  };
+  diagnostics?: JWTDiagnostics;
+  stackTrace?: string;
+}
+
+class DiagnosticLogger {
+  private logs: DiagnosticLogEntry[] = [];
+  private maxLogs = 100;
+  private errorThreshold = 10; // Alert if more than 10 errors in session
+  private errorCount = 0;
+
+  /**
+   * Logs a diagnostic event
+   */
+  log(entry: Omit<DiagnosticLogEntry, 'timestamp'>): void {
+    const logEntry: DiagnosticLogEntry = {
+      ...entry,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Add to in-memory log
+    this.logs.unshift(logEntry);
+    if (this.logs.length > this.maxLogs) {
+      this.logs.pop();
+    }
+
+    // Track error count
+    if (entry.level === 'error' || entry.level === 'critical') {
+      this.errorCount++;
+      
+      // Check threshold
+      if (this.errorCount >= this.errorThreshold) {
+        this.alertHighErrorRate();
+      }
+    }
+
+    // Console output with color coding
+    this.outputToConsole(logEntry);
+
+    // Persist to localStorage for debugging
+    this.persistLogs();
+
+    // TODO: Send to monitoring service (Sentry, LogRocket, etc.)
+    // this.sendToMonitoring(logEntry);
+  }
+
+  /**
+   * Logs info level message
+   */
+  info(category: DiagnosticLogEntry['category'], message: string, context?: DiagnosticLogEntry['context']): void {
+    this.log({ level: 'info', category, message, context });
+  }
+
+  /**
+   * Logs warning level message
+   */
+  warn(category: DiagnosticLogEntry['category'], message: string, context?: DiagnosticLogEntry['context']): void {
+    this.log({ level: 'warn', category, message, context });
+  }
+
+  /**
+   * Logs error level message
+   */
+  error(
+    category: DiagnosticLogEntry['category'],
+    message: string,
+    context?: DiagnosticLogEntry['context'],
+    error?: Error
+  ): void {
+    this.log({
+      level: 'error',
+      category,
+      message,
+      context,
+      stackTrace: error?.stack,
+    });
+  }
+
+  /**
+   * Logs critical level message (requires immediate attention)
+   */
+  critical(
+    category: DiagnosticLogEntry['category'],
+    message: string,
+    context?: DiagnosticLogEntry['context'],
+    diagnostics?: JWTDiagnostics
+  ): void {
+    this.log({
+      level: 'critical',
+      category,
+      message,
+      context,
+      diagnostics,
+    });
+  }
+
+  /**
+   * Gets all logs
+   */
+  getLogs(): DiagnosticLogEntry[] {
+    return [...this.logs];
+  }
+
+  /**
+   * Gets logs filtered by level
+   */
+  getLogsByLevel(level: LogLevel): DiagnosticLogEntry[] {
+    return this.logs.filter(log => log.level === level);
+  }
+
+  /**
+   * Gets logs filtered by category
+   */
+  getLogsByCategory(category: DiagnosticLogEntry['category']): DiagnosticLogEntry[] {
+    return this.logs.filter(log => log.category === category);
+  }
+
+  /**
+   * Clears all logs
+   */
+  clearLogs(): void {
+    this.logs = [];
+    this.errorCount = 0;
+    try {
+      localStorage.removeItem('diagnostic_logs');
+    } catch (e) {
+      console.error('Failed to clear diagnostic logs from localStorage:', e);
+    }
+  }
+
+  /**
+   * Exports logs as formatted string
+   */
+  exportLogs(): string {
+    let report = '==== Diagnostic Logs Export ====\n\n';
+    report += `Export Time: ${new Date().toISOString()}\n`;
+    report += `Total Logs: ${this.logs.length}\n`;
+    report += `Error Count: ${this.errorCount}\n\n`;
+
+    report += '--- LOG SUMMARY ---\n';
+    const summary = {
+      info: this.logs.filter(l => l.level === 'info').length,
+      warn: this.logs.filter(l => l.level === 'warn').length,
+      error: this.logs.filter(l => l.level === 'error').length,
+      critical: this.logs.filter(l => l.level === 'critical').length,
+    };
+    report += `Info: ${summary.info}\n`;
+    report += `Warnings: ${summary.warn}\n`;
+    report += `Errors: ${summary.error}\n`;
+    report += `Critical: ${summary.critical}\n\n`;
+
+    report += '--- RECENT LOGS (Most Recent First) ---\n';
+    this.logs.slice(0, 30).forEach((log, idx) => {
+      report += `\n[${idx + 1}] ${log.level.toUpperCase()} - ${log.category} - ${log.timestamp}\n`;
+      report += `Message: ${log.message}\n`;
+      if (log.context) {
+        report += `Context: ${JSON.stringify(log.context, null, 2)}\n`;
+      }
+      if (log.stackTrace) {
+        report += `Stack: ${log.stackTrace}\n`;
+      }
+    });
+
+    report += '\n================================\n';
+    return report;
+  }
+
+  /**
+   * Gets error statistics
+   */
+  getErrorStats(): { total: number; rate: number; recent: DiagnosticLogEntry[] } {
+    const errors = this.logs.filter(l => l.level === 'error' || l.level === 'critical');
+    const rate = this.logs.length > 0 ? (errors.length / this.logs.length) * 100 : 0;
+    
+    return {
+      total: errors.length,
+      rate: Math.round(rate * 100) / 100,
+      recent: errors.slice(0, 5),
+    };
+  }
+
+  /**
+   * Outputs log to console with color coding
+   */
+  private outputToConsole(entry: DiagnosticLogEntry): void {
+    const prefix = `[Diagnostic Logger] [${entry.category}]`;
+    const message = `${entry.message}`;
+    
+    switch (entry.level) {
+      case 'info':
+        console.log(`ℹ️ ${prefix}`, message, entry.context || '');
+        break;
+      case 'warn':
+        console.warn(`⚠️ ${prefix}`, message, entry.context || '');
+        break;
+      case 'error':
+        console.error(`❌ ${prefix}`, message, entry.context || '', entry.stackTrace || '');
+        break;
+      case 'critical':
+        console.error(`🚨 ${prefix} CRITICAL:`, message, entry.context || '', entry.diagnostics || '');
+        break;
+    }
+  }
+
+  /**
+   * Persists logs to localStorage
+   */
+  private persistLogs(): void {
+    try {
+      // Only store most recent 20 logs
+      const logsToStore = this.logs.slice(0, 20);
+      localStorage.setItem('diagnostic_logs', JSON.stringify(logsToStore));
+    } catch (e) {
+      // Silently fail if localStorage is full
+      console.warn('Failed to persist diagnostic logs:', e);
+    }
+  }
+
+  /**
+   * Alerts on high error rate
+   */
+  private alertHighErrorRate(): void {
+    console.error('🚨 [Diagnostic Logger] HIGH ERROR RATE DETECTED!');
+    console.error(`🚨 Error count: ${this.errorCount} (threshold: ${this.errorThreshold})`);
+    console.error('🚨 This may indicate a systemic issue requiring immediate attention.');
+    
+    // TODO: Send alert to monitoring service
+    // this.sendAlert('high_error_rate', { errorCount: this.errorCount });
+  }
+
+  /**
+   * Loads persisted logs from localStorage
+   */
+  loadPersistedLogs(): void {
+    try {
+      const stored = localStorage.getItem('diagnostic_logs');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          this.logs = parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load persisted diagnostic logs:', e);
+    }
+  }
+}
+
+// Singleton instance
+export const diagnosticLogger = new DiagnosticLogger();
+
+// Load persisted logs on module initialization
+diagnosticLogger.loadPersistedLogs();

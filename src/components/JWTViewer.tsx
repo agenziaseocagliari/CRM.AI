@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { diagnoseJWT, formatJWTDiagnostics, JWTDiagnostics } from '../lib/jwtUtils';
+import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
+import { useJWTDiagnostics } from '../hooks/useJWTDiagnostics';
+import { diagnosticLogger } from '../lib/diagnosticLogger';
 import toast from 'react-hot-toast';
 
 interface JWTViewerProps {
@@ -11,6 +13,15 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
   const [diagnostics, setDiagnostics] = useState<JWTDiagnostics | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRawToken, setShowRawToken] = useState(false);
+  const [activeTab, setActiveTab] = useState<'current' | 'history' | 'logs'>('current');
+
+  const {
+    sessionHistory,
+    healthStatus,
+    performHealthCheck,
+    clearHistory,
+    exportDiagnostics,
+  } = useJWTDiagnostics();
 
   useEffect(() => {
     loadJWTData();
@@ -45,10 +56,8 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
   };
 
   const copyFullDiagnostics = () => {
-    if (diagnostics) {
-      const report = formatJWTDiagnostics(diagnostics);
-      copyToClipboard(report);
-    }
+    const combinedReport = exportDiagnostics() + '\n\n' + diagnosticLogger.exportLogs();
+    copyToClipboard(combinedReport);
   };
 
   const handleDeepLogout = async () => {
@@ -86,9 +95,9 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-lg max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="p-6 bg-white rounded-lg shadow-lg max-w-6xl max-h-[90vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">🔐 JWT Token Viewer</h2>
+        <h2 className="text-2xl font-bold">🔐 JWT Session Diagnostics</h2>
         {onClose && (
           <button
             onClick={onClose}
@@ -98,6 +107,64 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
           </button>
         )}
       </div>
+
+      {/* Health Status Banner */}
+      <div className={`mb-4 p-4 rounded-lg border-2 ${healthStatus.isHealthy ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="text-lg font-bold">
+              {healthStatus.isHealthy ? '✅ Session Healthy' : '❌ Session Issues Detected'}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              Last checked: {new Date(healthStatus.lastChecked).toLocaleString()}
+            </div>
+          </div>
+          <button
+            onClick={performHealthCheck}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-sm"
+          >
+            🔍 Run Health Check
+          </button>
+        </div>
+        {!healthStatus.isHealthy && healthStatus.issues.length > 0 && (
+          <div className="mt-3 p-3 bg-white rounded border border-red-300">
+            <div className="font-semibold text-red-800 mb-2">Issues Found:</div>
+            <ul className="list-disc list-inside space-y-1">
+              {healthStatus.issues.map((issue, idx) => (
+                <li key={idx} className="text-red-700 text-sm">{issue}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="mb-6 border-b border-gray-200">
+        <div className="flex space-x-4">
+          <button
+            onClick={() => setActiveTab('current')}
+            className={`pb-2 px-4 font-semibold ${activeTab === 'current' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+          >
+            Current Token
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`pb-2 px-4 font-semibold ${activeTab === 'history' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+          >
+            Session History ({sessionHistory.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`pb-2 px-4 font-semibold ${activeTab === 'logs' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+          >
+            Diagnostic Logs
+          </button>
+        </div>
+      </div>
+
+      {/* Current Token Tab */}
+      {activeTab === 'current' && (
+        <div>
 
       {/* Current Role Display */}
       {diagnostics.claims?.user_role && (
@@ -114,6 +181,16 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
               {diagnostics.claims.email && (
                 <div className="text-sm text-gray-600 mt-1">
                   Account: <span className="font-mono">{diagnostics.claims.email}</span>
+                </div>
+              )}
+              {diagnostics.tokenAge && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Token age: {Math.floor(diagnostics.tokenAge / 60)} minutes
+                </div>
+              )}
+              {diagnostics.timeUntilExpiry && (
+                <div className="text-xs text-gray-500">
+                  Expires in: {Math.floor(diagnostics.timeUntilExpiry / 60)} minutes
                 </div>
               )}
             </div>
@@ -244,8 +321,156 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
         )}
       </div>
 
+      </div>
+      )}
+
+      {/* Session History Tab */}
+      {activeTab === 'history' && (
+        <div>
+          <div className="mb-4 flex justify-between items-center">
+            <h3 className="text-lg font-bold">Session Event History</h3>
+            <button
+              onClick={clearHistory}
+              className="text-sm text-red-600 hover:text-red-800"
+            >
+              Clear History
+            </button>
+          </div>
+          
+          {sessionHistory.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">
+              No session events recorded yet
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sessionHistory.map((event, idx) => (
+                <div key={idx} className="p-4 bg-gray-50 rounded border border-gray-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        event.event === 'login' ? 'bg-green-100 text-green-800' :
+                        event.event === 'logout' ? 'bg-red-100 text-red-800' :
+                        event.event === 'refresh' ? 'bg-blue-100 text-blue-800' :
+                        event.event === 'error' ? 'bg-red-100 text-red-800' :
+                        event.event === 'healthcheck' ? 'bg-purple-100 text-purple-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {event.event.toUpperCase()}
+                      </span>
+                      {event.userRole && (
+                        <span className="text-xs text-gray-600">
+                          Role: {event.userRole}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {new Date(event.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="text-sm space-y-1">
+                    {event.userId && (
+                      <div className="text-gray-600">User ID: <span className="font-mono text-xs">{event.userId}</span></div>
+                    )}
+                    {event.organizationId && (
+                      <div className="text-gray-600">Org ID: <span className="font-mono text-xs">{event.organizationId}</span></div>
+                    )}
+                    {event.localStorageState.organizationId && (
+                      <div className="text-gray-600">localStorage org_id: <span className="font-mono text-xs">{event.localStorageState.organizationId}</span></div>
+                    )}
+                    {event.errorDetails && (
+                      <div className="text-red-600 mt-2">Error: {event.errorDetails}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Diagnostic Logs Tab */}
+      {activeTab === 'logs' && (
+        <div>
+          <div className="mb-4 flex justify-between items-center">
+            <h3 className="text-lg font-bold">Diagnostic Logs</h3>
+            <button
+              onClick={() => diagnosticLogger.clearLogs()}
+              className="text-sm text-red-600 hover:text-red-800"
+            >
+              Clear Logs
+            </button>
+          </div>
+          
+          {(() => {
+            const logs = diagnosticLogger.getLogs();
+            const errorStats = diagnosticLogger.getErrorStats();
+            
+            return (
+              <>
+                {/* Error Stats */}
+                <div className="mb-4 p-4 bg-gray-50 rounded border border-gray-200">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold">{logs.length}</div>
+                      <div className="text-xs text-gray-600">Total Logs</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-red-600">{errorStats.total}</div>
+                      <div className="text-xs text-gray-600">Errors</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{errorStats.rate}%</div>
+                      <div className="text-xs text-gray-600">Error Rate</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Log Entries */}
+                {logs.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    No diagnostic logs recorded yet
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {logs.slice(0, 30).map((log, idx) => (
+                      <div key={idx} className={`p-3 rounded border text-sm ${
+                        log.level === 'critical' ? 'bg-red-50 border-red-300' :
+                        log.level === 'error' ? 'bg-red-50 border-red-200' :
+                        log.level === 'warn' ? 'bg-yellow-50 border-yellow-200' :
+                        'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="flex justify-between items-start mb-1">
+                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                            log.level === 'critical' ? 'bg-red-200 text-red-900' :
+                            log.level === 'error' ? 'bg-red-100 text-red-800' :
+                            log.level === 'warn' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {log.level.toUpperCase()}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(log.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="font-semibold mb-1">[{log.category}] {log.message}</div>
+                        {log.context && Object.keys(log.context).length > 0 && (
+                          <div className="text-xs text-gray-600 mt-1 font-mono">
+                            {JSON.stringify(log.context, null, 2)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Action Buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-6">
         <button
           onClick={copyFullDiagnostics}
           className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"

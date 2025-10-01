@@ -175,7 +175,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             // Check for JWT custom claim error specifically
             const errorMessage = errorJson?.error || errorText || '';
             const isJwtClaimError = (response.status === 403 || response.status === 401) && 
-                                   /user_role not found|JWT custom claim|custom claim.*not found/i.test(errorMessage);
+                                   /user_role not found|JWT custom claim|custom claim.*not found|logout and login again|Please logout and login|role was recently changed/i.test(errorMessage);
             
             if (isJwtClaimError) {
                 console.error(`[API Helper] JWT Custom Claim Error detected on '${functionName}'. Token is outdated or missing custom claims.`);

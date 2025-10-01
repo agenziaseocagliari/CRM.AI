@@ -14,6 +14,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
     const { organization, error } = crmData;
 
     const handleLogout = async () => {
+        // Clear all storage to ensure no auto-login
+        localStorage.clear();
+        sessionStorage.clear();
         await supabase.auth.signOut();
         // La navigazione alla homepage viene gestita dal listener in App.tsx
     };

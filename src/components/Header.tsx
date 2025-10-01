@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Organization } from '../types';
 import { BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
+import { supabase } from '../lib/supabaseClient';
+import { diagnoseJWT } from '../lib/jwtUtils';
 
 interface HeaderProps {
   organization: Organization | null;
@@ -8,13 +10,65 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const diagnostics = diagnoseJWT(session.access_token);
+        setCurrentRole(diagnostics.claims?.user_role || null);
+        setUserEmail(diagnostics.claims?.email || null);
+      }
+    };
+    
+    checkRole();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.access_token) {
+        const diagnostics = diagnoseJWT(session.access_token);
+        setCurrentRole(diagnostics.claims?.user_role || null);
+        setUserEmail(diagnostics.claims?.email || null);
+      } else {
+        setCurrentRole(null);
+        setUserEmail(null);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
+  
+  const getRoleDisplay = () => {
+    if (!currentRole) return { text: 'Ruolo non definito', color: 'bg-gray-100 text-gray-600' };
+    
+    switch (currentRole) {
+      case 'super_admin':
+        return { text: '🔐 Super Admin', color: 'bg-purple-100 text-purple-700' };
+      case 'admin':
+        return { text: '⚙️ Admin', color: 'bg-blue-100 text-blue-700' };
+      case 'user':
+        return { text: '👤 Utente Standard', color: 'bg-green-100 text-green-700' };
+      default:
+        return { text: `📋 ${currentRole}`, color: 'bg-gray-100 text-gray-700' };
+    }
+  };
+  
+  const roleDisplay = getRoleDisplay();
+  
   return (
     <header className="bg-card shadow-sm p-4 flex justify-between items-center">
-      <div>
+      <div className="flex items-center space-x-4">
         <div 
             className="flex items-center bg-gray-100 p-2 rounded-lg"
         >
           <span className="font-semibold text-lg text-text-primary">{organization?.name || 'Caricamento...'}</span>
+        </div>
+        
+        {/* Current Role Display */}
+        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${roleDisplay.color}`}>
+          {roleDisplay.text}
         </div>
       </div>
       
@@ -30,10 +84,22 @@ export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
         <button className="p-2 rounded-full hover:bg-gray-100">
           <BellIcon className="w-6 h-6 text-gray-500" />
         </button>
-        <button className="p-2 rounded-full hover:bg-gray-100">
+        <button 
+          className="p-2 rounded-full hover:bg-gray-100 relative group"
+          title={userEmail || 'Utente'}
+        >
           <UserCircleIcon className="w-8 h-8 text-gray-500" />
+          {userEmail && (
+            <div className="hidden group-hover:block absolute right-0 top-full mt-2 w-64 p-2 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div className="text-xs text-gray-600 truncate">{userEmail}</div>
+            </div>
+          )}
         </button>
-        <button onClick={onLogout} title="Logout" className="p-2 rounded-full hover:bg-gray-100">
+        <button 
+          onClick={onLogout} 
+          title="Logout - Per cambiare ruolo effettua logout e login con account diverso" 
+          className="p-2 rounded-full hover:bg-gray-100"
+        >
           <LogoutIcon className="w-6 h-6 text-gray-500" />
         </button>
       </div>

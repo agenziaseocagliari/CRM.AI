@@ -99,6 +99,34 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
         )}
       </div>
 
+      {/* Current Role Display */}
+      {diagnostics.claims?.user_role && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-300 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-gray-600 mb-1">Ruolo Corrente</div>
+              <div className="text-2xl font-bold text-indigo-900">
+                {diagnostics.claims.user_role === 'super_admin' && '🔐 Super Admin'}
+                {diagnostics.claims.user_role === 'admin' && '⚙️ Admin'}
+                {diagnostics.claims.user_role === 'user' && '👤 Utente Standard'}
+                {!['super_admin', 'admin', 'user'].includes(diagnostics.claims.user_role) && `📋 ${diagnostics.claims.user_role}`}
+              </div>
+              {diagnostics.claims.email && (
+                <div className="text-sm text-gray-600 mt-1">
+                  Account: <span className="font-mono">{diagnostics.claims.email}</span>
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-gray-500 mb-1">Per cambiare ruolo:</div>
+              <div className="text-xs text-gray-700">
+                Logout → Login con account diverso
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className={`p-4 rounded-lg border-2 ${diagnostics.isValid ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>

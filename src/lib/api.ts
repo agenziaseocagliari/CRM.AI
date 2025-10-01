@@ -1,6 +1,7 @@
 import React from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase } from './supabaseClient';
+import { diagnoseJWT } from './jwtUtils';
 
 /**
  * Retrieves the current organization ID from localStorage.
@@ -136,25 +137,38 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
     const isDebugMode = urlParams.get('debug_mode') === 'true';
     const debugOrgId = urlParams.get('debug_org_id');
 
-    if (isDebugMode && debugOrgId) {
-        finalPayload.organization_id = debugOrgId;
-        console.warn(`[API Helper] DEBUG MODE: Overriding organization_id with '${debugOrgId}' for function '${functionName}'.`);
-    } else if (!finalPayload.organization_id) {
-        const orgId = getOrganizationIdFromStorage();
-        if (!orgId) {
-            const errorMsg = 'ID Organizzazione non impostato. Ricarica la pagina o effettua nuovamente il login.';
-            console.error(`[API Helper] CRITICAL: organization_id is missing for function '${functionName}'.`, { payload });
-            showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, "organization_id missing from localStorage"));
-            throw new Error(errorMsg);
-        }
-        finalPayload.organization_id = orgId;
-    }
-    
+    // Get session to check user role
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session) {
         const errorMsg = 'Sessione utente non trovata o scaduta.';
         showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, sessionError || 'No session found'));
         throw new Error(sessionError?.message || 'Invalid session.');
+    }
+
+    // Check if user is super_admin
+    const diagnostics = diagnoseJWT(session.access_token);
+    const userRole = diagnostics.claims?.user_role;
+    const isSuperAdmin = userRole === 'super_admin';
+
+    if (isDebugMode && debugOrgId) {
+        finalPayload.organization_id = debugOrgId;
+        console.warn(`[API Helper] DEBUG MODE: Overriding organization_id with '${debugOrgId}' for function '${functionName}'.`);
+    } else if (!finalPayload.organization_id) {
+        const orgId = getOrganizationIdFromStorage();
+        // FIX: Skip organization_id validation for super_admin users
+        if (!orgId && !isSuperAdmin) {
+            const errorMsg = 'ID Organizzazione non impostato. Ricarica la pagina o effettua nuovamente il login.';
+            console.error(`[API Helper] CRITICAL: organization_id is missing for function '${functionName}'.`, { payload });
+            showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, "organization_id missing from localStorage"));
+            throw new Error(errorMsg);
+        }
+        if (orgId) {
+            finalPayload.organization_id = orgId;
+        } else if (isSuperAdmin) {
+            // Super admin can make API calls without organization_id or with "ALL"
+            console.log(`[API Helper] Super Admin detected - organization_id validation skipped for '${functionName}'.`);
+            finalPayload.organization_id = 'ALL';
+        }
     }
 
     const supabaseUrl = process.env.VITE_SUPABASE_URL;

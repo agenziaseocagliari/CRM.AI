@@ -63,24 +63,33 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
     
     toast.error(
         (t) => (
-            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'start', gap: '12px', maxWidth: '400px' } },
-                React.createElement('p', { className: 'font-semibold text-center w-full' }, message),
+            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'start', gap: '12px', maxWidth: '500px' } },
+                React.createElement('div', { className: 'w-full' },
+                    // Split message by newlines and create separate paragraphs
+                    ...message.split('\n').filter(line => line.trim()).map((line, idx) => 
+                        React.createElement('p', { 
+                            key: idx,
+                            className: line.trim().startsWith('⚠️') || line.trim().startsWith('NOTA:') 
+                                ? 'font-bold text-yellow-700 mb-2' 
+                                : line.match(/^\d+\./) 
+                                    ? 'text-sm ml-4 mb-1'
+                                    : 'text-sm mb-2'
+                        }, line.trim())
+                    )
+                ),
                 needsReconnect && !isJwtError && React.createElement('p', { className: 'text-sm text-center w-full' },
                     'Potrebbe essere necessario riconnettere il tuo account Google. ',
                     React.createElement('span', { className: 'font-bold' }, 'Vai su Impostazioni -> Integrazioni.')
                 ),
-                isJwtError && React.createElement('p', { className: 'text-sm text-center w-full text-yellow-700' },
-                    '⚠️ La tua sessione è scaduta o è stata aggiornata. È necessario effettuare nuovamente il login.'
-                ),
-                React.createElement('div', { className: "flex items-center space-x-2 w-full justify-center" },
+                React.createElement('div', { className: "flex items-center space-x-2 w-full justify-center mt-2" },
                     requiresLogout && React.createElement('button', {
                         onClick: async () => {
                             toast.dismiss(t.id);
                             await supabase.auth.signOut();
                             window.location.href = '/login';
                         },
-                        className: 'bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 font-semibold'
-                    }, 'Vai al Login'),
+                        className: 'bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 font-bold'
+                    }, '🚪 Logout'),
                     React.createElement('button', {
                         onClick: () => {
                             navigator.clipboard.writeText(diagnosticReport);
@@ -179,20 +188,22 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             
             if (isJwtClaimError) {
                 console.error(`[API Helper] JWT Custom Claim Error detected on '${functionName}'. Token is outdated or missing custom claims.`);
-                const userMessage = 'La sessione è scaduta o aggiornata. Per favore, effettua nuovamente il login.';
+                console.error(`[API Helper] IMPORTANT: Session refresh will NOT fix this issue. User must perform a FULL LOGOUT and LOGIN.`);
+                
+                const userMessage = '⚠️ Il tuo ruolo utente è stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverà il problema.';
                 const diagnosticReport = createDiagnosticReport(
                     userMessage, 
                     functionName, 
                     errorJson || errorText
                 );
                 
-                // Show error with logout button
+                // Show error with logout button and clear instructions
                 showErrorToast(userMessage, diagnosticReport, { 
                     requiresLogout: true,
                     isJwtError: true 
                 });
                 
-                // Automatically clear auth state
+                // Automatically clear auth state to force fresh login
                 localStorage.removeItem('organization_id');
                 
                 throw { 

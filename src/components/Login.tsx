@@ -7,25 +7,12 @@ import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
 import { recordLoginAttempt, detectLoginMethodFromUrl, getLoginHistory, analyzeLoginHistory, generateLoginHistoryReport } from '../lib/loginTracker';
 import toast from 'react-hot-toast';
 
-// Predefined accounts for explicit selection
-const PREDEFINED_ACCOUNTS = [
-    { 
-        email: 'webproseoid@gmail.com', 
-        label: 'Utente Standard',
-        description: 'Accesso normale al CRM',
-        icon: '👤'
-    },
-    { 
-        email: 'agenziaseocagliari@gmail.com', 
-        label: 'Super Admin',
-        description: 'Accesso amministratore completo',
-        icon: '🔐'
-    }
-];
+// Maximum failed login attempts before adding delay
+const MAX_FAILED_ATTEMPTS = 3;
+const LOGIN_DELAY_MS = 2000; // 2 seconds delay after max attempts
 
 export const Login: React.FC = () => {
     const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
-    const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -34,6 +21,8 @@ export const Login: React.FC = () => {
     const [jwtDiagnostics, setJwtDiagnostics] = useState<JWTDiagnostics | null>(null);
     const [showJwtDebug, setShowJwtDebug] = useState(false);
     const [showLoginHistory, setShowLoginHistory] = useState(false);
+    const [failedAttempts, setFailedAttempts] = useState(0);
+    const [isDelayed, setIsDelayed] = useState(false);
     const navigate = useNavigate();
 
     // Check JWT after login and detect login method
@@ -98,6 +87,13 @@ export const Login: React.FC = () => {
 
     const handleAuthAction = async (event: React.FormEvent) => {
         event.preventDefault();
+        
+        // Check if we need to add delay
+        if (isDelayed) {
+            toast.error('Troppi tentativi falliti. Attendi prima di riprovare.');
+            return;
+        }
+        
         setLoading(true);
         setError(null);
         setMessage(null);
@@ -105,21 +101,40 @@ export const Login: React.FC = () => {
         if (mode === 'signIn') {
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) {
-                setError(error.message);
+                // Generic error message - don't leak account information
+                setError('Credenziali errate. Verifica email e password.');
+                
+                // Track failed attempts
+                const newFailedAttempts = failedAttempts + 1;
+                setFailedAttempts(newFailedAttempts);
+                
                 // Record failed login
                 recordLoginAttempt({
                     method: 'password',
                     timestamp: new Date().toISOString(),
                     email: email,
                     success: false,
-                    error: error.message,
+                    error: 'Credenziali errate',
                 });
+                
+                // Add delay after max attempts
+                if (newFailedAttempts >= MAX_FAILED_ATTEMPTS) {
+                    setIsDelayed(true);
+                    toast.error(`Troppi tentativi falliti. Attendi ${LOGIN_DELAY_MS / 1000} secondi.`);
+                    setTimeout(() => {
+                        setIsDelayed(false);
+                        setFailedAttempts(0);
+                    }, LOGIN_DELAY_MS);
+                }
+            } else {
+                // Reset failed attempts on successful login
+                setFailedAttempts(0);
             }
             // Il successo del login viene gestito dal listener in App.tsx che naviga alla dashboard
         } else { // signUp
             const { error } = await supabase.auth.signUp({ email, password });
             if (error) {
-                setError(error.message);
+                setError('Errore durante la registrazione. Riprova più tardi.');
             } else {
                 setMessage('Registrazione avvenuta! Controlla la tua email per il link di conferma.');
                 setMode('signIn'); // Torna al login dopo la registrazione
@@ -145,23 +160,7 @@ export const Login: React.FC = () => {
         toast.success('Logout profondo completato. Riprova ad accedere.', { duration: 4000 });
         setJwtDiagnostics(null);
         setShowJwtDebug(false);
-        setSelectedAccount(null); // Reset account selection
         window.location.reload();
-    };
-    
-    const handleAccountSelect = (accountEmail: string) => {
-        setSelectedAccount(accountEmail);
-        setEmail(accountEmail);
-        setError(null);
-        setMessage(null);
-    };
-    
-    const handleBackToSelection = () => {
-        setSelectedAccount(null);
-        setEmail('');
-        setPassword('');
-        setError(null);
-        setMessage(null);
     };
     
     const copyLoginHistory = () => {
@@ -173,9 +172,6 @@ export const Login: React.FC = () => {
     const title = mode === 'signIn' ? 'Accedi a Guardian AI CRM' : 'Crea un nuovo account';
     const buttonText = mode === 'signIn' ? 'Accedi' : 'Registrati';
     const switchText = mode === 'signIn' ? "Non hai un account? Registrati" : "Hai già un account? Accedi";
-    
-    // Show account selection only for sign in mode and when no account is selected
-    const showAccountSelection = mode === 'signIn' && !selectedAccount;
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -193,106 +189,10 @@ export const Login: React.FC = () => {
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                    {showAccountSelection ? (
-                        // Account Selection View
-                        <div className="space-y-4">
-                            <div className="text-center mb-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                    Seleziona il tipo di account
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                    Scegli l'account con cui vuoi accedere
-                                </p>
-                            </div>
-                            
-                            {/* Account Selection Cards */}
-                            <div className="space-y-3">
-                                {PREDEFINED_ACCOUNTS.map((account) => (
-                                    <button
-                                        key={account.email}
-                                        onClick={() => handleAccountSelect(account.email)}
-                                        className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-all text-left group"
-                                    >
-                                        <div className="flex items-start space-x-3">
-                                            <span className="text-2xl">{account.icon}</span>
-                                            <div className="flex-1">
-                                                <div className="font-semibold text-gray-900 group-hover:text-primary">
-                                                    {account.label}
-                                                </div>
-                                                <div className="text-sm text-gray-600 mt-1">
-                                                    {account.description}
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-1 font-mono">
-                                                    {account.email}
-                                                </div>
-                                            </div>
-                                            <svg 
-                                                className="w-6 h-6 text-gray-400 group-hover:text-primary" 
-                                                fill="none" 
-                                                viewBox="0 0 24 24" 
-                                                stroke="currentColor"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                            
-                            {/* Info Banner */}
-                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div className="flex items-start space-x-2">
-                                    <span className="text-blue-600 text-lg">ℹ️</span>
-                                    <div className="text-sm text-blue-800">
-                                        <p className="font-semibold mb-1">Policy di cambio ruolo:</p>
-                                        <ul className="list-disc list-inside space-y-1 text-xs">
-                                            <li>Per cambiare ruolo occorre logout completo</li>
-                                            <li>Quindi effettuare login con l'account specifico</li>
-                                            <li>I ruoli sono legati all'account email utilizzato</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="mt-6 text-center text-sm">
-                                <button onClick={toggleMode} className="font-medium text-primary hover:text-indigo-500">
-                                    {switchText}
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        // Login Form View (existing form)
-                        <>
-                            {mode === 'signIn' && selectedAccount && (
-                                <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-lg">
-                                                {PREDEFINED_ACCOUNTS.find(a => a.email === selectedAccount)?.icon}
-                                            </span>
-                                            <div>
-                                                <div className="text-sm font-semibold text-gray-900">
-                                                    {PREDEFINED_ACCOUNTS.find(a => a.email === selectedAccount)?.label}
-                                                </div>
-                                                <div className="text-xs text-gray-600 font-mono">
-                                                    {selectedAccount}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={handleBackToSelection}
-                                            className="text-xs text-primary hover:text-indigo-500 underline"
-                                        >
-                                            Cambia
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            
-                            <form className="space-y-6" onSubmit={handleAuthAction}>
+                    <form className="space-y-6" onSubmit={handleAuthAction}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Indirizzo email
+                                Indirizzo Email
                             </label>
                             <div className="mt-1">
                                 <input
@@ -303,8 +203,8 @@ export const Login: React.FC = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    disabled={mode === 'signIn' && !!selectedAccount}
-                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                    placeholder="tua@email.com"
                                 />
                             </div>
                         </div>
@@ -327,26 +227,37 @@ export const Login: React.FC = () => {
                             </div>
                         </div>
                         
+                        {mode === 'signIn' && (
+                            <div className="flex items-center justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/forgot-password')}
+                                    className="text-sm font-medium text-primary hover:text-indigo-500"
+                                >
+                                    Password dimenticata?
+                                </button>
+                            </div>
+                        )}
+                        
                         {message && <p className="text-green-600 text-xs text-center">{message}</p>}
                         {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
                         <div>
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                                disabled={loading || isDelayed}
+                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Caricamento...' : buttonText}
                             </button>
                         </div>
                     </form>
+                    
                     <div className="mt-6 text-center text-sm">
                         <button onClick={toggleMode} className="font-medium text-primary hover:text-indigo-500">
                             {switchText}
                         </button>
                     </div>
-                    </> 
-                    )}
                     
                     {jwtDiagnostics && showJwtDebug && (
                         <div className="mt-6 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg">

@@ -197,7 +197,7 @@ END $$;
 DO $$
 DECLARE
   null_role_count integer;
-  super_admin_count integer;
+  sa_count integer;
 BEGIN
   -- Count users with NULL role
   SELECT COUNT(*) INTO null_role_count
@@ -205,7 +205,7 @@ BEGIN
   WHERE role IS NULL;
   
   -- Count super_admin users
-  SELECT COUNT(*) INTO super_admin_count
+  SELECT COUNT(*) INTO sa_count
   FROM public.profiles
   WHERE role = 'super_admin';
   
@@ -215,7 +215,7 @@ BEGIN
     RAISE NOTICE '✅ All users have a role assigned';
   END IF;
   
-  RAISE NOTICE 'ℹ️  Found % super_admin users', super_admin_count;
+  RAISE NOTICE 'ℹ️  Found % super_admin users', sa_count;
 END $$;
 
 -- =====================================================

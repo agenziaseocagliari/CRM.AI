@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // FIX: Corrected the import for useNavigate from 'react-router-dom' to resolve module export errors.
 import { useNavigate } from 'react-router-dom';
 import { GuardianIcon } from './ui/icons';
 import { supabase } from '../lib/supabaseClient';
+import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
+import toast from 'react-hot-toast';
 
 export const Login: React.FC = () => {
     const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
@@ -11,7 +13,47 @@ export const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [jwtDiagnostics, setJwtDiagnostics] = useState<JWTDiagnostics | null>(null);
+    const [showJwtDebug, setShowJwtDebug] = useState(false);
     const navigate = useNavigate();
+
+    // Check JWT after login
+    useEffect(() => {
+        const checkJWT = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+                const diag = diagnoseJWT(session.access_token);
+                setJwtDiagnostics(diag);
+                
+                // Auto-show debug info if there's a JWT issue
+                if (!diag.hasUserRole && diag.isValid) {
+                    setShowJwtDebug(true);
+                    toast.error('⚠️ TOKEN DEFECT: user_role mancante nel JWT', {
+                        duration: 8000,
+                    });
+                }
+            }
+        };
+        
+        checkJWT();
+        
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (_event === 'SIGNED_IN' && session?.access_token) {
+                const diag = diagnoseJWT(session.access_token);
+                setJwtDiagnostics(diag);
+                
+                if (!diag.hasUserRole && diag.isValid) {
+                    setShowJwtDebug(true);
+                    toast.error('⚠️ TOKEN DEFECT: user_role mancante nel JWT', {
+                        duration: 8000,
+                    });
+                }
+            }
+        });
+        
+        return () => subscription.unsubscribe();
+    }, []);
 
     const handleAuthAction = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -43,6 +85,16 @@ export const Login: React.FC = () => {
     
     const handleBackToHome = () => {
         navigate('/');
+    };
+    
+    const handleDeepLogout = async () => {
+        localStorage.clear();
+        sessionStorage.clear();
+        await supabase.auth.signOut();
+        toast.success('Logout profondo completato. Riprova ad accedere.', { duration: 4000 });
+        setJwtDiagnostics(null);
+        setShowJwtDebug(false);
+        window.location.reload();
     };
 
     const title = mode === 'signIn' ? 'Accedi a Guardian AI CRM' : 'Crea un nuovo account';
@@ -120,6 +172,49 @@ export const Login: React.FC = () => {
                             {switchText}
                         </button>
                     </div>
+                    
+                    {jwtDiagnostics && showJwtDebug && (
+                        <div className="mt-6 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg">
+                            <h3 className="font-bold text-yellow-800 mb-2">⚠️ TOKEN DEFECT RILEVATO</h3>
+                            <div className="text-sm text-yellow-900 space-y-2">
+                                <p><strong>user_role presente:</strong> {jwtDiagnostics.hasUserRole ? '✅ Sì' : '❌ No'}</p>
+                                {jwtDiagnostics.claims?.user_role && (
+                                    <p><strong>Ruolo attuale:</strong> <code className="bg-yellow-100 px-2 py-1 rounded">{jwtDiagnostics.claims.user_role}</code></p>
+                                )}
+                                {!jwtDiagnostics.hasUserRole && (
+                                    <>
+                                        <p className="font-semibold mt-2">📝 Azioni necessarie:</p>
+                                        <ol className="list-decimal list-inside ml-2 space-y-1">
+                                            <li>Effettua logout profondo (pulsante sotto)</li>
+                                            <li>Effettua login solo da form email + password</li>
+                                            <li>Non usare magic link o reset password</li>
+                                        </ol>
+                                        <button
+                                            onClick={handleDeepLogout}
+                                            className="mt-3 w-full bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600"
+                                        >
+                                            🔄 Esegui Logout Profondo
+                                        </button>
+                                    </>
+                                )}
+                                <button
+                                    onClick={() => setShowJwtDebug(false)}
+                                    className="mt-2 text-xs text-yellow-700 underline"
+                                >
+                                    Nascondi diagnostica
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {jwtDiagnostics && !showJwtDebug && !jwtDiagnostics.hasUserRole && (
+                        <button
+                            onClick={() => setShowJwtDebug(true)}
+                            className="mt-4 w-full text-sm text-yellow-600 hover:text-yellow-800 underline"
+                        >
+                            ⚠️ Mostra diagnostica JWT
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

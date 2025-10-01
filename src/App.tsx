@@ -32,6 +32,9 @@ import { Payments as SuperAdminPayments } from './components/superadmin/Payments
 import { AiWorkflows as SuperAdminAiWorkflows } from './components/superadmin/AiWorkflows';
 import { AuditLogs as SuperAdminAuditLogs } from './components/superadmin/AuditLogs';
 
+// Debug Panel
+import { DebugPanel } from './components/DebugPanel';
+
 
 const App: React.FC = () => {
   const { session, userRole, loading, jwtClaims } = useAuth();
@@ -114,6 +117,8 @@ const App: React.FC = () => {
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
+      {/* Debug Panel - Only visible when logged in */}
+      {session && <DebugPanel />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={session ? <Navigate to="/dashboard" /> : <Login />} />

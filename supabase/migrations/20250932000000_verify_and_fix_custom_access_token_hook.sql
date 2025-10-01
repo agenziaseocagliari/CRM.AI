@@ -105,7 +105,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO supabase_auth_admin;
 REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook FROM authenticated, anon, public;
 
-RAISE NOTICE '✅ Permissions granted to supabase_auth_admin';
+-- ✅ Permissions granted to supabase_auth_admin (RAISE NOTICE removed - not allowed outside DO blocks)
 
 -- =====================================================
 -- 4. Add/update comment
@@ -241,13 +241,14 @@ END $$;
 -- to get JWTs with the new custom claims!
 -- =====================================================
 
-RAISE NOTICE '';
-RAISE NOTICE '=======================================================';
-RAISE NOTICE 'Migration Complete - custom_access_token_hook updated';
-RAISE NOTICE '=======================================================';
-RAISE NOTICE '';
-RAISE NOTICE 'NEXT STEPS:';
-RAISE NOTICE '1. Configure hook in Supabase Dashboard (see above)';
-RAISE NOTICE '2. Have all users logout and login again';
-RAISE NOTICE '3. Run verification script: npm run verify:jwt';
-RAISE NOTICE '';
+-- =======================================================
+-- Migration Complete - custom_access_token_hook updated
+-- =======================================================
+-- 
+-- NEXT STEPS:
+-- 1. Configure hook in Supabase Dashboard (see above)
+-- 2. Have all users logout and login again
+-- 3. Run verification script: npm run verify:jwt
+--
+-- Note: RAISE NOTICE statements removed as they are not supported
+-- outside of DO blocks and are not essential for production deployment.

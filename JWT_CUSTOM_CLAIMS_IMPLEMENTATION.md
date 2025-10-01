@@ -409,15 +409,55 @@ const role = user.user_role;
 
 ---
 
+## 🛡️ Frontend Error Handling
+
+### UX-Friendly JWT Error Detection
+
+When users with old JWT tokens (missing `user_role` claim) make API requests, the frontend now provides a seamless error handling experience:
+
+**Implementation:** `src/lib/api.ts`
+
+```typescript
+// Detect JWT custom claim errors
+const isJwtClaimError = (response.status === 403 || response.status === 401) && 
+                       /user_role not found|JWT custom claim|custom claim.*not found/i.test(errorMessage);
+
+if (isJwtClaimError) {
+    // Show clear message with logout button
+    showErrorToast('La sessione è scaduta o aggiornata. Per favore, effettua nuovamente il login.', 
+                   diagnosticReport, 
+                   { requiresLogout: true, isJwtError: true });
+    
+    // Clear local state
+    localStorage.removeItem('organization_id');
+    
+    // Throw error with flags
+    throw { error: userMessage, isJwtError: true, requiresRelogin: true };
+}
+```
+
+**User Experience:**
+1. ✅ Clear Italian message: "La sessione è scaduta o aggiornata"
+2. ✅ Prominent "Vai al Login" button performs logout + redirect
+3. ✅ Toast persists until user takes action (no auto-dismiss)
+4. ✅ Diagnostic copy button for support
+5. ✅ Automatic cleanup of localStorage
+
+**Complete Documentation:** See `docs/JWT_ERROR_HANDLING_GUIDE.md`
+
+---
+
 ## 📝 Migration Checklist
 
 - [x] Created `custom_access_token_hook` SQL function
 - [x] Added `getUserFromJWT()` helper function
 - [x] Updated `validateSuperAdmin()` to use JWT claims
+- [x] **Implemented frontend JWT error handling**
 - [ ] Configured hook in Supabase Dashboard
 - [ ] Tested with super_admin user
 - [ ] Verified JWT contains `user_role` claim
 - [ ] Tested role change and token refresh
+- [ ] **Tested JWT error flow (old token → logout prompt → re-login)**
 - [ ] Updated all super admin edge functions
 - [ ] Monitored logs for errors
 - [ ] Updated documentation

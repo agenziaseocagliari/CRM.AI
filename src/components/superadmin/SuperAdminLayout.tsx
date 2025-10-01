@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { SuperAdminSidebar } from './SuperAdminSidebar';
 import { SuperAdminHeader } from './SuperAdminHeader';
 import { useAuth } from '../../contexts/AuthContext';
+import { AutomaticAlerts } from './alerts/AutomaticAlerts';
 import toast from 'react-hot-toast';
 
 export const SuperAdminLayout: React.FC = () => {
@@ -108,6 +109,8 @@ export const SuperAdminLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      {/* Background monitoring for automatic alerts */}
+      <AutomaticAlerts />
     </div>
   );
 };

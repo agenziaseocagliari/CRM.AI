@@ -50,35 +50,52 @@ function createDiagnosticReport(
  * Displays a detailed and actionable error toast.
  * @param message The main error message to display to the user.
  * @param diagnosticReport The full diagnostic report to be copied.
+ * @param options Optional configuration for the toast behavior.
  */
-function showErrorToast(message: string, diagnosticReport: string) {
+function showErrorToast(message: string, diagnosticReport: string, options?: { 
+    requiresLogout?: boolean;
+    isJwtError?: boolean;
+}) {
     // Check if the error suggests a Google reconnection is needed.
     const needsReconnect = /token|google|autenticazione|connetti|credential/i.test(diagnosticReport.toLowerCase());
+    const requiresLogout = options?.requiresLogout || false;
+    const isJwtError = options?.isJwtError || false;
     
     toast.error(
         (t) => (
             React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'start', gap: '12px', maxWidth: '400px' } },
                 React.createElement('p', { className: 'font-semibold text-center w-full' }, message),
-                needsReconnect && React.createElement('p', { className: 'text-sm text-center w-full' },
+                needsReconnect && !isJwtError && React.createElement('p', { className: 'text-sm text-center w-full' },
                     'Potrebbe essere necessario riconnettere il tuo account Google. ',
                     React.createElement('span', { className: 'font-bold' }, 'Vai su Impostazioni -> Integrazioni.')
                 ),
+                isJwtError && React.createElement('p', { className: 'text-sm text-center w-full text-yellow-700' },
+                    '⚠️ La tua sessione è scaduta o è stata aggiornata. È necessario effettuare nuovamente il login.'
+                ),
                 React.createElement('div', { className: "flex items-center space-x-2 w-full justify-center" },
+                    requiresLogout && React.createElement('button', {
+                        onClick: async () => {
+                            toast.dismiss(t.id);
+                            await supabase.auth.signOut();
+                            window.location.href = '/login';
+                        },
+                        className: 'bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 font-semibold'
+                    }, 'Vai al Login'),
                     React.createElement('button', {
                         onClick: () => {
                             navigator.clipboard.writeText(diagnosticReport);
                             toast.success('Diagnostica copiata!', { id: 'copy-toast', duration: 2000 });
                         },
                         className: 'bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm hover:bg-gray-300'
-                    }, 'Copia Diagnosi per Supporto'),
-                    React.createElement('button', {
+                    }, 'Copia Diagnosi'),
+                    !requiresLogout && React.createElement('button', {
                         onClick: () => toast.dismiss(t.id),
                         className: 'bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600'
                     }, 'Chiudi')
                 )
             )
         ),
-        { duration: 15000, id: `error-toast-${Date.now()}` }
+        { duration: requiresLogout ? Infinity : 15000, id: `error-toast-${Date.now()}` }
     );
 }
 
@@ -98,8 +115,9 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
     if (!user) {
         const errorMsg = "Utente non autenticato. Effettua nuovamente il login per continuare.";
         console.error("[API Helper] Pre-flight check failed: User not authenticated.");
-        showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, "Pre-flight check failed"));
-        throw new Error(errorMsg);
+        const diagnosticReport = createDiagnosticReport(errorMsg, functionName, "Pre-flight check failed");
+        showErrorToast(errorMsg, diagnosticReport, { requiresLogout: true });
+        throw { error: errorMsg, requiresRelogin: true };
     }
 
     // 2. Prepare payload with organization_id.
@@ -154,11 +172,52 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             
             console.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`, errorJson || errorText);
 
+            // Check for JWT custom claim error specifically
+            const errorMessage = errorJson?.error || errorText || '';
+            const isJwtClaimError = (response.status === 403 || response.status === 401) && 
+                                   /user_role not found|JWT custom claim|custom claim.*not found/i.test(errorMessage);
+            
+            if (isJwtClaimError) {
+                console.error(`[API Helper] JWT Custom Claim Error detected on '${functionName}'. Token is outdated or missing custom claims.`);
+                const userMessage = 'La sessione è scaduta o aggiornata. Per favore, effettua nuovamente il login.';
+                const diagnosticReport = createDiagnosticReport(
+                    userMessage, 
+                    functionName, 
+                    errorJson || errorText
+                );
+                
+                // Show error with logout button
+                showErrorToast(userMessage, diagnosticReport, { 
+                    requiresLogout: true,
+                    isJwtError: true 
+                });
+                
+                // Automatically clear auth state
+                localStorage.removeItem('organization_id');
+                
+                throw { 
+                    error: userMessage, 
+                    isJwtError: true,
+                    requiresRelogin: true,
+                    diagnostics: errorJson 
+                };
+            }
+
             const isAuthError = response.status === 401 || response.status === 403 || (errorText && /organization_id|jwt|token/i.test(errorText));
             
             if (isAuthError && !isRetry) {
                 console.warn(`[API Helper] Auth error on '${functionName}'. Attempting session refresh and one retry...`);
-                await supabase.auth.refreshSession();
+                const { error: refreshError } = await supabase.auth.refreshSession();
+                
+                if (refreshError) {
+                    console.error(`[API Helper] Session refresh failed:`, refreshError);
+                    const userMessage = 'Sessione scaduta. Per favore, effettua nuovamente il login.';
+                    const diagnosticReport = createDiagnosticReport(userMessage, functionName, refreshError);
+                    showErrorToast(userMessage, diagnosticReport, { requiresLogout: true });
+                    localStorage.removeItem('organization_id');
+                    throw { error: userMessage, requiresRelogin: true };
+                }
+                
                 return invokeSupabaseFunction(functionName, payload, true);
             }
             
@@ -195,16 +254,34 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         // Our goal is to only generate a *new* generic diagnostic report and toast for case #1 and #2.
         // Case #3 errors already have a specific, useful message from the backend and have been toasted.
         
-        // We check if the error already has our custom structure. If not, it's a network/parse error.
-        if (typeof error.error === 'undefined' && error instanceof Error) {
-            console.error(`[API Helper] Network or Parsing Error calling '${functionName}':`, error);
+        // Check if this is a re-thrown error from our handling (has custom structure)
+        if (error.isJwtError || error.requiresRelogin || typeof error.error !== 'undefined') {
+            // This is an already-processed application error, just re-throw
+            console.log(`[API Helper] Re-throwing processed error from '${functionName}'`);
+            throw error;
+        }
+        
+        // If we reach here, it's a true network/fetch error
+        if (error instanceof Error) {
+            console.error(`[API Helper] Network or Fetch Error calling '${functionName}':`, error);
+            
+            // Try to determine if this is a true network error vs. a CORS/backend issue
+            const isNetworkError = error.name === 'TypeError' && 
+                                  (error.message.includes('Failed to fetch') || 
+                                   error.message.includes('NetworkError') ||
+                                   error.message.includes('Network request failed'));
+            
+            const userMessage = isNetworkError 
+                ? 'Errore di rete. Controlla la connessione e riprova.'
+                : 'Errore di comunicazione con il server. Riprova più tardi.';
+                
             const diagnosticReport = createDiagnosticReport(
-                'Errore di Rete o Comunicazione',
+                userMessage,
                 functionName,
                 "La richiesta non ha raggiunto il server o la risposta non era valida.",
                 error
             );
-            showErrorToast('Errore di rete. Controlla la connessione e riprova.', diagnosticReport);
+            showErrorToast(userMessage, diagnosticReport);
         }
         
         // In all cases, we re-throw the error so the calling component's own try/catch block

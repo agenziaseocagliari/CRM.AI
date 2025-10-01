@@ -44,22 +44,39 @@
 
 ### 3. ✅ Password Reset Flow
 
-**New Component:** `src/components/ForgotPassword.tsx`
+**New Components:** 
+- `src/components/ForgotPassword.tsx` - Request password reset via email
+- `src/components/ResetPassword.tsx` - Set new password with recovery token
 
-**Features:**
+**ForgotPassword Features:**
 - Email input field
 - Supabase `resetPasswordForEmail()` integration
 - Generic success message (no account status leak)
 - Clear instructions for user
 - Navigation back to login
+- Redirects to `/reset-password` with recovery token
 
-**Route Added:**
-- `/forgot-password` - Public route in `src/App.tsx`
+**ResetPassword Features:**
+- Extracts recovery token from URL query parameters (`token` or `access_token`)
+- Password and confirm password fields with validation
+- Minimum 8 character password requirement
+- Calls `supabase.auth.updateUser({ password })` to update password
+- Automatic login after successful password reset
+- Redirects to dashboard after password update
+- Clear error messages for invalid/expired tokens
+- Navigation back to forgot-password page if token is invalid
+
+**Routes Added:**
+- `/forgot-password` - Public route for requesting password reset
+- `/reset-password` - Public route for setting new password with token
 
 **Security Considerations:**
 - Shows same message whether email exists or not
 - Prevents account enumeration attacks
 - Email instructions sent only if account exists (handled by Supabase)
+- Token validation handled by Supabase auth
+- Password strength validation (min 8 characters)
+- Password confirmation to prevent typos
 
 ---
 
@@ -159,6 +176,15 @@ const LOGIN_DELAY_MS = 2000; // 2 seconds
 - [x] Generic success message shown
 - [x] No account status leaked
 - [x] Back to login navigation works
+- [x] Email redirects to `/reset-password` with token
+- [x] Token extracted from URL query parameters
+- [x] New password form displayed
+- [x] Password confirmation validation works
+- [x] Minimum 8 character validation works
+- [x] `updateUser()` called with new password
+- [x] Success redirects to dashboard
+- [x] Invalid token shows error message
+- [x] Expired token handled gracefully
 
 ### Security
 - [x] No hardcoded emails visible
@@ -216,14 +242,24 @@ After 4 failed attempts, login tracking is visible.
      - "Forgot password" link
 
 2. **src/components/ForgotPassword.tsx** (NEW)
-   - Lines: 148
-   - Full password reset flow
+   - Lines: 137
+   - Password reset request flow
    - Generic messaging
    - Supabase integration
+   - Redirects to `/reset-password`
 
-3. **src/App.tsx**
-   - Added import for `ForgotPassword`
+3. **src/components/ResetPassword.tsx** (NEW)
+   - Lines: 246
+   - Password reset completion flow
+   - Token extraction from URL
+   - Password validation and confirmation
+   - Supabase `updateUser()` integration
+   - Auto-login and redirect to dashboard
+
+4. **src/App.tsx**
+   - Added import for `ForgotPassword` and `ResetPassword`
    - Added `/forgot-password` route
+   - Added `/reset-password` route
 
 4. **.gitignore**
    - Added `.env` entry

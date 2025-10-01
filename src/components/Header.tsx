@@ -2,6 +2,7 @@ import React from 'react';
 import { Organization } from '../types';
 import { BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { SessionHealthIndicator } from './SessionHealthIndicator';
 
 interface HeaderProps {
   organization: Organization | null;
@@ -44,6 +45,9 @@ export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
       </div>
       
       <div className="flex items-center space-x-4">
+        {/* Session Health Indicator - Compact */}
+        <SessionHealthIndicator mode="compact" autoCheck={true} checkInterval={5} />
+        
         <div className="relative">
           <input 
             type="text" 

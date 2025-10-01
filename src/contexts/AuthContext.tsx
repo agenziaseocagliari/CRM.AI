@@ -53,6 +53,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.warn('⚠️ [AuthContext] User must logout and login again to get proper token');
       }
 
+      // FIX: Set organization_id to "ALL" for super_admin users
+      if (claims.user_role === 'super_admin') {
+        console.log('🔐 [AuthContext] Super Admin detected - setting organization_id to "ALL"');
+        localStorage.setItem('organization_id', 'ALL');
+      }
+
       setJwtClaims(claims);
     } else {
       console.error('❌ [AuthContext] Failed to parse JWT claims');

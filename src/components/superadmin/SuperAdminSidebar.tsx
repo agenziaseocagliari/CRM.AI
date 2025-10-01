@@ -8,6 +8,7 @@ import {
     DocumentMagnifyingGlassIcon, 
     SparklesIcon 
 } from '../ui/icons';
+import { useAuth } from '../../contexts/AuthContext';
 
 const NavItem: React.FC<{ to: string; icon: React.ReactNode; label: string; }> = ({ to, icon, label }) => {
     const activeClass = 'bg-primary text-white dark:bg-dark-primary';
@@ -29,6 +30,8 @@ const NavItem: React.FC<{ to: string; icon: React.ReactNode; label: string; }> =
 };
 
 export const SuperAdminSidebar: React.FC = () => {
+  const { userRole } = useAuth();
+  
   return (
     <aside className="w-64 bg-sidebar text-white dark:bg-dark-sidebar flex flex-col p-4 flex-shrink-0 h-screen sticky top-0">
       <div className="flex items-center mb-8 px-2">
@@ -47,11 +50,13 @@ export const SuperAdminSidebar: React.FC = () => {
           <NavItem to="audit-logs" icon={<DocumentMagnifyingGlassIcon className="w-6 h-6" />} label="Audit Logs" />
         </ul>
       </nav>
-        <div className="mt-auto px-2">
-            <Link to="/dashboard" className="text-sm text-gray-400 hover:text-white dark:hover:text-dark-text-primary">
-                &larr; Torna al CRM
-            </Link>
-        </div>
+        {userRole !== "super_admin" && (
+          <div className="mt-auto px-2">
+              <Link to="/dashboard" className="text-sm text-gray-400 hover:text-white dark:hover:text-dark-text-primary">
+                  &larr; Torna al CRM
+              </Link>
+          </div>
+        )}
     </aside>
   );
 };

@@ -18,6 +18,7 @@ import { Automations } from './components/Automations';
 import { Settings, GoogleAuthCallback } from './components/Settings';
 import { Login } from './components/Login';
 import { ForgotPassword } from './components/ForgotPassword';
+import { ResetPassword } from './components/ResetPassword';
 import { HomePage } from './components/HomePage';
 import { PublicForm } from './components/PublicForm';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
@@ -141,6 +142,7 @@ const App: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={session ? <Navigate to="/dashboard" /> : <Login />} />
         <Route path="/forgot-password" element={session ? <Navigate to="/dashboard" /> : <ForgotPassword />} />
+        <Route path="/reset-password" element={session ? <Navigate to="/dashboard" /> : <ResetPassword />} />
         
         <Route path="/form/:formId" element={<PublicForm />} />
 

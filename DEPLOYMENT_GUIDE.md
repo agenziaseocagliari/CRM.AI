@@ -195,11 +195,35 @@ Dovresti vedere tutte le 22 functions deployate.
 
 ## 6️⃣ Deploy Frontend su Vercel
 
+### ⚠️ Policy di Deployment
+
+**IMPORTANTE**: Questo progetto segue una **strict deployment policy** per ottimizzare costi e sostenibilità.
+
+📖 **Leggi la policy completa**: [VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)
+
+**Regole chiave**:
+- ✅ **Produzione**: Deploy automatico SOLO da branch `main`
+- 🔍 **Preview**: Solo per PR su branch `feature/*`, `fix/*`, `hotfix/*`
+- ⏱️ **TTL**: Preview deployments max 7 giorni
+- 🧹 **Cleanup**: Rimozione immediata dopo merge/close PR
+
 ### Collega Repository
 
 1. Vai su https://vercel.com
 2. Import Git Repository
 3. Seleziona `seo-cagliari/CRM-AI`
+
+### Configura Git Settings (IMPORTANTE)
+
+**In Vercel Dashboard → Project Settings → Git**:
+
+1. **Production Branch**: Imposta su `main`
+2. **Automatic Deployments**: 
+   - ✅ Abilita SOLO per `main`
+   - ❌ Disabilita "Deploy all branches"
+3. **Preview Deployments**:
+   - ✅ Abilita per Pull Requests
+   - ✅ Branch prefix: `feature/`, `fix/`, `hotfix/`
 
 ### Configura Environment Variables
 
@@ -210,11 +234,22 @@ VITE_SUPABASE_URL=https://[project-id].supabase.co
 VITE_SUPABASE_ANON_KEY=[anon-key-da-supabase]
 ```
 
+### Configura Deployment Protection (Opzionale ma Consigliato)
+
+**In Settings → Deployment Protection**:
+
+1. **Deployment Expiration**: Imposta a 7 giorni per preview
+2. **Vercel Authentication**: Abilita per preview deployments (protegge ambienti di test)
+
 ### Deploy
 
-1. Clicca su **Deploy**
+1. Il primo deploy avviene automaticamente dopo l'import
 2. Attendi build e deployment
 3. Verifica che il sito sia online
+
+**⚠️ Nota**: Dopo il setup iniziale, i deployment avvengono automaticamente:
+- Su **push a `main`** → Deploy in produzione
+- Su **apertura PR** → Deploy preview (se branch è `feature/*`, `fix/*`, etc.)
 
 ### Configura Custom Domain (Opzionale)
 
@@ -226,6 +261,44 @@ VITE_SUPABASE_ANON_KEY=[anon-key-da-supabase]
 **⚠️ Importante**: Dopo aver configurato dominio custom, aggiorna:
 - `GOOGLE_REDIRECT_URI` nei secrets Supabase
 - Authorized redirect URIs in Google Cloud Console
+
+### Ottimizzazione Deploy Vercel (Riduzione Costi)
+
+Per ridurre costi e ottimizzare la gestione degli ambienti:
+
+#### 1. Disabilita Auto-Deploy su Tutti i Branch
+Vai su **Settings → Git → Production Branch**:
+- Production Branch: `main`
+- Disabilita: "Automatically deploy all branches"
+
+#### 2. Configura GitHub Secrets per Workflow
+Aggiungi in **Repository → Settings → Secrets and variables → Actions**:
+
+| Secret Name | Descrizione | Dove Ottenerlo |
+|------------|-------------|----------------|
+| `VERCEL_TOKEN` | Token API Vercel | https://vercel.com/account/tokens |
+| `VERCEL_ORG_ID` | Organization ID | Settings → General → ID |
+| `VERCEL_PROJECT_ID` | Project ID | Project Settings → General → Project ID |
+
+#### 3. Abilita Workflow Intelligenti
+I workflow `.github/workflows/vercel-preview.yml` e `vercel-cleanup.yml` gestiranno:
+- ✅ Preview solo su PR con label `deploy-preview` o branch `feature/*`, `fix/*`, `hotfix/*`, `release/*`
+- ✅ Auto-cleanup preview quando PR viene chiusa
+- ✅ Cleanup automatico preview più vecchi di 7 giorni (eseguito ogni notte)
+
+#### 4. Branch Naming Convention
+Usa questi pattern per controllare i deploy:
+```bash
+# ✅ Auto-deploy preview on PR
+git checkout -b feature/new-dashboard
+git checkout -b fix/login-bug
+
+# ❌ No auto-deploy (manual only)
+git checkout -b draft/experimental
+git checkout -b test/performance
+```
+
+**📚 Documentazione Completa**: Vedi [VERCEL_DEPLOYMENT_OPTIMIZATION.md](./VERCEL_DEPLOYMENT_OPTIMIZATION.md) per strategia completa
 
 ---
 
@@ -418,12 +491,36 @@ WHERE schemaname = 'public';
 - [ ] Controlla GitHub Actions runs
 - [ ] Review performance Supabase Dashboard
 - [ ] Backup database
+- [ ] **Esegui `node scripts/vercel-metrics.js`** per monitorare usage Vercel
+- [ ] Verifica preview deployments attivi (<10 raccomandato)
 
 ### Mensile
 - [ ] `npm audit` e aggiornamenti sicurezza
 - [ ] Review e cleanup logs vecchi
 - [ ] Verifica storage usage
 - [ ] Update documentazione se necessario
+- [ ] **Review costi Vercel** e trend deployments
+- [ ] Verifica efficacia strategia preview deployments
+
+### Vercel Cost Monitoring
+
+```bash
+# Controlla metriche Vercel
+VERCEL_TOKEN=xxx node scripts/vercel-metrics.cjs
+
+# Output include:
+# - Numero deployments (ultimi 7/30 giorni)
+# - Preview attivi vs production
+# - Success rate builds
+# - Stima usage mensile
+# - Warning su usage eccessivo
+```
+
+**Target KPIs**:
+- Preview attivi: < 10
+- Build success rate: > 95%
+- Preview lifetime medio: < 3 giorni
+- Deployments/settimana: 5-10 (non 20+)
 
 ---
 

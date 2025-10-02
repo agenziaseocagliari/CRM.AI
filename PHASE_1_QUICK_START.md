@@ -65,6 +65,8 @@ supabase functions list
 
 ### Step 3: Deploy Frontend (1 minute)
 
+**⚠️ IMPORTANTE**: Segui la [Vercel Deployment Policy](./VERCEL_DEPLOYMENT_POLICY.md)
+
 ```bash
 # Build production bundle
 npm run build
@@ -72,11 +74,17 @@ npm run build
 # Test locally (optional)
 npm run preview
 
-# Deploy to production
-vercel deploy --prod
-# OR
-netlify deploy --prod
+# Deploy to production (via Git push to main)
+# ✅ Vercel deploya automaticamente quando fai push a main
+git add .
+git commit -m "chore: deploy phase 1"
+git push origin main  # → Deploy automatico su Vercel
+
+# Alternativa: Deploy manuale (NON RACCOMANDATO)
+# vercel deploy --prod
 ```
+
+**Nota**: Con la nuova policy, il deployment avviene automaticamente su push a `main`. Non serve più usare `vercel deploy` manualmente.
 
 ---
 
@@ -391,7 +399,7 @@ npm run lint && npm run build
 # Reset and redeploy
 supabase db reset
 supabase functions deploy --no-verify-jwt
-npm run build && vercel deploy --prod
+npm run build && git push origin main  # Deploy automatico Vercel
 ```
 
 ### Contact
@@ -421,7 +429,7 @@ After successful deployment:
 supabase db push
 supabase functions deploy superadmin-quota-management
 supabase functions deploy superadmin-system-health
-npm run build && vercel deploy --prod
+npm run build && git push origin main  # ✅ Deploy automatico Vercel
 
 # Check status
 supabase functions list
@@ -435,6 +443,8 @@ supabase db logs --tail
 git checkout main
 supabase db reset
 ```
+
+**⚠️ Nota Deployment Frontend**: Con la nuova [Vercel Deployment Policy](./VERCEL_DEPLOYMENT_POLICY.md), il deployment avviene automaticamente su push a `main`.
 
 ---
 

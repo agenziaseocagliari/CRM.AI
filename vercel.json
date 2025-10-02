@@ -1,8 +1,12 @@
 {
+  "git": {
+    "deploymentEnabled": {
+
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+
 }

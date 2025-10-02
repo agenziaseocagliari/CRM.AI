@@ -57,9 +57,7 @@ Il progetto include documentazione tecnica comprehensiva:
 
 ### 🚀 Guide Quick Start
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Guida passo-passo per setup completo (GitHub, Supabase, Vercel)
-- **[VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)** - 📋 **Policy ufficiale Vercel**: production su main, preview su PR, TTL 7 giorni, cleanup automatico
-- **[VERCEL_DEPLOYMENT_OPTIMIZATION.md](./VERCEL_DEPLOYMENT_OPTIMIZATION.md)** - 🎯 Strategia ottimizzazione deploy Vercel e riduzione costi
-- **[VERCEL_QUICK_REFERENCE.md](./VERCEL_QUICK_REFERENCE.md)** - 🚀 Quick reference per sviluppatori su branch naming e workflow
+
 - **[.env.example](./.env.example)** - Template configurazione con tutte le variabili ambiente necessarie
 
 ### 📖 Documentazione Tecnica
@@ -119,9 +117,22 @@ npm run dev
 ```
 
 ### Deploy (Automatico via GitHub Actions)
+
+**⚠️ IMPORTANTE**: Segui la [Vercel Deployment Policy](./VERCEL_DEPLOYMENT_POLICY.md)
+
 ```bash
-# Deploy su push a main (automatico)
-git push origin main
+# Frontend: Deploy automatico su Vercel
+# ✅ Produzione: SOLO push a main
+git checkout main
+git merge feature/my-feature
+git push origin main  # → Deploy automatico in produzione
+
+# ✅ Preview: Apri PR da feature branch
+git push origin feature/my-feature
+# → Crea PR su GitHub → Preview deployment automatico
+
+# Backend: Deploy edge functions (automatico su push a main)
+git push origin main  # → GitHub Actions deploya su Supabase
 
 # Deploy manuale edge functions (se necessario)
 supabase functions deploy --no-verify-jwt

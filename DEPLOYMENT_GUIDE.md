@@ -195,11 +195,35 @@ Dovresti vedere tutte le 22 functions deployate.
 
 ## 6️⃣ Deploy Frontend su Vercel
 
+### ⚠️ Policy di Deployment
+
+**IMPORTANTE**: Questo progetto segue una **strict deployment policy** per ottimizzare costi e sostenibilità.
+
+📖 **Leggi la policy completa**: [VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)
+
+**Regole chiave**:
+- ✅ **Produzione**: Deploy automatico SOLO da branch `main`
+- 🔍 **Preview**: Solo per PR su branch `feature/*`, `fix/*`, `hotfix/*`
+- ⏱️ **TTL**: Preview deployments max 7 giorni
+- 🧹 **Cleanup**: Rimozione immediata dopo merge/close PR
+
 ### Collega Repository
 
 1. Vai su https://vercel.com
 2. Import Git Repository
 3. Seleziona `seo-cagliari/CRM-AI`
+
+### Configura Git Settings (IMPORTANTE)
+
+**In Vercel Dashboard → Project Settings → Git**:
+
+1. **Production Branch**: Imposta su `main`
+2. **Automatic Deployments**: 
+   - ✅ Abilita SOLO per `main`
+   - ❌ Disabilita "Deploy all branches"
+3. **Preview Deployments**:
+   - ✅ Abilita per Pull Requests
+   - ✅ Branch prefix: `feature/`, `fix/`, `hotfix/`
 
 ### Configura Environment Variables
 
@@ -210,11 +234,22 @@ VITE_SUPABASE_URL=https://[project-id].supabase.co
 VITE_SUPABASE_ANON_KEY=[anon-key-da-supabase]
 ```
 
+### Configura Deployment Protection (Opzionale ma Consigliato)
+
+**In Settings → Deployment Protection**:
+
+1. **Deployment Expiration**: Imposta a 7 giorni per preview
+2. **Vercel Authentication**: Abilita per preview deployments (protegge ambienti di test)
+
 ### Deploy
 
-1. Clicca su **Deploy**
+1. Il primo deploy avviene automaticamente dopo l'import
 2. Attendi build e deployment
 3. Verifica che il sito sia online
+
+**⚠️ Nota**: Dopo il setup iniziale, i deployment avvengono automaticamente:
+- Su **push a `main`** → Deploy in produzione
+- Su **apertura PR** → Deploy preview (se branch è `feature/*`, `fix/*`, etc.)
 
 ### Configura Custom Domain (Opzionale)
 

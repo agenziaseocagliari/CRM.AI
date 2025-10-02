@@ -379,7 +379,10 @@ VALUES ('Test Agent', 'health_monitor', 'Test description', '{}');
 ```bash
 # Push migration to Supabase
 cd /home/runner/work/CRM-AI/CRM-AI
-supabase db push
+
+# Usa --include-all per applicare la migration 20250102000000_create_agents_and_integrations.sql
+# anche se la sua data è anteriore alle migrations già applicate
+supabase db push --include-all
 
 # Verify migration
 supabase db diff

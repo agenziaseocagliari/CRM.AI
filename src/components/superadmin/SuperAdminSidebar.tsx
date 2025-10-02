@@ -6,7 +6,9 @@ import {
     UsersIcon, 
     CreditCardIcon, 
     DocumentMagnifyingGlassIcon, 
-    SparklesIcon 
+    SparklesIcon,
+    CpuChipIcon,
+    GlobeAltIcon
 } from '../ui/icons';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -46,7 +48,10 @@ export const SuperAdminSidebar: React.FC = () => {
           <NavItem to="dashboard" icon={<DashboardIcon className="w-6 h-6" />} label="Dashboard" />
           <NavItem to="customers" icon={<UsersIcon className="w-6 h-6" />} label="Clienti" />
           <NavItem to="payments" icon={<CreditCardIcon className="w-6 h-6" />} label="Pagamenti" />
-          <NavItem to="ai-workflows" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow AI" />
+          <NavItem to="automation-agents" icon={<CpuChipIcon className="w-6 h-6" />} label="Agenti AI" />
+          <NavItem to="api-integrations" icon={<GlobeAltIcon className="w-6 h-6" />} label="API & Integrazioni" />
+          <NavItem to="workflow-builder" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow Builder" />
+          <NavItem to="ai-workflows" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow Legacy" />
           <NavItem to="audit-logs" icon={<DocumentMagnifyingGlassIcon className="w-6 h-6" />} label="Audit Logs" />
         </ul>
       </nav>

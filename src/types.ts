@@ -130,3 +130,97 @@ export interface CreditLedgerEntry {
     outcome: 'SUCCESS' | 'INSUFFICIENT_FUNDS';
     created_at: string;
 }
+
+// =====================================================
+// Automation Agents & API Integration Types
+// =====================================================
+
+export type AgentType = 'health_monitor' | 'payment_revenue' | 'support_ticket' | 'user_engagement' | 'security_watcher';
+export type AgentStatus = 'idle' | 'running' | 'error';
+
+export interface AutomationAgent {
+    id: string;
+    name: string;
+    type: AgentType;
+    description: string;
+    is_active: boolean;
+    configuration: Record<string, any>;
+    status: AgentStatus;
+    last_run_at: string | null;
+    last_error: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AgentExecutionLog {
+    id: number;
+    agent_id: string;
+    execution_start: string;
+    execution_end: string | null;
+    status: 'running' | 'success' | 'error' | 'partial';
+    result_summary: Record<string, any> | null;
+    error_details: string | null;
+    actions_taken: any[];
+    created_at: string;
+}
+
+export type ProviderType = 'messaging' | 'email' | 'ai' | 'push' | 'custom';
+export type IntegrationStatus = 'connected' | 'disconnected' | 'error' | 'rate_limited';
+
+export interface APIIntegration {
+    id: string;
+    provider_name: string;
+    provider_type: ProviderType;
+    display_name: string;
+    is_active: boolean;
+    credentials: Record<string, any>;
+    configuration: Record<string, any>;
+    status: IntegrationStatus;
+    last_ping_at: string | null;
+    last_error: string | null;
+    usage_stats: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface IntegrationUsageLog {
+    id: number;
+    integration_id: string;
+    action_type: string;
+    status: 'success' | 'error' | 'rate_limited';
+    request_details: Record<string, any> | null;
+    response_details: Record<string, any> | null;
+    error_message: string | null;
+    execution_time_ms: number | null;
+    created_at: string;
+}
+
+export type TriggerType = 'manual' | 'schedule' | 'event' | 'condition';
+
+export interface WorkflowDefinition {
+    id: string;
+    organization_id: string | null;
+    name: string;
+    description: string | null;
+    natural_language_prompt: string;
+    workflow_json: Record<string, any>;
+    is_active: boolean;
+    trigger_type: TriggerType;
+    trigger_config: Record<string, any>;
+    created_by: string | null;
+    created_at: string;
+    updated_at: string;
+    last_executed_at: string | null;
+}
+
+export interface WorkflowExecutionLog {
+    id: number;
+    workflow_id: string;
+    execution_start: string;
+    execution_end: string | null;
+    status: 'running' | 'success' | 'error' | 'partial';
+    trigger_data: Record<string, any> | null;
+    execution_result: Record<string, any> | null;
+    error_details: string | null;
+    created_at: string;
+}

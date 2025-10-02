@@ -63,14 +63,29 @@ const allowedPatterns = [
   /profile\.role/,
   /profiles\.role/,
   /user\.role/,
+  /member\.role/,
   /SERVICE_ROLE_KEY/,
   /service_role_key/,
-  /\/\//,  // Comments
-  /\/\*/,  // Block comments
+  /^\s*\/\//,  // Lines starting with comments
+  /^\s*\/\*/,  // Lines starting with block comments
 ];
 
-function shouldIgnoreLine(line: string): boolean {
-  return allowedPatterns.some(pattern => pattern.test(line));
+function shouldIgnoreLine(line: string, context: string[]): boolean {
+  // Check if line itself contains allowed patterns
+  if (allowedPatterns.some(pattern => pattern.test(line))) {
+    return true;
+  }
+  
+  // Check if context (5 lines before) contains interface, type, or mock data declarations
+  const contextText = context.join('\n');
+  if (/interface\s+\w+\s*{/.test(contextText) ||
+      /type\s+\w+\s*=/.test(contextText) ||
+      /const\s+mock/i.test(contextText) ||
+      /Mock data/i.test(contextText)) {
+    return true;
+  }
+  
+  return false;
 }
 
 function checkFile(filePath: string): void {
@@ -78,8 +93,12 @@ function checkFile(filePath: string): void {
   const lines = content.split('\n');
 
   lines.forEach((line, index) => {
-    // Skip if line contains legitimate usage
-    if (shouldIgnoreLine(line)) {
+    // Get context (5 lines before current line)
+    const contextStart = Math.max(0, index - 5);
+    const context = lines.slice(contextStart, index);
+    
+    // Skip if line contains legitimate usage or is in a legitimate context
+    if (shouldIgnoreLine(line, context)) {
       return;
     }
 

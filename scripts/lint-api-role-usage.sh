@@ -36,18 +36,52 @@ check_pattern() {
     local message=$2
     local search_paths="src/ supabase/functions/"
     
-    # Search for the pattern, excluding legitimate uses
-    local results=$(grep -rn -E "$pattern" $search_paths \
-        --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 2>/dev/null | \
-        grep -v "SERVICE_ROLE_KEY" | \
-        grep -v "service_role_key" | \
-        grep -v "profile\.role" | \
-        grep -v "profiles\.role" | \
-        grep -v "user\.role" | \
-        grep -v "// " | \
-        grep -v "/\*" | \
-        grep -v "Never use" | \
-        grep -v "what NOT to do" || true)
+    # Get all matches with 5 lines of context before
+    local all_matches=$(grep -rn -B 5 -E "$pattern" $search_paths \
+        --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 2>/dev/null)
+    
+    # Process matches to filter out legitimate uses
+    local results=""
+    local current_block=""
+    local is_api_call=true
+    
+    while IFS= read -r line; do
+        if [[ "$line" == "--" ]]; then
+            # End of a match block - check if it should be included
+            if [ "$is_api_call" = true ] && [ ! -z "$current_block" ]; then
+                results="${results}${current_block}"$'\n'
+            fi
+            current_block=""
+            is_api_call=true
+        else
+            current_block="${current_block}${line}"$'\n'
+            
+            # Check if this block contains legitimate uses
+            if [[ "$line" =~ interface[[:space:]] ]] || \
+               [[ "$line" =~ ^[[:space:]]*type[[:space:]] ]] || \
+               [[ "$line" =~ const[[:space:]]mock ]] || \
+               [[ "$line" =~ "Mock data" ]] || \
+               [[ "$line" =~ SERVICE_ROLE_KEY ]] || \
+               [[ "$line" =~ service_role_key ]] || \
+               [[ "$line" =~ profile\.role ]] || \
+               [[ "$line" =~ profiles\.role ]] || \
+               [[ "$line" =~ user\.role ]] || \
+               [[ "$line" =~ member\.role ]] || \
+               [[ "$line" =~ ^[[:space:]]*/[/*] ]] || \
+               [[ "$line" =~ "Never use" ]] || \
+               [[ "$line" =~ "what NOT to do" ]]; then
+                is_api_call=false
+            fi
+        fi
+    done <<< "$all_matches"
+    
+    # Check last block
+    if [ "$is_api_call" = true ] && [ ! -z "$current_block" ]; then
+        results="${results}${current_block}"
+    fi
+    
+    # Remove leading/trailing whitespace
+    results=$(echo "$results" | sed '/^[[:space:]]*$/d')
     
     if [ ! -z "$results" ]; then
         ISSUES_FOUND=$((ISSUES_FOUND + 1))

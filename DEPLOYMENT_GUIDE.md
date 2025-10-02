@@ -471,7 +471,7 @@ WHERE schemaname = 'public';
 
 ```bash
 # Controlla metriche Vercel
-VERCEL_TOKEN=xxx node scripts/vercel-metrics.js
+VERCEL_TOKEN=xxx node scripts/vercel-metrics.cjs
 
 # Output include:
 # - Numero deployments (ultimi 7/30 giorni)

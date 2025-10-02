@@ -436,8 +436,8 @@ Deployment Protection:
 ### 1. Metriche da Tracciare
 
 ```javascript
-// Script: scripts/vercel-metrics.js
-// Uso: node scripts/vercel-metrics.js
+// Script: scripts/vercel-metrics.cjs
+// Uso: node scripts/vercel-metrics.cjs
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const TEAM_ID = process.env.VERCEL_TEAM_ID;
@@ -496,7 +496,7 @@ Cost Analysis:
 ### 3. Alerts Configuration
 
 ```javascript
-// scripts/vercel-alerts.js
+// scripts/vercel-alerts.cjs (future implementation)
 
 const THRESHOLDS = {
   BUILD_MINUTES_WARNING: 4000,    // 66% di 6000

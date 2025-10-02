@@ -135,7 +135,7 @@ Script per testare le funzionalità Super Admin delle edge functions.
 
 ---
 
-### vercel-metrics.js
+### vercel-metrics.cjs
 
 Script Node.js per monitorare l'utilizzo delle risorse Vercel e generare report dettagliati.
 
@@ -148,7 +148,7 @@ export VERCEL_TOKEN=xxx
 export VERCEL_TEAM_ID=yyy
 
 # Esegui script
-node scripts/vercel-metrics.js
+node scripts/vercel-metrics.cjs
 ```
 
 **Cosa Monitora**:
@@ -204,7 +204,7 @@ node scripts/vercel-metrics.js
 
 ### Settimanale
 - Verifica routine sincronizzazione
-- `node scripts/vercel-metrics.js` - Monitora usage Vercel
+- `node scripts/vercel-metrics.cjs` - Monitora usage Vercel
 - Check post-deployment
 
 ### Pre-Deploy

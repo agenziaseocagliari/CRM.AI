@@ -90,7 +90,7 @@ Prima di aprire una PR che richiede preview:
 export VERCEL_TOKEN=xxx
 
 # Esegui monitoring script
-node scripts/vercel-metrics.js
+node scripts/vercel-metrics.cjs
 ```
 
 **Output tipico:**
@@ -291,7 +291,7 @@ Implementa nuovo dashboard per super admin
 **Problemi con deploy?**
 - Check [VERCEL_DEPLOYMENT_OPTIMIZATION.md](./VERCEL_DEPLOYMENT_OPTIMIZATION.md)
 - Controlla GitHub Actions logs
-- Run `node scripts/vercel-metrics.js`
+- Run `node scripts/vercel-metrics.cjs`
 - Contatta DevOps team
 
 **Link Utili:**

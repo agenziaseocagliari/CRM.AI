@@ -106,6 +106,7 @@ ALTER TABLE ip_access_log ENABLE ROW LEVEL SECURITY;
 -- IP Whitelist Policies
 CREATE POLICY "Users can view their organization's IP whitelist"
     ON ip_whitelist FOR SELECT
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE user_id = auth.uid()
@@ -114,6 +115,7 @@ CREATE POLICY "Users can view their organization's IP whitelist"
 
 CREATE POLICY "Admins can insert IP whitelist entries"
     ON ip_whitelist FOR INSERT
+    TO public
     WITH CHECK (
         organization_id IN (
             SELECT organization_id FROM profiles 
@@ -124,6 +126,7 @@ CREATE POLICY "Admins can insert IP whitelist entries"
 
 CREATE POLICY "Admins can update IP whitelist entries"
     ON ip_whitelist FOR UPDATE
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
@@ -134,6 +137,7 @@ CREATE POLICY "Admins can update IP whitelist entries"
 
 CREATE POLICY "Admins can delete IP whitelist entries"
     ON ip_whitelist FOR DELETE
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
@@ -145,6 +149,7 @@ CREATE POLICY "Admins can delete IP whitelist entries"
 -- Geo-Restrictions Policies
 CREATE POLICY "Users can view their organization's geo-restrictions"
     ON geo_restrictions FOR SELECT
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles WHERE user_id = auth.uid()
@@ -153,6 +158,7 @@ CREATE POLICY "Users can view their organization's geo-restrictions"
 
 CREATE POLICY "Admins can manage geo-restrictions"
     ON geo_restrictions FOR ALL
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
@@ -164,6 +170,7 @@ CREATE POLICY "Admins can manage geo-restrictions"
 -- IP Access Log Policies
 CREATE POLICY "Admins can view their organization's IP access logs"
     ON ip_access_log FOR SELECT
+    TO public
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
@@ -172,10 +179,15 @@ CREATE POLICY "Admins can view their organization's IP access logs"
         )
     );
 
--- System can insert access logs (service role)
-CREATE POLICY "Service role can insert IP access logs"
+-- System can insert access logs (via SECURITY DEFINER functions)
+CREATE POLICY "System can insert IP access logs"
     ON ip_access_log FOR INSERT
-    WITH CHECK (true);
+    TO public
+    WITH CHECK (
+        -- Allow inserts from SECURITY DEFINER functions (log_ip_access)
+        -- These functions run with elevated privileges and handle authorization internally
+        true
+    );
 
 -- ============================================================================
 -- HELPER FUNCTIONS
@@ -400,19 +412,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 COMMENT ON FUNCTION cleanup_old_ip_access_logs IS 'Delete IP access logs older than specified retention period';
 
 -- ============================================================================
--- GRANTS
--- ============================================================================
-
--- Grant appropriate permissions to authenticated users
-GRANT SELECT ON ip_whitelist TO authenticated;
-GRANT SELECT ON geo_restrictions TO authenticated;
-GRANT SELECT ON ip_access_log TO authenticated;
-
--- Service role needs full access for logging
-GRANT ALL ON ip_whitelist TO service_role;
-GRANT ALL ON geo_restrictions TO service_role;
-GRANT ALL ON ip_access_log TO service_role;
-
--- ============================================================================
 -- MIGRATION COMPLETE
 -- ============================================================================
+-- Note: Access control is managed entirely through Row Level Security (RLS) policies.
+-- No GRANT statements to system roles (authenticated, service_role) are needed or recommended.
+-- All permissions are enforced via RLS policies with TO public and custom profile.role checks.

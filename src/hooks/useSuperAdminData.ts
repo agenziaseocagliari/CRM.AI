@@ -45,6 +45,13 @@ export interface AuditLog {
     adminEmail: string;
     action: string;
     targetId?: string;
+    operationType?: 'CREATE' | 'UPDATE' | 'DELETE' | 'READ' | 'EXECUTE';
+    targetType?: 'USER' | 'ORGANIZATION' | 'PAYMENT' | 'SYSTEM';
+    result?: 'SUCCESS' | 'FAILURE' | 'PARTIAL';
+    details?: Record<string, any>;
+    errorMessage?: string;
+    ipAddress?: string;
+    userAgent?: string;
 }
 
 // Hook

@@ -10,6 +10,30 @@ Il workflow di Continuous Integration e Continuous Deployment (CI/CD) è gestito
 - **Standard:** Questo file deve essere mantenuto in questa directory per garantire che GitHub Actions lo rilevi ed esegua automaticamente ad ogni push o pull request sul branch `main`.
 - **Modifiche:** Qualsiasi modifica alla pipeline di deploy deve essere effettuata direttamente su questo file e committata nel repository. La vecchia directory `.github_workflow_backup` è obsoleta e non deve essere utilizzata.
 
+## 🚀 Vercel Deployment Policy
+
+**Deploy Governance:**
+- ✅ **Production**: Deploy automatico **SOLO** su branch `main`
+- ✅ **Preview**: Deploy su PR con branch `feature/*`, `fix/*`, `hotfix/*`, `release/*`
+- ✅ **Cleanup**: Automatico alla chiusura PR + schedulato daily per preview > 7 giorni
+- ✅ **Optimization**: File non necessari esclusi via `.vercelignore`
+- 🚫 **Blocked**: Branch `copilot/*`, `test/*`, `draft/*`, `wip/*`, `experimental/*`, `docs/*`, `ci/*`
+
+**Workflows:**
+- `.github/workflows/vercel-preview.yml` - Deploy preview condizionale su PR
+- `.github/workflows/vercel-cleanup.yml` - Cleanup automatico preview obsoleti
+
+**Configurazione:**
+- `vercel.json` - Config deploy, security headers, cache optimization, branch blocking
+- `.vercelignore` - Esclusione docs, tests, scripts dal deployment
+
+**📚 Documentazione:**
+- [VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md) - Policy completa e best practices
+- [VERCEL_DASHBOARD_SETUP_GUIDE.md](./VERCEL_DASHBOARD_SETUP_GUIDE.md) - ⚠️ Configurazione Dashboard (CRITICO)
+- [PR_CONFLICT_RESOLUTION_GUIDE.md](./PR_CONFLICT_RESOLUTION_GUIDE.md) - Risoluzione conflitti PR
+
+**⚠️ IMPORTANTE:** Per bloccare completamente i deploy non autorizzati, è necessario configurare anche il Vercel Dashboard manualmente. Vedi [VERCEL_DASHBOARD_SETUP_GUIDE.md](./VERCEL_DASHBOARD_SETUP_GUIDE.md)
+
 # Gestione Autenticazione Google OAuth
 
 L'integrazione con Google Calendar utilizza un flusso OAuth 2.0 sicuro per l'autorizzazione.
@@ -33,8 +57,7 @@ Il progetto include documentazione tecnica comprehensiva:
 
 ### 🚀 Guide Quick Start
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Guida passo-passo per setup completo (GitHub, Supabase, Vercel)
-- **[VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)** - 🚀 Policy deployment Vercel (SOLO main in produzione, preview con TTL 7gg)
-- **[VERCEL_SETUP_CHECKLIST.md](./VERCEL_SETUP_CHECKLIST.md)** - ✅ Checklist configurazione Vercel Dashboard
+
 - **[.env.example](./.env.example)** - Template configurazione con tutte le variabili ambiente necessarie
 
 ### 📖 Documentazione Tecnica

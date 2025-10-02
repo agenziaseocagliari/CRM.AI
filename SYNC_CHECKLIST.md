@@ -49,6 +49,14 @@ git status
 - [ ] Branch di fix seguono naming convention: `fix/nome-fix`
 - [ ] Nessun branch obsoleto o abbandonato
 
+### Vercel Deployment Policy
+- [ ] Solo `main` deploya in produzione (verificare `vercel.json`)
+- [ ] Preview deployments solo per PR su feature/fix/hotfix branches
+- [ ] Nessun preview deployment attivo oltre 7 giorni
+- [ ] Nessun preview deployment "orfano" (PR chiusa ma deployment attivo)
+
+**Riferimento**: [VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)
+
 ### Pull Requests
 - [ ] Tutte le PR aperte sono revisionate
 - [ ] PR vecchie (>2 settimane) sono chiuse o mergiate

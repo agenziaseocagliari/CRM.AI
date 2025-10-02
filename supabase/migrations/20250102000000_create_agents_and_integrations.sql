@@ -354,7 +354,13 @@ CREATE POLICY "Users can view workflow logs" ON workflow_execution_logs
 CREATE POLICY "System can insert workflow logs" ON workflow_execution_logs
     FOR INSERT
     TO public
-    WITH CHECK (true); -- Allow system to log executions
+    WITH CHECK (
+        workflow_id IN (
+            SELECT id FROM workflow_definitions WHERE organization_id IN (
+                SELECT organization_id FROM profiles WHERE id = auth.uid()
+            )
+        )
+    );
 
 -- =====================================================
 -- 7. Helper Functions

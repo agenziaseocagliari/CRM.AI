@@ -272,7 +272,15 @@ CREATE POLICY "Super admins can view all incident actions" ON incident_actions
 CREATE POLICY "System can insert incident actions" ON incident_actions
     FOR INSERT
     TO public
-    WITH CHECK (true);
+    WITH CHECK (
+        incident_id IN (
+            SELECT id FROM incidents
+            WHERE organization_id IN (
+                SELECT organization_id FROM profiles
+                WHERE id = auth.uid()
+            )
+        )
+    );
 
 -- Notification rules policies
 CREATE POLICY "Super admins can manage notification rules" ON notification_rules

@@ -1,0 +1,69 @@
+name: Cleanup Vercel Previews
+
+on:
+  pull_request:
+    types: [closed]
+  schedule:
+    # Cleanup giornaliero alle 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup-closed-pr-previews:
+    name: Remove Closed PR Previews
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Remove Preview Deployment
+        run: |
+          echo "🗑️ Rimozione preview per PR #${{ github.event.number }}"
+          
+          # Lista deployments per questo PR
+          DEPLOYMENTS=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} | grep "pr-${{ github.event.number }}" || true)
+          
+          if [ -n "$DEPLOYMENTS" ]; then
+            echo "$DEPLOYMENTS" | while read -r line; do
+              DEPLOY_URL=$(echo "$line" | awk '{print $2}')
+              echo "Rimozione: $DEPLOY_URL"
+              vercel rm "$DEPLOY_URL" --yes --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
+            done
+            echo "✅ Preview rimossi per PR #${{ github.event.number }}"
+          else
+            echo "ℹ️ Nessun preview trovato per PR #${{ github.event.number }}"
+          fi
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+  cleanup-old-previews:
+    name: Remove Old/Stale Previews
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Cleanup Deployments Older Than 7 Days
+        run: |
+          echo "🗑️ Cleanup preview deployments più vecchi di 7 giorni"
+          
+          # Timestamp 7 giorni fa
+          CUTOFF_DATE=$(date -d '7 days ago' +%s)000
+          
+          # Lista tutti i deployments preview
+          vercel ls --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} | grep -v "production" | tail -n +2 | while read -r line; do
+            DEPLOY_URL=$(echo "$line" | awk '{print $2}')
+            DEPLOY_AGE=$(echo "$line" | awk '{print $4}')
+            
+            # Verifica età (conversione approssimativa)
+            if [[ "$DEPLOY_AGE" == *d || "$DEPLOY_AGE" == *w || "$DEPLOY_AGE" == *mo ]]; then
+              echo "Rimozione deployment vecchio: $DEPLOY_URL (età: $DEPLOY_AGE)"
+              vercel rm "$DEPLOY_URL" --yes --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
+            fi
+          done
+          
+          echo "✅ Cleanup completato"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

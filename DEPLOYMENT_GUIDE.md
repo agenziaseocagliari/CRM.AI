@@ -227,6 +227,44 @@ VITE_SUPABASE_ANON_KEY=[anon-key-da-supabase]
 - `GOOGLE_REDIRECT_URI` nei secrets Supabase
 - Authorized redirect URIs in Google Cloud Console
 
+### Ottimizzazione Deploy Vercel (Riduzione Costi)
+
+Per ridurre costi e ottimizzare la gestione degli ambienti:
+
+#### 1. Disabilita Auto-Deploy su Tutti i Branch
+Vai su **Settings → Git → Production Branch**:
+- Production Branch: `main`
+- Disabilita: "Automatically deploy all branches"
+
+#### 2. Configura GitHub Secrets per Workflow
+Aggiungi in **Repository → Settings → Secrets and variables → Actions**:
+
+| Secret Name | Descrizione | Dove Ottenerlo |
+|------------|-------------|----------------|
+| `VERCEL_TOKEN` | Token API Vercel | https://vercel.com/account/tokens |
+| `VERCEL_ORG_ID` | Organization ID | Settings → General → ID |
+| `VERCEL_PROJECT_ID` | Project ID | Project Settings → General → Project ID |
+
+#### 3. Abilita Workflow Intelligenti
+I workflow `.github/workflows/vercel-preview.yml` e `vercel-cleanup.yml` gestiranno:
+- ✅ Preview solo su PR con label `deploy-preview` o branch `feature/*`, `fix/*`, `hotfix/*`, `release/*`
+- ✅ Auto-cleanup preview quando PR viene chiusa
+- ✅ Cleanup automatico preview più vecchi di 7 giorni (eseguito ogni notte)
+
+#### 4. Branch Naming Convention
+Usa questi pattern per controllare i deploy:
+```bash
+# ✅ Auto-deploy preview on PR
+git checkout -b feature/new-dashboard
+git checkout -b fix/login-bug
+
+# ❌ No auto-deploy (manual only)
+git checkout -b draft/experimental
+git checkout -b test/performance
+```
+
+**📚 Documentazione Completa**: Vedi [VERCEL_DEPLOYMENT_OPTIMIZATION.md](./VERCEL_DEPLOYMENT_OPTIMIZATION.md) per strategia completa
+
 ---
 
 ## 7️⃣ Configurazione Post-Deploy
@@ -418,12 +456,36 @@ WHERE schemaname = 'public';
 - [ ] Controlla GitHub Actions runs
 - [ ] Review performance Supabase Dashboard
 - [ ] Backup database
+- [ ] **Esegui `node scripts/vercel-metrics.js`** per monitorare usage Vercel
+- [ ] Verifica preview deployments attivi (<10 raccomandato)
 
 ### Mensile
 - [ ] `npm audit` e aggiornamenti sicurezza
 - [ ] Review e cleanup logs vecchi
 - [ ] Verifica storage usage
 - [ ] Update documentazione se necessario
+- [ ] **Review costi Vercel** e trend deployments
+- [ ] Verifica efficacia strategia preview deployments
+
+### Vercel Cost Monitoring
+
+```bash
+# Controlla metriche Vercel
+VERCEL_TOKEN=xxx node scripts/vercel-metrics.js
+
+# Output include:
+# - Numero deployments (ultimi 7/30 giorni)
+# - Preview attivi vs production
+# - Success rate builds
+# - Stima usage mensile
+# - Warning su usage eccessivo
+```
+
+**Target KPIs**:
+- Preview attivi: < 10
+- Build success rate: > 95%
+- Preview lifetime medio: < 3 giorni
+- Deployments/settimana: 5-10 (non 20+)
 
 ---
 

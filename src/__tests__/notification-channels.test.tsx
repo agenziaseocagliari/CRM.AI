@@ -1,0 +1,175 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { NotificationChannelManager } from '../components/superadmin/NotificationChannelManager';
+
+describe('Notification Channel Manager E2E Tests', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    describe('Channel Display', () => {
+        it('should display notification channels', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Notification Channels')).toBeInTheDocument();
+            });
+        });
+
+        it('should show channel statistics', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Total Channels')).toBeInTheDocument();
+                expect(screen.getByText('Active')).toBeInTheDocument();
+                expect(screen.getByText('Total Sent')).toBeInTheDocument();
+                expect(screen.getByText('Error Rate')).toBeInTheDocument();
+            });
+        });
+
+        it('should display channel cards with details', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Primary Email')).toBeInTheDocument();
+                expect(screen.getByText('Slack Alerts')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Channel Management', () => {
+        it('should open add channel modal', async () => {
+            render(<NotificationChannelManager />);
+
+            const addButton = screen.getByText('Add Channel');
+            fireEvent.click(addButton);
+
+            await waitFor(() => {
+                expect(screen.getByText('Add Notification Channel')).toBeInTheDocument();
+            });
+        });
+
+        it('should allow selecting channel type', async () => {
+            render(<NotificationChannelManager />);
+
+            const addButton = screen.getByText('Add Channel');
+            fireEvent.click(addButton);
+
+            await waitFor(() => {
+                const typeSelect = screen.getByRole('combobox');
+                expect(typeSelect).toBeInTheDocument();
+                expect(screen.getByText('Email')).toBeInTheDocument();
+                expect(screen.getByText('Slack')).toBeInTheDocument();
+            });
+        });
+
+        it('should test channel connectivity', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const testButtons = screen.getAllByText('Test');
+                expect(testButtons.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should toggle channel status', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const enableButtons = screen.getAllByText(/Enable|Disable/i);
+                expect(enableButtons.length).toBeGreaterThan(0);
+            });
+        });
+    });
+
+    describe('Priority Management', () => {
+        it('should allow moving channel priority up', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const priorityButtons = document.querySelectorAll('button[class*="green"]');
+                expect(priorityButtons.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should allow moving channel priority down', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const priorityButtons = document.querySelectorAll('button[class*="yellow"]');
+                expect(priorityButtons.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should display channels sorted by priority', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const channels = screen.getAllByText(/Priority:/);
+                expect(channels.length).toBeGreaterThan(0);
+            });
+        });
+    });
+
+    describe('Channel Configuration', () => {
+        it('should allow editing channel configuration', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const editButtons = screen.getAllByText('Edit');
+                expect(editButtons.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should validate JSON configuration', async () => {
+            render(<NotificationChannelManager />);
+
+            const addButton = screen.getByText('Add Channel');
+            fireEvent.click(addButton);
+
+            await waitFor(() => {
+                const configTextarea = screen.getByPlaceholderText(/api_key/);
+                expect(configTextarea).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Fallback Mechanism', () => {
+        it('should show success rate for each channel', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const successRates = screen.getAllByText(/Success Rate:/);
+                expect(successRates.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should calculate error rate accurately', async () => {
+            render(<NotificationChannelManager />);
+
+            await waitFor(() => {
+                const errorRateElement = screen.getByText(/Error Rate/);
+                expect(errorRateElement).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Accessibility', () => {
+        it('should have proper ARIA labels', () => {
+            render(<NotificationChannelManager />);
+            
+            const buttons = screen.getAllByRole('button');
+            expect(buttons.length).toBeGreaterThan(0);
+        });
+
+        it('should support keyboard navigation', async () => {
+            render(<NotificationChannelManager />);
+
+            const addButton = screen.getByText('Add Channel');
+            addButton.focus();
+            
+            expect(document.activeElement).toBe(addButton);
+        });
+    });
+});

@@ -17,16 +17,22 @@ Il workflow di Continuous Integration e Continuous Deployment (CI/CD) è gestito
 - ✅ **Preview**: Deploy su PR con branch `feature/*`, `fix/*`, `hotfix/*`, `release/*`
 - ✅ **Cleanup**: Automatico alla chiusura PR + schedulato daily per preview > 7 giorni
 - ✅ **Optimization**: File non necessari esclusi via `.vercelignore`
+- 🚫 **Blocked**: Branch `copilot/*`, `test/*`, `draft/*`, `wip/*`, `experimental/*`, `docs/*`, `ci/*`
 
 **Workflows:**
 - `.github/workflows/vercel-preview.yml` - Deploy preview condizionale su PR
 - `.github/workflows/vercel-cleanup.yml` - Cleanup automatico preview obsoleti
 
 **Configurazione:**
-- `vercel.json` - Config deploy, security headers, cache optimization
+- `vercel.json` - Config deploy, security headers, cache optimization, branch blocking
 - `.vercelignore` - Esclusione docs, tests, scripts dal deployment
 
-**📚 Documentazione completa:** [VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)
+**📚 Documentazione:**
+- [VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md) - Policy completa e best practices
+- [VERCEL_DASHBOARD_SETUP_GUIDE.md](./VERCEL_DASHBOARD_SETUP_GUIDE.md) - ⚠️ Configurazione Dashboard (CRITICO)
+- [PR_CONFLICT_RESOLUTION_GUIDE.md](./PR_CONFLICT_RESOLUTION_GUIDE.md) - Risoluzione conflitti PR
+
+**⚠️ IMPORTANTE:** Per bloccare completamente i deploy non autorizzati, è necessario configurare anche il Vercel Dashboard manualmente. Vedi [VERCEL_DASHBOARD_SETUP_GUIDE.md](./VERCEL_DASHBOARD_SETUP_GUIDE.md)
 
 # Gestione Autenticazione Google OAuth
 

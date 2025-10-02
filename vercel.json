@@ -5,7 +5,14 @@
       "feature/*": false,
       "fix/*": false,
       "hotfix/*": false,
-      "release/*": false
+      "release/*": false,
+      "copilot/*": false,
+      "draft/*": false,
+      "test/*": false,
+      "wip/*": false,
+      "experimental/*": false,
+      "docs/*": false,
+      "ci/*": false
     }
   },
   "github": {

@@ -126,8 +126,14 @@ CREATE POLICY "Users can view quota usage for their organization" ON rate_limit_
         )
     );
 
+-- Drop any existing versions of check_rate_limit function to avoid conflicts
+-- This ensures idempotent migration and resolves duplicate function errors
+DROP FUNCTION IF EXISTS check_rate_limit(UUID, UUID, TEXT, INTEGER, INTEGER) CASCADE;
+DROP FUNCTION IF EXISTS check_rate_limit(UUID, TEXT, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS check_rate_limit(UUID, TEXT) CASCADE;
+
 -- Function to check rate limit (sliding window algorithm)
-CREATE OR REPLACE FUNCTION check_rate_limit(
+CREATE FUNCTION check_rate_limit(
     p_organization_id UUID,
     p_resource_type TEXT,
     p_endpoint TEXT DEFAULT NULL

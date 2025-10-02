@@ -401,7 +401,7 @@ INSERT INTO automation_agents (name, type, description, configuration) VALUES
     ('User Engagement Agent', 'user_engagement', 'Automatizza onboarding clienti, invio remind upgrade, campagne marketing',
      '{"channels": ["email", "whatsapp"], "onboarding_enabled": true, "upgrade_reminder_days": 7}'),
     ('Security Watcher', 'security_watcher', 'Scannerizza log auth/API, segnala anomalie, tentativi login irregolari',
-     '{"alert_channels": ["email", "telegram"], "auto_lock_enabled": false, "failed_login_threshold": 5, "anomaly_detection_enabled": true}}')
+     '{"alert_channels": ["email", "telegram"], "auto_lock_enabled": false, "failed_login_threshold": 5, "anomaly_detection_enabled": true}')
 ON CONFLICT DO NOTHING;
 
 -- =====================================================

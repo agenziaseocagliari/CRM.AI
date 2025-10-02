@@ -8,7 +8,9 @@ import {
     DocumentMagnifyingGlassIcon, 
     SparklesIcon,
     CpuChipIcon,
-    GlobeAltIcon
+    GlobeAltIcon,
+    ChartBarIcon,
+    ShieldCheckIcon
 } from '../ui/icons';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -46,6 +48,8 @@ export const SuperAdminSidebar: React.FC = () => {
       <nav className="flex-grow">
         <ul>
           <NavItem to="dashboard" icon={<DashboardIcon className="w-6 h-6" />} label="Dashboard" />
+          <NavItem to="system-health" icon={<ShieldCheckIcon className="w-6 h-6" />} label="System Health" />
+          <NavItem to="quota-management" icon={<ChartBarIcon className="w-6 h-6" />} label="Quota & Limits" />
           <NavItem to="customers" icon={<UsersIcon className="w-6 h-6" />} label="Clienti" />
           <NavItem to="payments" icon={<CreditCardIcon className="w-6 h-6" />} label="Pagamenti" />
           <NavItem to="automation-agents" icon={<CpuChipIcon className="w-6 h-6" />} label="Agenti AI" />

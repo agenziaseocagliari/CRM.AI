@@ -35,6 +35,8 @@ import { AuditLogs as SuperAdminAuditLogs } from './components/superadmin/AuditL
 import { AutomationAgents } from './components/superadmin/AutomationAgents';
 import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
 import { WorkflowBuilder } from './components/superadmin/WorkflowBuilder';
+import { SystemHealthDashboard } from './components/superadmin/SystemHealthDashboard';
+import { QuotaManagement } from './components/superadmin/QuotaManagement';
 
 // Debug Panel
 import { DebugPanel } from './components/DebugPanel';
@@ -227,6 +229,8 @@ const App: React.FC = () => {
         >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<SuperAdminDashboard />} />
+            <Route path="system-health" element={<SystemHealthDashboard />} />
+            <Route path="quota-management" element={<QuotaManagement />} />
             <Route path="customers" element={<SuperAdminCustomers />} />
             <Route path="payments" element={<SuperAdminPayments />} />
             <Route path="automation-agents" element={<AutomationAgents />} />

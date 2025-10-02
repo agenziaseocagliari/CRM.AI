@@ -1,0 +1,115 @@
+name: Vercel Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    branches:
+      - main
+
+jobs:
+  # Job 1: Verifica se il deploy è necessario
+  should-deploy:
+    name: Check if Preview Deploy Needed
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.check.outputs.deploy }}
+    steps:
+      - name: Check deployment conditions
+        id: check
+        run: |
+          # Deploy solo se:
+          # 1. PR ha label "deploy-preview" O
+          # 2. Branch inizia con feature/fix/hotfix/release
+          
+          BRANCH="${{ github.head_ref }}"
+          HAS_LABEL="${{ contains(github.event.pull_request.labels.*.name, 'deploy-preview') }}"
+          
+          if [[ "$HAS_LABEL" == "true" ]]; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Label 'deploy-preview' trovato - Deploy abilitato"
+            exit 0
+          fi
+          
+          if [[ "$BRANCH" =~ ^(feature|fix|hotfix|release)/ ]]; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Branch pattern matched - Deploy abilitato"
+            exit 0
+          fi
+          
+          echo "deploy=false" >> $GITHUB_OUTPUT
+          echo "⏭️ Condizioni non soddisfatte - Deploy saltato"
+
+  # Job 2: Deploy a Vercel (solo se necessario)
+  deploy-preview:
+    name: Deploy to Vercel Preview
+    runs-on: ubuntu-latest
+    needs: should-deploy
+    if: needs.should-deploy.outputs.deploy == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel Preview
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tee /dev/stderr | grep -o 'https://[^ ]*')
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "## 🚀 Preview Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "Preview URL: $URL" >> $GITHUB_STEP_SUMMARY
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment PR with Preview URL
+        uses: actions/github-script@v7
+        if: steps.deploy.outputs.url != ''
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const url = '${{ steps.deploy.outputs.url }}';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Preview Deployment Ready\n\n✅ **URL**: ${url}\n\n⚠️ Questo preview sarà rimosso automaticamente alla chiusura della PR.`
+            });
+
+  # Job 3: Blocca deployment non autorizzati
+  block-unauthorized:
+    name: Block Unauthorized Deploys
+    runs-on: ubuntu-latest
+    needs: should-deploy
+    if: needs.should-deploy.outputs.deploy == 'false'
+    steps:
+      - name: Comment PR - Deploy Blocked
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ Preview Deploy Disabilitato\n\nQuesto branch non è configurato per preview automatici.\n\n**Per abilitare il preview:**\n1. Rinomina branch con pattern: \`feature/*\`, \`fix/*\`, \`hotfix/*\`, \`release/*\`\n2. Oppure aggiungi label \`deploy-preview\` alla PR\n\n**Motivo**: Strategia di cost optimization per ridurre deploy inutili.`
+            });

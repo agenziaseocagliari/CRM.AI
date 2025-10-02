@@ -33,6 +33,8 @@ Il progetto include documentazione tecnica comprehensiva:
 
 ### 🚀 Guide Quick Start
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Guida passo-passo per setup completo (GitHub, Supabase, Vercel)
+- **[VERCEL_DEPLOYMENT_OPTIMIZATION.md](./VERCEL_DEPLOYMENT_OPTIMIZATION.md)** - 🎯 Strategia ottimizzazione deploy Vercel e riduzione costi
+- **[VERCEL_QUICK_REFERENCE.md](./VERCEL_QUICK_REFERENCE.md)** - 🚀 Quick reference per sviluppatori su branch naming e workflow
 - **[.env.example](./.env.example)** - Template configurazione con tutte le variabili ambiente necessarie
 
 ### 📖 Documentazione Tecnica

@@ -135,6 +135,62 @@ Script per testare le funzionalità Super Admin delle edge functions.
 
 ---
 
+### vercel-metrics.cjs
+
+Script Node.js per monitorare l'utilizzo delle risorse Vercel e generare report dettagliati.
+
+**Uso**:
+```bash
+# Export token (richiesto)
+export VERCEL_TOKEN=xxx
+
+# Se usi Vercel Team account
+export VERCEL_TEAM_ID=yyy
+
+# Esegui script
+node scripts/vercel-metrics.cjs
+```
+
+**Cosa Monitora**:
+1. 📊 Totale deployments (production vs preview)
+2. 📅 Activity ultimi 7/30 giorni
+3. ✅ Build success rate
+4. 👁️ Preview environments attivi
+5. ⚠️ Warning su usage eccessivo
+6. 💰 Stima costi mensili
+
+**Output Esempio**:
+```
+📊 VERCEL DEPLOYMENT METRICS - Guardian AI CRM
+═══════════════════════════════════════════
+
+🚀 Deployment Summary
+   Total Deployments: 45
+   ├─ Production: 15
+   └─ Preview: 30
+
+👁️  Active Preview Environments
+   Active Previews: 3
+   Oldest Preview: 2 days old
+
+💰 Estimated Monthly Usage
+   Projected Deployments/Month: ~40
+   Estimated Build Minutes: ~80 min
+   Hobby Plan Limit: 80/6000 min (1.3%)
+
+✅ All metrics look good!
+```
+
+**Exit Codes**:
+- `0`: Metriche recuperate con successo
+- `1`: Errore (token mancante o API error)
+
+**Prerequisiti**:
+- Token Vercel da https://vercel.com/account/tokens
+- Progetto configurato su Vercel
+
+---
+
 ## 🔧 Quando Usare gli Script
 
 ### Prima di Ogni Deploy
@@ -148,6 +204,7 @@ Script per testare le funzionalità Super Admin delle edge functions.
 
 ### Settimanale
 - Verifica routine sincronizzazione
+- `node scripts/vercel-metrics.cjs` - Monitora usage Vercel
 - Check post-deployment
 
 ### Pre-Deploy

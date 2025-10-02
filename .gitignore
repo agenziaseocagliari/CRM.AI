@@ -7,19 +7,34 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+package-lock.json.tmp
+
+# Build outputs
 dist
 dist-ssr
 *.local
+.vercel
+.output
 
 # Test coverage
 coverage
 .nyc_output
 *.lcov
+.test-results
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
 .DS_Store
 *.suo
@@ -27,4 +42,20 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-.env
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Phase 3 temporary development files
+/tmp
+.phase3-temp
+*.draft.md

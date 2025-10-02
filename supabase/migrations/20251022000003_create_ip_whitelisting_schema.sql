@@ -109,7 +109,7 @@ CREATE POLICY "Users can view their organization's IP whitelist"
     TO public
     USING (
         organization_id IN (
-            SELECT organization_id FROM profiles WHERE user_id = auth.uid()
+            SELECT organization_id FROM profiles WHERE id = auth.uid()
         )
     );
 
@@ -119,7 +119,7 @@ CREATE POLICY "Admins can insert IP whitelist entries"
     WITH CHECK (
         organization_id IN (
             SELECT organization_id FROM profiles 
-            WHERE user_id = auth.uid() 
+            WHERE id = auth.uid() 
             AND role IN ('admin', 'super_admin')
         )
     );
@@ -130,7 +130,7 @@ CREATE POLICY "Admins can update IP whitelist entries"
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
-            WHERE user_id = auth.uid() 
+            WHERE id = auth.uid() 
             AND role IN ('admin', 'super_admin')
         )
     );
@@ -141,7 +141,7 @@ CREATE POLICY "Admins can delete IP whitelist entries"
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
-            WHERE user_id = auth.uid() 
+            WHERE id = auth.uid() 
             AND role IN ('admin', 'super_admin')
         )
     );
@@ -152,7 +152,7 @@ CREATE POLICY "Users can view their organization's geo-restrictions"
     TO public
     USING (
         organization_id IN (
-            SELECT organization_id FROM profiles WHERE user_id = auth.uid()
+            SELECT organization_id FROM profiles WHERE id = auth.uid()
         )
     );
 
@@ -162,7 +162,7 @@ CREATE POLICY "Admins can manage geo-restrictions"
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
-            WHERE user_id = auth.uid() 
+            WHERE id = auth.uid() 
             AND role IN ('admin', 'super_admin')
         )
     );
@@ -174,7 +174,7 @@ CREATE POLICY "Admins can view their organization's IP access logs"
     USING (
         organization_id IN (
             SELECT organization_id FROM profiles 
-            WHERE user_id = auth.uid() 
+            WHERE id = auth.uid() 
             AND role IN ('admin', 'super_admin')
         )
     );

@@ -32,6 +32,8 @@ import { Customers as SuperAdminCustomers } from './components/superadmin/Custom
 import { Payments as SuperAdminPayments } from './components/superadmin/Payments';
 import { AiWorkflows as SuperAdminAiWorkflows } from './components/superadmin/AiWorkflows';
 import { AuditLogs as SuperAdminAuditLogs } from './components/superadmin/AuditLogs';
+import { AutomationAgents } from './components/superadmin/AutomationAgents';
+import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
 
 // Debug Panel
 import { DebugPanel } from './components/DebugPanel';
@@ -226,6 +228,8 @@ const App: React.FC = () => {
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="customers" element={<SuperAdminCustomers />} />
             <Route path="payments" element={<SuperAdminPayments />} />
+            <Route path="automation-agents" element={<AutomationAgents />} />
+            <Route path="api-integrations" element={<APIIntegrationsManager />} />
             <Route path="ai-workflows" element={<SuperAdminAiWorkflows />} />
             <Route path="audit-logs" element={<SuperAdminAuditLogs />} />
         </Route>

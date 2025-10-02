@@ -317,6 +317,7 @@ gh pr list --state open
 ### Documentazione Progetto
 
 - [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Guida deployment completa
+- [VERCEL_SETUP_CHECKLIST.md](./VERCEL_SETUP_CHECKLIST.md) - Checklist setup Vercel Dashboard
 - [README.md](./README.md) - Panoramica progetto
 - [SYNC_CHECKLIST.md](./SYNC_CHECKLIST.md) - Checklist sincronizzazione
 
@@ -331,6 +332,8 @@ gh pr list --state open
 - [ ] Team educato sulla policy
 - [ ] Cleanup branch esistenti
 - [ ] Monitoring setup (weekly/monthly checks)
+
+**📋 Azioni Richieste**: Consulta [VERCEL_SETUP_CHECKLIST.md](./VERCEL_SETUP_CHECKLIST.md) per configurazione Vercel Dashboard
 
 ---
 

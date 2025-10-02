@@ -34,6 +34,7 @@ Il progetto include documentazione tecnica comprehensiva:
 ### 🚀 Guide Quick Start
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Guida passo-passo per setup completo (GitHub, Supabase, Vercel)
 - **[VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)** - 🚀 Policy deployment Vercel (SOLO main in produzione, preview con TTL 7gg)
+- **[VERCEL_SETUP_CHECKLIST.md](./VERCEL_SETUP_CHECKLIST.md)** - ✅ Checklist configurazione Vercel Dashboard
 - **[.env.example](./.env.example)** - Template configurazione con tutte le variabili ambiente necessarie
 
 ### 📖 Documentazione Tecnica

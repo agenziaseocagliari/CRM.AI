@@ -9,6 +9,7 @@ import { UsageDashboard } from './UsageDashboard';
 import { invokeSupabaseFunction } from '../lib/api';
 import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
 import { JWTViewer } from './JWTViewer';
+import { TwoFactorSettings } from './TwoFactorAuth';
 
 // --- Componente Helper per UI di Stato ---
 const AuthStatusDisplay: React.FC<{
@@ -117,7 +118,7 @@ export const GoogleAuthCallback: React.FC = () => {
     />;
 };
 
-type SettingsTab = 'integrations' | 'billing' | 'debug';
+type SettingsTab = 'integrations' | 'billing' | 'security' | 'debug';
 
 export const Settings: React.FC = () => {
     const { organization, organizationSettings, subscription, ledger, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
@@ -228,6 +229,7 @@ export const Settings: React.FC = () => {
                     <nav className="flex space-x-2" aria-label="Tabs">
                         <TabButton tab="integrations" label="Integrazioni" />
                         <TabButton tab="billing" label="Billing & Usage" />
+                        <TabButton tab="security" label="🔒 Security" />
                         <TabButton tab="debug" label="🔧 Debug JWT" />
                     </nav>
                 </div>
@@ -282,6 +284,12 @@ export const Settings: React.FC = () => {
                 )}
                 
                 {activeTab === 'billing' && <UsageDashboard subscription={subscription} ledger={ledger} />}
+                
+                {activeTab === 'security' && (
+                    <div className="space-y-6">
+                        <TwoFactorSettings />
+                    </div>
+                )}
                 
                 {activeTab === 'debug' && (
                     <div className="space-y-6">

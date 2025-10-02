@@ -10,6 +10,24 @@ Il workflow di Continuous Integration e Continuous Deployment (CI/CD) è gestito
 - **Standard:** Questo file deve essere mantenuto in questa directory per garantire che GitHub Actions lo rilevi ed esegua automaticamente ad ogni push o pull request sul branch `main`.
 - **Modifiche:** Qualsiasi modifica alla pipeline di deploy deve essere effettuata direttamente su questo file e committata nel repository. La vecchia directory `.github_workflow_backup` è obsoleta e non deve essere utilizzata.
 
+## 🚀 Vercel Deployment Policy
+
+**Deploy Governance:**
+- ✅ **Production**: Deploy automatico **SOLO** su branch `main`
+- ✅ **Preview**: Deploy su PR con branch `feature/*`, `fix/*`, `hotfix/*`, `release/*`
+- ✅ **Cleanup**: Automatico alla chiusura PR + schedulato daily per preview > 7 giorni
+- ✅ **Optimization**: File non necessari esclusi via `.vercelignore`
+
+**Workflows:**
+- `.github/workflows/vercel-preview.yml` - Deploy preview condizionale su PR
+- `.github/workflows/vercel-cleanup.yml` - Cleanup automatico preview obsoleti
+
+**Configurazione:**
+- `vercel.json` - Config deploy, security headers, cache optimization
+- `.vercelignore` - Esclusione docs, tests, scripts dal deployment
+
+**📚 Documentazione completa:** [VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)
+
 # Gestione Autenticazione Google OAuth
 
 L'integrazione con Google Calendar utilizza un flusso OAuth 2.0 sicuro per l'autorizzazione.
@@ -33,6 +51,7 @@ Il progetto include documentazione tecnica comprehensiva:
 
 ### 🚀 Guide Quick Start
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Guida passo-passo per setup completo (GitHub, Supabase, Vercel)
+- **[VERCEL_DEPLOYMENT_POLICY.md](./VERCEL_DEPLOYMENT_POLICY.md)** - 📋 **Policy ufficiale Vercel**: production su main, preview su PR, TTL 7 giorni, cleanup automatico
 - **[VERCEL_DEPLOYMENT_OPTIMIZATION.md](./VERCEL_DEPLOYMENT_OPTIMIZATION.md)** - 🎯 Strategia ottimizzazione deploy Vercel e riduzione costi
 - **[VERCEL_QUICK_REFERENCE.md](./VERCEL_QUICK_REFERENCE.md)** - 🚀 Quick reference per sviluppatori su branch naming e workflow
 - **[.env.example](./.env.example)** - Template configurazione con tutte le variabili ambiente necessarie

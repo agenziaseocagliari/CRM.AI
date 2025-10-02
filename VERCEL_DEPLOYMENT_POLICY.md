@@ -64,10 +64,20 @@ Retention: Max 7 giorni dopo chiusura PR
 
 ```
 ❌ NON AUTORIZZATO
-Branches: draft/*, test/*, wip/*, experimental/*, docs/*, ci/*
-Motivo: Work in progress, sperimentazioni, documentazione
+Branches: copilot/*, draft/*, test/*, wip/*, experimental/*, docs/*, ci/*
+Motivo: 
+  - copilot/*: Branch automatici creati da GitHub Copilot Agent
+  - draft/*, test/*, wip/*: Work in progress, sperimentazioni
+  - experimental/*: Features sperimentali non stabili
+  - docs/*, ci/*: Modifiche solo a documentazione o CI/CD
 Deploy: Solo manuale se strettamente necessario
 ```
+
+**⚠️ NOTA IMPORTANTE:** I branch `copilot/*` sono bloccati esplicitamente perché:
+- Creati automaticamente da GitHub Copilot
+- Possono essere numerosi e consumare crediti rapidamente
+- Non necessitano di preview deployment (solo review codice)
+- Policy: review del codice su GitHub, deploy solo dopo merge in main
 
 ---
 
@@ -85,7 +95,14 @@ Deploy: Solo manuale se strettamente necessario
       "feature/*": false,     // ⚙️ Gestito da workflow
       "fix/*": false,         // ⚙️ Gestito da workflow
       "hotfix/*": false,      // ⚙️ Gestito da workflow
-      "release/*": false      // ⚙️ Gestito da workflow
+      "release/*": false,     // ⚙️ Gestito da workflow
+      "copilot/*": false,     // 🚫 BLOCCATO - Branch Copilot Agent
+      "draft/*": false,       // 🚫 BLOCCATO - Work in progress
+      "test/*": false,        // 🚫 BLOCCATO - Branch di test
+      "wip/*": false,         // 🚫 BLOCCATO - Work in progress
+      "experimental/*": false, // 🚫 BLOCCATO - Features sperimentali
+      "docs/*": false,        // 🚫 BLOCCATO - Solo documentazione
+      "ci/*": false           // 🚫 BLOCCATO - Solo CI/CD
     }
   },
   "github": {
@@ -291,6 +308,39 @@ node scripts/vercel-metrics.cjs
 ---
 
 ## 🚨 Troubleshooting
+
+### ⚠️ Deploy Non Autorizzati su Branch copilot/* o altri
+
+**Problema:** Vercel continua a fare deploy su branch che dovrebbero essere bloccati (copilot/*, test/*, etc.)
+
+**Causa:** Vercel Dashboard ha l'impostazione "Deploy all branches" attiva, che sovrascrive `vercel.json`
+
+**Soluzione:**
+```bash
+# 1. Accedi a Vercel Dashboard
+# https://vercel.com/seo-cagliari/crm-ai
+
+# 2. Settings → Git
+# - Production Branch: "main" ✅
+# - DISABILITA: "Automatically create Preview Deployments for all branches"
+# - ABILITA: "Preview Deployments: Pull Requests Only"
+
+# 3. Rimuovi deployment esistenti non autorizzati
+# Dashboard → Deployments → Filtra per branch → Delete
+
+# 4. Verifica la configurazione
+# Aspetta 5 minuti per propagazione
+# Test con commit su branch non autorizzato
+git checkout -b test/vercel-block-test
+git commit --allow-empty -m "Test"
+git push origin test/vercel-block-test
+# RISULTATO ATTESO: Nessun deployment creato
+
+# 5. Consulta guida completa
+# Vedi: VERCEL_DASHBOARD_SETUP_GUIDE.md
+```
+
+**Documentazione:** [VERCEL_DASHBOARD_SETUP_GUIDE.md](./VERCEL_DASHBOARD_SETUP_GUIDE.md)
 
 ### Preview Deploy Non Si Attiva
 

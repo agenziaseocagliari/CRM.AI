@@ -50,7 +50,8 @@ export const SuperAdminSidebar: React.FC = () => {
           <NavItem to="payments" icon={<CreditCardIcon className="w-6 h-6" />} label="Pagamenti" />
           <NavItem to="automation-agents" icon={<CpuChipIcon className="w-6 h-6" />} label="Agenti AI" />
           <NavItem to="api-integrations" icon={<GlobeAltIcon className="w-6 h-6" />} label="API & Integrazioni" />
-          <NavItem to="ai-workflows" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow AI" />
+          <NavItem to="workflow-builder" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow Builder" />
+          <NavItem to="ai-workflows" icon={<SparklesIcon className="w-6 h-6" />} label="Workflow Legacy" />
           <NavItem to="audit-logs" icon={<DocumentMagnifyingGlassIcon className="w-6 h-6" />} label="Audit Logs" />
         </ul>
       </nav>

@@ -143,6 +143,9 @@ supabase db pull
 
 # Push migrations a remoto (attenzione!)
 supabase db push
+
+# Se ci sono migrations con date anteriori a quelle già applicate, usa:
+supabase db push --include-all
 ```
 
 ### Tabelle Critiche da Verificare
@@ -415,7 +418,8 @@ LIMIT 50;
 1. `supabase db pull` per vedere differenze
 2. Creare migration per fix: `supabase migration new fix_name`
 3. Applicare: `supabase db push`
-4. Verificare in Supabase Dashboard
+4. Se ci sono migrations con date anteriori: `supabase db push --include-all`
+5. Verificare in Supabase Dashboard
 
 ---
 

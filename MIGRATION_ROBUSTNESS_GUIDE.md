@@ -317,6 +317,9 @@ supabase migration list
 # Push migration al database remoto
 supabase db push
 
+# Se hai migrations con date anteriori a quelle già applicate, usa:
+supabase db push --include-all
+
 # Oppure via Dashboard Supabase
 # → Database → Migrations → Apply pending migrations
 ```

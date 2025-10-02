@@ -90,8 +90,10 @@ jobs:
           supabase link --project-ref $SUPABASE_PROJECT_ID
           
           # Push migrations to remote database
-          echo "Pushing database migrations..."
-          supabase db push
+          # Using --include-all to apply migrations even if their dates are earlier than already-applied migrations
+          # This is necessary for migrations like 20250102000000_create_agents_and_integrations.sql
+          echo "Pushing database migrations with --include-all flag..."
+          supabase db push --include-all
           
           echo "✅ Database migrations synced successfully!"
 

@@ -37,6 +37,9 @@ describe('Audit Logger - logAuditEvent', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id-123',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const logId = await logAuditEvent({
@@ -58,9 +61,17 @@ describe('Audit Logger - logAuditEvent', () => {
   });
 
   it('should handle logging errors gracefully', async () => {
+    const mockError = new Error('Database error') as any;
+    mockError.details = 'Database connection failed';
+    mockError.hint = 'Check database connectivity';
+    mockError.code = 'PGRST500';
+    
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: null,
-      error: new Error('Database error'),
+      error: mockError,
+      count: null,
+      status: 500,
+      statusText: 'Internal Server Error',
     });
 
     const logId = await logAuditEvent({
@@ -77,6 +88,9 @@ describe('Audit Logger - logAuditEvent', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id-456',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await logAuditEvent({
@@ -122,6 +136,9 @@ describe('Audit Logger - searchAuditLogs', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: mockLogs,
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const results = await searchAuditLogs('org-123', {
@@ -140,9 +157,17 @@ describe('Audit Logger - searchAuditLogs', () => {
   });
 
   it('should return empty array on error', async () => {
+    const mockError = new Error('Search failed') as any;
+    mockError.details = 'Query execution failed';
+    mockError.hint = 'Check search parameters';
+    mockError.code = 'PGRST400';
+    
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: null,
-      error: new Error('Search failed'),
+      error: mockError,
+      count: null,
+      status: 400,
+      statusText: 'Bad Request',
     });
 
     const results = await searchAuditLogs('org-123');
@@ -154,6 +179,9 @@ describe('Audit Logger - searchAuditLogs', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: [],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await searchAuditLogs('org-123', {
@@ -194,6 +222,9 @@ describe('Audit Logger - getAuditLogStats', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: mockStats,
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const stats = await getAuditLogStats('org-123');
@@ -205,9 +236,17 @@ describe('Audit Logger - getAuditLogStats', () => {
   });
 
   it('should return null on error', async () => {
+    const mockError = new Error('Stats query failed') as any;
+    mockError.details = 'Unable to calculate statistics';
+    mockError.hint = 'Verify data exists in the specified date range';
+    mockError.code = 'PGRST500';
+    
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: null,
-      error: new Error('Stats query failed'),
+      error: mockError,
+      count: null,
+      status: 500,
+      statusText: 'Internal Server Error',
     });
 
     const stats = await getAuditLogStats('org-123');
@@ -219,6 +258,9 @@ describe('Audit Logger - getAuditLogStats', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: [{ total_events: '100', success_rate: '100', avg_duration_ms: '100' }],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const startDate = new Date('2025-01-01');
@@ -242,6 +284,9 @@ describe('Audit Logger - getRecentAuditLogs', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: [],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await getRecentAuditLogs('org-123', 25);
@@ -262,6 +307,9 @@ describe('Audit Logger - getUserAuditLogs', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: [],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await getUserAuditLogs('org-123', 'user-456', 30);
@@ -302,6 +350,9 @@ describe('Audit Logger - getResourceAuditLogs', () => {
           created_at: new Date().toISOString(),
         }],
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       }),
     };
 
@@ -321,7 +372,14 @@ describe('Audit Logger - getResourceAuditLogs', () => {
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({
         data: null,
-        error: new Error('Query failed'),
+        error: Object.assign(new Error('Query failed'), {
+          details: 'Database query error',
+          hint: 'Check query parameters',
+          code: 'PGRST500',
+        }),
+        count: null,
+        status: 500,
+        statusText: 'Internal Server Error',
       }),
     };
 
@@ -345,6 +403,9 @@ describe('Audit Logger - Export Functions', () => {
       single: vi.fn().mockResolvedValue({
         data: { id: 'export-123' },
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       }),
     };
 
@@ -386,6 +447,9 @@ describe('Audit Logger - Export Functions', () => {
           completed_at: new Date().toISOString(),
         },
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       }),
     };
 
@@ -420,6 +484,9 @@ describe('Audit Logger - Export Functions', () => {
           },
         ],
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       }),
     };
 
@@ -441,6 +508,9 @@ describe('Audit Logger - Helper Functions', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await AuditLogger.login('org-123', 'user-456', true);
@@ -456,6 +526,9 @@ describe('Audit Logger - Helper Functions', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await AuditLogger.logout('org-123', 'user-456');
@@ -470,6 +543,9 @@ describe('Audit Logger - Helper Functions', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await AuditLogger.createResource('org-123', 'user-456', 'contact', 'contact-789');
@@ -486,6 +562,9 @@ describe('Audit Logger - Helper Functions', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await AuditLogger.deleteResource('org-123', 'user-456', 'contact', 'contact-789');
@@ -500,6 +579,9 @@ describe('Audit Logger - Helper Functions', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await AuditLogger.executeWorkflow('org-123', 'user-456', 'workflow-123', 5000, true);
@@ -516,6 +598,9 @@ describe('Audit Logger - Helper Functions', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await AuditLogger.securityViolation('org-123', 'user-456', 'Unauthorized access attempt');
@@ -531,6 +616,9 @@ describe('Audit Logger - Helper Functions', () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: 'log-id',
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     await AuditLogger.systemError('org-123', 'Database connection lost', 'Connection timeout');

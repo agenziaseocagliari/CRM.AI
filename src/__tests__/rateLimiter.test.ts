@@ -45,6 +45,9 @@ describe('Rate Limiter - checkRateLimit', () => {
         },
       ],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     };
 
     vi.mocked(supabase.rpc).mockResolvedValue(mockResponse);
@@ -74,6 +77,9 @@ describe('Rate Limiter - checkRateLimit', () => {
         },
       ],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     };
 
     vi.mocked(supabase.rpc).mockResolvedValue(mockResponse);
@@ -86,9 +92,17 @@ describe('Rate Limiter - checkRateLimit', () => {
   });
 
   it('should gracefully degrade when RPC call fails', async () => {
+    const mockError = new Error('Database connection failed') as any;
+    mockError.details = 'Connection timeout';
+    mockError.hint = 'Check database availability';
+    mockError.code = 'PGRST500';
+    
     const mockResponse = {
       data: null,
-      error: new Error('Database connection failed'),
+      error: mockError,
+      count: null,
+      status: 500,
+      statusText: 'Internal Server Error',
     };
 
     vi.mocked(supabase.rpc).mockResolvedValue(mockResponse);
@@ -104,6 +118,9 @@ describe('Rate Limiter - checkRateLimit', () => {
     const mockResponse = {
       data: [],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     };
 
     vi.mocked(supabase.rpc).mockResolvedValue(mockResponse);
@@ -246,7 +263,7 @@ describe('Rate Limiter - getRateLimitConfig', () => {
       select: vi.fn().mockReturnValue(mockQuery),
     } as never);
 
-    const result = await getRateLimitConfig('org-123', 'ai_request');
+    await getRateLimitConfig('org-123', 'ai_request');
 
     expect(mockQuery.eq).toHaveBeenCalledWith('organization_id', 'org-123');
     expect(mockQuery.eq).toHaveBeenCalledWith('resource_type', 'ai_request');
@@ -370,6 +387,9 @@ describe('Rate Limiter - withRateLimit', () => {
         },
       ],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const mockFrom = {
@@ -403,6 +423,9 @@ describe('Rate Limiter - withRateLimit', () => {
         },
       ],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const mockFrom = {
@@ -436,6 +459,9 @@ describe('Rate Limiter - withRateLimit', () => {
         },
       ],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const mockFrom = {
@@ -479,6 +505,9 @@ describe('Rate Limiter - getRateLimitStatus', () => {
         },
       ],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const result = await getRateLimitStatus('org-123', 'api_call');
@@ -502,6 +531,9 @@ describe('Rate Limiter - getRateLimitStatus', () => {
         },
       ],
       error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
     });
 
     const result = await getRateLimitStatus('org-123', 'api_call');

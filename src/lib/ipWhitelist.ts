@@ -217,9 +217,8 @@ export async function logIPAccess(
           countryCode: options.countryCode,
           blockReason: options.blockReason,
           endpoint: options.endpoint,
+          userAgent: options.userAgent,
         },
-        ipAddress,
-        userAgent: options.userAgent,
         success: false,
       });
     }

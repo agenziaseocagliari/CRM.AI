@@ -263,7 +263,7 @@ describe('Rate Limiter - getRateLimitConfig', () => {
       select: vi.fn().mockReturnValue(mockQuery),
     } as never);
 
-    const result = await getRateLimitConfig('org-123', 'ai_request');
+    await getRateLimitConfig('org-123', 'ai_request');
 
     expect(mockQuery.eq).toHaveBeenCalledWith('organization_id', 'org-123');
     expect(mockQuery.eq).toHaveBeenCalledWith('resource_type', 'ai_request');

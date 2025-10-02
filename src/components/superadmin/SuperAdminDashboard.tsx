@@ -3,6 +3,8 @@ import { useSuperAdminData } from '../../hooks/useSuperAdminData';
 import { UsersIcon, DollarSignIcon, CheckCircleIcon, TrendingUpIcon, TrendingDownIcon } from '../ui/icons';
 import { supabase } from '../../lib/supabaseClient';
 import { diagnoseJWT, JWTDiagnostics } from '../../lib/jwtUtils';
+import { UserGrowthChart } from './charts/UserGrowthChart';
+import { MrrChart } from './charts/MrrChart';
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; color: string; }> = ({ title, value, icon, color }) => (
     <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow flex items-center">
@@ -144,20 +146,10 @@ export const SuperAdminDashboard: React.FC = () => {
                 />
             </div>
 
-            {/* Placeholder for future charts */}
+            {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                 <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Crescita Utenti</h2>
-                    <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-600 rounded-md">
-                        <p className="text-text-secondary dark:text-dark-text-secondary">Grafico in arrivo...</p>
-                    </div>
-                </div>
-                 <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Andamento MRR</h2>
-                     <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-600 rounded-md">
-                        <p className="text-text-secondary dark:text-dark-text-secondary">Grafico in arrivo...</p>
-                    </div>
-                </div>
+                <UserGrowthChart />
+                <MrrChart />
             </div>
         </div>
     );

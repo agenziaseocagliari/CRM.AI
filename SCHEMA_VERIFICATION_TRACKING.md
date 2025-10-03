@@ -64,7 +64,68 @@ AND indexname IN (
 
 ---
 
-### Issue 2: Missing Core Tables (Prerequisites)
+### Issue 2: Column Naming Mismatch in Performance Indexes
+
+**Severity**: 🔴 CRITICAL (Blocks Deployment)  
+**Status**: ✅ FIXED  
+**Date Fixed**: 2025-01-23  
+**Migration**: `20250123000000_phase3_performance_indexes.sql`, `20251103000000_fix_non_immutable_index_predicates.sql`
+
+**Description**:
+The performance indexes migration referenced column names `start_time` and `end_time` on the `crm_events` table, but the actual column names are `event_start_time` and `event_end_time`. This caused SQLSTATE 42703 errors during deployment.
+
+**Error Message**:
+```
+CREATE INDEX IF NOT EXISTS idx_crm_events_org_date
+  ON crm_events(organization_id, start_time DESC)
+  WHERE organization_id IS NOT NULL;
+-- ERROR: column "start_time" does not exist (SQLSTATE 42703)
+```
+
+**Root Cause Analysis**:
+1. Table created with columns: `event_start_time`, `event_end_time` (migration `20240911120000_create_crm_events_table.sql`)
+2. TypeScript code uses: `event_start_time`, `event_end_time`
+3. Documentation shows: `event_start_time`, `event_end_time`
+4. Performance indexes referenced: `start_time`, `end_time` ❌ (incorrect)
+
+**Fixes Applied**:
+
+1. **Column Reference Corrections** (2 indexes):
+   - ✅ `idx_crm_events_org_date`: `start_time` → `event_start_time`
+   - ✅ `idx_upcoming_events`: `start_time` → `event_start_time`
+
+2. **Defensive Table Existence Checks Added** (8 indexes):
+   - ✅ `idx_contacts_org_name` - wrapped with contacts table check
+   - ✅ `idx_contacts_search` - wrapped with contacts table check
+   - ✅ `idx_workflows_org_active` - wrapped with workflow_definitions table check
+   - ✅ `idx_audit_org_time` - wrapped with audit_logs table check
+   - ✅ `idx_active_workflows` - wrapped with workflow_definitions table check
+   - ✅ `idx_crm_events_org_date` - wrapped with crm_events table check
+   - ✅ `idx_upcoming_events` - wrapped with crm_events table check
+   - ✅ `idx_audit_old_entries` - wrapped with audit_logs table check
+
+3. **Column Existence Checks Added** (2 indexes):
+   - ✅ `idx_contacts_last_contact` - checks for `last_contact_date` column
+   - ✅ `idx_opportunities_stage_value` - checks for `estimated_value` and `status` columns
+
+**Benefits**:
+- ✅ Migration now succeeds without column errors
+- ✅ Idempotent - can be run multiple times safely
+- ✅ Graceful degradation - skips indexes if tables/columns don't exist
+- ✅ Future-proof - protects against similar issues
+
+**Verification Script**: `scripts/verify-column-references.sql`
+
+**Documentation**: `COLUMN_REFERENCES_FIX_REPORT.md`
+
+**Verification Command**:
+```bash
+supabase db execute --file scripts/verify-column-references.sql
+```
+
+---
+
+### Issue 3: Missing Core Tables (Prerequisites)
 
 **Severity**: 🔴 CRITICAL (Blocks All Migrations)  
 **Status**: ⚠️ DOCUMENTED (Requires Manual Setup)  

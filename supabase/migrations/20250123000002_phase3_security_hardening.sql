@@ -27,17 +27,8 @@ CREATE TABLE IF NOT EXISTS audit_logs_enhanced (
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   
-  -- Generated column for full-text search
-  search_vector tsvector GENERATED ALWAYS AS (
-    to_tsvector( 
-      COALESCE(action_type, '') || ' ' || 
-      COALESCE(resource_type, '') || ' ' || 
-      COALESCE(array_to_string(tags, ' '), '') || ' ' ||
-      COALESCE(metadata::text, '')
-    )
-  ) STORED,
-  
-  CONSTRAINT valid_action_type CHECK (action_type IN ('create', 'read', 'update', 'delete', 'execute', 'export', 'login', 'logout')),
+  -- Full-text search vector (updated via triggers)
+  search_vector tsvector,  CONSTRAINT valid_action_type CHECK (action_type IN ('create', 'read', 'update', 'delete', 'execute', 'export', 'login', 'logout')),
   CONSTRAINT valid_risk_level CHECK (risk_level IN ('low', 'medium', 'high', 'critical'))
 );
 

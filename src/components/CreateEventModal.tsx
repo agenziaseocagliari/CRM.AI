@@ -168,7 +168,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     const updateReminder = (index: number, field: string, value: unknown) => {
          setFormData(prev => {
             const newReminders = [...prev.reminders];
-            (newReminders[index] as any)[field] = value;
+            (newReminders[index] as Record<string, unknown>)[field] = value;
             return { ...prev, reminders: newReminders };
         });
     };

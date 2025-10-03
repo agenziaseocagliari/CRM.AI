@@ -74,7 +74,7 @@ export const Dashboard: React.FC = () => {
   const COLORS = ['#4f46e5', '#34d399', '#f59e0b', '#ec4899'];
 
   // --- START DEBUG INTERFACE LOGIC ---
-    const runDebugAction = async (title: string, action: () => Promise<any>) => {
+    const runDebugAction = async (title: string, action: () => Promise<unknown>) => {
         setIsLoading(true);
         setDebugModalTitle(title);
         try {
@@ -90,7 +90,7 @@ export const Dashboard: React.FC = () => {
             try {
                 const parsedError = JSON.parse(errorMessage);
                 setDebugModalContent({ error: 'Errore dalla funzione', details: parsedError });
-            } catch (e) {
+            } catch (_e) {
                 setDebugModalContent({ error: errorMessage, details: error });
             }
         } finally {

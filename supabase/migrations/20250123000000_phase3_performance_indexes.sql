@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_workflows_org_active
 
 -- Workflow executions: Recent executions by organization
 CREATE INDEX IF NOT EXISTS idx_workflow_exec_org_time
-  ON workflow_executions(organization_id, created_at DESC)
+  ON workflow_execution_logs(organization_id, created_at DESC)
   WHERE organization_id IS NOT NULL;
 
 -- Audit logs: Time-based queries by organization
@@ -56,13 +56,22 @@ CREATE INDEX IF NOT EXISTS idx_active_workflows
 
 -- Failed workflow executions (for error analysis)
 CREATE INDEX IF NOT EXISTS idx_failed_workflow_executions
-  ON workflow_executions(organization_id, workflow_id, created_at DESC)
+  ON workflow_execution_logs(organization_id, workflow_id, created_at DESC)
   WHERE status = 'failed' AND organization_id IS NOT NULL;
 
 -- Pending automations (for processing queue)
-CREATE INDEX IF NOT EXISTS idx_pending_automations
-  ON automation_requests(organization_id, created_at ASC)
-  WHERE status = 'pending' AND organization_id IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'automation_requests'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_pending_automations
+      ON automation_requests(organization_id, created_at ASC)
+      WHERE status = 'pending' AND organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Active integrations
 CREATE INDEX IF NOT EXISTS idx_active_integrations
@@ -123,14 +132,32 @@ CREATE INDEX IF NOT EXISTS idx_user_orgs_org_role
 -- =====================================================
 
 -- Agent executions by status (for monitoring dashboard)
-CREATE INDEX IF NOT EXISTS idx_agent_exec_status
-  ON agent_executions(organization_id, status, created_at DESC)
-  WHERE organization_id IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'agent_executions'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_agent_exec_status
+      ON agent_executions(organization_id, status, created_at DESC)
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Notification queue processing
-CREATE INDEX IF NOT EXISTS idx_notifications_pending
-  ON notifications(organization_id, status, created_at ASC)
-  WHERE status = 'pending' AND organization_id IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'notifications'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_notifications_pending
+      ON notifications(organization_id, status, created_at ASC)
+      WHERE status = 'pending' AND organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- =====================================================
 -- 7. Statistics and Analytics
@@ -142,9 +169,18 @@ CREATE INDEX IF NOT EXISTS idx_contacts_last_contact
   WHERE organization_id IS NOT NULL;
 
 -- Opportunity pipeline analysis
-CREATE INDEX IF NOT EXISTS idx_opportunities_stage_value
-  ON opportunities(organization_id, stage, estimated_value DESC)
-  WHERE organization_id IS NOT NULL AND status = 'active';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'opportunities'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_opportunities_stage_value
+      ON opportunities(organization_id, stage, estimated_value DESC)
+      WHERE organization_id IS NOT NULL AND status = 'active';
+  END IF;
+END $$;
 
 -- =====================================================
 -- 8. Cleanup and Maintenance Indexes
@@ -278,7 +314,7 @@ DO $$
 DECLARE
   high_traffic_tables TEXT[] := ARRAY[
     'contacts', 
-    'workflow_executions', 
+    'workflow_execution_logs', 
     'audit_logs', 
     'agent_executions',
     'crm_events'

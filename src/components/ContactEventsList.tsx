@@ -100,7 +100,7 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
     }, [contact, events]);
 
     const handleDeleteEvent = async (event: CrmEvent) => {
-        if (!window.confirm(`Annullare l'evento "${event.event_summary}"? SarÃ  rimosso anche da Google Calendar (se collegato).`)) {return;}
+        if (!window.confirm(`Annullare l'evento "${event.event_summary}"? SarÃ  rimosso anche da Google Calendar (se collegato).`)) {return;}
 
         setIsDeleting(event.id);
         const toastId = toast.loading('Annullamento evento...');
@@ -150,4 +150,6 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
         </div>
     );
 };
+
+
 

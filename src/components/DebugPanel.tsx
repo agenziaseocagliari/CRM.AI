@@ -52,7 +52,7 @@ export const DebugPanel: React.FC = () => {
         <div className="bg-gray-50 p-2 rounded">
           <strong>User Role:</strong>
           <div className="font-mono text-blue-600">
-            {userRole || <span className="text-red-600">NULL "š ï¸</span>}
+            {userRole || <span className="text-red-600">NULL "š ï¸</span>}
           </div>
         </div>
 
@@ -99,7 +99,7 @@ export const DebugPanel: React.FC = () => {
 
         {!userRole && (
           <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-            "š ï¸ <strong>WARNING:</strong> user_role is missing from JWT! User must logout and login again.
+            "š ï¸ <strong>WARNING:</strong> user_role is missing from JWT! User must logout and login again.
           </div>
         )}
       </div>
@@ -110,4 +110,6 @@ export const DebugPanel: React.FC = () => {
     </div>
   );
 };
+
+
 

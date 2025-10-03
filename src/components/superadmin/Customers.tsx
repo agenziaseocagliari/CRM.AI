@@ -132,7 +132,7 @@ export const Customers: React.FC = () => {
                 onClose={() => setConfirmAction(null)}
                 onConfirm={handleConfirmStatusChange}
                 title="Conferma Sospensione"
-                message={<span>Sei sicuro di voler sospendere l'account <strong>{confirmAction?.org.name}</strong>? L'utente non potrÃ  accedere al servizio.</span>}
+                message={<span>Sei sicuro di voler sospendere l'account <strong>{confirmAction?.org.name}</strong>? L'utente non potrÃ  accedere al servizio.</span>}
                 isConfirming={isConfirming}
                 requiresReason
                 confirmText="Sospendi Account"
@@ -140,3 +140,5 @@ export const Customers: React.FC = () => {
         </>
     );
 };
+
+

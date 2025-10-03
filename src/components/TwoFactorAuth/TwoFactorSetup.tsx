@@ -311,7 +311,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
               </h3>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                 <p className="text-yellow-800 text-sm">
-                  "š ï¸ Store these codes in a safe place. You can use them to access your account if you lose your authenticator device.
+                  "š ï¸ Store these codes in a safe place. You can use them to access your account if you lose your authenticator device.
                 </p>
               </div>
             </div>
@@ -375,4 +375,6 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
     </Modal>
   );
 };
+
+
 

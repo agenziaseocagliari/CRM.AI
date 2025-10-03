@@ -1,4 +1,4 @@
-/**
+﻿/**
  * JWT Custom Claims Verification Script
  * 
  * This script verifies that the custom_access_token_hook is properly configured
@@ -26,7 +26,7 @@ const colors = {
 };
 
 function log(message: string, color: string = colors.reset) {
-  console.log(`${color}${message}${colors.reset}`);
+  // console.log(`${color}${message}${colors.reset}`);
 }
 
 function decodeJWT(token: string): any {
@@ -205,6 +205,7 @@ async function verifyJWTCustomClaims() {
 // Run the verification
 verifyJWTCustomClaims().catch((error) => {
   log(`\n❌ Unexpected error: ${error.message}`, colors.red);
-  console.error(error);
+  // console.error(error);
   process.exit(1);
 });
+

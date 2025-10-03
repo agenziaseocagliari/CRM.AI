@@ -61,7 +61,7 @@ export const Dashboard: React.FC = () => {
   const pipelineData = Object.values(PipelineStage).map(stage => ({
     name: stage,
     // FIX: Correctly access the length of the array for each stage, handling cases where a stage might have no opportunities.
-    OpportunitÃ : opportunities[stage]?.length || 0,
+    OpportunitÃ : opportunities[stage]?.length || 0,
   }));
   
   // Dati mock per il grafico a torta (da sostituire con dati reali quando disponibili)
@@ -199,7 +199,7 @@ export const Dashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="OpportunitÃ " fill="#4f46e5" />
+                <Bar dataKey="OpportunitÃ " fill="#4f46e5" />
               </BarChart>
             </ResponsiveContainer>
         </div>
@@ -298,3 +298,5 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+
+

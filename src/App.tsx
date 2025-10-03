@@ -71,13 +71,13 @@ const App: React.FC = () => {
       toast.error(
         (t) => (
           <div className="space-y-3">
-            <p className="font-semibold text-lg">"š ï¸ Sessione Non Valida</p>
+            <p className="font-semibold text-lg">"š ï¸ Sessione Non Valida</p>
             <p className="text-sm">
               La tua sessione è scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
               <span className="font-bold">superadmin</span> o del tuo account.
             </p>
             <p className="text-xs text-gray-600">
-              IMPORTANTE: Ricaricare la pagina non risolverÃ  il problema. È necessario un nuovo login.
+              IMPORTANTE: Ricaricare la pagina non risolverÃ  il problema. È necessario un nuovo login.
             </p>
             <button
               onClick={async () => {
@@ -106,7 +106,7 @@ const App: React.FC = () => {
       // If user_role is missing, warn before reload
       if (session && !userRole) {
         e.preventDefault();
-        e.returnValue = 'La tua sessione non è valida. Ricaricare non risolverÃ  il problema. Devi effettuare il logout e login.';
+        e.returnValue = 'La tua sessione non è valida. Ricaricare non risolverÃ  il problema. Devi effettuare il logout e login.';
         return e.returnValue;
       }
     };
@@ -190,11 +190,11 @@ const App: React.FC = () => {
     );
     
     if (userRole === 'super_admin' && isStandardCrmRoute) {
-      diagnosticLogger.warn('"š ï¸ [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
+      diagnosticLogger.warn('"š ï¸ [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
       toast.error('Come Super Admin, devi usare la dashboard dedicata.', { duration: 3000 });
       navigate('/super-admin/dashboard', { replace: true });
     } else if (userRole !== 'super_admin' && isSuperAdminRoute) {
-      diagnosticLogger.warn('"š ï¸ [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
+      diagnosticLogger.warn('"š ï¸ [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
       toast.error('Non hai i permessi per accedere a questa sezione.', { duration: 3000 });
       navigate('/dashboard', { replace: true });
     }
@@ -308,3 +308,5 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+

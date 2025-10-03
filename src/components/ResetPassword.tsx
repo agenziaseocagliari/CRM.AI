@@ -118,7 +118,7 @@ export const ResetPassword: React.FC = () => {
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                         <div className="text-center space-y-4">
-                            <div className="text-6xl">"š ï¸</div>
+                            <div className="text-6xl">"š ï¸</div>
                             <p className="text-gray-700">
                                 Il link di reset password non è valido o è scaduto.
                             </p>
@@ -219,4 +219,6 @@ export const ResetPassword: React.FC = () => {
         </div>
     );
 };
+
+
 

@@ -222,7 +222,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       {/* TOKEN DEFECT Warning */}
       {!diagnostics.hasUserRole && diagnostics.isValid && (
         <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg">
-          <h3 className="text-xl font-bold text-yellow-800 mb-2">"š ï¸ TOKEN DEFECT RILEVATO</h3>
+          <h3 className="text-xl font-bold text-yellow-800 mb-2">"š ï¸ TOKEN DEFECT RILEVATO</h3>
           <p className="text-yellow-900 mb-3">
             Il tuo JWT non contiene il claim <code className="bg-yellow-200 px-2 py-1 rounded">user_role</code>.
             Questo significa che il token è stato generato prima della configurazione del custom_access_token_hook.
@@ -231,7 +231,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
             <h4 className="font-semibold mb-2">ðŸ“ Azioni Consigliate:</h4>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               <li>Effettua un <strong>logout profondo</strong> (pulsante sotto)</li>
-              <li>Pulizia completa di storage e cookie (giÃ  inclusa nel logout profondo)</li>
+              <li>Pulizia completa di storage e cookie (già  inclusa nel logout profondo)</li>
               <li>Effettua nuovamente il login <strong>SOLO tramite form email + password</strong></li>
               <li>Non usare magic link o reset password fino a risoluzione</li>
             </ol>
@@ -269,7 +269,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       {/* Warnings */}
       {diagnostics.warnings.length > 0 && (
         <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
-          <h3 className="font-bold text-yellow-800 mb-2">"š ï¸ Avvisi</h3>
+          <h3 className="font-bold text-yellow-800 mb-2">"š ï¸ Avvisi</h3>
           <ul className="list-disc list-inside space-y-1">
             {diagnostics.warnings.map((warning, idx) => (
               <li key={idx} className="text-yellow-700 text-sm">{warning}</li>
@@ -489,4 +489,6 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
     </div>
   );
 };
+
+
 

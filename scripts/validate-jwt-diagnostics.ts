@@ -1,4 +1,4 @@
-/**
+﻿/**
  * JWT Diagnostics Validation Script
  * 
  * This script validates the JWT diagnostics implementation by checking:
@@ -24,7 +24,7 @@ const colors = {
 };
 
 function log(message: string, color: string = colors.reset) {
-  console.log(`${color}${message}${colors.reset}`);
+  // console.log(`${color}${message}${colors.reset}`);
 }
 
 function checkFileExists(path: string): boolean {
@@ -166,6 +166,7 @@ async function validateDiagnosticsImplementation() {
 // Run validation
 validateDiagnosticsImplementation().catch((error) => {
   log(`\n❌ Validation script failed: ${error.message}`, colors.red);
-  console.error(error);
+  // console.error(error);
   process.exit(1);
 });
+

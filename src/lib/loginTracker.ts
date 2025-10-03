@@ -187,7 +187,7 @@ export function generateLoginHistoryReport(): string {
       const defects = analysis.jwtDefectsByMethod[method as LoginMethod];
       report += `  - ${method}: ${count} attempts`;
       if (defects > 0) {
-        report += ` ("š ï¸ ${defects} JWT defects)`;
+        report += ` ("š ï¸ ${defects} JWT defects)`;
       }
       report += '\n';
     }
@@ -214,4 +214,6 @@ export function generateLoginHistoryReport(): string {
   
   return report;
 }
+
+
 

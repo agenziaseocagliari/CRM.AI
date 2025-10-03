@@ -281,7 +281,7 @@ export const TwoFactorSettings: React.FC<TwoFactorSettingsProps> = ({ className 
         <div className="space-y-4">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-yellow-800 text-sm">
-              "š ï¸ Disabling 2FA will make your account less secure. Are you sure you want to continue?
+              "š ï¸ Disabling 2FA will make your account less secure. Are you sure you want to continue?
             </p>
           </div>
           <div className="flex space-x-3">
@@ -305,4 +305,6 @@ export const TwoFactorSettings: React.FC<TwoFactorSettingsProps> = ({ className 
     </div>
   );
 };
+
+
 

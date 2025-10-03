@@ -35,8 +35,8 @@ END $$;
 -- 2. Fix crm_events upcoming events index
 -- ============================================================================
 -- Original problematic index:
--- CREATE INDEX idx_upcoming_events ON crm_events(organization_id, start_time ASC) 
--- WHERE start_time > NOW() AND organization_id IS NOT NULL;
+-- CREATE INDEX idx_upcoming_events ON crm_events(organization_id, event_start_time ASC) 
+-- WHERE event_start_time > NOW() AND organization_id IS NOT NULL;
 
 DO $$
 BEGIN
@@ -46,7 +46,7 @@ BEGIN
   
   -- Recreate with only the organization_id predicate (removes NOW() comparison)
   CREATE INDEX IF NOT EXISTS idx_upcoming_events
-    ON crm_events(organization_id, start_time ASC)
+    ON crm_events(organization_id, event_start_time ASC)
     WHERE organization_id IS NOT NULL;
     
   RAISE NOTICE 'Fixed idx_upcoming_events index (removed NOW() predicate)';

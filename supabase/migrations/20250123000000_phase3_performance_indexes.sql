@@ -10,25 +10,43 @@
 -- 1. Composite Indexes for Common Query Patterns
 -- =====================================================
 
--- Contacts: Frequently filtered by organization and name
-CREATE INDEX IF NOT EXISTS idx_contacts_org_name 
-  ON contacts(organization_id, name)
-  WHERE organization_id IS NOT NULL;
+-- Contacts: Frequently filtered by organization and name (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'contacts'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_contacts_org_name 
+      ON contacts(organization_id, name)
+      WHERE organization_id IS NOT NULL;
 
--- Contacts: Full-text search optimization
-CREATE INDEX IF NOT EXISTS idx_contacts_search 
-  ON contacts 
-  USING GIN (to_tsvector('english', 
-    COALESCE(name, '') || ' ' || 
-    COALESCE(email, '') || ' ' ||
-    COALESCE(company, '')
-  ))
-  WHERE organization_id IS NOT NULL;
+    -- Contacts: Full-text search optimization
+    CREATE INDEX IF NOT EXISTS idx_contacts_search 
+      ON contacts 
+      USING GIN (to_tsvector('english', 
+        COALESCE(name, '') || ' ' || 
+        COALESCE(email, '') || ' ' ||
+        COALESCE(company, '')
+      ))
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
--- Workflow definitions: Active workflows by organization
-CREATE INDEX IF NOT EXISTS idx_workflows_org_active 
-  ON workflow_definitions(organization_id, is_active, created_at DESC)
-  WHERE organization_id IS NOT NULL;
+-- Workflow definitions: Active workflows by organization (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'workflow_definitions'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_workflows_org_active 
+      ON workflow_definitions(organization_id, is_active, created_at DESC)
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Workflow executions: Recent executions by organization
 DO $$
@@ -45,10 +63,19 @@ BEGIN
   END IF;
 END $$;
 
--- Audit logs: Time-based queries by organization
-CREATE INDEX IF NOT EXISTS idx_audit_org_time 
-  ON audit_logs(organization_id, created_at DESC)
-  WHERE organization_id IS NOT NULL;
+-- Audit logs: Time-based queries by organization (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'audit_logs'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_audit_org_time 
+      ON audit_logs(organization_id, created_at DESC)
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Audit logs: Action type filtering (only if column exists)
 DO $$
@@ -69,10 +96,19 @@ END $$;
 -- 2. Partial Indexes for Filtered Queries
 -- =====================================================
 
--- Active workflows only (reduces index size by ~50%)
-CREATE INDEX IF NOT EXISTS idx_active_workflows 
-  ON workflow_definitions(organization_id, name) 
-  WHERE is_active = true AND organization_id IS NOT NULL;
+-- Active workflows only (reduces index size by ~50%) (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'workflow_definitions'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_active_workflows 
+      ON workflow_definitions(organization_id, name) 
+      WHERE is_active = true AND organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Failed workflow executions (for error analysis)
 DO $$
@@ -143,17 +179,26 @@ END $$;
 -- 4. Event and Calendar Indexes
 -- =====================================================
 
--- CRM events by organization and date
-CREATE INDEX IF NOT EXISTS idx_crm_events_org_date
-  ON crm_events(organization_id, start_time DESC)
-  WHERE organization_id IS NOT NULL;
+-- CRM events by organization and date (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'crm_events'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_crm_events_org_date
+      ON crm_events(organization_id, event_start_time DESC)
+      WHERE organization_id IS NOT NULL;
 
--- Upcoming events (for reminders and notifications)
--- Fixed: Removed NOW() predicate (not IMMUTABLE)
--- Time-based filtering should be done in query WHERE clause
-CREATE INDEX IF NOT EXISTS idx_upcoming_events
-  ON crm_events(organization_id, start_time ASC)
-  WHERE organization_id IS NOT NULL;
+    -- Upcoming events (for reminders and notifications)
+    -- Fixed: Removed NOW() predicate (not IMMUTABLE)
+    -- Time-based filtering should be done in query WHERE clause
+    CREATE INDEX IF NOT EXISTS idx_upcoming_events
+      ON crm_events(organization_id, event_start_time ASC)
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- =====================================================
 -- 5. User and Organization Indexes
@@ -214,18 +259,38 @@ END $$;
 -- 7. Statistics and Analytics
 -- =====================================================
 
--- Contact engagement scoring
-CREATE INDEX IF NOT EXISTS idx_contacts_last_contact
-  ON contacts(organization_id, last_contact_date DESC NULLS LAST)
-  WHERE organization_id IS NOT NULL;
+-- Contact engagement scoring (only if column exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'contacts'
+    AND column_name = 'last_contact_date'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_contacts_last_contact
+      ON contacts(organization_id, last_contact_date DESC NULLS LAST)
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
--- Opportunity pipeline analysis
+-- Opportunity pipeline analysis (only if columns exist)
 DO $$
 BEGIN
   IF EXISTS (
     SELECT FROM information_schema.tables 
     WHERE table_schema = 'public' 
     AND table_name = 'opportunities'
+  ) AND EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'opportunities'
+    AND column_name = 'estimated_value'
+  ) AND EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'opportunities'
+    AND column_name = 'status'
   ) THEN
     CREATE INDEX IF NOT EXISTS idx_opportunities_stage_value
       ON opportunities(organization_id, stage, estimated_value DESC)
@@ -252,11 +317,20 @@ BEGIN
   END IF;
 END $$;
 
--- Old audit logs archival
+-- Old audit logs archival (only if table exists)
 -- Fixed: Removed NOW() predicate (not IMMUTABLE)
 -- Time-based filtering should be done in query WHERE clause
-CREATE INDEX IF NOT EXISTS idx_audit_old_entries
-  ON audit_logs(created_at);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'audit_logs'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_audit_old_entries
+      ON audit_logs(created_at);
+  END IF;
+END $$;
 
 -- =====================================================
 -- 9. Index Statistics and Monitoring

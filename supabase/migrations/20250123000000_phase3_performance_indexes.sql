@@ -339,7 +339,10 @@ END $$;
 -- Create a view for index usage statistics
 -- Fixed: Use correct column names from pg_stat_user_indexes (relname, indexrelname)
 -- or use pg_indexes for simpler access. Using pg_stat_user_indexes with correct column names.
-CREATE OR REPLACE VIEW v_index_usage_stats AS
+-- Note: DROP VIEW first to prevent SQLSTATE 42P16 error when changing view structure
+DROP VIEW IF EXISTS v_index_usage_stats CASCADE;
+
+CREATE VIEW v_index_usage_stats AS
 SELECT
   schemaname,
   relname as tablename,
@@ -353,7 +356,10 @@ WHERE schemaname = 'public'
 ORDER BY idx_scan DESC;
 
 -- Create a view for table statistics
-CREATE OR REPLACE VIEW v_table_stats AS
+-- Note: DROP VIEW first to prevent SQLSTATE 42P16 error when changing view structure
+DROP VIEW IF EXISTS v_table_stats CASCADE;
+
+CREATE VIEW v_table_stats AS
 SELECT
   schemaname,
   tablename,

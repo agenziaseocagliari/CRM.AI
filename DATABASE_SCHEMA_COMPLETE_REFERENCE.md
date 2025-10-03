@@ -1358,6 +1358,30 @@ CREATE INDEX idx_rate_limits_cleanup
 
 **Status**: ✅ Verified
 
+### 4. View Column Reference Error (v_index_usage_stats)
+
+**Issue**: The `v_index_usage_stats` view used incorrect column names from `pg_stat_user_indexes`. The view referenced `tablename` and `indexname` but `pg_stat_user_indexes` actually uses `relname` and `indexrelname`.
+
+**Error**: `SQLSTATE 42703: column "tablename" does not exist`
+
+**Fix**: Updated view to use correct column names with aliases:
+```sql
+CREATE OR REPLACE VIEW v_index_usage_stats AS
+SELECT
+  schemaname,
+  relname as tablename,          -- Fixed: was tablename
+  indexrelname as indexname,     -- Fixed: was indexname
+  idx_scan as index_scans,
+  idx_tup_read as tuples_read,
+  idx_tup_fetch as tuples_fetched,
+  pg_size_pretty(pg_relation_size(indexrelid)) as index_size
+FROM pg_stat_user_indexes
+WHERE schemaname = 'public'
+ORDER BY idx_scan DESC;
+```
+
+**Status**: ✅ Fixed in `20250123000000_phase3_performance_indexes.sql`
+
 ---
 
 ## 📝 Migration Best Practices
@@ -1427,11 +1451,49 @@ supabase db execute --file scripts/test-phase3-migrations.sql
 **Script**: `scripts/verify-integrations-migration.sql`  
 **Purpose**: Verify integrations table setup
 
+### 4. Complete Schema Audit
+**Document**: `DATABASE_SCHEMA_AUDIT_CHECKLIST.md` - **NEW**  
+**Purpose**: Complete checklist of all tables, columns, indexes, functions, and validation procedures
+
+This comprehensive audit checklist provides:
+- Complete catalog of all 53 tables with column details
+- All 51+ database functions
+- All 5 database views
+- RLS policy patterns
+- Pre/post deployment validation procedures
+- Known issues and manual actions required
+
+**Recommended Validation Procedure**:
+```sql
+-- 1. Check prerequisite tables
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
+AND table_name IN ('organizations', 'profiles', 'contacts', 'opportunities');
+-- Expected: 4 tables minimum
+
+-- 2. Verify migration tables
+SELECT COUNT(*) FROM information_schema.tables
+WHERE table_schema = 'public';
+-- Expected: 63+ tables (53 from migrations + 10 prerequisites)
+
+-- 3. Check index health
+SELECT * FROM v_index_usage_stats
+ORDER BY index_scans DESC
+LIMIT 20;
+-- Monitor index usage patterns
+
+-- 4. Verify RLS enabled
+SELECT COUNT(*) FROM pg_tables
+WHERE schemaname = 'public' AND rowsecurity = true;
+-- Expected: 53+ tables with RLS enabled
+```
+
 ---
 
 ## 📚 Documentation References
 
 ### Primary Documents
+- `DATABASE_SCHEMA_AUDIT_CHECKLIST.md` - **⭐ Complete audit checklist with all tables/columns**
 - `PHASE_3_SCHEMA_COMPLIANCE_REPORT_IT.md` - Schema compliance report
 - `PHASE_3_SCHEMA_VALIDATION.md` - Validation procedures
 - `IMPLEMENTATION_SUMMARY_PHASE3_SCHEMA_FIX.md` - Schema fix summary

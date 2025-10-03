@@ -111,7 +111,10 @@ CREATE INDEX idx_alert_history_rule ON alert_history(alert_rule_id, triggered_at
 -- =====================================================
 
 -- Real-time system health overview
-CREATE OR REPLACE VIEW v_system_health_overview AS
+-- Note: DROP VIEW first to prevent SQLSTATE 42P16 error when changing view structure
+DROP VIEW IF EXISTS v_system_health_overview CASCADE;
+
+CREATE VIEW v_system_health_overview AS
 SELECT
   check_type,
   COUNT(*) as total_checks,
@@ -125,7 +128,10 @@ WHERE checked_at > NOW() - INTERVAL '1 hour'
 GROUP BY check_type;
 
 -- Recent alerts summary
-CREATE OR REPLACE VIEW v_recent_alerts AS
+-- Note: DROP VIEW first to prevent SQLSTATE 42P16 error when changing view structure
+DROP VIEW IF EXISTS v_recent_alerts CASCADE;
+
+CREATE VIEW v_recent_alerts AS
 SELECT
   ar.rule_name,
   ar.severity,
@@ -141,7 +147,10 @@ WHERE ah.triggered_at > NOW() - INTERVAL '24 hours'
 ORDER BY ah.triggered_at DESC;
 
 -- Metric trends (hourly aggregates)
-CREATE OR REPLACE VIEW v_metric_trends_hourly AS
+-- Note: DROP VIEW first to prevent SQLSTATE 42P16 error when changing view structure
+DROP VIEW IF EXISTS v_metric_trends_hourly CASCADE;
+
+CREATE VIEW v_metric_trends_hourly AS
 SELECT
   metric_name,
   date_trunc('hour', recorded_at) as hour,

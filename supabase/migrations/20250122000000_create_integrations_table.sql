@@ -110,7 +110,37 @@ CREATE TRIGGER update_integrations_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
--- 3. Comments
+-- 3. Ensure columns exist (for existing tables)
+-- =====================================================
+-- Add configuration column if it doesn't exist
+-- This handles cases where table exists from previous migration
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'integrations' 
+        AND column_name = 'configuration'
+    ) THEN
+        ALTER TABLE integrations ADD COLUMN configuration JSONB DEFAULT '{}';
+    END IF;
+END $$;
+
+-- Add credentials column if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'integrations' 
+        AND column_name = 'credentials'
+    ) THEN
+        ALTER TABLE integrations ADD COLUMN credentials JSONB DEFAULT '{}';
+    END IF;
+END $$;
+
+-- =====================================================
+-- 4. Comments
 -- =====================================================
 
 COMMENT ON TABLE integrations IS 

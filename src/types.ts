@@ -195,6 +195,21 @@ export interface IntegrationUsageLog {
     created_at: string;
 }
 
+// Organization-level integrations (separate from super-admin APIIntegration)
+export interface Integration {
+    id: string;
+    organization_id: string;
+    integration_type: string;
+    is_active: boolean;
+    configuration: Record<string, any>;
+    credentials: Record<string, any>;
+    status: 'active' | 'inactive' | 'error' | 'rate_limited';
+    last_sync_at: string | null;
+    last_error: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export type TriggerType = 'manual' | 'schedule' | 'event' | 'condition';
 
 export interface WorkflowDefinition {

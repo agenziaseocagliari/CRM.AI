@@ -356,13 +356,14 @@ WHERE schemaname = 'public'
 ORDER BY idx_scan DESC;
 
 -- Create a view for table statistics
+-- Fixed: Use correct column name from pg_stat_user_tables (relname)
 -- Note: DROP VIEW first to prevent SQLSTATE 42P16 error when changing view structure
 DROP VIEW IF EXISTS v_table_stats CASCADE;
 
 CREATE VIEW v_table_stats AS
 SELECT
   schemaname,
-  tablename,
+  relname AS tablename,
   n_tup_ins as inserts,
   n_tup_upd as updates,
   n_tup_del as deletes,

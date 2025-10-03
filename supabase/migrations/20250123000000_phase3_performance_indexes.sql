@@ -156,15 +156,24 @@ CREATE INDEX IF NOT EXISTS idx_upcoming_events
 -- 5. User and Organization Indexes
 -- =====================================================
 
--- User organizations for access control
-CREATE INDEX IF NOT EXISTS idx_user_orgs_user_status
-  ON user_organizations(user_id, status)
-  WHERE status = 'active';
+-- User organizations for access control (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'user_organizations'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_user_orgs_user_status
+      ON user_organizations(user_id, status)
+      WHERE status = 'active';
 
--- Organization members count optimization
-CREATE INDEX IF NOT EXISTS idx_user_orgs_org_role
-  ON user_organizations(organization_id, role)
-  WHERE status = 'active';
+    -- Organization members count optimization
+    CREATE INDEX IF NOT EXISTS idx_user_orgs_org_role
+      ON user_organizations(organization_id, role)
+      WHERE status = 'active';
+  END IF;
+END $$;
 
 -- =====================================================
 -- 6. AI and Automation Indexes

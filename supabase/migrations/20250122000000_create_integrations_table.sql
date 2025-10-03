@@ -38,8 +38,8 @@ CREATE POLICY "Users can view organization integrations" ON integrations
     TO public
     USING (
         organization_id IN (
-            SELECT organization_id FROM user_organizations 
-            WHERE user_id = auth.uid() AND status = 'active'
+            SELECT organization_id FROM profiles 
+            WHERE id = auth.uid()
         )
         OR EXISTS (
             SELECT 1 FROM profiles
@@ -54,10 +54,9 @@ CREATE POLICY "Admins can insert integrations" ON integrations
     TO public
     WITH CHECK (
         organization_id IN (
-            SELECT organization_id FROM user_organizations
-            WHERE user_id = auth.uid() 
-            AND role IN ('admin', 'owner')
-            AND status = 'active'
+            SELECT organization_id FROM profiles
+            WHERE id = auth.uid() 
+            AND role IN ('admin', 'owner', 'super_admin')
         )
         OR EXISTS (
             SELECT 1 FROM profiles
@@ -72,10 +71,9 @@ CREATE POLICY "Admins can update integrations" ON integrations
     TO public
     USING (
         organization_id IN (
-            SELECT organization_id FROM user_organizations
-            WHERE user_id = auth.uid() 
-            AND role IN ('admin', 'owner')
-            AND status = 'active'
+            SELECT organization_id FROM profiles
+            WHERE id = auth.uid() 
+            AND role IN ('admin', 'owner', 'super_admin')
         )
         OR EXISTS (
             SELECT 1 FROM profiles
@@ -90,10 +88,9 @@ CREATE POLICY "Admins can delete integrations" ON integrations
     TO public
     USING (
         organization_id IN (
-            SELECT organization_id FROM user_organizations
-            WHERE user_id = auth.uid() 
-            AND role IN ('admin', 'owner')
-            AND status = 'active'
+            SELECT organization_id FROM profiles
+            WHERE id = auth.uid() 
+            AND role IN ('admin', 'owner', 'super_admin')
         )
         OR EXISTS (
             SELECT 1 FROM profiles

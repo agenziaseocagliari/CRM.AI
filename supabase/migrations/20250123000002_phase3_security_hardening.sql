@@ -158,13 +158,11 @@ TO public
 USING (
   -- User must be active member of the organization
   organization_id IN (
-    SELECT uo.organization_id 
-    FROM user_organizations uo
-    JOIN organizations o ON uo.organization_id = o.id
-    WHERE uo.user_id = auth.uid() 
-    AND uo.status = 'active'
+    SELECT p.organization_id 
+    FROM profiles p
+    JOIN organizations o ON p.organization_id = o.id
+    WHERE p.id = auth.uid() 
     AND o.status = 'active'
-    AND uo.role IN ('owner', 'admin', 'member')
   )
   AND organization_id IS NOT NULL
 );
@@ -189,13 +187,11 @@ FOR ALL
 TO public
 USING (
   organization_id IN (
-    SELECT uo.organization_id 
-    FROM user_organizations uo
-    JOIN organizations o ON uo.organization_id = o.id
-    WHERE uo.user_id = auth.uid() 
-    AND uo.status = 'active'
+    SELECT p.organization_id 
+    FROM profiles p
+    JOIN organizations o ON p.organization_id = o.id
+    WHERE p.id = auth.uid() 
     AND o.status = 'active'
-    AND uo.role IN ('owner', 'admin', 'member')
   )
   AND organization_id IS NOT NULL
 );
@@ -434,10 +430,8 @@ BEGIN
   GET DIAGNOSTICS v_count = ROW_COUNT;
   v_deleted_records := jsonb_set(v_deleted_records, '{contacts_anonymized}', to_jsonb(v_count));
   
-  -- Delete user-specific data that doesn't need retention
-  DELETE FROM user_organizations WHERE user_id = p_user_id;
-  GET DIAGNOSTICS v_count = ROW_COUNT;
-  v_deleted_records := jsonb_set(v_deleted_records, '{user_organizations_deleted}', to_jsonb(v_count));
+  -- Note: user_organizations table doesn't exist in current architecture
+  -- User-organization relationship is managed through profiles table
   
   -- Anonymize audit logs (keep for compliance, but remove PII)
   UPDATE audit_logs_enhanced
@@ -485,8 +479,8 @@ BEGIN
     'organizations', (
       SELECT jsonb_agg(o) FROM organizations o
       WHERE o.id IN (
-        SELECT organization_id FROM user_organizations
-        WHERE user_id = p_user_id
+        SELECT organization_id FROM profiles
+        WHERE id = p_user_id
       )
     ),
     'contacts_created', (
@@ -528,10 +522,9 @@ TO public
 USING (
   organization_id IN (
     SELECT organization_id 
-    FROM user_organizations 
-    WHERE user_id = auth.uid() 
-    AND status = 'active'
-    AND role IN ('owner', 'admin')
+    FROM profiles 
+    WHERE id = auth.uid() 
+    AND role IN ('owner', 'admin', 'super_admin')
   )
 );
 

@@ -466,9 +466,8 @@ TO public
 USING (
   organization_id IN (
     SELECT organization_id 
-    FROM user_organizations 
-    WHERE user_id = auth.uid() 
-    AND status = 'active'
+    FROM profiles 
+    WHERE id = auth.uid()
   )
 );
 

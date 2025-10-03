@@ -337,11 +337,13 @@ END $$;
 -- =====================================================
 
 -- Create a view for index usage statistics
+-- Fixed: Use correct column names from pg_stat_user_indexes (relname, indexrelname)
+-- or use pg_indexes for simpler access. Using pg_stat_user_indexes with correct column names.
 CREATE OR REPLACE VIEW v_index_usage_stats AS
 SELECT
   schemaname,
-  tablename,
-  indexname,
+  relname as tablename,
+  indexrelname as indexname,
   idx_scan as index_scans,
   idx_tup_read as tuples_read,
   idx_tup_fetch as tuples_fetched,

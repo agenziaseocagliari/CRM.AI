@@ -1,0 +1,126 @@
+// .eslintrc.cjs - Pragmatic Edition for Phase 5 Code Quality
+// Balanced approach between quality and practicality
+
+module.exports = {
+  root: true,
+  env: {
+    browser: true,
+    es2020: true,
+    node: true,
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
+    'plugin:react/jsx-runtime',
+  ],
+  ignorePatterns: [
+    'dist',
+    'node_modules',
+    '*.config.js',
+    '*.config.ts',
+    'supabase/functions/**/*.ts',
+  ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: [
+    'react-refresh',
+    '@typescript-eslint',
+    'react',
+    'react-hooks',
+  ],
+  settings: {
+    react: {
+      version: 'detect',
+    },
+  },
+  rules: {
+    // React Refresh for HMR
+    'react-refresh/only-export-components': [
+      'warn',
+      { allowConstantExport: true },
+    ],
+
+    // TypeScript Specific Rules
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        ignoreRestSiblings: true,
+      },
+    ],
+    '@typescript-eslint/no-explicit-any': 'warn',
+
+    // React Best Practices
+    'react/prop-types': 'off', // Using TypeScript instead
+    'react/react-in-jsx-scope': 'off', // React 17+ JSX transform
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+    'react/self-closing-comp': 'error',
+    'react/jsx-boolean-value': ['error', 'never'],
+    'react/jsx-curly-brace-presence': [
+      'error',
+      { props: 'never', children: 'never' },
+    ],
+
+    // Security Rules
+    'security/detect-object-injection': 'warn',
+    'security/detect-non-literal-regexp': 'warn',
+    'security/detect-unsafe-regex': 'error',
+    'security/detect-buffer-noassert': 'error',
+    'security/detect-eval-with-expression': 'error',
+
+    // Import Organization
+    'import/order': [
+      'error',
+      {
+        groups: [
+          'builtin',
+          'external',
+          'internal',
+          'parent',
+          'sibling',
+          'index',
+        ],
+        'newlines-between': 'always',
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true,
+        },
+      },
+    ],
+    'import/no-duplicates': 'error',
+    'import/no-unused-modules': 'warn',
+
+    // General Code Quality
+    'prefer-const': 'error',
+    'no-var': 'error',
+    'eqeqeq': ['error', 'always'],
+
+    // Disable overly strict rules that cause too many issues
+    'max-lines-per-function': 'off',
+    'complexity': 'off',
+    'max-params': 'off',
+    'max-nested-callbacks': 'off',
+    'require-await': 'off',
+    'curly': 'off',
+    'no-throw-literal': 'off',
+  },
+  overrides: [
+    {
+      files: ['**/__tests__/**/*', '**/*.test.*'],
+      env: {
+        jest: true,
+      },
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        'no-console': 'off',
+      },
+    },
+  ],
+};

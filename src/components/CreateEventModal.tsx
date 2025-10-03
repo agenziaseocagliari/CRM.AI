@@ -1,13 +1,13 @@
-// src/components/CreateEventModal.tsx
+﻿// src/components/CreateEventModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 // FIX: Corrected the import for Link from 'react-router-dom' to resolve module export errors.
 import { Link } from 'react-router-dom';
 
-import { Contact, Organization, CrmEvent } from '../types';
 import { invokeSupabaseFunction } from '../lib/api';
 import { generateTimeSlots, combineDateAndTime } from '../lib/eventUtils';
-import { Modal } from './ui/Modal';
+import { Contact, Organization, CrmEvent } from '../types';
+
 import {
     GoogleIcon,
     InfoIcon,
@@ -15,7 +15,9 @@ import {
     TrashIcon,
     WhatsAppIcon
 } from './ui/icons';
+import { Modal } from './ui/Modal';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 // Props for the component
 interface CreateEventModalProps {
     isOpen: boolean;
@@ -76,10 +78,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             setGoogleConnectionError(null);
         }
         
-        if (!isOpen || !isGoogleConnected || !formData.date || googleConnectionError) return;
+        if (!isOpen || !isGoogleConnected || !formData.date || googleConnectionError) {return;}
         
         if (isCalendarApiBlocked) {
-            console.warn("Chiamata a get-google-calendar-events bloccata a causa di un errore critico precedente.");
+            diagnosticLogger.warn("Chiamata a get-google-calendar-events bloccata a causa di un errore critico precedente.");
             return;
         }
 
@@ -104,12 +106,12 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             } catch (err: any) {
                 const errorMessage = err.message || '';
                 if (/token|google|autenticazione|credential/i.test(errorMessage.toLowerCase())) {
-                     console.error("Errore di connessione Google rilevato:", err);
+                     diagnosticLogger.error("Errore di connessione Google rilevato:", err);
                      setGoogleConnectionError("La connessione con Google Calendar ha un problema.");
                      // The detailed error toast is already shown by the API helper.
                 } else if (errorMessage.includes('obbligatori')) {
                      const errorMsg = "Errore critico dal backend: parametro mancante. Le chiamate al calendario sono state bloccate per questa sessione.";
-                     console.error(errorMsg, err);
+                     diagnosticLogger.error(errorMsg, err);
                      toast.error("Errore di comunicazione col calendario. Ricarica la pagina.", { duration: 6000 });
                      setCalendarApiBlocked(true);
                  }
@@ -132,7 +134,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             setCalendarApiBlocked(false);
             setGoogleConnectionError(null);
         }
-    }, [isOpen, contact, isGoogleConnected]);
+    }, [isOpen, contact, isGoogleConnected, googleConnectionError]);
 
 
     // Generate time slots based on availability
@@ -230,7 +232,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         } catch (err: any) {
             toast.dismiss(toastId); // The API helper shows a more detailed toast
-            console.error(err);
+            diagnosticLogger.error(err);
         } finally {
             setIsSaving(false);
         }
@@ -325,14 +327,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                              <div key={index} className="p-3 bg-gray-50 rounded-md border flex items-start space-x-3">
                                  <div className="flex-grow space-y-2">
                                      <div className="flex items-center space-x-2">
-                                         <span className="font-semibold text-sm flex items-center">{r.channel === 'Email' ? '📧 Email' : <><WhatsAppIcon className="w-4 h-4 text-green-600 mr-1"/> WhatsApp</>}</span>
+                                         <span className="font-semibold text-sm flex items-center">{r.channel === 'Email' ? 'ðŸ“§ Email' : <><WhatsAppIcon className="w-4 h-4 text-green-600 mr-1"/> WhatsApp</>}</span>
                                          <select value={r.minutesBefore} onChange={(e) => updateReminder(index, 'minutesBefore', parseInt(e.target.value))} className={`${inputStyle} text-xs p-1 mt-0`}>
                                              <option value={10}>10 minuti prima</option>
                                              <option value={60}>1 ora prima</option>
                                              <option value={1440}>1 giorno prima</option>
                                          </select>
                                      </div>
-                                      <textarea value={r.message} onChange={(e) => updateReminder(index, 'message', e.target.value)} rows={2} placeholder={`Testo del promemoria (opzionale, usa template default se vuoto)`} className={`${inputStyle} text-sm`}/>
+                                      <textarea value={r.message} onChange={(e) => updateReminder(index, 'message', e.target.value)} rows={2} placeholder="Testo del promemoria (opzionale, usa template default se vuoto)" className={`${inputStyle} text-sm`}/>
                                  </div>
                                  <button type="button" onClick={() => removeReminder(index)} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4"/></button>
                              </div>
@@ -354,3 +356,4 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         </Modal>
     );
 };
+

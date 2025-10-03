@@ -1,6 +1,7 @@
 import React from 'react';
 // FIX: Corrected the import for Link from 'react-router-dom' to resolve module export errors.
 import { Link } from 'react-router-dom';
+
 import { GuardianIcon, BrainCircuitIcon, ClipboardDataIcon, MessageBotIcon } from './ui/icons';
 
 export const HomePage: React.FC = () => {
@@ -25,7 +26,7 @@ export const HomePage: React.FC = () => {
                     Il CRM Potenziato dall'AI per la Tua Crescita
                 </h2>
                 <p className="mt-4 text-lg text-text-secondary max-w-2xl mx-auto">
-                    Guardian AI automatizza le tue vendite, gestisce i contatti e ottimizza la tua pipeline con la potenza dell'intelligenza artificiale.
+                    Guardian AI automatizza le tue vendite, gestisce i contatti e ottimizza la tua pipeline con la potenza dell&apos;intelligenza artificiale.
                 </p>
                 <Link to="/login" className="mt-8 inline-block bg-primary text-white px-8 py-4 rounded-lg hover:bg-indigo-700 font-bold text-lg">
                     Inizia la Prova Gratuita
@@ -40,12 +41,12 @@ export const HomePage: React.FC = () => {
                         <div className="bg-white p-8 rounded-lg shadow-md text-center">
                             <BrainCircuitIcon className="w-12 h-12 text-primary mx-auto mb-4" />
                             <h4 className="text-xl font-semibold mb-2">Lead Scoring Intelligente</h4>
-                            <p className="text-text-secondary">L'AI analizza e qualifica i tuoi lead, permettendoti di concentrarti sulle opportunità migliori.</p>
+                            <p className="text-text-secondary">L&apos;AI analizza e qualifica i tuoi lead, permettendoti di concentrarti sulle opportunità migliori.</p>
                         </div>
                         <div className="bg-white p-8 rounded-lg shadow-md text-center">
                             <MessageBotIcon className="w-12 h-12 text-primary mx-auto mb-4" />
                             <h4 className="text-xl font-semibold mb-2">Comunicazione Assistita</h4>
-                            <p className="text-text-secondary">Genera email e messaggi WhatsApp efficaci in pochi secondi con l'aiuto dei nostri modelli AI.</p>
+                            <p className="text-text-secondary">Genera email e messaggi WhatsApp efficaci in pochi secondi con l&apos;aiuto dei nostri modelli AI.</p>
                         </div>
                         <div className="bg-white p-8 rounded-lg shadow-md text-center">
                             <ClipboardDataIcon className="w-12 h-12 text-primary mx-auto mb-4" />

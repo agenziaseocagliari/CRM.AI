@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { GuardianIcon } from './ui/icons';
-import { supabase } from '../lib/supabaseClient';
+﻿import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
+import { supabase } from '../lib/supabaseClient';
+
+import { GuardianIcon } from './ui/icons';
+
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export const ForgotPassword: React.FC = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,15 +24,15 @@ export const ForgotPassword: React.FC = () => {
 
             if (error) {
                 // Generic message - don't leak if account exists or not
-                toast.error('Si è verificato un errore. Riprova più tardi.');
-                console.error('Password reset error:', error);
+                toast.error('Si Ã¨ verificato un errore. Riprova piÃ¹ tardi.');
+                diagnosticLogger.error('Password reset error:', error);
             } else {
                 setSubmitted(true);
                 toast.success('Controlla la tua email per le istruzioni di reset.');
             }
         } catch (error) {
-            toast.error('Si è verificato un errore. Riprova più tardi.');
-            console.error('Password reset error:', error);
+            toast.error('Si Ã¨ verificato un errore. Riprova piÃ¹ tardi.');
+            diagnosticLogger.error('Password reset error:', error);
         } finally {
             setLoading(false);
         }
@@ -54,12 +57,12 @@ export const ForgotPassword: React.FC = () => {
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                         <div className="text-center space-y-4">
-                            <div className="text-6xl">📧</div>
+                            <div className="text-6xl">ðŸ“§</div>
                             <p className="text-gray-700">
-                                Se l'indirizzo email è registrato nel sistema, riceverai un link per reimpostare la password.
+                                Se l&apos;indirizzo email Ã¨ registrato nel sistema, riceverai un link per reimpostare la password.
                             </p>
                             <p className="text-sm text-gray-600">
-                                Controlla anche la cartella spam se non vedi l'email.
+                                Controlla anche la cartella spam se non vedi l&apos;email.
                             </p>
                             <button
                                 onClick={handleBackToLogin}
@@ -134,3 +137,4 @@ export const ForgotPassword: React.FC = () => {
         </div>
     );
 };
+

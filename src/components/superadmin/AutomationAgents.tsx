@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
+
+import { supabase } from '../../lib/supabaseClient';
 import { AutomationAgent, AgentExecutionLog } from '../../types';
 import { 
     CheckCircleIcon, 
@@ -159,7 +160,7 @@ const ConfigurationModal: React.FC<{
         onSave(config);
     };
 
-    if (!agent) return null;
+    if (!agent) {return null;}
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Configura ${agent.name}`}>
@@ -225,7 +226,7 @@ const LogsModal: React.FC<{
     }, [agent, isOpen]);
 
     const loadLogs = async () => {
-        if (!agent) return;
+        if (!agent) {return;}
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -235,7 +236,7 @@ const LogsModal: React.FC<{
                 .order('created_at', { ascending: false })
                 .limit(20);
 
-            if (error) throw error;
+            if (error) {throw error;}
             setLogs(data || []);
         } catch (error: any) {
             toast.error(`Errore nel caricamento log: ${error.message}`);
@@ -244,14 +245,14 @@ const LogsModal: React.FC<{
         }
     };
 
-    if (!agent) return null;
+    if (!agent) {return null;}
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Log Esecuzioni - ${agent.name}`}>
             <div className="space-y-4">
                 {loading ? (
                     <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
                         <p className="text-sm text-text-secondary mt-2">Caricamento log...</p>
                     </div>
                 ) : logs.length === 0 ? (
@@ -321,7 +322,7 @@ export const AutomationAgents: React.FC = () => {
                 .select('*')
                 .order('created_at', { ascending: true });
 
-            if (error) throw error;
+            if (error) {throw error;}
             setAgents(data || []);
         } catch (error: any) {
             toast.error(`Errore nel caricamento agenti: ${error.message}`);
@@ -338,7 +339,7 @@ export const AutomationAgents: React.FC = () => {
                 .update({ is_active: !agent.is_active })
                 .eq('id', agent.id);
 
-            if (error) throw error;
+            if (error) {throw error;}
 
             toast.success(`Agente ${agent.is_active ? 'disattivato' : 'attivato'} con successo`);
             loadAgents();
@@ -360,7 +361,7 @@ export const AutomationAgents: React.FC = () => {
     };
 
     const handleSaveConfiguration = async (config: Record<string, any>) => {
-        if (!selectedAgent) return;
+        if (!selectedAgent) {return;}
 
         setActionLoading(true);
         try {
@@ -369,7 +370,7 @@ export const AutomationAgents: React.FC = () => {
                 .update({ configuration: config })
                 .eq('id', selectedAgent.id);
 
-            if (error) throw error;
+            if (error) {throw error;}
 
             toast.success('Configurazione salvata con successo');
             setConfigModalOpen(false);
@@ -384,7 +385,7 @@ export const AutomationAgents: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
             </div>
         );
     }

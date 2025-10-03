@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
+
 import { useAuth } from '../contexts/AuthContext';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 /**
  * Debug panel to show JWT claims in real-time.
  * Can be toggled with Ctrl+Shift+D or by clicking the debug icon.
@@ -14,7 +16,7 @@ export const DebugPanel: React.FC = () => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'D') {
         setIsVisible(prev => !prev);
-        console.log('🐛 [DebugPanel] Toggled:', !isVisible);
+        diagnosticLogger.info('ðŸ› [DebugPanel] Toggled:', !isVisible);
       }
     };
 
@@ -29,7 +31,7 @@ export const DebugPanel: React.FC = () => {
         className="fixed bottom-4 right-4 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 z-50"
         title="Debug JWT Claims (Ctrl+Shift+D)"
       >
-        🐛
+        ðŸ›
       </button>
     );
   }
@@ -37,12 +39,12 @@ export const DebugPanel: React.FC = () => {
   return (
     <div className="fixed bottom-4 right-4 bg-white border-2 border-gray-800 rounded-lg shadow-2xl p-4 w-96 max-h-96 overflow-y-auto z-50">
       <div className="flex justify-between items-center mb-3 border-b pb-2">
-        <h3 className="font-bold text-lg">🐛 Debug JWT Claims</h3>
+        <h3 className="font-bold text-lg">ðŸ› Debug JWT Claims</h3>
         <button
           onClick={() => setIsVisible(false)}
           className="text-gray-500 hover:text-gray-700 font-bold"
         >
-          ✕
+          âœ•
         </button>
       </div>
 
@@ -50,7 +52,7 @@ export const DebugPanel: React.FC = () => {
         <div className="bg-gray-50 p-2 rounded">
           <strong>User Role:</strong>
           <div className="font-mono text-blue-600">
-            {userRole || <span className="text-red-600">NULL ⚠️</span>}
+            {userRole || <span className="text-red-600">NULL âš ï¸</span>}
           </div>
         </div>
 
@@ -73,13 +75,13 @@ export const DebugPanel: React.FC = () => {
           <strong>Role Flags:</strong>
           <div className="grid grid-cols-3 gap-2 mt-1">
             <div className={`p-1 rounded text-center text-xs ${isSuperAdmin ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}>
-              Super Admin {isSuperAdmin ? '✅' : '❌'}
+              Super Admin {isSuperAdmin ? 'âœ…' : 'âŒ'}
             </div>
             <div className={`p-1 rounded text-center text-xs ${isAdmin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
-              Admin {isAdmin ? '✅' : '❌'}
+              Admin {isAdmin ? 'âœ…' : 'âŒ'}
             </div>
             <div className={`p-1 rounded text-center text-xs ${isUser ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
-              User {isUser ? '✅' : '❌'}
+              User {isUser ? 'âœ…' : 'âŒ'}
             </div>
           </div>
         </div>
@@ -97,7 +99,7 @@ export const DebugPanel: React.FC = () => {
 
         {!userRole && (
           <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-            ⚠️ <strong>WARNING:</strong> user_role is missing from JWT! User must logout and login again.
+            âš ï¸ <strong>WARNING:</strong> user_role is missing from JWT! User must logout and login again.
           </div>
         )}
       </div>
@@ -108,3 +110,4 @@ export const DebugPanel: React.FC = () => {
     </div>
   );
 };
+

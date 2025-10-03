@@ -1,10 +1,12 @@
 // File: src/components/UsageDashboard.tsx
 
 import React, { useEffect, useRef, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSignIcon, SparklesIcon, CheckCircleIcon } from './ui/icons';
 import { toast } from 'react-hot-toast';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
 import { OrganizationSubscription, CreditLedgerEntry } from '../types';
+
+import { DollarSignIcon, SparklesIcon, CheckCircleIcon } from './ui/icons';
 
 // Props interface per il componente
 interface UsageDashboardProps {
@@ -43,7 +45,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({
     // Hook per monitorare i crediti e mostrare notifiche
     useEffect(() => {
         // Se i dati non sono ancora caricati, non fare nulla
-        if (!subscription) return;
+        if (!subscription) {return;}
 
         const creditsPercentage = (currentCredits / totalCredits) * 100;
 
@@ -73,7 +75,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({
 
     // Aggrega i dati di utilizzo dal ledger per il grafico
     const usageData = useMemo(() => {
-        if (!ledger) return [];
+        if (!ledger) {return [];}
         const usageMap = ledger.reduce((acc, entry) => {
             if (entry.outcome === 'SUCCESS') {
                 // FIX: Explicitly cast `credits_changed` to a number to prevent potential runtime errors
@@ -128,7 +130,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({
                         <div>
                             <p className="text-sm text-gray-600 font-medium">Ciclo attuale: {subscription ? `${new Date(subscription.cycle_start_date).toLocaleDateString('it-IT')} - ${subscription.cycle_end_date ? new Date(subscription.cycle_end_date).toLocaleDateString('it-IT') : 'N/A'}` : 'N/A'}</p>
                             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${creditsPercentage}%` }}></div>
+                                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${creditsPercentage}%` }} />
                             </div>
                         </div>
                     </div>

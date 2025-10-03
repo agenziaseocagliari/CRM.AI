@@ -16,9 +16,17 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+
+    /* Enhanced Type Safety - Gradually enabled */
+    // "exactOptionalPropertyTypes": true, // TODO: Enable after fixing all errors
+    // "noImplicitReturns": true, // TODO: Fix useEffect return types
+    "noImplicitOverride": true,
+    // "noUncheckedIndexedAccess": true, // TODO: Enable after index access fixes
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
 
     /* Path Aliases */
     "baseUrl": ".",

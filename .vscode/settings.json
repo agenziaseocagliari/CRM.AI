@@ -1,0 +1,47 @@
+{
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.preferences.inlayHints.parameterNames.enabled": "all",
+  "typescript.preferences.inlayHints.variableTypes.enabled": true,
+  "typescript.preferences.inlayHints.functionLikeReturnTypes.enabled": true,
+  "editor.inlayHints.enabled": "on",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescript": "typescript",
+    "typescriptreact": "typescriptreact"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["classnames\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "files.exclude": {
+    "node_modules": true,
+    ".env": false,
+    "dist": true,
+    "build": true
+  },
+  "search.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "build": true,
+    "*.log": true
+  },
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "debug.console.fontSize": 14,
+  "debug.internalConsoleOptions": "openOnSessionStart"
+}

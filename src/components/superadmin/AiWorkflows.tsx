@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { SparklesIcon, TrendingDownIcon, TemplateIcon } from '../ui/icons';
+
 import { invokeSupabaseFunction } from '../../lib/api';
+import { SparklesIcon, TrendingDownIcon, TemplateIcon } from '../ui/icons';
 import { Modal } from '../ui/Modal';
 
 interface WorkflowExecution {
@@ -40,7 +41,7 @@ const WorkflowCard: React.FC<{
         >
             {isRunning ? (
                 <span className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2" />
                     In esecuzione...
                 </span>
             ) : (

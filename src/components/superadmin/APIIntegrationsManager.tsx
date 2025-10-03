@@ -1,6 +1,8 @@
+/* eslint-disable no-alert */
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
+
+import { supabase } from '../../lib/supabaseClient';
 import { APIIntegration, IntegrationUsageLog } from '../../types';
 import { 
     ExclamationTriangleIcon,
@@ -298,10 +300,11 @@ const StatsModal: React.FC<{
         if (integration && isOpen) {
             loadLogs();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [integration, isOpen]);
 
     const loadLogs = async () => {
-        if (!integration) return;
+        if (!integration) {return;}
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -311,7 +314,7 @@ const StatsModal: React.FC<{
                 .order('created_at', { ascending: false })
                 .limit(50);
 
-            if (error) throw error;
+            if (error) {throw error;}
             setLogs(data || []);
         } catch (error: any) {
             toast.error(`Errore nel caricamento statistiche: ${error.message}`);
@@ -320,7 +323,7 @@ const StatsModal: React.FC<{
         }
     };
 
-    if (!integration) return null;
+    if (!integration) {return null;}
 
     const successCount = logs.filter(l => l.status === 'success').length;
     const errorCount = logs.filter(l => l.status === 'error').length;
@@ -350,7 +353,7 @@ const StatsModal: React.FC<{
                     <h4 className="font-semibold text-text-primary mb-2">Log Recenti (ultimi 50)</h4>
                     {loading ? (
                         <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
                         </div>
                     ) : logs.length === 0 ? (
                         <p className="text-text-secondary text-center py-8">Nessun log disponibile</p>
@@ -413,7 +416,7 @@ export const APIIntegrationsManager: React.FC = () => {
                 .select('*')
                 .order('created_at', { ascending: true });
 
-            if (error) throw error;
+            if (error) {throw error;}
             setIntegrations(data || []);
         } catch (error: any) {
             toast.error(`Errore nel caricamento integrazioni: ${error.message}`);
@@ -440,14 +443,14 @@ export const APIIntegrationsManager: React.FC = () => {
                     .update(integrationData)
                     .eq('id', selectedIntegration.id);
 
-                if (error) throw error;
+                if (error) {throw error;}
                 toast.success('Integrazione aggiornata con successo');
             } else {
                 const { error } = await supabase
                     .from('api_integrations')
                     .insert([integrationData]);
 
-                if (error) throw error;
+                if (error) {throw error;}
                 toast.success('Integrazione creata con successo');
             }
 
@@ -469,7 +472,7 @@ export const APIIntegrationsManager: React.FC = () => {
     };
 
     const handleDelete = async (integration: APIIntegration) => {
-        if (!confirm(`Sei sicuro di voler eliminare ${integration.display_name}?`)) return;
+        if (!confirm(`Sei sicuro di voler eliminare ${integration.display_name}?`)) {return;}
 
         try {
             const { error } = await supabase
@@ -477,7 +480,7 @@ export const APIIntegrationsManager: React.FC = () => {
                 .delete()
                 .eq('id', integration.id);
 
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success('Integrazione eliminata con successo');
             loadIntegrations();
         } catch (error: any) {
@@ -492,7 +495,7 @@ export const APIIntegrationsManager: React.FC = () => {
                 .update({ is_active: !integration.is_active })
                 .eq('id', integration.id);
 
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success(`Integrazione ${integration.is_active ? 'disattivata' : 'attivata'}`);
             loadIntegrations();
         } catch (error: any) {
@@ -507,7 +510,7 @@ export const APIIntegrationsManager: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
             </div>
         );
     }

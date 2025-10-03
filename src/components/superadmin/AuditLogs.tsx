@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useSuperAdminData, AuditLog } from '../../hooks/useSuperAdminData';
-import { useDebounce } from '../../hooks/useDebounce';
-import { SearchIcon, SortIcon } from '../ui/icons';
 import toast from 'react-hot-toast';
+
+import { useDebounce } from '../../hooks/useDebounce';
+import { useSuperAdminData, AuditLog } from '../../hooks/useSuperAdminData';
+import { SearchIcon, SortIcon } from '../ui/icons';
+
 
 type SortKey = keyof AuditLog | 'timestamp';
 
@@ -86,7 +88,7 @@ export const AuditLogs: React.FC = () => {
     };
 
     const renderSortArrow = (key: SortKey) => {
-        if (!sortConfig || sortConfig.key !== key) return <SortIcon className="w-4 h-4 text-gray-400" />;
+        if (!sortConfig || sortConfig.key !== key) {return <SortIcon className="w-4 h-4 text-gray-400" />;}
         return sortConfig.direction === 'ascending' ? '▲' : '▼';
     };
 

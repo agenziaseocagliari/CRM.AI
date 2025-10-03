@@ -1,8 +1,10 @@
 import React from 'react';
-import { Organization } from '../types';
-import { BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
+
 import { useAuth } from '../contexts/AuthContext';
+import { Organization } from '../types';
+
 import { SessionHealthIndicator } from './SessionHealthIndicator';
+import { BellIcon, UserCircleIcon, SearchIcon, LogoutIcon } from './ui/icons';
 
 interface HeaderProps {
   organization: Organization | null;
@@ -13,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
   const { userRole, userEmail } = useAuth();
   
   const getRoleDisplay = () => {
-    if (!userRole) return { text: 'Ruolo non definito', color: 'bg-gray-100 text-gray-600' };
+    if (!userRole) {return { text: 'Ruolo non definito', color: 'bg-gray-100 text-gray-600' };}
     
     switch (userRole) {
       case 'super_admin':
@@ -46,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
       
       <div className="flex items-center space-x-4">
         {/* Session Health Indicator - Compact */}
-        <SessionHealthIndicator mode="compact" autoCheck={true} checkInterval={5} />
+        <SessionHealthIndicator mode="compact" autoCheck checkInterval={5} />
         
         <div className="relative">
           <input 

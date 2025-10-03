@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 // FIX: Corrected the import for useNavigate from 'react-router-dom' to resolve module export errors.
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { GuardianIcon } from './ui/icons';
-import { supabase } from '../lib/supabaseClient';
+
 import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
 import { recordLoginAttempt, detectLoginMethodFromUrl, getLoginHistory, analyzeLoginHistory, generateLoginHistoryReport } from '../lib/loginTracker';
-import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabaseClient';
+
+import { GuardianIcon } from './ui/icons';
 
 // Maximum failed login attempts before adding delay
 const MAX_FAILED_ATTEMPTS = 3;
@@ -393,7 +395,7 @@ const LoginHistoryView: React.FC = () => {
             <div className="bg-white p-2 rounded">
                 <div className="font-semibold mb-1">Per Metodo:</div>
                 {Object.entries(analysis.methodBreakdown).map(([method, count]) => {
-                    if (count === 0) return null;
+                    if (count === 0) {return null;}
                     const defects = analysis.jwtDefectsByMethod[method as keyof typeof analysis.jwtDefectsByMethod];
                     return (
                         <div key={method} className="flex justify-between text-xs">

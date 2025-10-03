@@ -1,0 +1,34 @@
+{
+  "timestamp": "2025-10-03T18:27:16.132Z",
+  "bundleAnalysis": {
+    "totals": {
+      "js": 10397,
+      "css": 0,
+      "html": 0,
+      "images": 0,
+      "other": 2943,
+      "total": 13340
+    },
+    "assets": [
+      {
+        "name": "sw.js",
+        "size": 10397,
+        "ext": ".js"
+      },
+      {
+        "name": "manifest.json",
+        "size": 2943,
+        "ext": ".json"
+      }
+    ],
+    "score": 100
+  },
+  "optimizations": {
+    "lazyLoading": true,
+    "serviceWorker": true,
+    "imageOptimization": true,
+    "caching": true,
+    "codeMinification": true
+  },
+  "recommendations": []
+}

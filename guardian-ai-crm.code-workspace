@@ -1,0 +1,33 @@
+{
+  "folders": [
+    {
+      "name": "Guardian AI CRM",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "files.exclude": {
+      "node_modules": true,
+      ".env": false
+    },
+    "search.exclude": {
+      "node_modules": true,
+      "dist": true,
+      "build": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-typescript-next",
+      "supabase.supabase",
+      "github.vscode-pull-request-github",
+      "ms-vscode.vscode-json"
+    ]
+  }
+}

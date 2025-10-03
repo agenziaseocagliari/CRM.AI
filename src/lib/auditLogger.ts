@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 3 - M02: Enhanced Audit Logging with Search & Filtering
  * 
  * Comprehensive audit logging system with full-text search, filtering, and export capabilities.
@@ -13,6 +13,7 @@
 
 import { supabase } from './supabaseClient';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export type AuditSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL' | 'SECURITY';
 
 export interface AuditLog {
@@ -108,13 +109,13 @@ export async function logAuditEvent(params: {
     });
 
     if (error) {
-      console.error('Failed to log audit event:', error);
+      diagnosticLogger.error('Failed to log audit event:', error);
       return null;
     }
 
     return data as string;
   } catch (error) {
-    console.error('Exception logging audit event:', error);
+    diagnosticLogger.error('Exception logging audit event:', error);
     return null;
   }
 }
@@ -143,7 +144,7 @@ export async function searchAuditLogs(
     });
 
     if (error) {
-      console.error('Failed to search audit logs:', error);
+      diagnosticLogger.error('Failed to search audit logs:', error);
       return [];
     }
 
@@ -179,7 +180,7 @@ export async function searchAuditLogs(
       createdAt: new Date(row.created_at),
     }));
   } catch (error) {
-    console.error('Exception searching audit logs:', error);
+    diagnosticLogger.error('Exception searching audit logs:', error);
     return [];
   }
 }
@@ -200,7 +201,7 @@ export async function getAuditLogStats(
     });
 
     if (error || !data || data.length === 0) {
-      console.error('Failed to get audit log stats:', error);
+      diagnosticLogger.error('Failed to get audit log stats:', error);
       return null;
     }
 
@@ -214,7 +215,7 @@ export async function getAuditLogStats(
       avgDurationMs: parseFloat(stats.avg_duration_ms) || 0,
     };
   } catch (error) {
-    console.error('Exception getting audit log stats:', error);
+    diagnosticLogger.error('Exception getting audit log stats:', error);
     return null;
   }
 }
@@ -260,7 +261,7 @@ export async function getResourceAuditLogs(
       .limit(limit);
 
     if (error) {
-      console.error('Failed to get resource audit logs:', error);
+      diagnosticLogger.error('Failed to get resource audit logs:', error);
       return [];
     }
 
@@ -281,7 +282,7 @@ export async function getResourceAuditLogs(
       createdAt: new Date(row.created_at),
     }));
   } catch (error) {
-    console.error('Exception getting resource audit logs:', error);
+    diagnosticLogger.error('Exception getting resource audit logs:', error);
     return [];
   }
 }
@@ -309,13 +310,13 @@ export async function requestAuditLogExport(
       .single();
 
     if (error) {
-      console.error('Failed to request audit log export:', error);
+      diagnosticLogger.error('Failed to request audit log export:', error);
       return null;
     }
 
     return data.id;
   } catch (error) {
-    console.error('Exception requesting audit log export:', error);
+    diagnosticLogger.error('Exception requesting audit log export:', error);
     return null;
   }
 }
@@ -332,7 +333,7 @@ export async function getExportStatus(exportId: string): Promise<AuditLogExport 
       .single();
 
     if (error) {
-      console.error('Failed to get export status:', error);
+      diagnosticLogger.error('Failed to get export status:', error);
       return null;
     }
 
@@ -351,7 +352,7 @@ export async function getExportStatus(exportId: string): Promise<AuditLogExport 
       completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
     };
   } catch (error) {
-    console.error('Exception getting export status:', error);
+    diagnosticLogger.error('Exception getting export status:', error);
     return null;
   }
 }
@@ -377,7 +378,7 @@ export async function listExports(
     const { data, error } = await query;
 
     if (error) {
-      console.error('Failed to list exports:', error);
+      diagnosticLogger.error('Failed to list exports:', error);
       return [];
     }
 
@@ -396,7 +397,7 @@ export async function listExports(
       completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
     }));
   } catch (error) {
-    console.error('Exception listing exports:', error);
+    diagnosticLogger.error('Exception listing exports:', error);
     return [];
   }
 }
@@ -519,3 +520,4 @@ export default {
   listExports,
   AuditLogger,
 };
+

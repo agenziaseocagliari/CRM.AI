@@ -1,5 +1,7 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
+
+import { useAuth } from '../../contexts/AuthContext';
 import { 
     GuardianIcon, 
     DashboardIcon, 
@@ -12,7 +14,6 @@ import {
     ChartBarIcon,
     ShieldCheckIcon
 } from '../ui/icons';
-import { useAuth } from '../../contexts/AuthContext';
 
 const NavItem: React.FC<{ to: string; icon: React.ReactNode; label: string; }> = ({ to, icon, label }) => {
     const activeClass = 'bg-primary text-white dark:bg-dark-primary';

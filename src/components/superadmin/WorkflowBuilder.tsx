@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
+
+import { invokeSupabaseFunction } from '../../lib/api';
+import { supabase } from '../../lib/supabaseClient';
 import { WorkflowDefinition, WorkflowExecutionLog } from '../../types';
 import { 
     SparklesIcon,
@@ -13,7 +15,6 @@ import {
     ClockIcon
 } from '../ui/icons';
 import { Modal } from '../ui/Modal';
-import { invokeSupabaseFunction } from '../../lib/api';
 
 interface Message {
     sender: 'user' | 'ai';
@@ -145,7 +146,7 @@ const LogsModal: React.FC<{
     }, [workflow, isOpen]);
 
     const loadLogs = async () => {
-        if (!workflow) return;
+        if (!workflow) {return;}
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -155,7 +156,7 @@ const LogsModal: React.FC<{
                 .order('created_at', { ascending: false })
                 .limit(20);
 
-            if (error) throw error;
+            if (error) {throw error;}
             setLogs(data || []);
         } catch (error: any) {
             toast.error(`Errore nel caricamento log: ${error.message}`);
@@ -164,14 +165,14 @@ const LogsModal: React.FC<{
         }
     };
 
-    if (!workflow) return null;
+    if (!workflow) {return null;}
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Log Esecuzioni - ${workflow.name}`}>
             <div className="space-y-4">
                 {loading ? (
                     <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
                     </div>
                 ) : logs.length === 0 ? (
                     <div className="text-center py-8">
@@ -247,7 +248,7 @@ export const WorkflowBuilder: React.FC = () => {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {throw error;}
             setWorkflows(data || []);
         } catch (error: any) {
             toast.error(`Errore nel caricamento workflow: ${error.message}`);
@@ -258,7 +259,7 @@ export const WorkflowBuilder: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
+        if (!input.trim() || isLoading) {return;}
 
         setLastInteraction(null);
         const userMessage: Message = { sender: 'user', text: input };
@@ -271,7 +272,7 @@ export const WorkflowBuilder: React.FC = () => {
                 prompt: userMessage.text 
             });
 
-            if (!data.reply) throw new Error("La risposta dell'AI non è valida.");
+            if (!data.reply) {throw new Error("La risposta dell'AI non è valida.");}
 
             const aiMessage: Message = { sender: 'ai', text: data.reply };
             setMessages(prev => [...prev, aiMessage]);
@@ -288,7 +289,7 @@ export const WorkflowBuilder: React.FC = () => {
     };
 
     const handleSaveWorkflow = async () => {
-        if (!lastInteraction) return;
+        if (!lastInteraction) {return;}
         setIsLoading(true);
 
         try {
@@ -302,7 +303,7 @@ export const WorkflowBuilder: React.FC = () => {
                 is_active: false,
             });
 
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success('Workflow salvato con successo!');
             loadWorkflows();
             setMessages([]);
@@ -321,7 +322,7 @@ export const WorkflowBuilder: React.FC = () => {
                 .update({ is_active: !workflow.is_active })
                 .eq('id', workflow.id);
 
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success(`Workflow ${workflow.is_active ? 'disattivato' : 'attivato'}`);
             loadWorkflows();
         } catch (error: any) {
@@ -340,7 +341,7 @@ export const WorkflowBuilder: React.FC = () => {
     };
 
     const handleDeleteWorkflow = async (workflow: WorkflowDefinition) => {
-        if (!confirm(`Sei sicuro di voler eliminare "${workflow.name}"?`)) return;
+        if (!confirm(`Sei sicuro di voler eliminare "${workflow.name}"?`)) {return;}
 
         try {
             const { error } = await supabase
@@ -348,7 +349,7 @@ export const WorkflowBuilder: React.FC = () => {
                 .delete()
                 .eq('id', workflow.id);
 
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success('Workflow eliminato con successo');
             loadWorkflows();
         } catch (error: any) {
@@ -364,7 +365,7 @@ export const WorkflowBuilder: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
             </div>
         );
     }
@@ -430,9 +431,9 @@ export const WorkflowBuilder: React.FC = () => {
                                     </div>
                                     <div className="max-w-2xl px-4 py-3 rounded-2xl bg-gray-100 dark:bg-dark-sidebar">
                                         <div className="flex items-center space-x-2">
-                                            <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                            <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                            <span className="h-2 w-2 bg-primary rounded-full animate-bounce"></span>
+                                            <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                            <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                            <span className="h-2 w-2 bg-primary rounded-full animate-bounce" />
                                         </div>
                                     </div>
                                 </div>

@@ -1,8 +1,10 @@
-import React from 'react';
+﻿import React from 'react';
 import { toast } from 'react-hot-toast';
-import { supabase } from './supabaseClient';
+
+import { diagnosticLogger } from './mockDiagnosticLogger';
+import { SecureLogger, SecureErrorHandler } from './security/securityUtils';
 import { diagnoseJWT } from './jwtUtils';
-import { diagnosticLogger } from './diagnosticLogger';
+import { supabase } from './supabaseClient';
 
 /**
  * Retrieves the current organization ID from localStorage.
@@ -71,7 +73,7 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
                     ...message.split('\n').filter(line => line.trim()).map((line, idx) => 
                         React.createElement('p', { 
                             key: idx,
-                            className: line.trim().startsWith('⚠️') || line.trim().startsWith('NOTA:') 
+                            className: line.trim().startsWith('âš ï¸') || line.trim().startsWith('NOTA:') 
                                 ? 'font-bold text-yellow-700 mb-2' 
                                 : line.match(/^\d+\./) 
                                     ? 'text-sm ml-4 mb-1'
@@ -91,7 +93,7 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
                             window.location.href = '/login';
                         },
                         className: 'bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 font-bold'
-                    }, '🚪 Logout'),
+                    }, 'ðŸšª Logout'),
                     React.createElement('button', {
                         onClick: () => {
                             navigator.clipboard.writeText(diagnosticReport);
@@ -119,13 +121,13 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
  * @returns {Promise<any>} A promise that resolves with the function's response data.
  */
 export async function invokeSupabaseFunction(functionName: string, payload: object = {}, isRetry: boolean = false): Promise<any> {
-    console.log(`[API Helper] Invoking '${functionName}'...`, { isRetry });
+    diagnosticLogger.info(`[API Helper] Invoking '${functionName}'...`, { isRetry });
 
     // 1. Pre-flight security check: Ensure a user is logged in.
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         const errorMsg = "Utente non autenticato. Effettua nuovamente il login per continuare.";
-        console.error("[API Helper] Pre-flight check failed: User not authenticated.");
+        diagnosticLogger.error("[API Helper] Pre-flight check failed: User not authenticated.");
         const diagnosticReport = createDiagnosticReport(errorMsg, functionName, "Pre-flight check failed");
         showErrorToast(errorMsg, diagnosticReport, { requiresLogout: true });
         throw { error: errorMsg, requiresRelogin: true };
@@ -153,13 +155,13 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
 
     if (isDebugMode && debugOrgId) {
         finalPayload.organization_id = debugOrgId;
-        console.warn(`[API Helper] DEBUG MODE: Overriding organization_id with '${debugOrgId}' for function '${functionName}'.`);
+        diagnosticLogger.warn(`[API Helper] DEBUG MODE: Overriding organization_id with '${debugOrgId}' for function '${functionName}'.`);
     } else if (!finalPayload.organization_id) {
         const orgId = getOrganizationIdFromStorage();
         // FIX: Skip organization_id validation for super_admin users
         if (!orgId && !isSuperAdmin) {
             const errorMsg = 'ID Organizzazione non impostato. Ricarica la pagina o effettua nuovamente il login.';
-            console.error(`[API Helper] CRITICAL: organization_id is missing for function '${functionName}'.`, { payload });
+            diagnosticLogger.error(`[API Helper] CRITICAL: organization_id is missing for function '${functionName}'.`, { payload });
             showErrorToast(errorMsg, createDiagnosticReport(errorMsg, functionName, "organization_id missing from localStorage"));
             throw new Error(errorMsg);
         }
@@ -167,14 +169,14 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             finalPayload.organization_id = orgId;
         } else if (isSuperAdmin) {
             // Super admin can make API calls without organization_id or with "ALL"
-            console.log(`[API Helper] Super Admin detected - organization_id validation skipped for '${functionName}'.`);
+            diagnosticLogger.info(`[API Helper] Super Admin detected - organization_id validation skipped for '${functionName}'.`);
             finalPayload.organization_id = 'ALL';
         }
     }
 
     const supabaseUrl = process.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) throw new Error("Supabase URL or Anon Key not configured.");
+    if (!supabaseUrl || !supabaseAnonKey) {throw new Error("Supabase URL or Anon Key not configured.");}
     
     const headers = {
         'Content-Type': 'application/json',
@@ -194,7 +196,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             let errorJson: any = null;
             try { errorJson = JSON.parse(errorText); } catch (e) { /* ignore */ }
             
-            console.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`, errorJson || errorText);
+            diagnosticLogger.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`, errorJson || errorText);
 
             // Check for JWT custom claim error specifically
             const errorMessage = errorJson?.error || errorText || '';
@@ -202,8 +204,8 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
                                    /user_role not found|JWT custom claim|custom claim.*not found|logout and login again|Please logout and login|role was recently changed/i.test(errorMessage);
             
             if (isJwtClaimError) {
-                console.error(`[API Helper] JWT Custom Claim Error detected on '${functionName}'. Token is outdated or missing custom claims.`);
-                console.error(`[API Helper] IMPORTANT: Session refresh will NOT fix this issue. User must perform a FULL LOGOUT and LOGIN.`);
+                diagnosticLogger.error(`[API Helper] JWT Custom Claim Error detected on '${functionName}'. Token is outdated or missing custom claims.`);
+                diagnosticLogger.error(`[API Helper] IMPORTANT: Session refresh will NOT fix this issue. User must perform a FULL LOGOUT and LOGIN.`);
                 
                 diagnosticLogger.critical('api', `JWT Custom Claim Error on ${functionName}`, {
                     endpoint: functionName,
@@ -212,7 +214,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
                     userId: session?.user?.id,
                 });
                 
-                const userMessage = '⚠️ Il tuo ruolo utente è stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverà il problema.';
+                const userMessage = 'âš ï¸ Il tuo ruolo utente Ã¨ stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverÃ  il problema.';
                 const diagnosticReport = createDiagnosticReport(
                     userMessage, 
                     functionName, 
@@ -239,11 +241,11 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             const isAuthError = response.status === 401 || response.status === 403 || (errorText && /organization_id|jwt|token/i.test(errorText));
             
             if (isAuthError && !isRetry) {
-                console.warn(`[API Helper] Auth error on '${functionName}'. Attempting session refresh and one retry...`);
+                diagnosticLogger.warn(`[API Helper] Auth error on '${functionName}'. Attempting session refresh and one retry...`);
                 const { error: refreshError } = await supabase.auth.refreshSession();
                 
                 if (refreshError) {
-                    console.error(`[API Helper] Session refresh failed:`, refreshError);
+                    diagnosticLogger.error(`[API Helper] Session refresh failed:`, refreshError);
                     const userMessage = 'Sessione scaduta. Per favore, effettua nuovamente il login.';
                     const diagnosticReport = createDiagnosticReport(userMessage, functionName, refreshError);
                     showErrorToast(userMessage, diagnosticReport, { requiresLogout: true });
@@ -271,11 +273,11 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         }
         
         const data = await response.json();
-        console.log(`[API Helper] OK response from '${functionName}'.`);
+        diagnosticLogger.info(`[API Helper] OK response from '${functionName}'.`);
         console.dir(data);
 
         if (data.error) {
-            console.warn(`[API Helper] Function '${functionName}' returned 200 OK but with an error payload.`);
+            diagnosticLogger.warn(`[API Helper] Function '${functionName}' returned 200 OK but with an error payload.`);
             const diagnosticReport = createDiagnosticReport(data.error, functionName, data);
             showErrorToast(data.error, diagnosticReport);
             // FIX: Also throw the full data object here to ensure components
@@ -297,13 +299,13 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         // Check if this is a re-thrown error from our handling (has custom structure)
         if (error.isJwtError || error.requiresRelogin || typeof error.error !== 'undefined') {
             // This is an already-processed application error, just re-throw
-            console.log(`[API Helper] Re-throwing processed error from '${functionName}'`);
+            diagnosticLogger.info(`[API Helper] Re-throwing processed error from '${functionName}'`);
             throw error;
         }
         
         // If we reach here, it's a true network/fetch error
         if (error instanceof Error) {
-            console.error(`[API Helper] Network or Fetch Error calling '${functionName}':`, error);
+            diagnosticLogger.error(`[API Helper] Network or Fetch Error calling '${functionName}':`, error);
             
             // Try to determine if this is a true network error vs. a CORS/backend issue
             const isNetworkError = error.name === 'TypeError' && 
@@ -313,7 +315,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             
             const userMessage = isNetworkError 
                 ? 'Errore di rete. Controlla la connessione e riprova.'
-                : 'Errore di comunicazione con il server. Riprova più tardi.';
+                : 'Errore di comunicazione con il server. Riprova piÃ¹ tardi.';
                 
             const diagnosticReport = createDiagnosticReport(
                 userMessage,

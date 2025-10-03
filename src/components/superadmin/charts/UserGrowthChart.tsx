@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-// import { invokeSupabaseFunction } from '../../../lib/api'; // TODO: Uncomment when real API endpoint is available
+﻿import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { diagnosticLogger } from '../../../lib/mockDiagnosticLogger';
+// import { invokeSupabaseFunction } from '../../../lib/api'; // TODO: Uncomment when real API endpoint is available
 
 interface UserGrowthData {
     date: string;
@@ -27,7 +28,7 @@ export const UserGrowthChart: React.FC = () => {
             const mockData = generateMockData(dateRange);
             setData(mockData);
         } catch (err) {
-            console.error('Failed to fetch user growth data:', err);
+            diagnosticLogger.error('Failed to fetch user growth data:', err);
             setError('Impossibile caricare i dati di crescita utenti');
             toast.error('Errore nel caricamento del grafico crescita utenti');
         } finally {
@@ -83,7 +84,7 @@ export const UserGrowthChart: React.FC = () => {
             <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Crescita Utenti</h2>
                 <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
                 </div>
             </div>
         );
@@ -94,7 +95,7 @@ export const UserGrowthChart: React.FC = () => {
             <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Crescita Utenti</h2>
                 <div className="flex flex-col items-center justify-center h-64 bg-red-50 dark:bg-red-900/20 rounded-md">
-                    <p className="text-red-600 dark:text-red-400 mb-4">⚠️ {error}</p>
+                    <p className="text-red-600 dark:text-red-400 mb-4">âš ï¸ {error}</p>
                     <button
                         onClick={fetchData}
                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-indigo-700"
@@ -125,7 +126,7 @@ export const UserGrowthChart: React.FC = () => {
                         className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-gray-700 dark:text-gray-200"
                         title="Esporta dati CSV"
                     >
-                        📥 Esporta
+                        ðŸ“¥ Esporta
                     </button>
                 </div>
             </div>
@@ -171,8 +172,9 @@ export const UserGrowthChart: React.FC = () => {
             </ResponsiveContainer>
             
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                💡 Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l'endpoint API appropriato.
+                ðŸ’¡ Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l'endpoint API appropriato.
             </div>
         </div>
     );
 };
+

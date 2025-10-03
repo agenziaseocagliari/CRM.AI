@@ -2,9 +2,19 @@ import React, { useState, useEffect } from 'react';
 // FIX: Import useParams to get formId directly from the URL.
 // FIX: Corrected the import for useParams from 'react-router-dom' to resolve module export errors.
 import { useParams } from 'react-router-dom';
+
 import { supabase } from '../lib/supabaseClient';
 import { Form, FormField } from '../types';
+
 import { GuardianIcon } from './ui/icons';
+import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
+
+// Error interface for proper typing
+interface ApiError {
+    message: string;
+    status?: number;
+    code?: string;
+}
 
 // FIX: Removed PublicFormProps interface as formId is now retrieved from URL params.
 // interface PublicFormProps {
@@ -56,12 +66,13 @@ export const PublicForm: React.FC = () => {
                     .eq('id', formId)
                     .single();
                 
-                if (fetchError) throw fetchError;
-                if (!data) throw new Error("Form non trovato.");
+                if (fetchError) {throw fetchError;}
+                if (!data) {throw new Error("Form non trovato.");}
 
                 setForm(data);
-            } catch (err: any) {
-                setError(`Impossibile caricare il form: ${err.message}`);
+            } catch (err: unknown) {
+                const error = err as ApiError;
+                setError(`Impossibile caricare il form: ${error.message}`);
             } finally {
                 setLoading(false);
             }
@@ -76,22 +87,51 @@ export const PublicForm: React.FC = () => {
         setError(null);
         
         const formData = new FormData(e.currentTarget);
-        const formValues: { [key: string]: any } = {};
+        const formValues: { [key: string]: FormDataEntryValue } = {};
+        
+        // Input validation and sanitization
         formData.forEach((value, key) => {
-            formValues[key] = value;
+            const sanitizedKey = InputValidator.sanitizeString(key);
+            const sanitizedValue = InputValidator.sanitizeString(value.toString());
+            
+            // Validate specific field types
+            if (sanitizedKey.toLowerCase().includes('email')) {
+                if (!InputValidator.isValidEmail(sanitizedValue)) {
+                    throw new Error('Formato email non valido');
+                }
+            }
+            if (sanitizedKey.toLowerCase().includes('phone')) {
+                if (sanitizedValue && !InputValidator.isValidPhone(sanitizedValue)) {
+                    throw new Error('Formato telefono non valido');
+                }
+            }
+            
+            formValues[sanitizedKey] = sanitizedValue;
         });
 
         try {
+            // Log form submission with secure logging
+            SecureLogger.info('public-form', `Form submission attempt for form ${formId}`, {
+                formFields: Object.keys(formValues).join(', '),
+                timestamp: new Date().toISOString(),
+                source: 'PublicForm'
+            });
+            
             const { error: rpcError } = await supabase.rpc('create_submission', {
                 p_form_id: formId,
                 p_form_data: formValues
             });
 
-            if (rpcError) throw rpcError;
+            if (rpcError) {throw rpcError;}
 
             setSubmitSuccess(true);
-        } catch (err: any) {
-            setError(`Errore durante l'invio: ${err.message}`);
+            SecureLogger.info('public-form', 'Form submission successful', {
+                formId: formId,
+                formFields: Object.keys(formValues).join(', ')
+            });
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            setError(`Errore durante l'invio: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }

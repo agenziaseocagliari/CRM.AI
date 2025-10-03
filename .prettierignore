@@ -1,0 +1,38 @@
+# .prettierignore - Files to exclude from Prettier formatting
+# Phase 5: Code Quality Enhancement
+
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Generated files
+coverage/
+*.min.js
+*.bundle.js
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Markdown files with specific formatting
+CHANGELOG.md
+README.md
+
+# Configuration files with specific syntax
+.env*
+*.yml
+*.yaml
+
+# Binary and media files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+*.ico
+*.pdf
+
+# Logs
+*.log

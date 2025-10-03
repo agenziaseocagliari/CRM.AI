@@ -1,11 +1,13 @@
-// src/components/ContactEventsList.tsx
+﻿// src/components/ContactEventsList.tsx\n/* eslint-disable no-alert */
 import React, { useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { invokeSupabaseFunction } from '../lib/api';
 import { Contact, CrmEvent, EventReminder } from '../types';
+
 import { CheckCircleIcon, ClockIcon, InfoIcon, TrashIcon, WhatsAppIcon } from './ui/icons';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 interface ContactEventsListProps {
     contact: Contact | null;
     events: CrmEvent[];
@@ -43,7 +45,7 @@ const ReminderStatus: React.FC<{ reminders?: EventReminder[] }> = ({ reminders }
 
                 return (
                     <div key={r.id} title={title} className={`flex items-center space-x-1 p-1 bg-gray-100 rounded-md ${colorClass}`}>
-                        {r.channel === 'WhatsApp' ? <WhatsAppIcon className="w-3.5 h-3.5"/> : '📧'}
+                        {r.channel === 'WhatsApp' ? <WhatsAppIcon className="w-3.5 h-3.5"/> : 'ðŸ“§'}
                         {icon}
                     </div>
                 );
@@ -91,14 +93,14 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
     const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
     const contactEvents = useMemo(() => {
-        if (!contact) return [];
+        if (!contact) {return [];}
         return events
             .filter(e => e.contact_id === contact.id)
             .sort((a, b) => new Date(b.event_start_time).getTime() - new Date(a.event_start_time).getTime());
     }, [contact, events]);
 
     const handleDeleteEvent = async (event: CrmEvent) => {
-        if (!window.confirm(`Annullare l'evento "${event.event_summary}"? Sarà rimosso anche da Google Calendar (se collegato).`)) return;
+        if (!window.confirm(`Annullare l'evento "${event.event_summary}"? SarÃ  rimosso anche da Google Calendar (se collegato).`)) {return;}
 
         setIsDeleting(event.id);
         const toastId = toast.loading('Annullamento evento...');
@@ -114,14 +116,14 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
             onActionSuccess();
         } catch (err: any) {
             toast.error(`Errore durante l'annullamento.`, { id: toastId });
-            console.error(err);
+            diagnosticLogger.error(err);
         } finally {
             setIsDeleting(null);
         }
     };
 
-    if (!contact) return <div className="p-4">Seleziona un contatto.</div>;
-    if (contactEvents.length === 0) return <div className="p-4 text-gray-500 text-center">Nessun evento per questo contatto.</div>;
+    if (!contact) {return <div className="p-4">Seleziona un contatto.</div>;}
+    if (contactEvents.length === 0) {return <div className="p-4 text-gray-500 text-center">Nessun evento per questo contatto.</div>;}
 
     const now = new Date();
     const futureEvents = contactEvents.filter(e => new Date(e.event_start_time) > now);
@@ -133,7 +135,7 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
                 <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-2">Prossimi Eventi</h3>
                     <div className="space-y-2">
-                        {futureEvents.map(e => <EventItem key={e.id} event={e} isFuture={true} onDelete={handleDeleteEvent} isDeleting={isDeleting === e.id} />)}
+                        {futureEvents.map(e => <EventItem key={e.id} event={e} isFuture onDelete={handleDeleteEvent} isDeleting={isDeleting === e.id} />)}
                     </div>
                 </div>
             )}
@@ -148,3 +150,4 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
         </div>
     );
 };
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Diagnostic Logger
  * 
  * Centralized logging system for JWT and session diagnostics.
@@ -7,6 +7,7 @@
 
 import { JWTDiagnostics } from './jwtUtils';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export type LogLevel = 'info' | 'warn' | 'error' | 'critical';
 
 export interface DiagnosticLogEntry {
@@ -148,7 +149,7 @@ class DiagnosticLogger {
     try {
       localStorage.removeItem('diagnostic_logs');
     } catch (e) {
-      console.error('Failed to clear diagnostic logs from localStorage:', e);
+      diagnosticLogger.error('Failed to clear diagnostic logs from localStorage:', e);
     }
   }
 
@@ -212,16 +213,16 @@ class DiagnosticLogger {
     
     switch (entry.level) {
       case 'info':
-        console.log(`ℹ️ ${prefix}`, message, entry.context || '');
+        diagnosticLogger.info(`â„¹ï¸ ${prefix}`, message, entry.context || '');
         break;
       case 'warn':
-        console.warn(`⚠️ ${prefix}`, message, entry.context || '');
+        diagnosticLogger.warn(`âš ï¸ ${prefix}`, message, entry.context || '');
         break;
       case 'error':
-        console.error(`❌ ${prefix}`, message, entry.context || '', entry.stackTrace || '');
+        diagnosticLogger.error(`âŒ ${prefix}`, message, entry.context || '', entry.stackTrace || '');
         break;
       case 'critical':
-        console.error(`🚨 ${prefix} CRITICAL:`, message, entry.context || '', entry.diagnostics || '');
+        diagnosticLogger.error(`ðŸš¨ ${prefix} CRITICAL:`, message, entry.context || '', entry.diagnostics || '');
         break;
     }
   }
@@ -236,7 +237,7 @@ class DiagnosticLogger {
       localStorage.setItem('diagnostic_logs', JSON.stringify(logsToStore));
     } catch (e) {
       // Silently fail if localStorage is full
-      console.warn('Failed to persist diagnostic logs:', e);
+      diagnosticLogger.warn('Failed to persist diagnostic logs:', e);
     }
   }
 
@@ -244,9 +245,9 @@ class DiagnosticLogger {
    * Alerts on high error rate
    */
   private alertHighErrorRate(): void {
-    console.error('🚨 [Diagnostic Logger] HIGH ERROR RATE DETECTED!');
-    console.error(`🚨 Error count: ${this.errorCount} (threshold: ${this.errorThreshold})`);
-    console.error('🚨 This may indicate a systemic issue requiring immediate attention.');
+    diagnosticLogger.error('ðŸš¨ [Diagnostic Logger] HIGH ERROR RATE DETECTED!');
+    diagnosticLogger.error(`ðŸš¨ Error count: ${this.errorCount} (threshold: ${this.errorThreshold})`);
+    diagnosticLogger.error('ðŸš¨ This may indicate a systemic issue requiring immediate attention.');
     
     // TODO: Send alert to monitoring service
     // this.sendAlert('high_error_rate', { errorCount: this.errorCount });
@@ -265,7 +266,7 @@ class DiagnosticLogger {
         }
       }
     } catch (e) {
-      console.warn('Failed to load persisted diagnostic logs:', e);
+      diagnosticLogger.warn('Failed to load persisted diagnostic logs:', e);
     }
   }
 }
@@ -275,3 +276,4 @@ export const diagnosticLogger = new DiagnosticLogger();
 
 // Load persisted logs on module initialization
 diagnosticLogger.loadPersistedLogs();
+

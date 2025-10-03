@@ -1,9 +1,12 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
+
 import { useSuperAdminData, AdminOrganization, OrganizationStatus } from '../../hooks/useSuperAdminData';
-import { CustomerDetailModal } from './CustomerDetailModal';
 import { ConfirmationModal } from '../ui/ConfirmationModal';
 
+import { CustomerDetailModal } from './CustomerDetailModal';
+
+import { diagnosticLogger } from '../../lib/mockDiagnosticLogger';
 const statusStyles: Record<OrganizationStatus, string> = {
     active: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
     trial: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
@@ -26,7 +29,7 @@ export const Customers: React.FC = () => {
     const [isConfirming, setIsConfirming] = useState(false);
 
     const filteredOrganizations = useMemo(() => {
-        if (filter === 'all') return organizations;
+        if (filter === 'all') {return organizations;}
         return organizations.filter(org => org.status === filter);
     }, [organizations, filter]);
 
@@ -35,7 +38,7 @@ export const Customers: React.FC = () => {
     };
 
     const handleConfirmStatusChange = async (reason?: string) => {
-        if (!confirmAction) return;
+        if (!confirmAction) {return;}
         setIsConfirming(true);
 
         const { org, status } = confirmAction;
@@ -45,7 +48,7 @@ export const Customers: React.FC = () => {
             toast.success(`Stato di ${org.name} aggiornato!`);
         } catch (e) {
             // The API helper in the hook already shows a detailed error toast.
-            console.error(`Failed to update status for ${org.name}`, e);
+            diagnosticLogger.error(`Failed to update status for ${org.name}`, e);
         } finally {
             setIsConfirming(false);
             setConfirmAction(null);
@@ -128,10 +131,10 @@ export const Customers: React.FC = () => {
                 isOpen={!!confirmAction && confirmAction.status === 'suspended'}
                 onClose={() => setConfirmAction(null)}
                 onConfirm={handleConfirmStatusChange}
-                title={`Conferma Sospensione`}
-                message={<span>Sei sicuro di voler sospendere l'account <strong>{confirmAction?.org.name}</strong>? L'utente non potrà accedere al servizio.</span>}
+                title="Conferma Sospensione"
+                message={<span>Sei sicuro di voler sospendere l'account <strong>{confirmAction?.org.name}</strong>? L'utente non potrÃ  accedere al servizio.</span>}
                 isConfirming={isConfirming}
-                requiresReason={true}
+                requiresReason
                 confirmText="Sospendi Account"
             />
         </>

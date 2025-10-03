@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+﻿import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
+import { supabase } from '../../lib/supabaseClient';
+
+import { diagnosticLogger } from '../../lib/mockDiagnosticLogger';
 interface QuotaStats {
   totalRequests24h: number;
   activeAlerts: number;
@@ -45,7 +47,7 @@ export const QuotaManagement: React.FC = () => {
       const data = await response.json();
       setStats(data);
     } catch (error: any) {
-      console.error('Error fetching quota stats:', error);
+      diagnosticLogger.error('Error fetching quota stats:', error);
       toast.error('Failed to load quota statistics');
     } finally {
       setLoading(false);
@@ -56,7 +58,7 @@ export const QuotaManagement: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-text-secondary">Loading quota data...</p>
         </div>
       </div>
@@ -245,3 +247,4 @@ export const QuotaManagement: React.FC = () => {
     </div>
   );
 };
+

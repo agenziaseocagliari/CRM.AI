@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { VideoIcon } from './ui/icons';
 
 export const Meetings: React.FC = () => {

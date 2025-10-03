@@ -1,7 +1,9 @@
+/* eslint-disable no-alert */
 import React from 'react';
 import toast from 'react-hot-toast';
-import { Modal } from '../ui/Modal';
+
 import { AdminOrganization } from '../../hooks/useSuperAdminData';
+import { Modal } from '../ui/Modal';
 
 interface CustomerDetailModalProps {
     isOpen: boolean;
@@ -30,7 +32,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({ isOpen
         }
     }
 
-    if (!customer) return null;
+    if (!customer) {return null;}
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Dettaglio Cliente: ${customer.name}`}>

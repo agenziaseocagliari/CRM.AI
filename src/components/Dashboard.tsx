@@ -1,17 +1,33 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
+import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
 import { BarChart, Bar, CartesianGrid, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from 'recharts';
+
 import { useCrmData } from '../hooks/useCrmData';
+import { invokeSupabaseFunction } from '../lib/api';
 import { Opportunity, PipelineStage } from '../types';
+
+import { SessionHealthIndicator } from './SessionHealthIndicator';
 import { Card } from './ui/Card';
 import { CheckCircleIcon, DollarSignIcon, TrendingUpIcon, UsersIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
-import { invokeSupabaseFunction } from '../lib/api';
-import toast from 'react-hot-toast';
-import { SessionHealthIndicator } from './SessionHealthIndicator';
+
+// Error interface for proper typing
+interface ApiError {
+    message: string;
+    status?: number;
+    code?: string;
+}
+
+// Chart label interface for proper typing
+interface ChartLabelProps {
+    name: string;
+    percent: number;
+}
 
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export const Dashboard: React.FC = () => {
   const { opportunities, contacts, organization } = useOutletContext<ReturnType<typeof useCrmData>>();
 
@@ -34,7 +50,7 @@ export const Dashboard: React.FC = () => {
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   
   // Calcolo dinamico basato sui contatti totali, non solo sui lead.
-  // Per una metrica più precisa, potremmo filtrare i contatti creati di recente.
+  // Per una metrica piÃ¹ precisa, potremmo filtrare i contatti creati di recente.
   // Per ora, mostriamo il totale dei contatti.
   const totalContactsCount = contacts?.length || 0;
 
@@ -45,7 +61,7 @@ export const Dashboard: React.FC = () => {
   const pipelineData = Object.values(PipelineStage).map(stage => ({
     name: stage,
     // FIX: Correctly access the length of the array for each stage, handling cases where a stage might have no opportunities.
-    Opportunità: opportunities[stage]?.length || 0,
+    OpportunitÃ : opportunities[stage]?.length || 0,
   }));
   
   // Dati mock per il grafico a torta (da sostituire con dati reali quando disponibili)
@@ -63,12 +79,13 @@ export const Dashboard: React.FC = () => {
         setDebugModalTitle(title);
         try {
             const result = await action();
-            console.log(`--- DEBUG [${title}] RESULT ---`);
-            console.log(result);
+            diagnosticLogger.info(`--- DEBUG [${title}] RESULT ---`);
+            diagnosticLogger.info(result);
             setDebugModalContent(result);
-        } catch (error: any) {
-            console.error(`--- DEBUG [${title}] ERROR ---`, error);
-            const errorMessage = error.message || 'Errore sconosciuto';
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            diagnosticLogger.error(`--- DEBUG [${title}] ERROR ---`, err);
+            const errorMessage = err.message || 'Errore sconosciuto';
             // Check if error message is a JSON string
             try {
                 const parsedError = JSON.parse(errorMessage);
@@ -89,7 +106,7 @@ export const Dashboard: React.FC = () => {
 
     const handleTriggerCheckToken = () => {
         if (!organization?.id) {
-            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
+            toast.error("ID Organizzazione non disponibile. Riprova piÃ¹ tardi.");
             return;
         }
         runDebugAction(
@@ -102,7 +119,7 @@ export const Dashboard: React.FC = () => {
 
     const handleTriggerCalendarEvents = () => {
         if (!organization?.id) {
-            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
+            toast.error("ID Organizzazione non disponibile. Riprova piÃ¹ tardi.");
             return;
         }
         const timeMin = new Date();
@@ -145,8 +162,9 @@ export const Dashboard: React.FC = () => {
             const responseBody = await response.text();
             const output = `Status: ${response.status}\nStatus Text: ${response.statusText}\n---\nResponse Body:\n${responseBody}`;
             setWebhookResponseContent(output.trim());
-        } catch (error: any) {
-            const output = `Si è verificato un errore durante l'invio della richiesta.\n---\nMessage: ${error.message}\n---\nControlla la console del browser per maggiori dettagli.`;
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            const output = `Si Ã¨ verificato un errore durante l'invio della richiesta.\n---\nMessage: ${err.message}\n---\nControlla la console del browser per maggiori dettagli.`;
             setWebhookResponseContent(output.trim());
         } finally {
             setIsLoading(false);
@@ -162,10 +180,10 @@ export const Dashboard: React.FC = () => {
       </div>
       
       {/* Session Health Indicator */}
-      <SessionHealthIndicator mode="full" autoCheck={true} checkInterval={5} />
+      <SessionHealthIndicator mode="full" autoCheck checkInterval={5} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card title="Fatturato Totale" value={`€${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />
+        <Card title="Fatturato Totale" value={`â‚¬${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />
         <Card title="Contatti Totali" value={totalContactsCount.toString()} icon={<UsersIcon className="w-8 h-8 text-white" />} color="bg-green-500" />
         <Card title="Affari Vinti" value={dealsWon.toString()} icon={<CheckCircleIcon className="w-8 h-8 text-white" />} color="bg-yellow-500" />
         <Card title="Tasso di Conversione" value={`${conversionRate}%`} icon={<TrendingUpIcon className="w-8 h-8 text-white" />} color="bg-purple-500" />
@@ -181,7 +199,7 @@ export const Dashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="Opportunità" fill="#4f46e5" />
+                <Bar dataKey="OpportunitÃ " fill="#4f46e5" />
               </BarChart>
             </ResponsiveContainer>
         </div>
@@ -201,7 +219,7 @@ export const Dashboard: React.FC = () => {
                         // type inference issue with the `recharts` library. The library correctly
                         // provides the `percent` property at runtime, but the type definition
                         // seems to be incomplete, causing a compile-time error.
-                        label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={(entry: any) => `${entry.name} ${(entry.percent * 100).toFixed(0)}%`}
                     >
                         {leadSourceData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

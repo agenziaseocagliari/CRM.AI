@@ -1,12 +1,14 @@
+/* eslint-disable no-alert */
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Modal } from '../ui/Modal';
+
 import { 
     BellIcon, 
     GlobeAltIcon,
     CogIcon,
     PlayIcon
 } from '../ui/icons';
+import { Modal } from '../ui/Modal';
 
 // Arrow icons using simple SVG
 const ArrowUpIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -271,7 +273,7 @@ export const NotificationChannelManager: React.FC = () => {
     };
 
     const handleEditChannel = async () => {
-        if (!selectedChannel) return;
+        if (!selectedChannel) {return;}
 
         try {
             setChannels(prev => prev.map(ch => 
@@ -339,7 +341,7 @@ export const NotificationChannelManager: React.FC = () => {
 
     const handleMovePriority = (channel: NotificationChannel, direction: 'up' | 'down') => {
         const newPriority = direction === 'up' ? channel.priority - 1 : channel.priority + 1;
-        if (newPriority < 1) return;
+        if (newPriority < 1) {return;}
 
         setChannels(prev => {
             const updated = prev.map(ch => {
@@ -446,7 +448,7 @@ export const NotificationChannelManager: React.FC = () => {
             {/* Channels List */}
             {loading ? (
                 <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

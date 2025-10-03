@@ -1,15 +1,18 @@
-// src/components/CalendarView.tsx
+﻿// src/components/CalendarView.tsx
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext, Link } from 'react-router-dom';
+
 import { useCrmData } from '../hooks/useCrmData';
+import { invokeSupabaseFunction } from '../lib/api';
 import { CrmEvent } from '../types';
+
+import { ConnectCalendarPrompt } from './ConnectCalendarPrompt';
 import { DayEventsModal } from './DayEventsModal';
 import { InfoIcon, PlusIcon } from './ui/icons';
-import { ConnectCalendarPrompt } from './ConnectCalendarPrompt';
-import { invokeSupabaseFunction } from '../lib/api';
 
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
 const CalendarHeader: React.FC<{
@@ -75,7 +78,7 @@ export const CalendarView: React.FC = () => {
                         // Success: Move to a final 'valid' state.
                         setConnectionStatus('valid');
                     } catch (error: any) {
-                        console.error("Errore di connessione a Google Calendar rilevato:", error);
+                        diagnosticLogger.error("Errore di connessione a Google Calendar rilevato:", error);
                         // Failure: Move to a final 'error' state. No more checks will be performed.
                         setConnectionStatus('error');
                     }
@@ -123,7 +126,7 @@ export const CalendarView: React.FC = () => {
 
     const eventsByDate = useMemo(() => {
         return crmEvents.reduce((acc, event) => {
-            if (event.status === 'cancelled' || !event.event_start_time) return acc;
+            if (event.status === 'cancelled' || !event.event_start_time) {return acc;}
             
             const localDate = new Date(event.event_start_time);
             const year = localDate.getFullYear();
@@ -155,14 +158,14 @@ export const CalendarView: React.FC = () => {
             }
             
         } catch (err: any) {
-            // L'errore dettagliato è già gestito e mostrato da invokeSupabaseFunction
+            // L'errore dettagliato Ã¨ giÃ  gestito e mostrato da invokeSupabaseFunction
             setIsConnecting(false);
         }
     };
     
     // The main data loading is handled by the parent layout, so we don't need a full-screen loader here.
     // This component will just be invisible until the `loading` flag is false.
-    if (loading) return null;
+    if (loading) {return null;}
     
     if (!isCalendarLinked) {
         return <ConnectCalendarPrompt onConnect={handleGoogleConnect} isLoading={isConnecting} />;
@@ -175,7 +178,7 @@ export const CalendarView: React.FC = () => {
                     <div className="mb-4 p-3 bg-red-50 text-red-800 text-sm rounded-md flex items-start space-x-2">
                         <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                         <span>
-                            La connessione con Google Calendar ha un problema. Le funzionalità del calendario sono limitate.
+                            La connessione con Google Calendar ha un problema. Le funzionalitÃ  del calendario sono limitate.
                             {' '}
                             <Link to="/settings" className="font-bold underline hover:text-red-900">
                                 Vai alle impostazioni per riconnettere il tuo account.
@@ -261,3 +264,4 @@ export const CalendarView: React.FC = () => {
         </>
     );
 };
+

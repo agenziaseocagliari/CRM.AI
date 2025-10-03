@@ -1,8 +1,10 @@
-// src/components/superadmin/incidents/IncidentDashboard.tsx
+﻿// src/components/superadmin/incidents/IncidentDashboard.tsx
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+
 import { invokeSupabaseFunction } from '../../../lib/api';
 
+import { diagnosticLogger } from '../../../lib/mockDiagnosticLogger';
 interface Incident {
   id: string;
   incident_type: string;
@@ -74,16 +76,16 @@ export const IncidentDashboard: React.FC = () => {
       };
 
       result.incidents?.forEach((incident: Incident) => {
-        if (incident.status === 'open') newStats.open++;
-        if (incident.status === 'investigating') newStats.investigating++;
-        if (incident.status === 'resolved') newStats.resolved++;
-        if (incident.severity === 'critical') newStats.critical++;
-        if (incident.severity === 'high') newStats.high++;
+        if (incident.status === 'open') {newStats.open++;}
+        if (incident.status === 'investigating') {newStats.investigating++;}
+        if (incident.status === 'resolved') {newStats.resolved++;}
+        if (incident.severity === 'critical') {newStats.critical++;}
+        if (incident.severity === 'high') {newStats.high++;}
       });
 
       setStats(newStats);
     } catch (error) {
-      console.error('Error loading incidents:', error);
+      diagnosticLogger.error('Error loading incidents:', error);
       toast.error('Failed to load incidents');
     } finally {
       setIsLoading(false);
@@ -230,7 +232,7 @@ export const IncidentDashboard: React.FC = () => {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
             <p className="text-gray-600 mt-4">Loading incidents...</p>
           </div>
         ) : incidents.length === 0 ? (
@@ -338,3 +340,4 @@ export const IncidentDashboard: React.FC = () => {
     </div>
   );
 };
+

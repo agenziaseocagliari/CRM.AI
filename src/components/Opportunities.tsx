@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import { useOutletContext } from 'react-router-dom';
-import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
-import { supabase } from '../lib/supabaseClient';
-import { Modal } from './ui/Modal';
-import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
 import toast from 'react-hot-toast';
+import { useOutletContext } from 'react-router-dom';
+
 import { useCrmData } from '../hooks/useCrmData';
+import { supabase } from '../lib/supabaseClient';
+import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
+
+import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
+import { Modal } from './ui/Modal';
+
+
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
+
+// Error interface for proper typing
+interface ApiError {
+    message: string;
+    status?: number;
+    code?: string;
+}
 
 const stageColors: Record<PipelineStage, string> = {
   [PipelineStage.NewLead]: 'bg-blue-100 border-blue-400',
@@ -40,7 +52,7 @@ const KanbanCard: React.FC<{
       className="bg-white p-4 mb-3 rounded-lg shadow cursor-grab active:cursor-grabbing border-l-4 border-primary relative group"
     >
       <p className="font-semibold text-gray-800">{opportunity.contact_name}</p>
-      <p className="text-sm text-gray-600">€{opportunity.value.toLocaleString('it-IT')}</p>
+      <p className="text-sm text-gray-600">â‚¬{opportunity.value.toLocaleString('it-IT')}</p>
       <p className="text-xs text-gray-400 mt-2">Assegnato a: {opportunity.assigned_to}</p>
       <p className="text-xs text-gray-500 mt-1">Scadenza: {new Date(opportunity.close_date).toLocaleDateString('it-IT')}</p>
       
@@ -80,7 +92,7 @@ const KanbanColumn: React.FC<{
         <span className={`font-bold text-sm px-2 py-1 rounded-full ${stageColors[stage]} ${stageTextColors[stage]}`}>{opportunities.length}</span>
       </div>
       <div className='text-sm font-bold text-gray-500 mb-3 px-2'>
-        €{totalValue.toLocaleString('it-IT')}
+        â‚¬{totalValue.toLocaleString('it-IT')}
       </div>
       <div className="h-full">
         {opportunities.map((op) => (
@@ -159,7 +171,7 @@ export const Opportunities: React.FC = () => {
     e.preventDefault();
     
     const opportunityId = e.dataTransfer.getData('opportunityId');
-    if (!opportunityId) return;
+    if (!opportunityId) {return;}
 
     const originalData: OpportunitiesData = JSON.parse(JSON.stringify(boardData));
     let foundOpportunity: Opportunity | undefined;
@@ -174,7 +186,7 @@ export const Opportunities: React.FC = () => {
       }
     }
     
-    if (!foundOpportunity || !sourceStage || sourceStage === targetStage) return;
+    if (!foundOpportunity || !sourceStage || sourceStage === targetStage) {return;}
     
     const newData: OpportunitiesData = JSON.parse(JSON.stringify(boardData));
     newData[sourceStage] = newData[sourceStage].filter(op => op.id !== opportunityId);
@@ -187,11 +199,11 @@ export const Opportunities: React.FC = () => {
             .from('opportunities')
             .update({ stage: targetStage })
             .eq('id', opportunityId);
-        if (error) throw error;
-        toast.success(`Opportunità spostata in "${targetStage}"`);
+        if (error) {throw error;}
+        toast.success(`OpportunitÃ  spostata in "${targetStage}"`);
     } catch (err) {
-        toast.error("Errore durante l'aggiornamento dell'opportunità.");
-        console.error("Errore durante l'aggiornamento dell'opportunità:", err);
+        toast.error("Errore durante l'aggiornamento dell'opportunitÃ .");
+        diagnosticLogger.error('api', "Errore durante l'aggiornamento dell'opportunitÃ :", err as ApiError);
         setBoardData(originalData); // Ripristina in caso di fallimento
     }
   };
@@ -204,37 +216,39 @@ export const Opportunities: React.FC = () => {
         let successMessage = '';
         if (modalMode === 'edit' && opportunityToModify) {
             const { error } = await supabase.from('opportunities').update(formData).eq('id', opportunityToModify.id);
-            if (error) throw error;
-            successMessage = 'Opportunità aggiornata con successo!';
+            if (error) {throw error;}
+            successMessage = 'OpportunitÃ  aggiornata con successo!';
         } else {
              if (!organization) {
-                throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'opportunità.");
+                throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'opportunitÃ .");
             }
             const { error } = await supabase.rpc('create_opportunity', formData);
-            if (error) throw error;
-            successMessage = 'Opportunità creata con successo!';
+            if (error) {throw error;}
+            successMessage = 'OpportunitÃ  creata con successo!';
         }
         refetchData();
         handleCloseModals();
         toast.success(successMessage);
-    } catch (err: any) {
-        toast.error(`Errore nel salvaggio: ${err.message}`);
+    } catch (err: unknown) {
+        const error = err as ApiError;
+        toast.error(`Errore nel salvaggio: ${error.message}`);
     } finally {
         setIsSaving(false);
     }
   }
 
   const handleDelete = async () => {
-    if (!opportunityToModify) return;
+    if (!opportunityToModify) {return;}
     setIsSaving(true);
     try {
         const { error } = await supabase.from('opportunities').delete().eq('id', opportunityToModify.id);
-        if (error) throw error;
+        if (error) {throw error;}
         refetchData();
         handleCloseModals();
-        toast.success('Opportunità eliminata!');
-    } catch (err: any) {
-        toast.error(`Errore: ${err.message}`);
+        toast.success('OpportunitÃ  eliminata!');
+    } catch (err: unknown) {
+        const error = err as ApiError;
+        toast.error(`Errore: ${error.message}`);
     } finally {
         setIsSaving(false);
     }
@@ -248,10 +262,10 @@ export const Opportunities: React.FC = () => {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-text-primary">Pipeline Opportunità</h1>
+        <h1 className="text-3xl font-bold text-text-primary">Pipeline OpportunitÃ </h1>
         <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
             <PlusIcon className="w-5 h-5" />
-            <span>Aggiungi Opportunità</span>
+            <span>Aggiungi OpportunitÃ </span>
         </button>
       </div>
       <div className="flex space-x-4 overflow-x-auto pb-4">
@@ -267,7 +281,7 @@ export const Opportunities: React.FC = () => {
         ))}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModals} title={modalMode === 'add' ? 'Crea Nuova Opportunità' : 'Modifica Opportunità'}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModals} title={modalMode === 'add' ? 'Crea Nuova OpportunitÃ ' : 'Modifica OpportunitÃ '}>
         <form onSubmit={handleSave} className="space-y-4">
             <div>
                 <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700">Contatto *</label>
@@ -279,7 +293,7 @@ export const Opportunities: React.FC = () => {
                 </select>
             </div>
              <div>
-                <label htmlFor="value" className="block text-sm font-medium text-gray-700">Valore (€)</label>
+                <label htmlFor="value" className="block text-sm font-medium text-gray-700">Valore (â‚¬)</label>
                 <input type="number" id="value" name="value" value={formData.value} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
              <div>
@@ -299,7 +313,7 @@ export const Opportunities: React.FC = () => {
       </Modal>
 
       <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
-        <p>Sei sicuro di voler eliminare l'opportunità per <strong>{opportunityToModify?.contact_name}</strong>? Questa azione è irreversibile.</p>
+        <p>Sei sicuro di voler eliminare l&apos;opportunitÃ  per <strong>{opportunityToModify?.contact_name}</strong>? Questa azione Ã¨ irreversibile.</p>
         <div className="flex justify-end pt-4 border-t mt-4">
               <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
               <button onClick={handleDelete} disabled={isSaving} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isSaving ? 'Eliminazione...' : 'Elimina'}</button>

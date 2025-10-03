@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+
 import { useSuperAdminData } from '../../../hooks/useSuperAdminData';
 
 interface Alert {

@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+
 import { WorkflowDefinition } from '../../types';
 import { 
     PlayIcon, 
@@ -99,7 +100,7 @@ export const VisualWorkflowCanvas: React.FC<VisualWorkflowCanvasProps> = ({
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
-        if (!draggedNode) return;
+        if (!draggedNode) {return;}
 
         const canvasRect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - canvasRect.left;
@@ -177,7 +178,7 @@ export const VisualWorkflowCanvas: React.FC<VisualWorkflowCanvasProps> = ({
                     {connections.map((conn, idx) => {
                         const fromNode = nodes.find(n => n.id === conn.from);
                         const toNode = nodes.find(n => n.id === conn.to);
-                        if (!fromNode || !toNode) return null;
+                        if (!fromNode || !toNode) {return null;}
 
                         const x1 = fromNode.position.x + 75;
                         const y1 = fromNode.position.y + 30;

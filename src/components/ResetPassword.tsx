@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { GuardianIcon } from './ui/icons';
-import { supabase } from '../lib/supabaseClient';
+﻿import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { supabase } from '../lib/supabaseClient';
+
+import { GuardianIcon } from './ui/icons';
+
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export const ResetPassword: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [password, setPassword] = useState('');
@@ -47,7 +50,7 @@ export const ResetPassword: React.FC = () => {
             });
 
             if (error) {
-                console.error('Password reset error:', error);
+                diagnosticLogger.error('Password reset error:', error);
                 toast.error('Errore durante il reset della password. Il link potrebbe essere scaduto.');
             } else {
                 setSuccess(true);
@@ -60,8 +63,8 @@ export const ResetPassword: React.FC = () => {
                 }, 2000);
             }
         } catch (error) {
-            console.error('Password reset error:', error);
-            toast.error('Si è verificato un errore. Riprova più tardi.');
+            diagnosticLogger.error('Password reset error:', error);
+            toast.error('Si Ã¨ verificato un errore. Riprova piÃ¹ tardi.');
         } finally {
             setLoading(false);
         }
@@ -86,9 +89,9 @@ export const ResetPassword: React.FC = () => {
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                         <div className="text-center space-y-4">
-                            <div className="text-6xl">✅</div>
+                            <div className="text-6xl">âœ…</div>
                             <p className="text-gray-700">
-                                La tua password è stata aggiornata con successo.
+                                La tua password Ã¨ stata aggiornata con successo.
                             </p>
                             <p className="text-sm text-gray-600">
                                 Verrai reindirizzato alla dashboard automaticamente...
@@ -115,9 +118,9 @@ export const ResetPassword: React.FC = () => {
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                         <div className="text-center space-y-4">
-                            <div className="text-6xl">⚠️</div>
+                            <div className="text-6xl">âš ï¸</div>
                             <p className="text-gray-700">
-                                Il link di reset password non è valido o è scaduto.
+                                Il link di reset password non Ã¨ valido o Ã¨ scaduto.
                             </p>
                             <button
                                 onClick={() => navigate('/forgot-password')}
@@ -216,3 +219,4 @@ export const ResetPassword: React.FC = () => {
         </div>
     );
 };
+

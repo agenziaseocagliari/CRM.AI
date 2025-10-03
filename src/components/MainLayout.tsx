@@ -1,11 +1,14 @@
-import React from 'react';
+﻿import React from 'react';
 // FIX: Corrected the import for Outlet from 'react-router-dom' to resolve module export errors.
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
-import { Header } from './Header';
+
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
 
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
+
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 interface MainLayoutProps {
     crmData: ReturnType<typeof useCrmData>;
 }
@@ -14,7 +17,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
     const { organization, error } = crmData;
 
     const handleLogout = async () => {
-        console.log('👋 [MainLayout] Logging out - clearing all session data');
+        diagnosticLogger.info('ðŸ‘‹ [MainLayout] Logging out - clearing all session data');
         // Clear all storage to ensure no auto-login or stale state
         localStorage.clear();
         sessionStorage.clear();
@@ -24,7 +27,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
     
     // An error from the core data hook is critical. Display an error page.
     if (error) {
-        // Non mostriamo l'errore di configurazione qui, poiché viene già gestito in App.tsx.
+        // Non mostriamo l'errore di configurazione qui, poichÃ© viene giÃ  gestito in App.tsx.
         // Mostriamo un errore generico per altri problemi.
         return <div className="flex items-center justify-center h-screen text-red-500">{error}</div>;
     }
@@ -43,7 +46,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
                     onLogout={handleLogout}
                 />
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
-                    {/* L'Outlet renderizzerà il componente della rotta figlia e passerà crmData tramite context */}
+                    {/* L'Outlet renderizzerÃ  il componente della rotta figlia e passerÃ  crmData tramite context */}
                     <Outlet context={crmData} />
                 </main>
             </div>

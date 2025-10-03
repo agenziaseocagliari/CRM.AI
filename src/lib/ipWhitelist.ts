@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 3 - M03: IP Whitelisting & Geo-Restrictions
  * 
  * IP validation and geo-restriction utilities for organization-level security.
@@ -10,9 +10,10 @@
  * - Real-time access statistics
  */
 
-import { supabase } from './supabaseClient';
 import { logAuditEvent } from './auditLogger';
+import { supabase } from './supabaseClient';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export interface IPWhitelist {
   id: string;
   organizationId: string;
@@ -88,10 +89,10 @@ export async function checkIPWhitelist(
       p_ip_address: ipAddress,
     });
 
-    if (error) throw error;
+    if (error) {throw error;}
     return data || false;
   } catch (error) {
-    console.error('Error checking IP whitelist:', error);
+    diagnosticLogger.error('Error checking IP whitelist:', error);
     // Fail open for availability (can be changed to fail closed for security)
     return false;
   }
@@ -110,10 +111,10 @@ export async function checkGeoRestriction(
       p_country_code: countryCode,
     });
 
-    if (error) throw error;
+    if (error) {throw error;}
     return data || { allowed: true, reason: 'No geo-restrictions configured' };
   } catch (error) {
-    console.error('Error checking geo-restriction:', error);
+    diagnosticLogger.error('Error checking geo-restriction:', error);
     // Fail open for availability
     return { allowed: true, reason: 'Error checking geo-restrictions' };
   }
@@ -157,7 +158,7 @@ export async function validateIPAccess(
 
     return result;
   } catch (error) {
-    console.error('Error validating IP access:', error);
+    diagnosticLogger.error('Error validating IP access:', error);
     // Fail open for availability
     return {
       allowed: true,
@@ -201,7 +202,7 @@ export async function logIPAccess(
       p_user_agent: options.userAgent || null,
     });
 
-    if (error) throw error;
+    if (error) {throw error;}
 
     // Also log to audit system if blocked
     if (options.isBlocked) {
@@ -225,7 +226,7 @@ export async function logIPAccess(
 
     return data || null;
   } catch (error) {
-    console.error('Error logging IP access:', error);
+    diagnosticLogger.error('Error logging IP access:', error);
     return null;
   }
 }
@@ -262,7 +263,7 @@ export async function addIPWhitelist(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {throw error;}
 
     // Log audit event
     await logAuditEvent({
@@ -281,7 +282,7 @@ export async function addIPWhitelist(
 
     return data ? mapIPWhitelistFromDB(data) : null;
   } catch (error) {
-    console.error('Error adding IP whitelist:', error);
+    diagnosticLogger.error('Error adding IP whitelist:', error);
     throw error;
   }
 }
@@ -300,7 +301,7 @@ export async function removeIPWhitelist(
       .eq('id', ipWhitelistId)
       .eq('organization_id', organizationId);
 
-    if (error) throw error;
+    if (error) {throw error;}
 
     // Log audit event
     await logAuditEvent({
@@ -315,7 +316,7 @@ export async function removeIPWhitelist(
 
     return true;
   } catch (error) {
-    console.error('Error removing IP whitelist:', error);
+    diagnosticLogger.error('Error removing IP whitelist:', error);
     return false;
   }
 }
@@ -340,10 +341,10 @@ export async function listIPWhitelist(
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {throw error;}
     return data ? data.map(mapIPWhitelistFromDB) : [];
   } catch (error) {
-    console.error('Error listing IP whitelist:', error);
+    diagnosticLogger.error('Error listing IP whitelist:', error);
     return [];
   }
 }
@@ -374,7 +375,7 @@ export async function addGeoRestriction(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {throw error;}
 
     // Log audit event
     await logAuditEvent({
@@ -393,7 +394,7 @@ export async function addGeoRestriction(
 
     return data ? mapGeoRestrictionFromDB(data) : null;
   } catch (error) {
-    console.error('Error adding geo-restriction:', error);
+    diagnosticLogger.error('Error adding geo-restriction:', error);
     throw error;
   }
 }
@@ -412,7 +413,7 @@ export async function removeGeoRestriction(
       .eq('id', geoRestrictionId)
       .eq('organization_id', organizationId);
 
-    if (error) throw error;
+    if (error) {throw error;}
 
     // Log audit event
     await logAuditEvent({
@@ -427,7 +428,7 @@ export async function removeGeoRestriction(
 
     return true;
   } catch (error) {
-    console.error('Error removing geo-restriction:', error);
+    diagnosticLogger.error('Error removing geo-restriction:', error);
     return false;
   }
 }
@@ -452,10 +453,10 @@ export async function listGeoRestrictions(
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {throw error;}
     return data ? data.map(mapGeoRestrictionFromDB) : [];
   } catch (error) {
-    console.error('Error listing geo-restrictions:', error);
+    diagnosticLogger.error('Error listing geo-restrictions:', error);
     return [];
   }
 }
@@ -473,7 +474,7 @@ export async function getIPAccessStats(
       p_days: days,
     });
 
-    if (error) throw error;
+    if (error) {throw error;}
 
     return {
       totalRequests: data?.total_requests || 0,
@@ -484,7 +485,7 @@ export async function getIPAccessStats(
       topBlockedIps: data?.top_blocked_ips || [],
     };
   } catch (error) {
-    console.error('Error getting IP access stats:', error);
+    diagnosticLogger.error('Error getting IP access stats:', error);
     return {
       totalRequests: 0,
       blockedRequests: 0,
@@ -526,10 +527,10 @@ export async function getIPAccessLogs(
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {throw error;}
     return data ? data.map(mapIPAccessLogFromDB) : [];
   } catch (error) {
-    console.error('Error getting IP access logs:', error);
+    diagnosticLogger.error('Error getting IP access logs:', error);
     return [];
   }
 }
@@ -588,3 +589,4 @@ function mapIPAccessLogFromDB(data: any): IPAccessLog {
     accessTime: new Date(data.access_time),
   };
 }
+

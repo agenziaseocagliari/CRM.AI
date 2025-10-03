@@ -1,11 +1,14 @@
-// src/components/TwoFactorAuth/TwoFactorSetup.tsx
-import React, { useState, useEffect } from 'react';
+﻿// src/components/TwoFactorAuth/TwoFactorSetup.tsx
 import QRCode from 'qrcode';
-import { supabase } from '../../lib/supabaseClient';
+/* eslint-disable no-alert */
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Modal } from '../ui/Modal';
-import { CheckCircleIcon } from '../ui/icons';
 
+import { supabase } from '../../lib/supabaseClient';
+import { CheckCircleIcon } from '../ui/icons';
+import { Modal } from '../ui/Modal';
+
+import { diagnosticLogger } from '../../lib/mockDiagnosticLogger';
 interface TwoFactorSetupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,13 +42,13 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
       setVerificationCode('');
       setBackupCodes([]);
     }
-  }, [isOpen]);
+  }, [isOpen, currentStep.step]);
 
   const generateTOTPSecret = async () => {
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {throw new Error('User not authenticated');}
 
       const generateSecret = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -66,7 +69,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
       setQrCodeUrl(qrUrl);
       setCurrentStep({ step: 'qr', data: { secret: newSecret } });
     } catch (error) {
-      console.error('Error generating TOTP secret:', error);
+      diagnosticLogger.error('Error generating TOTP secret:', error);
       toast.error('Failed to generate authentication code');
     } finally {
       setIsLoading(false);
@@ -82,7 +85,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {throw new Error('User not authenticated');}
       
       const { error: insertError } = await supabase
         .from('user_2fa_settings')
@@ -94,7 +97,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
           verified_at: new Date().toISOString(),
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {throw insertError;}
 
       const codes = await generateBackupCodes();
       setBackupCodes(codes);
@@ -102,7 +105,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
       setCurrentStep({ step: 'backup' });
       toast.success('2FA enabled successfully!');
     } catch (error) {
-      console.error('Error enabling 2FA:', error);
+      diagnosticLogger.error('Error enabling 2FA:', error);
       toast.error('Failed to enable 2FA. Please try again.');
     } finally {
       setIsLoading(false);
@@ -112,24 +115,24 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
   const generateBackupCodes = async (): Promise<string[]> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {throw new Error('User not authenticated');}
 
       const { data, error } = await supabase.rpc('generate_backup_codes', {
         p_user_id: user.id
       });
 
-      if (error) throw error;
+      if (error) {throw error;}
       
       const { error: updateError } = await supabase
         .from('user_2fa_settings')
         .update({ backup_codes: data })
         .eq('user_id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {throw updateError;}
 
       return data || [];
     } catch (error) {
-      console.error('Error generating backup codes:', error);
+      diagnosticLogger.error('Error generating backup codes:', error);
       return [];
     }
   };
@@ -308,7 +311,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
               </h3>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                 <p className="text-yellow-800 text-sm">
-                  ⚠️ Store these codes in a safe place. You can use them to access your account if you lose your authenticator device.
+                  âš ï¸ Store these codes in a safe place. You can use them to access your account if you lose your authenticator device.
                 </p>
               </div>
             </div>
@@ -372,3 +375,4 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
     </Modal>
   );
 };
+

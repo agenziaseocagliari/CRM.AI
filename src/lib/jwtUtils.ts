@@ -1,4 +1,4 @@
-/**
+﻿/**
  * JWT Utility Functions for Debugging and Diagnostics
  * 
  * This module provides utilities to decode, inspect, and diagnose JWT tokens
@@ -40,7 +40,7 @@ export function decodeJWT(token: string): JWTClaims | null {
     // JWT format: header.payload.signature
     const parts = token.split('.');
     if (parts.length !== 3) {
-      console.error('[JWT Utils] Invalid JWT format: expected 3 parts');
+      // diagnosticLogger.error('[JWT Utils] Invalid JWT format: expected 3 parts');
       return null;
     }
 
@@ -58,7 +58,7 @@ export function decodeJWT(token: string): JWTClaims | null {
 
     return JSON.parse(jsonPayload);
   } catch (error) {
-    console.error('[JWT Utils] Error decoding JWT:', error);
+    // diagnosticLogger.error('[JWT Utils] Error decoding JWT:', error);
     return null;
   }
 }
@@ -148,11 +148,11 @@ export function formatJWTDiagnostics(diagnostics: JWTDiagnostics): string {
   let report = '==== JWT Diagnostics Report ====\n\n';
   
   report += `Timestamp: ${new Date().toISOString()}\n`;
-  report += `Valid JWT: ${diagnostics.isValid ? '✅ Yes' : '❌ No'}\n`;
-  report += `Has user_role: ${diagnostics.hasUserRole ? '✅ Yes' : '❌ No'}\n\n`;
+  report += `Valid JWT: ${diagnostics.isValid ? 'âœ… Yes' : 'âŒ No'}\n`;
+  report += `Has user_role: ${diagnostics.hasUserRole ? 'âœ… Yes' : 'âŒ No'}\n\n`;
 
   if (diagnostics.errors.length > 0) {
-    report += '🚨 ERRORS:\n';
+    report += 'ðŸš¨ ERRORS:\n';
     diagnostics.errors.forEach(err => {
       report += `  - ${err}\n`;
     });
@@ -160,7 +160,7 @@ export function formatJWTDiagnostics(diagnostics: JWTDiagnostics): string {
   }
 
   if (diagnostics.warnings.length > 0) {
-    report += '⚠️  WARNINGS:\n';
+    report += 'âš ï¸  WARNINGS:\n';
     diagnostics.warnings.forEach(warn => {
       report += `  - ${warn}\n`;
     });
@@ -168,12 +168,12 @@ export function formatJWTDiagnostics(diagnostics: JWTDiagnostics): string {
   }
 
   if (diagnostics.claims) {
-    report += '📋 CLAIMS:\n';
+    report += 'ðŸ“‹ CLAIMS:\n';
     report += JSON.stringify(diagnostics.claims, null, 2);
     report += '\n\n';
   }
 
-  report += '🔑 RAW TOKEN (first 50 chars):\n';
+  report += 'ðŸ”‘ RAW TOKEN (first 50 chars):\n';
   report += diagnostics.rawToken.substring(0, 50) + '...\n\n';
 
   report += '================================\n';
@@ -201,3 +201,4 @@ export function checkSessionJWT(session: any): JWTDiagnostics {
 
   return diagnoseJWT(session.access_token);
 }
+

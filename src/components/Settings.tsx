@@ -1,16 +1,20 @@
-// src/components/Settings.tsx
+﻿// src/components/Settings.tsx\n/* eslint-disable no-alert */
 import React, { useState, useEffect, useRef } from 'react';
-import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
-import { useCrmData } from '../hooks/useCrmData';
-import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
-import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons';
-import { UsageDashboard } from './UsageDashboard';
+import { useOutletContext, useSearchParams, useNavigate } from 'react-router-dom';
+
+import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
-import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
+import { supabase } from '../lib/supabaseClient';
+
 import { JWTViewer } from './JWTViewer';
 import { TwoFactorSettings } from './TwoFactorAuth';
+import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons';
+import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
+import { UsageDashboard } from './UsageDashboard';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
+import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
 // --- Componente Helper per UI di Stato ---
 const AuthStatusDisplay: React.FC<{
     status: 'loading' | 'success' | 'error';
@@ -21,7 +25,7 @@ const AuthStatusDisplay: React.FC<{
     const renderIcon = () => {
         switch (status) {
             case 'loading':
-                return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>;
+                return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />;
             case 'success':
                 return <CheckCircleIcon className="w-16 h-16 text-green-500" />;
             case 'error':
@@ -40,7 +44,7 @@ const AuthStatusDisplay: React.FC<{
                 <h2 className="mt-4 text-xl font-semibold text-gray-800">
                     {status === 'loading' && 'Connessione in corso...'}
                     {status === 'success' && 'Successo!'}
-                    {status === 'error' && 'Si è verificato un problema'}
+                    {status === 'error' && 'Si Ã¨ verificato un problema'}
                 </h2>
                 <p className={`mt-2 text-gray-600 ${status === 'error' ? 'text-red-600' : ''}`}>
                     {message}
@@ -71,7 +75,7 @@ export const GoogleAuthCallback: React.FC = () => {
     const exchangeAttempted = useRef(false);
 
     useEffect(() => {
-        if (exchangeAttempted.current) return;
+        if (exchangeAttempted.current) {return;}
         exchangeAttempted.current = true;
 
         const exchangeCodeForToken = async () => {
@@ -143,10 +147,29 @@ export const Settings: React.FC = () => {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!organization) return;
+        if (!organization) {return;}
         setIsSaving(true);
         
         try {
+            // Validate API keys format before saving
+            if (brevoApiKey && brevoApiKey.length > 0 && brevoApiKey.length < 10) {
+                throw new Error('Chiave API Brevo non valida');
+            }
+            if (twilioSid && !twilioSid.startsWith('AC')) {
+                throw new Error('Twilio Account SID deve iniziare con "AC"');
+            }
+            if (twilioToken && twilioToken.length > 0 && twilioToken.length < 20) {
+                throw new Error('Twilio Auth Token non valido');
+            }
+            
+            // Log operation with masked sensitive data
+            SecureLogger.info('settings', 'Saving organization settings', {
+                organizationId: organization.id,
+                hasBrevoKey: !!brevoApiKey,
+                hasTwilioSid: !!twilioSid,
+                hasTwilioToken: !!twilioToken
+            });
+            
             const { error } = await supabase.from('organization_settings').upsert(
                 {
                     organization_id: organization.id,
@@ -157,7 +180,7 @@ export const Settings: React.FC = () => {
                 { onConflict: 'organization_id' }
             );
 
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success('Impostazioni salvate con successo!');
             refetch();
         } catch (err: any) {
@@ -172,28 +195,27 @@ export const Settings: React.FC = () => {
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
             const { url } = await invokeSupabaseFunction('google-auth-url', { state });
-            if (url) window.location.href = url;
-            else throw new Error("URL di autenticazione non ricevuto.");
+            if (url) {window.location.href = url;} else {throw new Error("URL di autenticazione non ricevuto.");}
         } catch (err: any) {
-            console.error(err);
+            diagnosticLogger.error(err);
         }
     };
     
     const handleGoogleDisconnect = async () => {
-        if (!organization || !window.confirm("Sei sicuro? Questo interromperà la sincronizzazione con Google Calendar.")) return;
+        if (!organization || !window.confirm("Sei sicuro? Questo interromperÃ  la sincronizzazione con Google Calendar.")) {return;}
         try {
             // La disconnessione ora invoca una funzione dedicata per una pulizia completa
             await invokeSupabaseFunction('google-disconnect', { organization_id: organization.id });
             toast.success("Account Google disconnesso.");
             refetch();
         } catch (err: any) {
-            // L'errore viene già mostrato dal gestore API
-            console.error(err);
+            // L'errore viene giÃ  mostrato dal gestore API
+            diagnosticLogger.error(err);
         }
     };
     
     const handleCheckTokenStatus = async () => {
-        if (!organization) return;
+        if (!organization) {return;}
         setIsCheckingToken(true);
         setDiagResult(null);
         setIsDiagModalOpen(true);
@@ -229,8 +251,8 @@ export const Settings: React.FC = () => {
                     <nav className="flex space-x-2" aria-label="Tabs">
                         <TabButton tab="integrations" label="Integrazioni" />
                         <TabButton tab="billing" label="Billing & Usage" />
-                        <TabButton tab="security" label="🔒 Security" />
-                        <TabButton tab="debug" label="🔧 Debug JWT" />
+                        <TabButton tab="security" label="ðŸ”’ Security" />
+                        <TabButton tab="debug" label="ðŸ”§ Debug JWT" />
                     </nav>
                 </div>
 
@@ -249,7 +271,7 @@ export const Settings: React.FC = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="twilio_token" className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
-                                    <input type="password" id="twilio_token" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="••••••••••••••••" />
+                                    <input type="password" id="twilio_token" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
                                 </div>
                                 <div className="flex justify-end pt-4 border-t">
                                     <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
@@ -294,7 +316,7 @@ export const Settings: React.FC = () => {
                 {activeTab === 'debug' && (
                     <div className="space-y-6">
                         <div className="bg-white p-6 rounded-lg shadow">
-                            <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">🔐 Debug JWT Token</h2>
+                            <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">ðŸ” Debug JWT Token</h2>
                             <p className="text-gray-600 mb-4">
                                 Questa sezione ti permette di visualizzare e diagnosticare il tuo JWT token.
                                 Utile per verificare la presenza del claim <code className="bg-gray-100 px-2 py-1 rounded">user_role</code>.
@@ -306,7 +328,7 @@ export const Settings: React.FC = () => {
                                     onClick={() => setShowJWTViewer(true)}
                                     className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
                                 >
-                                    🔍 Visualizza JWT Token
+                                    ðŸ” Visualizza JWT Token
                                 </button>
                             )}
                         </div>
@@ -324,12 +346,12 @@ export const Settings: React.FC = () => {
                             <ul className="list-disc list-inside bg-gray-50 p-3 rounded-md">
                                 <li>Access Token: <span className={diagResult.has_access_token ? 'text-green-600' : 'text-red-600'}>{diagResult.has_access_token ? 'Presente' : 'MANCANTE'}</span></li>
                                 <li>Refresh Token: <span className={diagResult.has_refresh_token ? 'text-green-600' : 'text-red-600'}>{diagResult.has_refresh_token ? 'Presente (OK)' : 'MANCANTE (CRITICO)'}</span></li>
-                                <li>Scaduto: <span className={diagResult.is_expired ? 'text-yellow-600' : 'text-green-600'}>{diagResult.is_expired ? 'Sì' : 'No'}</span></li>
+                                <li>Scaduto: <span className={diagResult.is_expired ? 'text-yellow-600' : 'text-green-600'}>{diagResult.is_expired ? 'SÃ¬' : 'No'}</span></li>
                                 <li>Data Scadenza (UTC): <span>{diagResult.expiry_date_utc}</span></li>
                             </ul>
                         )}
                          {diagResult.error && <p className="text-red-600 mt-2"><strong>Dettagli Errore:</strong> {diagResult.details}</p>}
-                        <p className="text-xs text-gray-500 pt-2 border-t mt-3">Se lo stato non è 'FOUND' o il 'Refresh Token' è mancante, per favore <button onClick={handleGoogleDisconnect} className="text-primary underline">disconnetti</button> e ricollega il tuo account.</p>
+                        <p className="text-xs text-gray-500 pt-2 border-t mt-3">Se lo stato non Ã¨ 'FOUND' o il 'Refresh Token' Ã¨ mancante, per favore <button onClick={handleGoogleDisconnect} className="text-primary underline">disconnetti</button> e ricollega il tuo account.</p>
                     </div>
                 ) : <p>Nessun risultato.</p>}
             </Modal>

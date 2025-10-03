@@ -1,5 +1,6 @@
 // src/components/ConnectCalendarPrompt.tsx
 import React from 'react';
+
 import { GoogleIcon } from './ui/icons';
 
 interface ConnectCalendarPromptProps {

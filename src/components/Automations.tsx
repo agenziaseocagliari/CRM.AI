@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import { useOutletContext } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
-import { MessageBotIcon, UserCircleIcon, SparklesIcon, TrashIcon } from './ui/icons';
+import { useOutletContext } from 'react-router-dom';
+
 import { useCrmData } from '../hooks/useCrmData';
-import { Automation } from '../types';
-import { Modal } from './ui/Modal';
 import { invokeSupabaseFunction } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
+import { Automation } from '../types';
+
+import { MessageBotIcon, UserCircleIcon, SparklesIcon, TrashIcon } from './ui/icons';
+import { Modal } from './ui/Modal';
+
 
 interface Message {
   sender: 'user' | 'ai';
@@ -51,7 +54,7 @@ export const Automations: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
+        if (!input.trim() || isLoading) {return;}
         
         setLastInteraction(null);
         const userMessage: Message = { sender: 'user', text: input };
@@ -62,7 +65,7 @@ export const Automations: React.FC = () => {
         try {
             const data = await invokeSupabaseFunction('process-automation-request', { prompt: userMessage.text });
             
-            if (!data.reply) throw new Error("La risposta dell'AI non è valida.");
+            if (!data.reply) {throw new Error("La risposta dell'AI non è valida.");}
 
             const aiMessage: Message = { sender: 'ai', text: data.reply };
             setMessages(prev => [...prev, aiMessage]);
@@ -78,7 +81,7 @@ export const Automations: React.FC = () => {
     };
 
     const handleSaveAutomation = async () => {
-        if (!lastInteraction || !organization) return;
+        if (!lastInteraction || !organization) {return;}
         setIsLoading(true);
 
         try {
@@ -87,7 +90,7 @@ export const Automations: React.FC = () => {
                 description: lastInteraction.ai,
                 organization_id: organization.id,
             });
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success("Automazione salvata con successo!");
             refetch(); // Ricarica la lista delle automazioni
             // Reset chat
@@ -106,11 +109,11 @@ export const Automations: React.FC = () => {
     };
 
     const handleDeleteAutomation = async () => {
-        if (!automationToDelete) return;
+        if (!automationToDelete) {return;}
         setIsLoading(true);
         try {
             const { error } = await supabase.from('automations').delete().eq('id', automationToDelete.id);
-            if (error) throw error;
+            if (error) {throw error;}
             toast.success("Automazione eliminata!");
             refetch();
             setDeleteModalOpen(false);
@@ -128,7 +131,7 @@ export const Automations: React.FC = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-text-primary">Le Tue Automazioni</h1>
                     <p className="text-text-secondary mt-1">
-                        Qui trovi tutte le automazioni che hai creato. Attualmente sono salvate come "ricette" pronte per essere eseguite.
+                        Qui trovi tutte le automazioni che hai creato. Attualmente sono salvate come &quot;ricette&quot; pronte per essere eseguite.
                     </p>
                 </div>
 
@@ -140,7 +143,7 @@ export const Automations: React.FC = () => {
                     <div className="bg-white p-8 rounded-lg shadow border text-center">
                         <MessageBotIcon className="w-12 h-12 mx-auto text-gray-300" />
                         <h2 className="mt-4 text-xl font-semibold text-text-primary">Nessuna automazione ancora creata</h2>
-                        <p className="mt-1 text-text-secondary">Usa l'agente AI qui sotto per iniziare a costruirne una.</p>
+                        <p className="mt-1 text-text-secondary">Usa l&apos;agente AI qui sotto per iniziare a costruirne una.</p>
                     </div>
                 )}
                 
@@ -151,7 +154,7 @@ export const Automations: React.FC = () => {
                             Crea una Nuova Automazione
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">
-                            Descrivi cosa vuoi fare e l'agente preparerà i passaggi per te.
+                            Descrivi cosa vuoi fare e l&apos;agente preparerà i passaggi per te.
                         </p>
                     </header>
                     <main className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -169,9 +172,9 @@ export const Automations: React.FC = () => {
                                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-primary flex-shrink-0"><MessageBotIcon className="w-6 h-6"/></div>
                                 <div className="max-w-lg px-4 py-3 rounded-2xl bg-gray-100 text-text-primary rounded-bl-none">
                                     <div className="flex items-center space-x-2">
-                                        <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                        <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                        <span className="h-2 w-2 bg-primary rounded-full animate-bounce"></span>
+                                        <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                        <span className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                        <span className="h-2 w-2 bg-primary rounded-full animate-bounce" />
                                     </div>
                                 </div>
                             </div>
@@ -204,7 +207,7 @@ export const Automations: React.FC = () => {
             </div>
             
             <Modal isOpen={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Conferma Eliminazione">
-                <p>Sei sicuro di voler eliminare l'automazione <strong>"{automationToDelete?.name}"</strong>? Questa azione è irreversibile.</p>
+                <p>Sei sicuro di voler eliminare l&apos;automazione <strong>&quot;{automationToDelete?.name}&quot;</strong>? Questa azione è irreversibile.</p>
                 <div className="flex justify-end pt-4 border-t mt-4">
                     <button type="button" onClick={() => setDeleteModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
                     <button onClick={handleDeleteAutomation} disabled={isLoading} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isLoading ? 'Eliminazione...' : 'Elimina'}</button>

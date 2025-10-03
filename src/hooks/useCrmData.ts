@@ -1,7 +1,9 @@
-// Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
+﻿// Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
 import { useState, useEffect, useCallback } from 'react';
 
+import { invokeSupabaseFunction } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { 
     Automation,
     Contact,
@@ -16,7 +18,6 @@ import {
     PipelineStage,
     Profile
 } from '../types';
-import { invokeSupabaseFunction } from '../lib/api';
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
   const emptyData: OpportunitiesData = {
@@ -27,7 +28,7 @@ const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesD
     [PipelineStage.Lost]: [],
   };
 
-  if (!opportunities) return emptyData;
+  if (!opportunities) {return emptyData;}
 
   return opportunities.reduce((acc, op) => {
     if (acc[op.stage]) {
@@ -60,13 +61,13 @@ export const useCrmData = () => {
       // Step 1: Get JWT session and extract user
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if(sessionError) {
-        console.error('[useCrmData] Session error:', sessionError);
+        diagnosticLogger.error('[useCrmData] Session error:', sessionError);
         throw sessionError;
       }
       const user = session?.user;
       
       if (!user) {
-        console.log('[useCrmData] No user session found, clearing state');
+        diagnosticLogger.info('[useCrmData] No user session found, clearing state');
         setLoading(false);
         setOrganization(null); setContacts([]); setOpportunities(groupOpportunitiesByStage([]));
         setForms([]); setAutomations([]); setOrganizationSettings(null);
@@ -77,7 +78,7 @@ export const useCrmData = () => {
       }
 
       // Step 2: Log JWT user details for debugging
-      console.log('[useCrmData] User authenticated from JWT:', {
+      diagnosticLogger.info('[useCrmData] User authenticated from JWT:', {
         userId: user.id,
         email: user.email,
         jwtSub: user.id, // This is the 'sub' claim from JWT
@@ -93,7 +94,7 @@ export const useCrmData = () => {
       
       // Step 4: Enhanced error handling with diagnostic information
       if (profileError || !profileData) {
-        console.error('[useCrmData] Profile lookup failed:', {
+        diagnosticLogger.error('[useCrmData] Profile lookup failed:', {
           error: profileError,
           queriedUserId: user.id,
           userEmail: user.email,
@@ -117,7 +118,7 @@ export const useCrmData = () => {
       }
       
       const { organization_id } = profileData;
-      console.log('[useCrmData] Profile found successfully:', {
+      diagnosticLogger.info('[useCrmData] Profile found successfully:', {
         userId: user.id,
         organizationId: organization_id
       });
@@ -135,17 +136,17 @@ export const useCrmData = () => {
         supabase.from('google_credentials').select('organization_id').eq('organization_id', organization_id).maybeSingle()
       ]);
 
-      console.log('[useCrmData] Data fetch completed for organization:', organization_id);
+      diagnosticLogger.info('[useCrmData] Data fetch completed for organization:', organization_id);
 
-      if (orgResponse.error) throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);
-      if (contactsResponse.error) throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);
-      if (opportunitiesResponse.error) throw new Error(`Errore nel caricamento delle opportunità: ${opportunitiesResponse.error.message}`);
-      if (formsResponse.error) throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);
-      if (automationsResponse.error) throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`);
-      if (settingsResponse.error) throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);
-      if (subscriptionResponse.error) throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);
-      if (ledgerResponse.error) throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`);
-      if (googleCredsResponse.error) throw new Error(`Errore nel caricamento delle credenziali Google: ${googleCredsResponse.error.message}`);
+      if (orgResponse.error) {throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);}
+      if (contactsResponse.error) {throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);}
+      if (opportunitiesResponse.error) {throw new Error(`Errore nel caricamento delle opportunitÃ : ${opportunitiesResponse.error.message}`);}
+      if (formsResponse.error) {throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);}
+      if (automationsResponse.error) {throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`);}
+      if (settingsResponse.error) {throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);}
+      if (subscriptionResponse.error) {throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);}
+      if (ledgerResponse.error) {throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`);}
+      if (googleCredsResponse.error) {throw new Error(`Errore nel caricamento delle credenziali Google: ${googleCredsResponse.error.message}`);}
       
       if (orgResponse.data) {
         setOrganization(orgResponse.data);
@@ -162,14 +163,14 @@ export const useCrmData = () => {
       setIsCalendarLinked(!!googleCredsResponse.data);
 
     } catch (err: any) {
-      console.error('[useCrmData] Error in fetchData:', {
+      diagnosticLogger.error('[useCrmData] Error in fetchData:', {
         error: err,
         message: err.message,
         stack: err.stack,
         timestamp: new Date().toISOString()
       });
       setError(err.message);
-      console.error(err);
+      diagnosticLogger.error(err);
     } finally {
       setLoading(false);
     }

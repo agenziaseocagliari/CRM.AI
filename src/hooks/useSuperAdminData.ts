@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
+
 import { invokeSupabaseFunction } from '../lib/api';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 // Types
 export type OrganizationStatus = 'active' | 'trial' | 'suspended';
 export type PaymentStatus = 'Paid' | 'Pending' | 'Failed';
@@ -109,7 +111,7 @@ export const useSuperAdminData = () => {
             setNotifications(newNotifications);
 
         } catch (error) {
-            console.error("Failed to fetch super admin data", error);
+            diagnosticLogger.error("Failed to fetch super admin data", error);
             // Error toast is handled by invokeSupabaseFunction
         } finally {
             setLoading(false);

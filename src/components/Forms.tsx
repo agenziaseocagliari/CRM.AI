@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import { useOutletContext } from 'react-router-dom';
-import { Form, FormField } from '../types';
-import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
-import { Modal } from './ui/Modal';
-import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
+import { useOutletContext } from 'react-router-dom';
+
 import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
+import { Form, FormField } from '../types';
 
-// Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità pubblica
+import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
+import { Modal } from './ui/Modal';
+
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
+import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
+
+// Error interface for proper typing
+interface ApiError {
+    message: string;
+    status?: number;
+    code?: string;
+}
+
+// Componente per renderizzare dinamicamente i campi del form in anteprima o in modalitÃ  pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
     const commonClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
     const label = <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">{field.label}{field.required ? ' *' : ''}</label>;
@@ -101,11 +113,24 @@ export const Forms: React.FC = () => {
     
     const handleGenerateForm = async () => {
         if (!prompt) { toast.error("Per favore, inserisci una descrizione per il tuo form."); return; }
+        
+        // Sanitize and validate prompt input
+        const sanitizedPrompt = InputValidator.sanitizeString(prompt);
+        if (sanitizedPrompt.length < 5) {
+            toast.error("La descrizione deve essere più dettagliata (almeno 5 caratteri).");
+            return;
+        }
+        
+        SecureLogger.info('forms', 'Form generation initiated', {
+            promptLength: sanitizedPrompt.length,
+            organizationId: organization?.id
+        });
+        
         setIsLoading(true); setGeneratedFields(null);
 
         const toastId = toast.loading('Generazione campi in corso...');
         try {
-            const data = await invokeSupabaseFunction('generate-form-fields', { prompt });
+            const data = await invokeSupabaseFunction('generate-form-fields', { prompt: sanitizedPrompt });
             
             const fields = data.fields as FormField[];
             if (!fields || !Array.isArray(fields) || fields.length === 0) {
@@ -115,8 +140,9 @@ export const Forms: React.FC = () => {
             setGeneratedFields(fields);
             toast.success('Campi generati con successo!', { id: toastId });
 
-        } catch (err: any) {
-            console.error("Errore dettagliato generazione form:", err);
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            diagnosticLogger.error('api', 'Errore dettagliato generazione form:', error);
             // The error toast is now handled by invokeSupabaseFunction, so we just log.
             toast.dismiss(toastId);
         } finally {
@@ -129,32 +155,56 @@ export const Forms: React.FC = () => {
             toast.error("Nome, titolo e campi generati sono necessari per salvare."); 
             return; 
         }
+        
+        // Sanitize form inputs
+        const sanitizedName = InputValidator.sanitizeString(formName);
+        const sanitizedTitle = InputValidator.sanitizeString(formTitle);
+        
+        if (sanitizedName.length < 2 || sanitizedTitle.length < 2) {
+            toast.error("Nome e titolo devono avere almeno 2 caratteri validi.");
+            return;
+        }
+        
+        SecureLogger.info('forms', 'Form save operation initiated', {
+            nameLength: sanitizedName.length,
+            titleLength: sanitizedTitle.length,
+            fieldsCount: generatedFields.length,
+            organizationId: organization.id
+        });
+        
         setIsLoading(true);
 
         try {
-            const { error: insertError } = await supabase.from('forms').insert({ name: formName, title: formTitle, fields: generatedFields, organization_id: organization.id });
-            if (insertError) throw insertError;
+            const { error: insertError } = await supabase.from('forms').insert({ 
+                name: sanitizedName, 
+                title: sanitizedTitle, 
+                fields: generatedFields, 
+                organization_id: organization.id 
+            });
+            if (insertError) {throw insertError;}
             refetchData(); 
             handleCloseModals();
             toast.success('Form salvato con successo!');
-        } catch (err: any) {
-            toast.error(`Errore durante il salvaggio: ${err.message}`);
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(`Errore durante il salvaggio: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
     };
     
     const handleDeleteForm = async () => {
-        if (!formToModify) return;
+        if (!formToModify) {return;}
         setIsLoading(true);
         try {
             const { error } = await supabase.from('forms').delete().eq('id', formToModify.id);
-            if(error) throw error;
+            if(error) {throw error;}
             refetchData(); 
             handleCloseModals();
             toast.success('Form eliminato!');
-        } catch (err: any) { 
-            toast.error(`Errore: ${err.message}`); 
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(`Errore: ${error.message}`);
         } finally { 
             setIsLoading(false); 
         }
@@ -171,8 +221,8 @@ export const Forms: React.FC = () => {
             return (
                 <div className="bg-card p-8 rounded-lg shadow text-center">
                     <div className="mx-auto bg-indigo-100 rounded-full w-16 h-16 flex items-center justify-center"> <SparklesIcon className="w-8 h-8 text-primary" /> </div>
-                    <h2 className="mt-4 text-2xl font-semibold text-text-primary"> Crea il tuo primo Form con l'AI </h2>
-                    <p className="mt-2 text-text-secondary max-w-2xl mx-auto"> Inizia a raccogliere lead in pochi secondi. Descrivi i campi di cui hai bisogno e lascia che l'AI faccia il resto. </p>
+                    <h2 className="mt-4 text-2xl font-semibold text-text-primary"> Crea il tuo primo Form con l&apos;AI </h2>
+                    <p className="mt-2 text-text-secondary max-w-2xl mx-auto"> Inizia a raccogliere lead in pochi secondi. Descrivi i campi di cui hai bisogno e lascia che l&apos;AI faccia il resto. </p>
                     <div className="mt-6"> <button onClick={handleOpenCreateModal} className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-indigo-700 text-lg font-semibold flex items-center space-x-2 mx-auto"> <PlusIcon className="w-5 h-5"/> <span>Inizia a Costruire</span> </button> </div>
                 </div>
             );
@@ -224,7 +274,7 @@ export const Forms: React.FC = () => {
         </Modal>
         
         <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
-            <p>Sei sicuro di voler eliminare il form <strong>{formToModify?.name}</strong>? Questa azione è irreversibile.</p>
+            <p>Sei sicuro di voler eliminare il form <strong>{formToModify?.name}</strong>? Questa azione Ã¨ irreversibile.</p>
             <div className="flex justify-end pt-4 border-t mt-4">
                 <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
                 <button onClick={handleDeleteForm} disabled={isLoading} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isLoading ? 'Eliminazione...' : 'Elimina'}</button>

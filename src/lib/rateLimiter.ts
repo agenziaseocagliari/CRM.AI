@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 3 - M01: API Rate Limiting & Quota Management
  * 
  * Intelligent rate limiter with sliding window algorithm for per-organization quotas.
@@ -13,6 +13,7 @@
 
 import { supabase } from './supabaseClient';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export interface RateLimitConfig {
   organizationId: string;
   resourceType: string;
@@ -67,7 +68,7 @@ export async function checkRateLimit(
     });
 
     if (error) {
-      console.error('Rate limit check error:', error);
+      diagnosticLogger.error('Rate limit check error:', error);
       // Graceful degradation: allow request if check fails
       return {
         isAllowed: true,
@@ -98,7 +99,7 @@ export async function checkRateLimit(
       resetAt: new Date(result.reset_at),
     };
   } catch (error) {
-    console.error('Rate limit check exception:', error);
+    diagnosticLogger.error('Rate limit check exception:', error);
     // Graceful degradation
     return {
       isAllowed: true,
@@ -126,13 +127,13 @@ export async function trackRequest(tracking: RateLimitTracking): Promise<boolean
     });
 
     if (error) {
-      console.error('Failed to track request:', error);
+      diagnosticLogger.error('Failed to track request:', error);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Exception tracking request:', error);
+    diagnosticLogger.error('Exception tracking request:', error);
     return false;
   }
 }
@@ -157,7 +158,7 @@ export async function getRateLimitConfig(
     const { data, error } = await query;
 
     if (error) {
-      console.error('Failed to get rate limit config:', error);
+      diagnosticLogger.error('Failed to get rate limit config:', error);
       return [];
     }
 
@@ -171,7 +172,7 @@ export async function getRateLimitConfig(
       enabled: row.enabled,
     }));
   } catch (error) {
-    console.error('Exception getting rate limit config:', error);
+    diagnosticLogger.error('Exception getting rate limit config:', error);
     return [];
   }
 }
@@ -187,11 +188,11 @@ export async function updateRateLimitConfig(
   try {
     const updateData: Record<string, unknown> = {};
     
-    if (config.maxRequests !== undefined) updateData.max_requests = config.maxRequests;
-    if (config.windowSeconds !== undefined) updateData.window_seconds = config.windowSeconds;
-    if (config.quotaMonthly !== undefined) updateData.quota_monthly = config.quotaMonthly;
-    if (config.enabled !== undefined) updateData.enabled = config.enabled;
-    if (config.endpointPattern !== undefined) updateData.endpoint_pattern = config.endpointPattern;
+    if (config.maxRequests !== undefined) {updateData.max_requests = config.maxRequests;}
+    if (config.windowSeconds !== undefined) {updateData.window_seconds = config.windowSeconds;}
+    if (config.quotaMonthly !== undefined) {updateData.quota_monthly = config.quotaMonthly;}
+    if (config.enabled !== undefined) {updateData.enabled = config.enabled;}
+    if (config.endpointPattern !== undefined) {updateData.endpoint_pattern = config.endpointPattern;}
     
     updateData.updated_at = new Date().toISOString();
 
@@ -202,13 +203,13 @@ export async function updateRateLimitConfig(
       .eq('resource_type', resourceType);
 
     if (error) {
-      console.error('Failed to update rate limit config:', error);
+      diagnosticLogger.error('Failed to update rate limit config:', error);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Exception updating rate limit config:', error);
+    diagnosticLogger.error('Exception updating rate limit config:', error);
     return false;
   }
 }
@@ -228,16 +229,16 @@ export async function getQuotaUsage(
       .select('*')
       .eq('organization_id', organizationId);
 
-    if (resourceType) query = query.eq('resource_type', resourceType);
-    if (year) query = query.eq('year', year);
-    if (month) query = query.eq('month', month);
+    if (resourceType) {query = query.eq('resource_type', resourceType);}
+    if (year) {query = query.eq('year', year);}
+    if (month) {query = query.eq('month', month);}
 
     query = query.order('year', { ascending: false }).order('month', { ascending: false });
 
     const { data, error } = await query;
 
     if (error) {
-      console.error('Failed to get quota usage:', error);
+      diagnosticLogger.error('Failed to get quota usage:', error);
       return [];
     }
 
@@ -251,7 +252,7 @@ export async function getQuotaUsage(
       lastUpdated: new Date(row.last_updated),
     }));
   } catch (error) {
-    console.error('Exception getting quota usage:', error);
+    diagnosticLogger.error('Exception getting quota usage:', error);
     return [];
   }
 }
@@ -364,3 +365,4 @@ export default {
   withRateLimit,
   getRateLimitStatus,
 };
+

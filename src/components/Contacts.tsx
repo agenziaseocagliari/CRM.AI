@@ -1,20 +1,31 @@
-import React, { useState } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import { useOutletContext } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useOutletContext } from 'react-router-dom';
 
-import { supabase } from '../lib/supabaseClient';
-import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
 import { useCrmData } from '../hooks/useCrmData';
-import { Contact } from '../types';
-import { CalendarIcon, EditIcon, PlusIcon, SparklesIcon, TrashIcon, WhatsAppIcon } from './ui/icons';
-import { Modal } from './ui/Modal';
-import { LeadScoreBadge } from './ui/LeadScoreBadge';
-// FIX: Corrected import path for CreateEventModal.
-import { CreateEventModal } from './CreateEventModal';
-// FIX: Corrected import path for ContactEventsList.
-import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
 import { invokeSupabaseFunction } from '../lib/api';
+import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
+import { supabase } from '../lib/supabaseClient';
+import { Contact } from '../types';
+
+import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
+import { CreateEventModal } from './CreateEventModal';
+import { CalendarIcon, EditIcon, PlusIcon, SparklesIcon, TrashIcon, WhatsAppIcon } from './ui/icons';
+import { LeadScoreBadge } from './ui/LeadScoreBadge';
+
+// Error interface for proper typing
+interface ApiError {
+    message: string;
+    status?: number;
+    code?: string;
+}
+import { Modal } from './ui/Modal';
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
+import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
+// FIX: Corrected import path for CreateEventModal.
+// FIX: Corrected import path for ContactEventsList.
+
 
 // Definiamo un tipo per i dati del form per maggiore chiarezza e sicurezza.
 // Ora include phonePrefix e phoneNumber invece di un unico campo 'phone'.
@@ -40,7 +51,7 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
     if (!fullPhone) {
         return { prefix: '+39', number: '' };
     }
-    // Cerca il prefisso più lungo che corrisponde all'inizio del numero
+    // Cerca il prefisso piÃ¹ lungo che corrisponde all'inizio del numero
     const bestMatch = countryCodes.find(code => fullPhone.startsWith(code.dial_code));
 
     if (bestMatch) {
@@ -55,7 +66,7 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
         // Supponiamo un prefisso di 2 cifre dopo il + come fallback generico
         const prefix = fullPhone.substring(0, 3);
         const number = fullPhone.substring(3);
-        // Controlla se il prefisso trovato è valido, altrimenti default
+        // Controlla se il prefisso trovato Ã¨ valido, altrimenti default
         if (countryCodes.some(c => c.dial_code === prefix)) {
             return { prefix, number };
         }
@@ -85,14 +96,15 @@ export const Contacts: React.FC = () => {
     const [generatedContent, setGeneratedContent] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const handleOpenAddModal = () => {
+    // âš¡ Performance: Memoized handlers to prevent unnecessary re-renders
+    const handleOpenAddModal = useCallback(() => {
         setModalMode('add');
         setFormData(initialFormState);
         setSelectedContact(null);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleOpenEditModal = (contact: Contact) => {
+    const handleOpenEditModal = useCallback((contact: Contact) => {
         setModalMode('edit');
         setSelectedContact(contact);
         // **FIX CRITICO**: Usiamo la funzione helper per dividere il numero
@@ -105,39 +117,42 @@ export const Contacts: React.FC = () => {
             phoneNumber: number,
         });
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleOpenDeleteModal = (contact: Contact) => {
+    const handleOpenDeleteModal = useCallback((contact: Contact) => {
         setSelectedContact(contact);
         setIsDeleteModalOpen(true);
-    };
+    }, []);
 
-    const handleOpenEmailModal = (contact: Contact) => {
+    const handleOpenEmailModal = useCallback((contact: Contact) => {
         setSelectedContact(contact);
         setAiPrompt('');
         setGeneratedContent('');
         setIsEmailModalOpen(true);
-    };
+    }, []);
     
-     const handleOpenWhatsAppModal = (contact: Contact) => {
+    const handleOpenWhatsAppModal = useCallback((contact: Contact) => {
         setSelectedContact(contact);
         setAiPrompt('');
         setGeneratedContent('');
         setIsWhatsAppModalOpen(true);
-    };
+    }, []);
 
-    const handleOpenCreateEventModal = (contact: Contact) => {
+    const handleOpenCreateEventModal = useCallback((contact: Contact) => {
         setSelectedContact(contact);
         setIsCreateEventModalOpen(true);
-    };
+    }, []);
     
-    const handleOpenViewEventsModal = (contact: Contact) => {
+    const handleOpenViewEventsModal = useCallback((contact: Contact) => {
         setSelectedContact(contact);
         setIsViewEventsModalOpen(true);
-    };
+    }, []);
 
+    // Performance: Stats computation removed to eliminate unused variable warning
 
-    const handleCloseModals = () => {
+    // Sorted contacts logic removed to eliminate unused variable warning
+
+    const handleCloseModals = useCallback(() => {
         setIsModalOpen(false);
         setIsDeleteModalOpen(false);
         setIsEmailModalOpen(false);
@@ -145,11 +160,25 @@ export const Contacts: React.FC = () => {
         setIsCreateEventModalOpen(false);
         setIsViewEventsModalOpen(false);
         setSelectedContact(null);
-    };
+    }, []);
     
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        
+        // Sanitize input to prevent XSS
+        const sanitizedValue = InputValidator.sanitizeString(value);
+        
+        // Additional validation for specific fields
+        if (name === 'email' && sanitizedValue && !InputValidator.isValidEmail(sanitizedValue)) {
+            SecureLogger.warn('contacts', 'Invalid email format entered', { field: name });
+            // Still allow input but log suspicious activity
+        }
+        
+        if (name === 'phoneNumber' && sanitizedValue && !InputValidator.isValidPhone(`${formData.phonePrefix}${sanitizedValue}`)) {
+            SecureLogger.warn('contacts', 'Invalid phone format entered', { field: name });
+        }
+        
+        setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
     };
 
     const handleSaveContact = async (e: React.FormEvent) => {
@@ -162,56 +191,84 @@ export const Contacts: React.FC = () => {
         }
 
         try {
+            // Additional validation before saving
+            if (formData.email && !InputValidator.isValidEmail(formData.email)) {
+                throw new Error('Formato email non valido');
+            }
+            
+            // Validate and sanitize all form fields
+            const sanitizedFormData = {
+                name: InputValidator.sanitizeString(formData.name),
+                email: InputValidator.sanitizeString(formData.email),
+                company: InputValidator.sanitizeString(formData.company),
+                phonePrefix: InputValidator.sanitizeString(formData.phonePrefix),
+                phoneNumber: InputValidator.sanitizeString(formData.phoneNumber)
+            };
+            
             let successMessage = '';
             // Ricostruiamo il numero di telefono completo prima di salvarlo
-            const fullPhoneNumber = `${formData.phonePrefix}${formData.phoneNumber}`;
+            const fullPhoneNumber = `${sanitizedFormData.phonePrefix}${sanitizedFormData.phoneNumber}`;
+            
+            // Final phone validation
+            if (fullPhoneNumber.length > 3 && !InputValidator.isValidPhone(fullPhoneNumber)) {
+                throw new Error('Formato telefono non valido');
+            }
+            
+            SecureLogger.info('contacts', 'Contact save operation initiated', {
+                isEditing: !!selectedContact,
+                organizationId: organization.id,
+                hasEmail: !!sanitizedFormData.email,
+                hasPhone: !!sanitizedFormData.phoneNumber
+            });
             
             // Prepariamo i dati da salvare, escludendo i campi separati del telefono
             const dataToSave = {
-                name: formData.name,
-                email: formData.email,
-                company: formData.company,
+                name: sanitizedFormData.name,
+                email: sanitizedFormData.email,
+                company: sanitizedFormData.company,
                 phone: fullPhoneNumber,
                 organization_id: organization.id,
             };
 
             if (modalMode === 'edit' && selectedContact) {
                 const { error } = await supabase.from('contacts').update(dataToSave).eq('id', selectedContact.id);
-                if (error) throw error;
+                if (error) {throw error;}
                 successMessage = 'Contatto aggiornato!';
             } else {
                 const { error } = await supabase.from('contacts').insert(dataToSave);
-                if (error) throw error;
+                if (error) {throw error;}
                 successMessage = 'Contatto creato!';
             }
             refetch();
             handleCloseModals();
             toast.success(successMessage);
-        } catch (err: any) {
-            toast.error(`Errore: ${err.message}`);
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(`Errore: ${error.message}`);
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDeleteContact = async () => {
-        if (!selectedContact) return;
+        if (!selectedContact) {return;}
         setIsSaving(true);
         try {
             const { error } = await supabase.from('contacts').delete().eq('id', selectedContact.id);
-            if (error) throw error;
+            if (error) {throw error;}
             refetch();
             handleCloseModals();
             toast.success('Contatto eliminato.');
-        } catch (err: any) {
-            toast.error(`Errore: ${err.message}`);
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(`Errore: ${error.message}`);
         } finally {
             setIsSaving(false);
         }
     };
     
     const handleGenerateEmail = async () => {
-        if (!aiPrompt || !selectedContact) return;
+        if (!aiPrompt || !selectedContact) {return;}
         setIsGenerating(true);
         setGeneratedContent('');
         const toastId = toast.loading('Generazione email in corso...');
@@ -223,16 +280,17 @@ export const Contacts: React.FC = () => {
             });
             setGeneratedContent(data.email);
             toast.success('Email generata!', { id: toastId });
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const error = err as ApiError;
             toast.error(`Errore durante la generazione.`, { id: toastId });
-            console.error(err);
+            diagnosticLogger.error('api', 'Errore generazione email AI:', error);
         } finally {
             setIsGenerating(false);
         }
     };
     
     const handleGenerateWhatsApp = async () => {
-        if (!aiPrompt || !selectedContact) return;
+        if (!aiPrompt || !selectedContact) {return;}
         setIsGenerating(true);
         setGeneratedContent('');
         const toastId = toast.loading('Creazione messaggio...');
@@ -244,16 +302,17 @@ export const Contacts: React.FC = () => {
             });
             setGeneratedContent(data.message);
             toast.success('Messaggio pronto!', { id: toastId });
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const error = err as ApiError;
             toast.error(`Errore durante la creazione.`, { id: toastId });
-            console.error(err);
+            diagnosticLogger.error('api', 'Errore generazione WhatsApp AI:', error);
         } finally {
             setIsGenerating(false);
         }
     };
     
     const handleSendWhatsApp = async () => {
-        if (!generatedContent || !selectedContact) return;
+        if (!generatedContent || !selectedContact) {return;}
         setIsSaving(true);
         const toastId = toast.loading('Invio in corso...');
 
@@ -264,9 +323,10 @@ export const Contacts: React.FC = () => {
             });
             toast.success('Messaggio WhatsApp inviato!', { id: toastId });
             handleCloseModals();
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const error = err as ApiError;
             toast.error(`Errore durante l'invio.`, { id: toastId });
-            console.error(err);
+            diagnosticLogger.error('api', 'Errore invio WhatsApp:', error);
         } finally {
             setIsSaving(false);
         }
@@ -388,7 +448,7 @@ export const Contacts: React.FC = () => {
 
             {/* Modal Conferma Eliminazione */}
             <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
-                <p>Sei sicuro di voler eliminare il contatto <strong>{selectedContact?.name}</strong>? Questa azione è irreversibile.</p>
+                <p>Sei sicuro di voler eliminare il contatto <strong>{selectedContact?.name}</strong>? Questa azione Ã¨ irreversibile.</p>
                 <div className="flex justify-end pt-4 border-t mt-4">
                     <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
                     <button onClick={handleDeleteContact} disabled={isSaving} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isSaving ? 'Eliminazione...' : 'Elimina'}</button>
@@ -399,7 +459,7 @@ export const Contacts: React.FC = () => {
             <Modal isOpen={isEmailModalOpen} onClose={handleCloseModals} title={`Scrivi Email a ${selectedContact?.name}`}>
                  <div className="space-y-4">
                     <div>
-                        <label htmlFor="ai-prompt-email" className="block text-sm font-medium text-gray-700">Obiettivo dell'email</label>
+                        <label htmlFor="ai-prompt-email" className="block text-sm font-medium text-gray-700">Obiettivo dell&apos;email</label>
                         <input type="text" id="ai-prompt-email" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="Es: Follow-up dopo la nostra telefonata" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
                     </div>
                     <div className="flex justify-end">
@@ -431,7 +491,7 @@ export const Contacts: React.FC = () => {
                         <div className="pt-4 border-t">
                             <label className="block text-sm font-medium text-gray-700">Messaggio</label>
                             <textarea value={generatedContent} onChange={(e) => setGeneratedContent(e.target.value)} rows={5} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
-                             <p className="mt-2 text-xs text-gray-500">Puoi modificare il testo prima dell'invio. Numero destinatario: {selectedContact?.phone}</p>
+                             <p className="mt-2 text-xs text-gray-500">Puoi modificare il testo prima dell&apos;invio. Numero destinatario: {selectedContact?.phone}</p>
                             <div className="flex justify-end mt-2">
                                 <button onClick={handleSendWhatsApp} disabled={isSaving} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm flex items-center space-x-2 disabled:bg-gray-400">{isSaving ? 'Invio...': <><WhatsAppIcon className="w-4 h-4" /><span>Invia ora via Twilio</span></>}</button>
                             </div>
@@ -459,3 +519,4 @@ export const Contacts: React.FC = () => {
         </>
     );
 };
+

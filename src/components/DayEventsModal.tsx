@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { Contact, CrmEvent } from '../types';
+
 import { CreateEventModal } from './CreateEventModal';
-import { Modal } from './ui/Modal';
 import { PlusIcon } from './ui/icons';
+import { Modal } from './ui/Modal';
 
 interface DayEventsModalProps {
     isOpen: boolean;
@@ -38,7 +39,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
     const dayEvents = date ? crmEvents.filter(e => {
-        if (e.status === 'cancelled') return false;
+        if (e.status === 'cancelled') {return false;}
         const eventDate = new Date(e.event_start_time);
         return eventDate.getFullYear() === date.getFullYear() &&
                eventDate.getMonth() === date.getMonth() &&
@@ -49,7 +50,7 @@ export const DayEventsModal: React.FC<DayEventsModalProps> = ({ isOpen, onClose,
         // Se c'è un solo evento, pre-seleziona quel contatto, altrimenti apri senza contatto
         if (dayEvents.length === 1) {
             const contact = contacts.find(c => c.id === dayEvents[0].contact_id);
-            if(contact) setSelectedContact(contact);
+            if(contact) {setSelectedContact(contact);}
         } else {
             setSelectedContact(null); // Permette di scegliere il contatto nel modale
         }

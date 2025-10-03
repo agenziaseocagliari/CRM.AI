@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Login Method Tracker
  * 
  * This module tracks different login methods (password, magic link, password reset)
@@ -53,9 +53,9 @@ export function recordLoginAttempt(attempt: LoginAttempt): void {
     }
     
     localStorage.setItem(LOGIN_HISTORY_KEY, JSON.stringify(history));
-    console.log('[Login Tracker] Recorded login attempt:', safeAttempt);
+    // diagnosticLogger.info('[Login Tracker] Recorded login attempt:', safeAttempt);
   } catch (error) {
-    console.error('[Login Tracker] Failed to record login attempt:', error);
+    // diagnosticLogger.error('[Login Tracker] Failed to record login attempt:', error);
   }
 }
 
@@ -65,10 +65,10 @@ export function recordLoginAttempt(attempt: LoginAttempt): void {
 export function getLoginHistory(): LoginAttempt[] {
   try {
     const stored = localStorage.getItem(LOGIN_HISTORY_KEY);
-    if (!stored) return [];
+    if (!stored) {return [];}
     return JSON.parse(stored);
   } catch (error) {
-    console.error('[Login Tracker] Failed to get login history:', error);
+    // diagnosticLogger.error('[Login Tracker] Failed to get login history:', error);
     return [];
   }
 }
@@ -187,7 +187,7 @@ export function generateLoginHistoryReport(): string {
       const defects = analysis.jwtDefectsByMethod[method as LoginMethod];
       report += `  - ${method}: ${count} attempts`;
       if (defects > 0) {
-        report += ` (⚠️ ${defects} JWT defects)`;
+        report += ` (âš ï¸ ${defects} JWT defects)`;
       }
       report += '\n';
     }
@@ -197,12 +197,12 @@ export function generateLoginHistoryReport(): string {
   history.slice(0, 5).forEach((attempt, idx) => {
     report += `${idx + 1}. [${attempt.timestamp}]\n`;
     report += `   Method: ${attempt.method}\n`;
-    report += `   Success: ${attempt.success ? '✅' : '❌'}\n`;
+    report += `   Success: ${attempt.success ? 'âœ…' : 'âŒ'}\n`;
     if (attempt.email) {
       report += `   Email: ${attempt.email}\n`;
     }
     if (attempt.jwtHasUserRole !== undefined) {
-      report += `   JWT user_role: ${attempt.jwtHasUserRole ? '✅ Present' : '❌ Missing'}\n`;
+      report += `   JWT user_role: ${attempt.jwtHasUserRole ? 'âœ… Present' : 'âŒ Missing'}\n`;
     }
     if (attempt.error) {
       report += `   Error: ${attempt.error}\n`;
@@ -214,3 +214,4 @@ export function generateLoginHistoryReport(): string {
   
   return report;
 }
+

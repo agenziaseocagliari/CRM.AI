@@ -1,8 +1,10 @@
 import React from 'react';
 // FIX: Corrected the import for NavLink from 'react-router-dom' to resolve module export errors.
 import { NavLink } from 'react-router-dom';
-import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon, AdminPanelIcon } from './ui/icons';
+
 import { useAuth } from '../contexts/AuthContext';
+
+import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon, AdminPanelIcon } from './ui/icons';
 
 const NavItem: React.FC<{
   to: string;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+
 import { useSuperAdminData, PaymentStatus, Transaction } from '../../hooks/useSuperAdminData';
 import { Modal } from '../ui/Modal';
 
@@ -194,7 +195,7 @@ export const Payments: React.FC = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan={5} className="text-center py-8">
-                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
                                         <p className="mt-2 text-text-secondary dark:text-dark-text-secondary">
                                             Caricamento transazioni...
                                         </p>

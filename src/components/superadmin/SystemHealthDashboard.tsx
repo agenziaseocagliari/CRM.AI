@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+﻿import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
+import { supabase } from '../../lib/supabaseClient';
+
+import { diagnosticLogger } from '../../lib/mockDiagnosticLogger';
 interface HealthMetrics {
   totalRequests24h: number;
   requests1h: number;
@@ -19,14 +21,37 @@ interface EndpointHealth {
   status: 'healthy' | 'warning' | 'critical';
 }
 
+interface SlowQuery {
+  query: string;
+  duration: number;
+  timestamp: string;
+  table?: string;
+}
+
+interface SystemError {
+  endpoint: string;
+  error_message?: string;
+  status_code: number;
+  created_at: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+interface SystemAlert {
+  id: string;
+  message: string;
+  alert_type: 'exceeded' | 'critical' | 'warning' | 'info';
+  created_at: string;
+  resolved?: boolean;
+}
+
 interface SystemHealth {
   status: 'healthy' | 'warning' | 'critical';
   uptime: number;
   metrics: HealthMetrics;
   endpoints: EndpointHealth[];
-  slowQueries: any[];
-  recentErrors: any[];
-  activeAlerts: any[];
+  slowQueries: SlowQuery[];
+  recentErrors: SystemError[];
+  activeAlerts: SystemAlert[];
   timestamp: string;
 }
 
@@ -72,8 +97,9 @@ export const SystemHealthDashboard: React.FC = () => {
 
       const data = await response.json();
       setHealth(data.health);
-    } catch (error: any) {
-      console.error('Error fetching system health:', error);
+    } catch (error: unknown) {
+      const err = error as Error;
+      diagnosticLogger.error('api', 'Error fetching system health:', err);
       toast.error('Failed to load system health data');
     } finally {
       setLoading(false);
@@ -96,13 +122,13 @@ export const SystemHealthDashboard: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy':
-        return '✅';
+        return 'âœ…';
       case 'warning':
-        return '⚠️';
+        return 'âš ï¸';
       case 'critical':
-        return '🚨';
+        return 'ðŸš¨';
       default:
-        return '❓';
+        return 'â“';
     }
   };
 
@@ -110,7 +136,7 @@ export const SystemHealthDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-text-secondary">Loading system health...</p>
         </div>
       </div>
@@ -176,37 +202,37 @@ export const SystemHealthDashboard: React.FC = () => {
         <MetricCard
           title="Total Requests (24h)"
           value={health?.metrics?.totalRequests24h?.toLocaleString() || '0'}
-          icon="📊"
+          icon="ðŸ“Š"
           color="blue"
         />
         <MetricCard
           title="Requests (1h)"
           value={health?.metrics?.requests1h?.toLocaleString() || '0'}
-          icon="📈"
+          icon="ðŸ“ˆ"
           color="indigo"
         />
         <MetricCard
           title="Error Rate (1h)"
           value={`${health?.metrics?.errorRate?.toFixed(2) || '0.00'}%`}
-          icon={health?.metrics?.errorRate && health.metrics.errorRate > 5 ? '🚨' : '✅'}
+          icon={health?.metrics?.errorRate && health.metrics.errorRate > 5 ? 'ðŸš¨' : 'âœ…'}
           color={health?.metrics?.errorRate && health.metrics.errorRate > 5 ? 'red' : 'green'}
         />
         <MetricCard
           title="Avg Response Time"
           value={`${health?.metrics?.avgResponseTime || '0'}ms`}
-          icon="⚡"
+          icon="âš¡"
           color="yellow"
         />
         <MetricCard
           title="Rate Limited (24h)"
           value={health?.metrics?.rateLimitedRequests24h?.toLocaleString() || '0'}
-          icon="🛑"
+          icon="ðŸ›‘"
           color="orange"
         />
         <MetricCard
           title="Slow Queries (24h)"
           value={health?.metrics?.slowQueries?.toLocaleString() || '0'}
-          icon="🐌"
+          icon="ðŸŒ"
           color="purple"
         />
       </div>
@@ -215,10 +241,10 @@ export const SystemHealthDashboard: React.FC = () => {
       {health?.activeAlerts && health.activeAlerts.length > 0 && (
         <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow">
           <h2 className="text-xl font-bold text-text-primary dark:text-dark-text-primary mb-4">
-            🚨 Active Alerts
+            ðŸš¨ Active Alerts
           </h2>
           <div className="space-y-3">
-            {health.activeAlerts.slice(0, 5).map((alert: any) => (
+            {health.activeAlerts.slice(0, 5).map((alert: SystemAlert) => (
               <div
                 key={alert.id}
                 className={`p-4 rounded-lg border-l-4 ${
@@ -314,7 +340,7 @@ export const SystemHealthDashboard: React.FC = () => {
             Recent Errors (Last 5 minutes)
           </h2>
           <div className="space-y-2">
-            {health.recentErrors.slice(0, 10).map((error: any, idx: number) => (
+            {health.recentErrors.slice(0, 10).map((error: SystemError, idx: number) => (
               <div key={idx} className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -381,3 +407,4 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, color }) =>
     </div>
   );
 };
+

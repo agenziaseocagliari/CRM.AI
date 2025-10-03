@@ -1,0 +1,56 @@
+# .eslintignore - Files to exclude from ESLint analysis
+# Phase 5: Code Quality Enhancement
+
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Configuration files (handled separately)
+*.config.js
+*.config.ts
+!.eslintrc.js
+
+# Environment files
+.env*
+
+# Build outputs
+coverage/
+*.tsbuildinfo
+
+# Supabase generated files
+supabase/types.ts
+supabase/.temp/
+
+# Generated files
+public/
+*.min.js
+*.bundle.js
+
+# IDE and system files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript declaration files (generated)
+**/*.d.ts
+!src/**/*.d.ts
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+.tmp/
+temp/

@@ -1,7 +1,9 @@
+/* eslint-disable no-alert */
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Modal } from '../ui/Modal';
+
 import { UsersIcon } from '../ui/icons';
+import { Modal } from '../ui/Modal';
 
 interface TeamMember {
     id: string;
@@ -91,7 +93,7 @@ export const TeamManagement: React.FC = () => {
     };
 
     const handleDelete = (memberId: string) => {
-        if (!confirm('Sei sicuro di voler eliminare questo utente?')) return;
+        if (!confirm('Sei sicuro di voler eliminare questo utente?')) {return;}
         
         setMembers(prev => prev.filter(m => m.id !== memberId));
         toast.success('Utente eliminato');
@@ -107,7 +109,7 @@ export const TeamManagement: React.FC = () => {
     };
 
     const handleSaveEdit = () => {
-        if (!selectedMember) return;
+        if (!selectedMember) {return;}
         
         setMembers(prev =>
             prev.map(m => (m.id === selectedMember.id ? selectedMember : m))

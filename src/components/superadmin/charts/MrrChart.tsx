@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-// import { invokeSupabaseFunction } from '../../../lib/api'; // TODO: Uncomment when real API endpoint is available
+﻿import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { diagnosticLogger } from '../../../lib/mockDiagnosticLogger';
+// import { invokeSupabaseFunction } from '../../../lib/api'; // TODO: Uncomment when real API endpoint is available
 
 interface MrrData {
     month: string;
@@ -27,7 +28,7 @@ export const MrrChart: React.FC = () => {
             const mockData = generateMockMrrData(period);
             setData(mockData);
         } catch (err) {
-            console.error('Failed to fetch MRR data:', err);
+            diagnosticLogger.error('Failed to fetch MRR data:', err);
             setError('Impossibile caricare i dati MRR');
             toast.error('Errore nel caricamento del grafico MRR');
         } finally {
@@ -63,7 +64,7 @@ export const MrrChart: React.FC = () => {
     const handleExport = () => {
         // Export data as CSV
         const csvContent = [
-            ['Mese', 'MRR (€)', 'Crescita (€)'],
+            ['Mese', 'MRR (â‚¬)', 'Crescita (â‚¬)'],
             ...data.map(d => [d.month, d.mrr, d.growth])
         ].map(row => row.join(',')).join('\n');
         
@@ -87,7 +88,7 @@ export const MrrChart: React.FC = () => {
             <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Andamento MRR</h2>
                 <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
                 </div>
             </div>
         );
@@ -98,7 +99,7 @@ export const MrrChart: React.FC = () => {
             <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Andamento MRR</h2>
                 <div className="flex flex-col items-center justify-center h-64 bg-red-50 dark:bg-red-900/20 rounded-md">
-                    <p className="text-red-600 dark:text-red-400 mb-4">⚠️ {error}</p>
+                    <p className="text-red-600 dark:text-red-400 mb-4">âš ï¸ {error}</p>
                     <button
                         onClick={fetchData}
                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-indigo-700"
@@ -118,13 +119,13 @@ export const MrrChart: React.FC = () => {
                     <div className="mt-2 flex items-center space-x-4">
                         <div>
                             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                €{currentMrr.toLocaleString('it-IT')}
+                                â‚¬{currentMrr.toLocaleString('it-IT')}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">MRR Corrente</p>
                         </div>
                         <div className={`flex items-center ${Number(mrrGrowthPercent) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             <span className="text-lg font-semibold">
-                                {Number(mrrGrowthPercent) >= 0 ? '↗' : '↘'} {mrrGrowthPercent}%
+                                {Number(mrrGrowthPercent) >= 0 ? 'â†—' : 'â†˜'} {mrrGrowthPercent}%
                             </span>
                             <p className="text-xs ml-1">vs mese scorso</p>
                         </div>
@@ -144,7 +145,7 @@ export const MrrChart: React.FC = () => {
                         className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-gray-700 dark:text-gray-200"
                         title="Esporta dati CSV"
                     >
-                        📥 Esporta
+                        ðŸ“¥ Esporta
                     </button>
                 </div>
             </div>
@@ -166,7 +167,7 @@ export const MrrChart: React.FC = () => {
                     <YAxis 
                         stroke="#6B7280"
                         style={{ fontSize: '12px' }}
-                        tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                        tickFormatter={(value) => `â‚¬${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip 
                         contentStyle={{ 
@@ -175,7 +176,7 @@ export const MrrChart: React.FC = () => {
                             borderRadius: '8px',
                             color: '#F3F4F6'
                         }}
-                        formatter={(value: number) => [`€${value.toLocaleString('it-IT')}`, 'MRR']}
+                        formatter={(value: number) => [`â‚¬${value.toLocaleString('it-IT')}`, 'MRR']}
                     />
                     <Legend />
                     <Area 
@@ -191,8 +192,9 @@ export const MrrChart: React.FC = () => {
             </ResponsiveContainer>
             
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                💡 Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l'endpoint API appropriato.
+                ðŸ’¡ Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l'endpoint API appropriato.
             </div>
         </div>
     );
 };
+

@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { UserCircleIcon, SunIcon, MoonIcon, BellIcon, SparklesIcon, CheckCircleIcon, LogoutIcon, SettingsIcon } from '../ui/icons';
-import { useSuperAdminData } from '../../hooks/useSuperAdminData';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
+
+import { useAuth } from '../../contexts/AuthContext';
+import { useSuperAdminData } from '../../hooks/useSuperAdminData';
+import { supabase } from '../../lib/supabaseClient';
+import { UserCircleIcon, SunIcon, MoonIcon, BellIcon, SparklesIcon, CheckCircleIcon, LogoutIcon, SettingsIcon } from '../ui/icons';
 import { Modal } from '../ui/Modal';
 
+import { diagnosticLogger } from '../../lib/mockDiagnosticLogger';
 const NotificationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const { notifications } = useSuperAdminData();
     const panelRef = useRef<HTMLDivElement>(null);
@@ -73,7 +75,7 @@ const AccountMenu: React.FC<{ onClose: () => void; onOpenSettings: () => void; o
             <div className="p-3 border-b dark:border-gray-600">
                 <p className="font-semibold text-text-primary dark:text-dark-text-primary text-sm">{userEmail}</p>
                 <p className="text-xs text-text-secondary dark:text-dark-text-secondary">
-                    {userRole === 'super_admin' ? '🔐 Super Admin' : userRole}
+                    {userRole === 'super_admin' ? 'ðŸ” Super Admin' : userRole}
                 </p>
             </div>
             <div className="py-1">
@@ -126,7 +128,7 @@ export const SuperAdminHeader: React.FC = () => {
         setAccountMenuOpen(false);
         
         try {
-            console.log('👋 [SuperAdminHeader] Initiating logout...');
+            diagnosticLogger.info('ðŸ‘‹ [SuperAdminHeader] Initiating logout...');
             
             // Show loading toast
             const loadingToast = toast.loading('Disconnessione in corso...');
@@ -139,15 +141,15 @@ export const SuperAdminHeader: React.FC = () => {
             const { error } = await supabase.auth.signOut();
             
             if (error) {
-                console.error('❌ [SuperAdminHeader] Logout error:', error);
+                diagnosticLogger.error('âŒ [SuperAdminHeader] Logout error:', error);
                 toast.error('Errore durante il logout: ' + error.message, { id: loadingToast });
             } else {
-                console.log('✅ [SuperAdminHeader] Logout successful');
+                diagnosticLogger.info('âœ… [SuperAdminHeader] Logout successful');
                 toast.success('Disconnessione avvenuta con successo', { id: loadingToast });
                 // Navigation will be handled by AuthContext
             }
         } catch (error) {
-            console.error('❌ [SuperAdminHeader] Unexpected logout error:', error);
+            diagnosticLogger.error('âŒ [SuperAdminHeader] Unexpected logout error:', error);
             toast.error('Errore imprevisto durante il logout');
         } finally {
             setIsLoggingOut(false);
@@ -167,7 +169,7 @@ export const SuperAdminHeader: React.FC = () => {
                             title="Notifiche"
                         >
                             <BellIcon className="w-6 h-6 text-gray-500 dark:text-gray-300" />
-                            <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-dark-card"></span>
+                            <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-dark-card" />
                         </button>
                         {isNotificationsOpen && <NotificationPanel onClose={() => setNotificationsOpen(false)} />}
                     </div>
@@ -218,14 +220,14 @@ export const SuperAdminHeader: React.FC = () => {
                             disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                         />
-                        <p className="mt-1 text-xs text-gray-500">L'email non può essere modificata</p>
+                        <p className="mt-1 text-xs text-gray-500">L'email non puÃ² essere modificata</p>
                     </div>
                     
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Ruolo</label>
                         <input
                             type="text"
-                            value={userRole === 'super_admin' ? '🔐 Super Admin' : userRole || ''}
+                            value={userRole === 'super_admin' ? 'ðŸ” Super Admin' : userRole || ''}
                             disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                         />
@@ -239,14 +241,14 @@ export const SuperAdminHeader: React.FC = () => {
                                 onClick={toggleTheme}
                                 className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
                             >
-                                {theme === 'light' ? '☀️ Chiaro' : '🌙 Scuro'}
+                                {theme === 'light' ? 'â˜€ï¸ Chiaro' : 'ðŸŒ™ Scuro'}
                             </button>
                         </div>
                     </div>
 
                     <div className="pt-4 border-t border-gray-200">
                         <p className="text-xs text-gray-500">
-                            💡 Per ulteriori impostazioni avanzate, contatta il supporto tecnico.
+                            ðŸ’¡ Per ulteriori impostazioni avanzate, contatta il supporto tecnico.
                         </p>
                     </div>
                 </div>
@@ -261,3 +263,4 @@ const InfoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
     </svg>
 );
+

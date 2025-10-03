@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+
 import { useSuperAdminData } from '../../hooks/useSuperAdminData';
-import { UsersIcon, DollarSignIcon, CheckCircleIcon, TrendingUpIcon, TrendingDownIcon } from '../ui/icons';
-import { supabase } from '../../lib/supabaseClient';
 import { diagnoseJWT, JWTDiagnostics } from '../../lib/jwtUtils';
-import { UserGrowthChart } from './charts/UserGrowthChart';
+import { supabase } from '../../lib/supabaseClient';
+import { UsersIcon, DollarSignIcon, CheckCircleIcon, TrendingUpIcon, TrendingDownIcon } from '../ui/icons';
+
 import { MrrChart } from './charts/MrrChart';
+import { UserGrowthChart } from './charts/UserGrowthChart';
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; color: string; }> = ({ title, value, icon, color }) => (
     <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow flex items-center">

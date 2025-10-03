@@ -289,6 +289,21 @@ CREATE INDEX ... (fails on re-run)
 DROP POLICY ... (fails if table doesn't exist)
 ```
 
+### 5. Gestione VIEW
+
+**IMPORTANTE**: Per VIEW, usare sempre il pattern DROP-CREATE per evitare errori SQLSTATE 42P16:
+
+```sql
+-- ✅ GOOD - Idempotente e sicuro
+DROP VIEW IF EXISTS view_name CASCADE;
+CREATE VIEW view_name AS ...;
+
+-- ❌ BAD - Può fallire se la struttura cambia
+CREATE OR REPLACE VIEW view_name AS ...;
+```
+
+**Riferimento completo**: Vedi `VIEW_MIGRATION_BEST_PRACTICES.md` per dettagli e esempi.
+
 ---
 
 ## 🚀 Deploy Instructions

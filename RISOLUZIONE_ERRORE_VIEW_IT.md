@@ -298,9 +298,12 @@ Il documento `DATABASE_SCHEMA_AUDIT_CHECKLIST.md` fornisce:
 -- 1. Verifica esistenza oggetti prima di crearli
 CREATE TABLE IF NOT EXISTS ...
 CREATE INDEX IF NOT EXISTS ...
-CREATE VIEW OR REPLACE ...
 
--- 2. Verifica colonne esistono prima di usarle
+-- 2. Per VIEW: SEMPRE usare pattern DROP-CREATE
+DROP VIEW IF EXISTS view_name CASCADE;
+CREATE VIEW view_name AS ...;
+
+-- 3. Verifica colonne esistono prima di usarle
 DO $$
 BEGIN
   IF EXISTS (
@@ -312,9 +315,11 @@ BEGIN
   END IF;
 END $$;
 
--- 3. Documenta i catalog system usati
+-- 4. Documenta i catalog system usati
 -- COMMENT: Using pg_stat_user_indexes (relname, indexrelname)
 ```
+
+**⚠️ IMPORTANTE**: Per gestione VIEW, consultare sempre `VIEW_MIGRATION_BEST_PRACTICES.md` che documenta il pattern completo per evitare errori SQLSTATE 42P16.
 
 ---
 
@@ -325,6 +330,7 @@ END $$;
 - `GUIDA_VALIDAZIONE_SCHEMA_IT.md` - Guida validazione in italiano
 - `DATABASE_SCHEMA_COMPLETE_REFERENCE.md` - Reference guide completa
 - `MIGRATION_ROBUSTNESS_GUIDE.md` - Best practices migration
+- `VIEW_MIGRATION_BEST_PRACTICES.md` - **NUOVO**: Pattern idempotenti per VIEW
 
 ### Script Utili
 ```bash

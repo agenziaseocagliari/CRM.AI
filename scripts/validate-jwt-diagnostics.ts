@@ -1,4 +1,4 @@
-﻿/**
+/**
  * JWT Diagnostics Validation Script
  * 
  * This script validates the JWT diagnostics implementation by checking:
@@ -23,7 +23,7 @@ const colors = {
   cyan: '\x1b[36m',
 };
 
-function log(message: string, color: string = colors.reset) {
+function log(message: string, _color: string = colors.reset) {
   // console.log(`${color}${message}${colors.reset}`);
 }
 
@@ -32,16 +32,16 @@ function checkFileExists(path: string): boolean {
   const exists = existsSync(fullPath);
   
   if (exists) {
-    log(`  ✅ ${path}`, colors.green);
+    log(`  ? ${path}`, colors.green);
   } else {
-    log(`  ❌ ${path} - NOT FOUND`, colors.red);
+    log(`  ? ${path} - NOT FOUND`, colors.red);
   }
   
   return exists;
 }
 
 async function validateDiagnosticsImplementation() {
-  log('\n🔍 JWT Diagnostics Implementation Validation\n', colors.bright);
+  log('\n?? JWT Diagnostics Implementation Validation\n', colors.bright);
   
   let allPassed = true;
   
@@ -90,40 +90,40 @@ async function validateDiagnosticsImplementation() {
     // Check logs
     const logs = diagnosticLogger.getLogs();
     if (logs.length >= 3) {
-      log('  ✅ Diagnostic logger works correctly', colors.green);
+      log('  ? Diagnostic logger works correctly', colors.green);
     } else {
-      log('  ❌ Diagnostic logger did not log messages', colors.red);
+      log('  ? Diagnostic logger did not log messages', colors.red);
       allPassed = false;
     }
     
     // Test export
     const exported = diagnosticLogger.exportLogs();
     if (exported.includes('Diagnostic Logs Export')) {
-      log('  ✅ Export functionality works', colors.green);
+      log('  ? Export functionality works', colors.green);
     } else {
-      log('  ❌ Export functionality failed', colors.red);
+      log('  ? Export functionality failed', colors.red);
       allPassed = false;
     }
     
     // Clean up test logs
     diagnosticLogger.clearLogs();
   } catch (error: any) {
-    log(`  ❌ Failed to test diagnostic logger: ${error.message}`, colors.red);
+    log(`  ? Failed to test diagnostic logger: ${error.message}`, colors.red);
     allPassed = false;
   }
   
   // Test JWT utilities
   log('\nStep 4: Testing JWT Utilities', colors.cyan);
   try {
-    const { diagnoseJWT, decodeJWT } = await import('../src/lib/jwtUtils.js');
+    const { diagnoseJWT, decodeJWT: _decodeJWT } = await import('../src/lib/jwtUtils.js');
     
     // Test with mock JWT (invalid format to test error handling)
     const diagnostics = diagnoseJWT('invalid.jwt.token');
     
     if (!diagnostics.isValid && diagnostics.errors.length > 0) {
-      log('  ✅ JWT error handling works', colors.green);
+      log('  ? JWT error handling works', colors.green);
     } else {
-      log('  ❌ JWT error handling failed', colors.red);
+      log('  ? JWT error handling failed', colors.red);
       allPassed = false;
     }
     
@@ -132,31 +132,31 @@ async function validateDiagnosticsImplementation() {
     const validDiagnostics = diagnoseJWT(mockJWT);
     
     if (validDiagnostics.isValid && !validDiagnostics.hasUserRole) {
-      log('  ✅ JWT diagnostics detects missing user_role', colors.green);
+      log('  ? JWT diagnostics detects missing user_role', colors.green);
     } else {
-      log('  ❌ JWT diagnostics failed to detect missing user_role', colors.red);
+      log('  ? JWT diagnostics failed to detect missing user_role', colors.red);
       allPassed = false;
     }
     
     // Check timestamp and new fields
     if (validDiagnostics.timestamp && validDiagnostics.tokenAge !== undefined) {
-      log('  ✅ Enhanced JWT diagnostics fields present', colors.green);
+      log('  ? Enhanced JWT diagnostics fields present', colors.green);
     } else {
-      log('  ❌ Enhanced JWT diagnostics fields missing', colors.red);
+      log('  ? Enhanced JWT diagnostics fields missing', colors.red);
       allPassed = false;
     }
   } catch (error: any) {
-    log(`  ❌ Failed to test JWT utilities: ${error.message}`, colors.red);
+    log(`  ? Failed to test JWT utilities: ${error.message}`, colors.red);
     allPassed = false;
   }
   
   // Summary
   log('\n' + '='.repeat(60), colors.cyan);
   if (allPassed) {
-    log('✅ ALL VALIDATIONS PASSED', colors.green);
+    log('? ALL VALIDATIONS PASSED', colors.green);
     log('\nThe JWT diagnostics implementation is complete and functional.', colors.bright);
   } else {
-    log('❌ SOME VALIDATIONS FAILED', colors.red);
+    log('? SOME VALIDATIONS FAILED', colors.red);
     log('\nPlease review the errors above and fix any issues.', colors.yellow);
     process.exit(1);
   }
@@ -165,8 +165,11 @@ async function validateDiagnosticsImplementation() {
 
 // Run validation
 validateDiagnosticsImplementation().catch((error) => {
-  log(`\n❌ Validation script failed: ${error.message}`, colors.red);
+  log(`\n? Validation script failed: ${error.message}`, colors.red);
   // console.error(error);
   process.exit(1);
 });
+
+
+
 

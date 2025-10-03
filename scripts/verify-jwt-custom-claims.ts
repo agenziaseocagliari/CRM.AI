@@ -1,4 +1,4 @@
-﻿/**
+/**
  * JWT Custom Claims Verification Script
  * 
  * This script verifies that the custom_access_token_hook is properly configured
@@ -25,7 +25,7 @@ const colors = {
   cyan: '\x1b[36m',
 };
 
-function log(message: string, color: string = colors.reset) {
+function log(message: string, _color: string = colors.reset) {
   // console.log(`${color}${message}${colors.reset}`);
 }
 
@@ -39,7 +39,7 @@ function decodeJWT(token: string): any {
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = JSON.parse(Buffer.from(base64, 'base64').toString());
     return jsonPayload;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -54,13 +54,13 @@ async function verifyJWTCustomClaims() {
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    log('❌ ERROR: Missing environment variables', colors.red);
+    log('? ERROR: Missing environment variables', colors.red);
     log('   Required: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY', colors.yellow);
     log('   Please check your .env file\n', colors.yellow);
     process.exit(1);
   }
 
-  log('✅ Environment variables found', colors.green);
+  log('? Environment variables found', colors.green);
   log(`   URL: ${supabaseUrl}`, colors.blue);
   log(`   Anon Key: ${supabaseAnonKey.substring(0, 20)}...`, colors.blue);
 
@@ -73,7 +73,7 @@ async function verifyJWTCustomClaims() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
   if (sessionError || !session) {
-    log('⚠️  No active session found', colors.yellow);
+    log('??  No active session found', colors.yellow);
     log('   This script requires a logged-in user to test JWT claims', colors.yellow);
     log('   Please login to your application first, then run this script again\n', colors.yellow);
     
@@ -82,7 +82,7 @@ async function verifyJWTCustomClaims() {
     process.exit(0);
   }
 
-  log('✅ Active session found', colors.green);
+  log('? Active session found', colors.green);
   log(`   User ID: ${session.user.id}`, colors.blue);
   log(`   Email: ${session.user.email}`, colors.blue);
 
@@ -93,11 +93,11 @@ async function verifyJWTCustomClaims() {
   const decoded = decodeJWT(session.access_token);
   
   if (!decoded) {
-    log('❌ ERROR: Could not decode JWT token', colors.red);
+    log('? ERROR: Could not decode JWT token', colors.red);
     process.exit(1);
   }
 
-  log('✅ JWT decoded successfully', colors.green);
+  log('? JWT decoded successfully', colors.green);
   
   // Check for required standard claims
   log('\nStandard Claims:', colors.bright);
@@ -118,7 +118,7 @@ async function verifyJWTCustomClaims() {
       isExpired ? colors.red : colors.blue);
   
   if (isExpired) {
-    log('   ⚠️  TOKEN IS EXPIRED!', colors.red);
+    log('   ??  TOKEN IS EXPIRED!', colors.red);
   }
 
   // Check for custom claims
@@ -136,11 +136,11 @@ async function verifyJWTCustomClaims() {
   log('Assessment:', colors.bright);
   
   if (hasUserRole) {
-    log('✅ SUCCESS: user_role custom claim is present!', colors.green);
+    log('? SUCCESS: user_role custom claim is present!', colors.green);
     log('   The custom_access_token_hook is working correctly', colors.green);
     log(`   Current role: ${decoded.user_role}`, colors.blue);
   } else {
-    log('❌ CRITICAL: user_role custom claim is MISSING!', colors.red);
+    log('? CRITICAL: user_role custom claim is MISSING!', colors.red);
     log('\n   This indicates the custom_access_token_hook is NOT configured or failing', colors.red);
     log('\n   Required Actions:', colors.yellow);
     log('   1. Verify the custom_access_token_hook SQL function exists:', colors.yellow);
@@ -157,7 +157,7 @@ async function verifyJWTCustomClaims() {
   }
 
   if (!hasOrgId && decoded.user_role !== 'super_admin') {
-    log('\n⚠️  WARNING: organization_id custom claim is missing', colors.yellow);
+    log('\n??  WARNING: organization_id custom claim is missing', colors.yellow);
     log('   This is expected for super_admin users but may cause issues for regular users', colors.yellow);
   }
 
@@ -172,25 +172,25 @@ async function verifyJWTCustomClaims() {
     .single();
 
   if (profileError) {
-    log('❌ ERROR: Could not fetch profile from database', colors.red);
+    log('? ERROR: Could not fetch profile from database', colors.red);
     log(`   Error: ${profileError.message}`, colors.red);
   } else if (!profile) {
-    log('❌ ERROR: No profile found for this user', colors.red);
+    log('? ERROR: No profile found for this user', colors.red);
   } else {
-    log('✅ Profile found in database', colors.green);
+    log('? Profile found in database', colors.green);
     log(`   Database role: ${profile.role || 'NULL'}`, colors.blue);
     log(`   Database organization_id: ${profile.organization_id || 'NULL'}`, colors.blue);
     log(`   Profile created: ${profile.created_at}`, colors.blue);
     
     // Compare JWT vs Database
     if (hasUserRole && profile.role !== decoded.user_role) {
-      log('\n⚠️  MISMATCH: JWT role differs from database role!', colors.yellow);
+      log('\n??  MISMATCH: JWT role differs from database role!', colors.yellow);
       log(`   JWT: ${decoded.user_role}`, colors.yellow);
       log(`   Database: ${profile.role}`, colors.yellow);
       log('   This indicates the role was changed after the JWT was issued', colors.yellow);
       log('   User should logout and login again to get updated role', colors.yellow);
     } else if (hasUserRole && profile.role === decoded.user_role) {
-      log('\n✅ JWT and database roles match', colors.green);
+      log('\n? JWT and database roles match', colors.green);
     }
   }
 
@@ -204,8 +204,11 @@ async function verifyJWTCustomClaims() {
 
 // Run the verification
 verifyJWTCustomClaims().catch((error) => {
-  log(`\n❌ Unexpected error: ${error.message}`, colors.red);
+  log(`\n? Unexpected error: ${error.message}`, colors.red);
   // console.error(error);
   process.exit(1);
 });
+
+
+
 

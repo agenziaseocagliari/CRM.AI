@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
  * Custom lint rule to detect and prevent custom 'role' parameters in API calls
  * 
@@ -33,7 +33,7 @@ interface LintIssue {
 const issues: LintIssue[] = [];
 
 // Colors for terminal output
-const colors = {
+const _colors = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
   green: '\x1b[32m',
@@ -103,7 +103,7 @@ function checkFile(filePath: string): void {
     }
 
     // Check for problematic patterns
-    problematicPatterns.forEach(({ regex, message, severity }) => {
+    problematicPatterns.forEach(({ regex, message, severity: _severity }) => {
       const matches = line.matchAll(regex);
       for (const match of matches) {
         issues.push({
@@ -148,7 +148,7 @@ function walkDirectory(dir: string, extensions: string[]): string[] {
 }
 
 function main() {
-  // console.log(`${colors.blue}${colors.bold}🔍 Linting for API Role Usage${colors.reset}`);
+  // console.log(`${colors.blue}${colors.bold}?? Linting for API Role Usage${colors.reset}`);
   // console.log('========================================\n');
 
   const rootDir = process.cwd();
@@ -174,28 +174,28 @@ function main() {
 
   // Report results
   if (issues.length === 0) {
-    // console.log(`${colors.green}${colors.bold}✅ No problematic role usage found!${colors.reset}\n`);
+    // console.log(`${colors.green}${colors.bold}? No problematic role usage found!${colors.reset}\n`);
     // console.log('The codebase follows Supabase best practices:');
-    // console.log('  • No custom role headers/params in API calls');
-    // console.log('  • Role management is JWT-based');
-    // console.log('  • Authorization uses database-level checks\n');
+    // console.log('  � No custom role headers/params in API calls');
+    // console.log('  � Role management is JWT-based');
+    // console.log('  � Authorization uses database-level checks\n');
     process.exit(0);
   } else {
-    // console.log(`${colors.red}${colors.bold}❌ Found ${issues.length} issue(s):${colors.reset}\n`);
+    // console.log(`${colors.red}${colors.bold}? Found ${issues.length} issue(s):${colors.reset}\n`);
     
-    issues.forEach((issue, idx) => {
-      const relPath = path.relative(rootDir, issue.file);
+    issues.forEach((issue, _idx) => {
+      const _relPath = path.relative(rootDir, issue.file);
       // console.log(`${colors.yellow}${idx + 1}.${colors.reset} ${relPath}:${issue.line}:${issue.column}`);
       // console.log(`   ${colors.red}${issue.message}${colors.reset}`);
       // console.log(`   ${colors.blue}Code:${colors.reset} ${issue.code}\n`);
     });
 
-    // console.log(`${colors.yellow}${colors.bold}⚠️  ACTION REQUIRED:${colors.reset}`);
+    // console.log(`${colors.yellow}${colors.bold}??  ACTION REQUIRED:${colors.reset}`);
     // console.log('\nRemove all custom role headers/params from API calls.');
     // console.log('Instead, use JWT-based authentication:\n');
-    // console.log('  ✅ CORRECT:');
+    // console.log('  ? CORRECT:');
     // console.log('     headers: { Authorization: `Bearer ${token}` }\n');
-    // console.log('  ❌ WRONG:');
+    // console.log('  ? WRONG:');
     // console.log("     headers: { role: 'super_admin' }\n");
     // console.log('For details, see: AUTHENTICATION_BEST_PRACTICES.md\n');
     
@@ -206,8 +206,14 @@ function main() {
 // Run the linter
 try {
   main();
-} catch (error) {
+} catch {
   // console.error(`${colors.red}Error running linter:${colors.reset}`, error);
   process.exit(1);
 }
+
+
+
+
+
+
 

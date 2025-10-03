@@ -71,6 +71,8 @@ Il progetto include documentazione tecnica comprehensiva:
 
 ### 📖 Documentazione Tecnica (Phase 1)
 - **[PHASE_1_COMPLETION_SUMMARY.md](./PHASE_1_COMPLETION_SUMMARY.md)** - 📊 Phase 1 summary
+- **[DATABASE_SCHEMA_COMPLETE_REFERENCE.md](./DATABASE_SCHEMA_COMPLETE_REFERENCE.md)** - 🗄️ **NEW!** Complete database schema reference (63 tables)
+- **[SCHEMA_VERIFICATION_TRACKING.md](./SCHEMA_VERIFICATION_TRACKING.md)** - 🔍 **NEW!** Schema verification and tracking
 - **[EDGE_FUNCTIONS_API.md](./EDGE_FUNCTIONS_API.md)** - Documentazione completa API per tutte le edge functions
 - **[SUPERVISION_REPORT.md](./SUPERVISION_REPORT.md)** - Report analisi architettura e best practices
 - **[SYNC_CHECKLIST.md](./SYNC_CHECKLIST.md)** - Checklist per verifiche periodiche GitHub ↔️ Supabase

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS api_rate_limits (
     request_count INTEGER NOT NULL DEFAULT 1,
     window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     window_duration_minutes INTEGER NOT NULL DEFAULT 60,
+    window_end TIMESTAMPTZ GENERATED ALWAYS AS (window_start + (window_duration_minutes || ' minutes')::INTERVAL) STORED,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

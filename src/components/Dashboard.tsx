@@ -21,7 +21,7 @@ interface ApiError {
 }
 
 // Chart label interface for proper typing
-interface ChartLabelProps {
+interface _ChartLabelProps {
     name: string;
     percent: number;
 }
@@ -35,7 +35,7 @@ export const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
   const [debugModalTitle, setDebugModalTitle] = useState('');
-  const [debugModalContent, setDebugModalContent] = useState<any>(null);
+  const [debugModalContent, setDebugModalContent] = useState<unknown>(null);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
   const [webhookResponseContent, setWebhookResponseContent] = useState('');
   // --- END DEBUG INTERFACE STATE ---
@@ -219,7 +219,10 @@ export const Dashboard: React.FC = () => {
                         // type inference issue with the `recharts` library. The library correctly
                         // provides the `percent` property at runtime, but the type definition
                         // seems to be incomplete, causing a compile-time error.
-                        label={(entry: any) => `${entry.name} ${(entry.percent * 100).toFixed(0)}%`}
+                        label={(props: unknown) => {
+                            const entry = props as {name: string, percent: number};
+                            return `${entry.name} ${(entry.percent * 100).toFixed(0)}%`;
+                        }}
                     >
                         {leadSourceData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

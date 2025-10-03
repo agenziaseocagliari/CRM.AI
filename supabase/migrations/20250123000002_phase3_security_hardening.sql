@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS audit_logs_enhanced (
   
   -- Generated column for full-text search
   search_vector tsvector GENERATED ALWAYS AS (
-    to_tsvector('simple', 
+    to_tsvector( 
       COALESCE(action_type, '') || ' ' || 
       COALESCE(resource_type, '') || ' ' || 
       COALESCE(array_to_string(tags, ' '), '') || ' ' ||

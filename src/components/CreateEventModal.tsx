@@ -1,4 +1,4 @@
-﻿// src/components/CreateEventModal.tsx
+// src/components/CreateEventModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 // FIX: Corrected the import for Link from 'react-router-dom' to resolve module export errors.
@@ -96,15 +96,18 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 const data = await invokeSupabaseFunction('get-google-calendar-events', {
                     timeMin: startOfDay.toISOString(),
                     timeMax: endOfDay.toISOString(),
-                }) as { events: any[] };
+                }) as { events: unknown[] };
                 
-                const slots = data.events.map((event: any) => ({
-                    start: event.start.dateTime,
-                    end: event.end.dateTime,
-                }));
+                const slots = data.events.map((event: unknown) => {
+                    const e = event as {start: {dateTime: string}, end: {dateTime: string}};
+                    return {
+                        start: e.start.dateTime,
+                        end: e.end.dateTime,
+                    };
+                });
                 setBusySlots(slots);
-            } catch (err: any) {
-                const errorMessage = err.message || '';
+            } catch (err: unknown) {
+                const errorMessage = (err as Error).message || '';
                 if (/token|google|autenticazione|credential/i.test(errorMessage.toLowerCase())) {
                      diagnosticLogger.error("Errore di connessione Google rilevato:", err);
                      setGoogleConnectionError("La connessione con Google Calendar ha un problema.");
@@ -162,7 +165,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         }));
     };
     
-    const updateReminder = (index: number, field: string, value: any) => {
+    const updateReminder = (index: number, field: string, value: unknown) => {
          setFormData(prev => {
             const newReminders = [...prev.reminders];
             (newReminders[index] as any)[field] = value;
@@ -230,7 +233,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             onActionSuccess();
             onClose();
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.dismiss(toastId); // The API helper shows a more detailed toast
             diagnosticLogger.error(err);
         } finally {
@@ -327,7 +330,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                              <div key={index} className="p-3 bg-gray-50 rounded-md border flex items-start space-x-3">
                                  <div className="flex-grow space-y-2">
                                      <div className="flex items-center space-x-2">
-                                         <span className="font-semibold text-sm flex items-center">{r.channel === 'Email' ? 'ðŸ“§ Email' : <><WhatsAppIcon className="w-4 h-4 text-green-600 mr-1"/> WhatsApp</>}</span>
+                                         <span className="font-semibold text-sm flex items-center">{r.channel === 'Email' ? '📧 Email' : <><WhatsAppIcon className="w-4 h-4 text-green-600 mr-1"/> WhatsApp</>}</span>
                                          <select value={r.minutesBefore} onChange={(e) => updateReminder(index, 'minutesBefore', parseInt(e.target.value))} className={`${inputStyle} text-xs p-1 mt-0`}>
                                              <option value={10}>10 minuti prima</option>
                                              <option value={60}>1 ora prima</option>

@@ -71,7 +71,7 @@ export const Automations: React.FC = () => {
             setMessages(prev => [...prev, aiMessage]);
             setLastInteraction({ user: userMessage.text, ai: aiMessage.text });
 
-        } catch (_err: unknown) {
+        } catch {
             const errorMessage: Message = { sender: 'ai', text: `Mi dispiace, si  verificato un errore. Riprova pi tardi.` };
             setMessages(prev => [...prev, errorMessage]);
             // Error toast is handled by the central helper
@@ -96,8 +96,8 @@ export const Automations: React.FC = () => {
             // Reset chat
             setMessages([]);
             setLastInteraction(null);
-        } catch (_err: unknown) {
-            toast.error(`Errore nel salvataggio: ${(_err as Error).message}`);
+        } catch (err: unknown) {
+            toast.error(`Errore nel salvataggio: ${(err as Error).message}`);
         } finally {
             setIsLoading(false);
         }

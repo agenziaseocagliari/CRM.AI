@@ -157,7 +157,7 @@ export const CalendarView: React.FC = () => {
                 throw new Error("La funzione non ha restituito un URL valido.");
             }
             
-        } catch (_err: unknown) {
+        } catch {
             // L'errore dettagliato è già  gestito e mostrato da invokeSupabaseFunction
             setIsConnecting(false);
         }

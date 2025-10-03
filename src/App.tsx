@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
-// FIX: Corrected imports for                     IMPORTANTE: Ricaricare la pagina non risolver‡ il problema. » necessario un nuovo login.     <p className="font-semibold text-lg">?? Sessione Non Valida</p>           <p className="font-semibold text-lg">?? Sessione Non Valida</p>outes              IMPORTANTE: Ricaricare la pagina non risolver‡ il problema. » necessario un nuovo login. Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
+Ôªøimport React, { useEffect } from 'react';
+// FIX: Corrected imports for                     IMPORTANTE: Ricaricare la pagina non risolver il problema.  necessario un nuovo login.     <p className="font-semibold text-lg">?? Sessione Non Valida</p>           <p className="font-semibold text-lg">?? Sessione Non Valida</p>outes              IMPORTANTE: Ricaricare la pagina non risolver il problema.  necessario un nuovo login. Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 
 
 // Lazy components for performance optimization
-import { 
+import {
   Dashboard,
   Contacts,
   Opportunities,
@@ -28,7 +28,7 @@ import { PublicForm } from './components/PublicForm';
 import { ResetPassword } from './components/ResetPassword';
 import { GoogleAuthCallback } from './components/Settings';
 // Super Admin lazy components - Heavy components for performance
-import { 
+import {
   SuperAdminDashboard,
   SuperAdminLayout,
   SystemHealthDashboard,
@@ -55,7 +55,7 @@ import { diagnosticLogger } from './lib/mockDiagnosticLogger';
 
 // Performance optimization imports
 import { register as registerSW, checkForUpdates } from './lib/serviceWorkerRegistration';
-import { performanceMonitor, usePerformanceMonitoring } from './lib/performanceMonitoring';
+import { performanceMonitor, usePerformanceMonitoring as _usePerformanceMonitoring } from './lib/performanceMonitoring';
 
 const App: React.FC = () => {
   const { session, userRole, loading, jwtClaims } = useAuth();
@@ -66,18 +66,18 @@ const App: React.FC = () => {
   // JWT Health Check - warn if user_role is missing and force logout
   useEffect(() => {
     if (session && jwtClaims && !userRole) {
-      diagnosticLogger.error('"ùå [App] JWT TOKEN DEFECT: user_role is missing from JWT');
-      
+      diagnosticLogger.error('" [App] JWT TOKEN DEFECT: user_role is missing from JWT');
+
       toast.error(
         (t) => (
           <div className="space-y-3">
-            <p className="font-semibold text-lg">"ö Ô∏è Sessione Non Valida</p>
+            <p className="font-semibold text-lg">"  Sessione Non Valida</p>
             <p className="text-sm">
-              La tua sessione Ë scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
+              La tua sessione  scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
               <span className="font-bold">superadmin</span> o del tuo account.
             </p>
             <p className="text-xs text-gray-600">
-              IMPORTANTE: Ricaricare la pagina non risolver√  il problema. » necessario un nuovo login.
+              IMPORTANTE: Ricaricare la pagina non risolver  il problema.  necessario un nuovo login.
             </p>
             <button
               onClick={async () => {
@@ -89,7 +89,7 @@ const App: React.FC = () => {
               }}
               className="w-full mt-2 bg-red-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-700"
             >
-              üö™ Logout e Torna al Login
+               Logout e Torna al Login
             </button>
           </div>
         ),
@@ -106,7 +106,7 @@ const App: React.FC = () => {
       // If user_role is missing, warn before reload
       if (session && !userRole) {
         e.preventDefault();
-        e.returnValue = 'La tua sessione non Ë valida. Ricaricare non risolver√  il problema. Devi effettuare il logout e login.';
+        e.returnValue = 'La tua sessione non  valida. Ricaricare non risolver  il problema. Devi effettuare il logout e login.';
         return e.returnValue;
       }
     };
@@ -163,10 +163,10 @@ const App: React.FC = () => {
     if (session && location.pathname === '/login') {
       // Role-based redirect after login
       if (userRole === 'super_admin') {
-        diagnosticLogger.info('üîê [App] Super Admin logged in - redirecting to /super-admin/dashboard');
+        diagnosticLogger.info(' [App] Super Admin logged in - redirecting to /super-admin/dashboard');
         navigate('/super-admin/dashboard');
       } else {
-        diagnosticLogger.info('üë§ [App] Standard user logged in - redirecting to /dashboard');
+        diagnosticLogger.info(' [App] Standard user logged in - redirecting to /dashboard');
         navigate('/dashboard');
       }
     } else if (!session && location.pathname !== '/login' && location.pathname !== '/') {
@@ -174,32 +174,32 @@ const App: React.FC = () => {
       const publicPaths = ['/', '/login', '/forgot-password', '/reset-password', '/form/', '/privacy-policy', '/terms-of-service'];
       const isPublicPath = publicPaths.some(path => location.pathname.startsWith(path));
       if (!isPublicPath) {
-        diagnosticLogger.info('üîí [App] Redirecting to login - no session on protected route');
+        diagnosticLogger.info(' [App] Redirecting to login - no session on protected route');
         navigate('/');
       }
     }
   }, [session, location.pathname, navigate, userRole]);
-  
+
   // Role-based route guard: prevent cross-role access
   useEffect(() => {
     if (loading || !session) {return;}
-    
+
     const isSuperAdminRoute = location.pathname.startsWith('/super-admin');
     const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/settings'].some(
       path => location.pathname.startsWith(path)
     );
-    
+
     if (userRole === 'super_admin' && isStandardCrmRoute) {
-      diagnosticLogger.warn('"ö Ô∏è [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
+      diagnosticLogger.warn('"  [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
       toast.error('Come Super Admin, devi usare la dashboard dedicata.', { duration: 3000 });
       navigate('/super-admin/dashboard', { replace: true });
     } else if (userRole !== 'super_admin' && isSuperAdminRoute) {
-      diagnosticLogger.warn('"ö Ô∏è [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
+      diagnosticLogger.warn('"  [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
       toast.error('Non hai i permessi per accedere a questa sezione.', { duration: 3000 });
       navigate('/dashboard', { replace: true });
     }
   }, [session, userRole, location.pathname, loading, navigate]);
-  
+
   // Apply theme from local storage on initial load
   useEffect(() => {
     if (localStorage.getItem('theme') === 'dark') {
@@ -221,7 +221,7 @@ const App: React.FC = () => {
           </div>
       );
   }
-  
+
   // FIX: Removed `crmData.loading` check to prevent the entire component tree
   // from unmounting during data re-fetches. This is a critical fix to prevent
   // state loss in child components and avoid re-render loops. The loading state
@@ -238,31 +238,31 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={
-          session 
-            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace /> 
+          session
+            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace />
             : <Login />
         } />
         <Route path="/forgot-password" element={
-          session 
-            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace /> 
+          session
+            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace />
             : <ForgotPassword />
         } />
         <Route path="/reset-password" element={
-          session 
-            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace /> 
+          session
+            ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace />
             : <ResetPassword />
         } />
-        
+
         <Route path="/form/:formId" element={<PublicForm />} />
 
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
-        
+
         <Route path="/settings/oauth/google" element={session ? <GoogleAuthCallback /> : <Navigate to="/login" />} />
 
         {/* Protected Routes */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             session ? <MainLayout crmData={crmData} /> : <Navigate to="/login" replace />
           }
@@ -276,9 +276,9 @@ const App: React.FC = () => {
           <Route path="automations" element={<Automations />} />
           <Route path="settings" element={<Settings />} />
         </Route>
-        
+
         {/* Super Admin Routes */}
-        <Route 
+        <Route
             path="/super-admin"
             element={session ? <SuperAdminLayout /> : <Navigate to="/login" replace />}
         >
@@ -294,10 +294,10 @@ const App: React.FC = () => {
             <Route path="ai-workflows" element={<SuperAdminAiWorkflows />} />
             <Route path="audit-logs" element={<SuperAdminAuditLogs />} />
         </Route>
-        
+
         <Route path="*" element={
           <Navigate to={
-            session 
+            session
               ? (userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard')
               : '/'
           } replace />

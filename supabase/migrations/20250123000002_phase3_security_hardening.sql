@@ -1,4 +1,4 @@
--- =====================================================
+﻿-- =====================================================
 -- Phase 3: Security Hardening - Zero Trust Model
 -- =====================================================
 -- Description: Enhanced RLS policies, audit logging, and security controls
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS audit_logs_enhanced (
   
   -- Generated column for full-text search
   search_vector tsvector GENERATED ALWAYS AS (
-    to_tsvector('english', 
+    to_tsvector('simple', 
       COALESCE(action_type, '') || ' ' || 
       COALESCE(resource_type, '') || ' ' || 
       COALESCE(array_to_string(tags, ' '), '') || ' ' ||

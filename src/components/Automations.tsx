@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
@@ -37,7 +37,7 @@ const AutomationCard: React.FC<{ automation: Automation; onDelete: (automation: 
 
 export const Automations: React.FC = () => {
     const { automations, organization, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
-    
+
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +55,7 @@ export const Automations: React.FC = () => {
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || isLoading) {return;}
-        
+
         setLastInteraction(null);
         const userMessage: Message = { sender: 'user', text: input };
         setMessages(prev => [...prev, userMessage]);
@@ -64,15 +64,15 @@ export const Automations: React.FC = () => {
 
         try {
             const data = await invokeSupabaseFunction('process-automation-request', { prompt: userMessage.text });
-            
-            if (!data.reply) {throw new Error("La risposta dell'AI non è valida.");}
+
+            if (!data.reply) {throw new Error("La risposta dell'AI non  valida.");}
 
             const aiMessage: Message = { sender: 'ai', text: data.reply };
             setMessages(prev => [...prev, aiMessage]);
             setLastInteraction({ user: userMessage.text, ai: aiMessage.text });
 
         } catch (err: any) {
-            const errorMessage: Message = { sender: 'ai', text: `Mi dispiace, si è verificato un errore. Riprova più tardi.` };
+            const errorMessage: Message = { sender: 'ai', text: `Mi dispiace, si  verificato un errore. Riprova pi tardi.` };
             setMessages(prev => [...prev, errorMessage]);
             // Error toast is handled by the central helper
         } finally {
@@ -124,7 +124,7 @@ export const Automations: React.FC = () => {
             setIsLoading(false);
         }
     };
-    
+
     return (
         <>
             <div className="space-y-8 max-w-4xl mx-auto">
@@ -146,7 +146,7 @@ export const Automations: React.FC = () => {
                         <p className="mt-1 text-text-secondary">Usa l&apos;agente AI qui sotto per iniziare a costruirne una.</p>
                     </div>
                 )}
-                
+
                 <div className="flex flex-col h-[600px] bg-white rounded-lg shadow-lg border">
                     <header className="p-4 border-b">
                         <h2 className="text-2xl font-bold text-text-primary flex items-center">
@@ -154,7 +154,7 @@ export const Automations: React.FC = () => {
                             Crea una Nuova Automazione
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">
-                            Descrivi cosa vuoi fare e l&apos;agente preparerà i passaggi per te.
+                            Descrivi cosa vuoi fare e l&apos;agente preparer i passaggi per te.
                         </p>
                     </header>
                     <main className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -205,9 +205,9 @@ export const Automations: React.FC = () => {
                     </footer>
                 </div>
             </div>
-            
+
             <Modal isOpen={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Conferma Eliminazione">
-                <p>Sei sicuro di voler eliminare l&apos;automazione <strong>&quot;{automationToDelete?.name}&quot;</strong>? Questa azione è irreversibile.</p>
+                <p>Sei sicuro di voler eliminare l&apos;automazione <strong>&quot;{automationToDelete?.name}&quot;</strong>? Questa azione  irreversibile.</p>
                 <div className="flex justify-end pt-4 border-t mt-4">
                     <button type="button" onClick={() => setDeleteModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
                     <button onClick={handleDeleteAutomation} disabled={isLoading} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isLoading ? 'Eliminazione...' : 'Elimina'}</button>

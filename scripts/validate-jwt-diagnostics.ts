@@ -1,4 +1,4 @@
-/**
+﻿/**
  * JWT Diagnostics Validation Script
  * 
  * This script validates the JWT diagnostics implementation by checking:
@@ -107,7 +107,7 @@ async function validateDiagnosticsImplementation() {
     
     // Clean up test logs
     diagnosticLogger.clearLogs();
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`  ? Failed to test diagnostic logger: ${error.message}`, colors.red);
     allPassed = false;
   }
@@ -145,7 +145,7 @@ async function validateDiagnosticsImplementation() {
       log('  ? Enhanced JWT diagnostics fields missing', colors.red);
       allPassed = false;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     log(`  ? Failed to test JWT utilities: ${error.message}`, colors.red);
     allPassed = false;
   }

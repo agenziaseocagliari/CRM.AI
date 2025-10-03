@@ -1,4 +1,4 @@
-/**
+﻿/**
  * JWT Custom Claims Verification Script
  * 
  * This script verifies that the custom_access_token_hook is properly configured
@@ -29,7 +29,7 @@ function log(message: string, _color: string = colors.reset) {
   // console.log(`${color}${message}${colors.reset}`);
 }
 
-function decodeJWT(token: string): any {
+function decodeJWT(token: string): unknown {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) {

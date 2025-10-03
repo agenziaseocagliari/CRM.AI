@@ -107,6 +107,9 @@ const imageOptimizationPlugin = (): Plugin => {
 };
 
 export default defineConfig({
+  // Use relative paths for better compatibility with different hosting environments
+  base: './',
+  
   plugins: [
     react({
       // Enable React optimizations

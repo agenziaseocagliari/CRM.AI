@@ -158,7 +158,7 @@ export const CalendarView: React.FC = () => {
             }
             
         } catch (err: any) {
-            // L'errore dettagliato Ã¨ giÃ  gestito e mostrato da invokeSupabaseFunction
+            // L'errore dettagliato è giÃ  gestito e mostrato da invokeSupabaseFunction
             setIsConnecting(false);
         }
     };

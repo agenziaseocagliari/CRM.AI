@@ -44,7 +44,7 @@ const AuthStatusDisplay: React.FC<{
                 <h2 className="mt-4 text-xl font-semibold text-gray-800">
                     {status === 'loading' && 'Connessione in corso...'}
                     {status === 'success' && 'Successo!'}
-                    {status === 'error' && 'Si Ã¨ verificato un problema'}
+                    {status === 'error' && 'Si è verificato un problema'}
                 </h2>
                 <p className={`mt-2 text-gray-600 ${status === 'error' ? 'text-red-600' : ''}`}>
                     {message}
@@ -271,7 +271,7 @@ export const Settings: React.FC = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="twilio_token" className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
-                                    <input type="password" id="twilio_token" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                                    <input type="password" id="twilio_token" value={twilioToken} onChange={(e) => setTwilioToken(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" placeholder="••••••••••••••••" />
                                 </div>
                                 <div className="flex justify-end pt-4 border-t">
                                     <button type="submit" disabled={isSaving} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
@@ -346,12 +346,12 @@ export const Settings: React.FC = () => {
                             <ul className="list-disc list-inside bg-gray-50 p-3 rounded-md">
                                 <li>Access Token: <span className={diagResult.has_access_token ? 'text-green-600' : 'text-red-600'}>{diagResult.has_access_token ? 'Presente' : 'MANCANTE'}</span></li>
                                 <li>Refresh Token: <span className={diagResult.has_refresh_token ? 'text-green-600' : 'text-red-600'}>{diagResult.has_refresh_token ? 'Presente (OK)' : 'MANCANTE (CRITICO)'}</span></li>
-                                <li>Scaduto: <span className={diagResult.is_expired ? 'text-yellow-600' : 'text-green-600'}>{diagResult.is_expired ? 'SÃ¬' : 'No'}</span></li>
+                                <li>Scaduto: <span className={diagResult.is_expired ? 'text-yellow-600' : 'text-green-600'}>{diagResult.is_expired ? 'Sì' : 'No'}</span></li>
                                 <li>Data Scadenza (UTC): <span>{diagResult.expiry_date_utc}</span></li>
                             </ul>
                         )}
                          {diagResult.error && <p className="text-red-600 mt-2"><strong>Dettagli Errore:</strong> {diagResult.details}</p>}
-                        <p className="text-xs text-gray-500 pt-2 border-t mt-3">Se lo stato non Ã¨ 'FOUND' o il 'Refresh Token' Ã¨ mancante, per favore <button onClick={handleGoogleDisconnect} className="text-primary underline">disconnetti</button> e ricollega il tuo account.</p>
+                        <p className="text-xs text-gray-500 pt-2 border-t mt-3">Se lo stato non è 'FOUND' o il 'Refresh Token' è mancante, per favore <button onClick={handleGoogleDisconnect} className="text-primary underline">disconnetti</button> e ricollega il tuo account.</p>
                     </div>
                 ) : <p>Nessun risultato.</p>}
             </Modal>

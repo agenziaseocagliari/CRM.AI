@@ -187,7 +187,7 @@ export function generateLoginHistoryReport(): string {
       const defects = analysis.jwtDefectsByMethod[method as LoginMethod];
       report += `  - ${method}: ${count} attempts`;
       if (defects > 0) {
-        report += ` (âš ï¸ ${defects} JWT defects)`;
+        report += ` ("š ï¸ ${defects} JWT defects)`;
       }
       report += '\n';
     }
@@ -197,12 +197,12 @@ export function generateLoginHistoryReport(): string {
   history.slice(0, 5).forEach((attempt, idx) => {
     report += `${idx + 1}. [${attempt.timestamp}]\n`;
     report += `   Method: ${attempt.method}\n`;
-    report += `   Success: ${attempt.success ? 'âœ…' : 'âŒ'}\n`;
+    report += `   Success: ${attempt.success ? '"…' : '"Œ'}\n`;
     if (attempt.email) {
       report += `   Email: ${attempt.email}\n`;
     }
     if (attempt.jwtHasUserRole !== undefined) {
-      report += `   JWT user_role: ${attempt.jwtHasUserRole ? 'âœ… Present' : 'âŒ Missing'}\n`;
+      report += `   JWT user_role: ${attempt.jwtHasUserRole ? '"… Present' : '"Œ Missing'}\n`;
     }
     if (attempt.error) {
       report += `   Error: ${attempt.error}\n`;

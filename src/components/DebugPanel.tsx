@@ -44,7 +44,7 @@ export const DebugPanel: React.FC = () => {
           onClick={() => setIsVisible(false)}
           className="text-gray-500 hover:text-gray-700 font-bold"
         >
-          âœ•
+          "•
         </button>
       </div>
 
@@ -52,7 +52,7 @@ export const DebugPanel: React.FC = () => {
         <div className="bg-gray-50 p-2 rounded">
           <strong>User Role:</strong>
           <div className="font-mono text-blue-600">
-            {userRole || <span className="text-red-600">NULL âš ï¸</span>}
+            {userRole || <span className="text-red-600">NULL "š ï¸</span>}
           </div>
         </div>
 
@@ -75,13 +75,13 @@ export const DebugPanel: React.FC = () => {
           <strong>Role Flags:</strong>
           <div className="grid grid-cols-3 gap-2 mt-1">
             <div className={`p-1 rounded text-center text-xs ${isSuperAdmin ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}>
-              Super Admin {isSuperAdmin ? 'âœ…' : 'âŒ'}
+              Super Admin {isSuperAdmin ? '"…' : '"Œ'}
             </div>
             <div className={`p-1 rounded text-center text-xs ${isAdmin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
-              Admin {isAdmin ? 'âœ…' : 'âŒ'}
+              Admin {isAdmin ? '"…' : '"Œ'}
             </div>
             <div className={`p-1 rounded text-center text-xs ${isUser ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
-              User {isUser ? 'âœ…' : 'âŒ'}
+              User {isUser ? '"…' : '"Œ'}
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ export const DebugPanel: React.FC = () => {
 
         {!userRole && (
           <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-            âš ï¸ <strong>WARNING:</strong> user_role is missing from JWT! User must logout and login again.
+            "š ï¸ <strong>WARNING:</strong> user_role is missing from JWT! User must logout and login again.
           </div>
         )}
       </div>

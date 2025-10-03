@@ -1,5 +1,5 @@
 ﻿import React, { useEffect } from 'react';
-// FIX: Corrected imports for Routes, Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
+// FIX: Corrected imports for                     IMPORTANTE: Ricaricare la pagina non risolverà il problema. È necessario un nuovo login.     <p className="font-semibold text-lg">⚠️ Sessione Non Valida</p>           <p className="font-semibold text-lg">⚠️ Sessione Non Valida</p>outes              IMPORTANTE: Ricaricare la pagina non risolverà il problema. È necessario un nuovo login. Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
@@ -66,18 +66,18 @@ const App: React.FC = () => {
   // JWT Health Check - warn if user_role is missing and force logout
   useEffect(() => {
     if (session && jwtClaims && !userRole) {
-      diagnosticLogger.error('âŒ [App] JWT TOKEN DEFECT: user_role is missing from JWT');
+      diagnosticLogger.error('"Œ [App] JWT TOKEN DEFECT: user_role is missing from JWT');
       
       toast.error(
         (t) => (
           <div className="space-y-3">
-            <p className="font-semibold text-lg">âš ï¸ Sessione Non Valida</p>
+            <p className="font-semibold text-lg">"š ï¸ Sessione Non Valida</p>
             <p className="text-sm">
-              La tua sessione Ã¨ scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
+              La tua sessione è scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
               <span className="font-bold">superadmin</span> o del tuo account.
             </p>
             <p className="text-xs text-gray-600">
-              IMPORTANTE: Ricaricare la pagina non risolverÃ  il problema. Ãˆ necessario un nuovo login.
+              IMPORTANTE: Ricaricare la pagina non risolverÃ  il problema. È necessario un nuovo login.
             </p>
             <button
               onClick={async () => {
@@ -106,7 +106,7 @@ const App: React.FC = () => {
       // If user_role is missing, warn before reload
       if (session && !userRole) {
         e.preventDefault();
-        e.returnValue = 'La tua sessione non Ã¨ valida. Ricaricare non risolverÃ  il problema. Devi effettuare il logout e login.';
+        e.returnValue = 'La tua sessione non è valida. Ricaricare non risolverÃ  il problema. Devi effettuare il logout e login.';
         return e.returnValue;
       }
     };
@@ -190,11 +190,11 @@ const App: React.FC = () => {
     );
     
     if (userRole === 'super_admin' && isStandardCrmRoute) {
-      diagnosticLogger.warn('âš ï¸ [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
+      diagnosticLogger.warn('"š ï¸ [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
       toast.error('Come Super Admin, devi usare la dashboard dedicata.', { duration: 3000 });
       navigate('/super-admin/dashboard', { replace: true });
     } else if (userRole !== 'super_admin' && isSuperAdminRoute) {
-      diagnosticLogger.warn('âš ï¸ [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
+      diagnosticLogger.warn('"š ï¸ [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
       toast.error('Non hai i permessi per accedere a questa sezione.', { duration: 3000 });
       navigate('/dashboard', { replace: true });
     }

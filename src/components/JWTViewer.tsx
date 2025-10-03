@@ -115,7 +115,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
         <div className="flex justify-between items-center">
           <div>
             <div className="text-lg font-bold">
-              {healthStatus.isHealthy ? 'âœ… Session Healthy' : 'âŒ Session Issues Detected'}
+              {healthStatus.isHealthy ? '"… Session Healthy' : '"Œ Session Issues Detected'}
             </div>
             <div className="text-sm text-gray-600 mt-1">
               Last checked: {new Date(healthStatus.lastChecked).toLocaleString()}
@@ -176,7 +176,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
               <div className="text-sm font-semibold text-gray-600 mb-1">Ruolo Corrente</div>
               <div className="text-2xl font-bold text-indigo-900">
                 {diagnostics.claims.user_role === 'super_admin' && 'ðŸ” Super Admin'}
-                {diagnostics.claims.user_role === 'admin' && 'âš™ï¸ Admin'}
+                {diagnostics.claims.user_role === 'admin' && '"š™ï¸ Admin'}
                 {diagnostics.claims.user_role === 'user' && 'ðŸ‘¤ Utente Standard'}
                 {!['super_admin', 'admin', 'user'].includes(diagnostics.claims.user_role) && `ðŸ“‹ ${diagnostics.claims.user_role}`}
               </div>
@@ -199,7 +199,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
             <div className="text-right">
               <div className="text-xs text-gray-500 mb-1">Per cambiare ruolo:</div>
               <div className="text-xs text-gray-700">
-                Logout â†’ Login con account diverso
+                Logout "†’ Login con account diverso
               </div>
             </div>
           </div>
@@ -210,22 +210,22 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className={`p-4 rounded-lg border-2 ${diagnostics.isValid ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
           <div className="text-sm font-semibold mb-1">Token Valido</div>
-          <div className="text-2xl">{diagnostics.isValid ? 'âœ… SÃ¬' : 'âŒ No'}</div>
+          <div className="text-2xl">{diagnostics.isValid ? '"… Sì' : '"Œ No'}</div>
         </div>
         
         <div className={`p-4 rounded-lg border-2 ${diagnostics.hasUserRole ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
           <div className="text-sm font-semibold mb-1">user_role Presente</div>
-          <div className="text-2xl">{diagnostics.hasUserRole ? 'âœ… SÃ¬' : 'âŒ No'}</div>
+          <div className="text-2xl">{diagnostics.hasUserRole ? '"… Sì' : '"Œ No'}</div>
         </div>
       </div>
 
       {/* TOKEN DEFECT Warning */}
       {!diagnostics.hasUserRole && diagnostics.isValid && (
         <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg">
-          <h3 className="text-xl font-bold text-yellow-800 mb-2">âš ï¸ TOKEN DEFECT RILEVATO</h3>
+          <h3 className="text-xl font-bold text-yellow-800 mb-2">"š ï¸ TOKEN DEFECT RILEVATO</h3>
           <p className="text-yellow-900 mb-3">
             Il tuo JWT non contiene il claim <code className="bg-yellow-200 px-2 py-1 rounded">user_role</code>.
-            Questo significa che il token Ã¨ stato generato prima della configurazione del custom_access_token_hook.
+            Questo significa che il token è stato generato prima della configurazione del custom_access_token_hook.
           </p>
           <div className="bg-white p-3 rounded border border-yellow-300 mb-3">
             <h4 className="font-semibold mb-2">ðŸ“ Azioni Consigliate:</h4>
@@ -247,9 +247,9 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
 
       {/* Backend Update Warning */}
       <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-500 rounded-lg">
-        <h3 className="text-lg font-bold text-blue-800 mb-2">â„¹ï¸ Importante: Aggiornamenti Backend</h3>
+        <h3 className="text-lg font-bold text-blue-800 mb-2">"„¹ï¸ Importante: Aggiornamenti Backend</h3>
         <p className="text-blue-900 text-sm">
-          Dopo ogni aggiornamento backend o delle policy di autenticazione, Ã¨ <strong>indispensabile rigenerare il JWT</strong>.
+          Dopo ogni aggiornamento backend o delle policy di autenticazione, è <strong>indispensabile rigenerare il JWT</strong>.
           Per farlo, effettua logout e login nuovamente.
         </p>
       </div>
@@ -269,7 +269,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       {/* Warnings */}
       {diagnostics.warnings.length > 0 && (
         <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
-          <h3 className="font-bold text-yellow-800 mb-2">âš ï¸ Avvisi</h3>
+          <h3 className="font-bold text-yellow-800 mb-2">"š ï¸ Avvisi</h3>
           <ul className="list-disc list-inside space-y-1">
             {diagnostics.warnings.map((warning, idx) => (
               <li key={idx} className="text-yellow-700 text-sm">{warning}</li>

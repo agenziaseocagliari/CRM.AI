@@ -160,7 +160,7 @@ export const TwoFactorSettings: React.FC<TwoFactorSettingsProps> = ({ className 
               <h3 className="text-lg font-medium text-gray-900">Status</h3>
               {status?.isEnabled ? (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  âœ“ Enabled
+                  "“ Enabled
                 </span>
               ) : (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -250,15 +250,15 @@ export const TwoFactorSettings: React.FC<TwoFactorSettingsProps> = ({ className 
           <h3 className="text-lg font-medium text-gray-900 mb-3">Security Tips</h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex items-start">
-              <span className="mr-2">â€¢</span>
+              <span className="mr-2">"€¢</span>
               <span>Use an authenticator app like Google Authenticator or Authy for the best security</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2">â€¢</span>
+              <span className="mr-2">"€¢</span>
               <span>Save your backup codes in a secure location</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2">â€¢</span>
+              <span className="mr-2">"€¢</span>
               <span>Review and remove trusted devices you no longer use</span>
             </li>
           </ul>
@@ -281,7 +281,7 @@ export const TwoFactorSettings: React.FC<TwoFactorSettingsProps> = ({ className 
         <div className="space-y-4">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-yellow-800 text-sm">
-              âš ï¸ Disabling 2FA will make your account less secure. Are you sure you want to continue?
+              "š ï¸ Disabling 2FA will make your account less secure. Are you sure you want to continue?
             </p>
           </div>
           <div className="flex space-x-3">

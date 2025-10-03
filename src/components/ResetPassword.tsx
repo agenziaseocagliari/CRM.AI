@@ -64,7 +64,7 @@ export const ResetPassword: React.FC = () => {
             }
         } catch (error) {
             diagnosticLogger.error('Password reset error:', error);
-            toast.error('Si Ã¨ verificato un errore. Riprova piÃ¹ tardi.');
+            toast.error('Si è verificato un errore. Riprova più tardi.');
         } finally {
             setLoading(false);
         }
@@ -89,9 +89,9 @@ export const ResetPassword: React.FC = () => {
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                         <div className="text-center space-y-4">
-                            <div className="text-6xl">âœ…</div>
+                            <div className="text-6xl">"…</div>
                             <p className="text-gray-700">
-                                La tua password Ã¨ stata aggiornata con successo.
+                                La tua password è stata aggiornata con successo.
                             </p>
                             <p className="text-sm text-gray-600">
                                 Verrai reindirizzato alla dashboard automaticamente...
@@ -118,9 +118,9 @@ export const ResetPassword: React.FC = () => {
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                         <div className="text-center space-y-4">
-                            <div className="text-6xl">âš ï¸</div>
+                            <div className="text-6xl">"š ï¸</div>
                             <p className="text-gray-700">
-                                Il link di reset password non Ã¨ valido o Ã¨ scaduto.
+                                Il link di reset password non è valido o è scaduto.
                             </p>
                             <button
                                 onClick={() => navigate('/forgot-password')}

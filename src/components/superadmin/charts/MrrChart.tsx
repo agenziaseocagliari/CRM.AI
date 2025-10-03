@@ -64,7 +64,7 @@ export const MrrChart: React.FC = () => {
     const handleExport = () => {
         // Export data as CSV
         const csvContent = [
-            ['Mese', 'MRR (â‚¬)', 'Crescita (â‚¬)'],
+            ['Mese', 'MRR ("‚¬)', 'Crescita ("‚¬)'],
             ...data.map(d => [d.month, d.mrr, d.growth])
         ].map(row => row.join(',')).join('\n');
         
@@ -99,7 +99,7 @@ export const MrrChart: React.FC = () => {
             <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Andamento MRR</h2>
                 <div className="flex flex-col items-center justify-center h-64 bg-red-50 dark:bg-red-900/20 rounded-md">
-                    <p className="text-red-600 dark:text-red-400 mb-4">âš ï¸ {error}</p>
+                    <p className="text-red-600 dark:text-red-400 mb-4">"š ï¸ {error}</p>
                     <button
                         onClick={fetchData}
                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-indigo-700"
@@ -119,13 +119,13 @@ export const MrrChart: React.FC = () => {
                     <div className="mt-2 flex items-center space-x-4">
                         <div>
                             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                â‚¬{currentMrr.toLocaleString('it-IT')}
+                                "‚¬{currentMrr.toLocaleString('it-IT')}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">MRR Corrente</p>
                         </div>
                         <div className={`flex items-center ${Number(mrrGrowthPercent) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             <span className="text-lg font-semibold">
-                                {Number(mrrGrowthPercent) >= 0 ? 'â†—' : 'â†˜'} {mrrGrowthPercent}%
+                                {Number(mrrGrowthPercent) >= 0 ? '"†—' : '"†˜'} {mrrGrowthPercent}%
                             </span>
                             <p className="text-xs ml-1">vs mese scorso</p>
                         </div>
@@ -167,7 +167,7 @@ export const MrrChart: React.FC = () => {
                     <YAxis 
                         stroke="#6B7280"
                         style={{ fontSize: '12px' }}
-                        tickFormatter={(value) => `â‚¬${(value / 1000).toFixed(0)}k`}
+                        tickFormatter={(value) => `"‚¬${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip 
                         contentStyle={{ 
@@ -176,7 +176,7 @@ export const MrrChart: React.FC = () => {
                             borderRadius: '8px',
                             color: '#F3F4F6'
                         }}
-                        formatter={(value: number) => [`â‚¬${value.toLocaleString('it-IT')}`, 'MRR']}
+                        formatter={(value: number) => [`"‚¬${value.toLocaleString('it-IT')}`, 'MRR']}
                     />
                     <Legend />
                     <Area 

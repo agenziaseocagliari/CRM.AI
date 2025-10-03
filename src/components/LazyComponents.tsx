@@ -14,11 +14,13 @@ const LoadingSpinner: React.FC = () => (
 export const withLazyLoading = <P extends object>(
   LazyComponent: React.LazyExoticComponent<ComponentType<P>>
 ): React.FC<P> => {
-  return (props: P) => (
+  const Component = (props: P) => (
     <Suspense fallback={<LoadingSpinner />}>
       <LazyComponent {...(props as any)} />
     </Suspense>
   );
+  Component.displayName = 'LazyLoadedComponent';
+  return Component;
 };
 
 // Lazy loaded components

@@ -27,7 +27,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
     
     // An error from the core data hook is critical. Display an error page.
     if (error) {
-        // Non mostriamo l'errore di configurazione qui, poichÃ© viene giÃ  gestito in App.tsx.
+        // Non mostriamo l'errore di configurazione qui, poiché viene giÃ  gestito in App.tsx.
         // Mostriamo un errore generico per altri problemi.
         return <div className="flex items-center justify-center h-screen text-red-500">{error}</div>;
     }

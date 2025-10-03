@@ -31,9 +31,19 @@ CREATE INDEX IF NOT EXISTS idx_workflows_org_active
   WHERE organization_id IS NOT NULL;
 
 -- Workflow executions: Recent executions by organization
-CREATE INDEX IF NOT EXISTS idx_workflow_exec_org_time
-  ON workflow_execution_logs(organization_id, created_at DESC)
-  WHERE organization_id IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'workflow_execution_logs'
+    AND column_name = 'organization_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_workflow_exec_org_time
+      ON workflow_execution_logs(organization_id, created_at DESC)
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Audit logs: Time-based queries by organization
 CREATE INDEX IF NOT EXISTS idx_audit_org_time 
@@ -55,9 +65,19 @@ CREATE INDEX IF NOT EXISTS idx_active_workflows
   WHERE is_active = true AND organization_id IS NOT NULL;
 
 -- Failed workflow executions (for error analysis)
-CREATE INDEX IF NOT EXISTS idx_failed_workflow_executions
-  ON workflow_execution_logs(organization_id, workflow_id, created_at DESC)
-  WHERE status = 'failed' AND organization_id IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'workflow_execution_logs'
+    AND column_name = 'organization_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_failed_workflow_executions
+      ON workflow_execution_logs(organization_id, workflow_id, created_at DESC)
+      WHERE status = 'failed' AND organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- Pending automations (for processing queue)
 DO $$

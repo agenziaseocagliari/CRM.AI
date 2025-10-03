@@ -59,6 +59,7 @@ serve(async (req) => {
       .from("workflow_execution_logs")
       .insert({
         workflow_id: workflow.id,
+        organization_id: workflow.organization_id,
         execution_start: executionStartTime,
         status: "running",
         trigger_data,

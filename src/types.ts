@@ -216,6 +216,7 @@ export interface WorkflowDefinition {
 export interface WorkflowExecutionLog {
     id: number;
     workflow_id: string;
+    organization_id: string | null;
     execution_start: string;
     execution_end: string | null;
     status: 'running' | 'success' | 'error' | 'partial';

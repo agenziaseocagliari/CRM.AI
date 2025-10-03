@@ -38,12 +38,13 @@ PostgreSQL requires all functions used in index WHERE clauses to be marked IMMUT
 
 **Affected Indexes**:
 1. `idx_rate_limits_cleanup` - Used `WHERE window_end < NOW()`
-2. `idx_crm_events_upcoming` - Used `WHERE start_time > NOW()`
-3. `idx_sessions_expiry` - Used `WHERE expires_at < NOW()`
-4. `idx_audit_logs_retention` - Used `WHERE created_at < NOW() - INTERVAL '90 days'`
+2. `idx_upcoming_events` - Used `WHERE start_time > NOW()`
+3. `idx_sessions_expired` - Used `WHERE expires_at < NOW()`
+4. `idx_audit_old_entries` - Used `WHERE created_at < NOW() - INTERVAL '90 days'`
 
 **Fix Applied**:
-- Removed NOW() predicates from index definitions
+- ✅ **Source migration fixed**: `20250123000000_phase3_performance_indexes.sql` - All NOW() predicates removed
+- ✅ **Fix migration updated**: `20251103000000_fix_non_immutable_index_predicates.sql` - Handles existing databases
 - Indexes now cover entire columns (slightly larger but still efficient)
 - Time-based filtering moved to query WHERE clauses
 - PostgreSQL can still use indexes efficiently with bitmap scans
@@ -55,9 +56,9 @@ FROM pg_indexes
 WHERE schemaname = 'public'
 AND indexname IN (
   'idx_rate_limits_cleanup',
-  'idx_crm_events_upcoming', 
-  'idx_sessions_expiry',
-  'idx_audit_logs_retention'
+  'idx_upcoming_events', 
+  'idx_sessions_expired',
+  'idx_audit_old_entries'
 );
 ```
 

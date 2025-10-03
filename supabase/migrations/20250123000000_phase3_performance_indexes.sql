@@ -132,9 +132,10 @@ BEGIN
     CREATE INDEX IF NOT EXISTS idx_rate_limits_org_endpoint 
       ON api_rate_limits(organization_id, endpoint, window_end DESC);
     
+    -- Fixed: Removed NOW() predicate (not IMMUTABLE)
+    -- Time-based filtering should be done in query WHERE clause
     CREATE INDEX IF NOT EXISTS idx_rate_limits_cleanup
-      ON api_rate_limits(window_end)
-      WHERE window_end < NOW();
+      ON api_rate_limits(window_end);
   END IF;
 END $$;
 
@@ -148,9 +149,11 @@ CREATE INDEX IF NOT EXISTS idx_crm_events_org_date
   WHERE organization_id IS NOT NULL;
 
 -- Upcoming events (for reminders and notifications)
+-- Fixed: Removed NOW() predicate (not IMMUTABLE)
+-- Time-based filtering should be done in query WHERE clause
 CREATE INDEX IF NOT EXISTS idx_upcoming_events
   ON crm_events(organization_id, start_time ASC)
-  WHERE start_time > NOW() AND organization_id IS NOT NULL;
+  WHERE organization_id IS NOT NULL;
 
 -- =====================================================
 -- 5. User and Organization Indexes
@@ -242,16 +245,18 @@ BEGIN
     WHERE table_schema = 'public' 
     AND table_name = 'sessions'
   ) THEN
+    -- Fixed: Removed NOW() predicate (not IMMUTABLE)
+    -- Time-based filtering should be done in query WHERE clause
     CREATE INDEX IF NOT EXISTS idx_sessions_expired
-      ON sessions(expires_at)
-      WHERE expires_at < NOW();
+      ON sessions(expires_at);
   END IF;
 END $$;
 
 -- Old audit logs archival
+-- Fixed: Removed NOW() predicate (not IMMUTABLE)
+-- Time-based filtering should be done in query WHERE clause
 CREATE INDEX IF NOT EXISTS idx_audit_old_entries
-  ON audit_logs(created_at)
-  WHERE created_at < NOW() - INTERVAL '90 days';
+  ON audit_logs(created_at);
 
 -- =====================================================
 -- 9. Index Statistics and Monitoring

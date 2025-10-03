@@ -110,13 +110,15 @@ PostgreSQL richiede che tutte le funzioni usate nelle clausole WHERE degli indic
 
 **Indici Problematici Identificati**:
 1. `idx_rate_limits_cleanup` - Usava `WHERE window_end < NOW()`
-2. `idx_crm_events_upcoming` - Usava `WHERE start_time > NOW()`
-3. `idx_sessions_expiry` - Usava `WHERE expires_at < NOW()`
-4. `idx_audit_logs_retention` - Usava `WHERE created_at < NOW() - INTERVAL '90 days'`
+2. `idx_upcoming_events` - Usava `WHERE start_time > NOW()`
+3. `idx_sessions_expired` - Usava `WHERE expires_at < NOW()`
+4. `idx_audit_old_entries` - Usava `WHERE created_at < NOW() - INTERVAL '90 days'`
 
 **Soluzione Implementata**:
-- Creata migration `20251103000000_fix_non_immutable_index_predicates.sql`
-- Rimossi predicati NOW() dalle definizioni degli indici
+- ✅ **Corretti direttamente i file sorgente delle migration**:
+  - `20250123000000_phase3_performance_indexes.sql` - Rimossi predicati NOW() da tutti gli indici
+- ✅ **Aggiornata migration di fix**:
+  - `20251103000000_fix_non_immutable_index_predicates.sql` - Corregge database esistenti
 - Gli indici ora coprono intere colonne (leggermente più grandi ma ancora efficienti)
 - Filtri temporali spostati nelle clausole WHERE delle query
 - PostgreSQL può ancora usare gli indici efficientemente con bitmap scans
@@ -345,14 +347,15 @@ supabase db execute --file scripts/verify-integrations-migration.sql
 
 4. **Verifica Indici**
    ```sql
+   -- Verificare che gli indici siano stati creati senza predicati NOW()
    SELECT indexname, indexdef
    FROM pg_indexes
    WHERE schemaname = 'public'
    AND indexname IN (
      'idx_rate_limits_cleanup',
-     'idx_crm_events_upcoming',
-     'idx_sessions_expiry',
-     'idx_audit_logs_retention'
+     'idx_upcoming_events',
+     'idx_sessions_expired',
+     'idx_audit_old_entries'
    );
    ```
 

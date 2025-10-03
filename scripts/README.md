@@ -278,6 +278,199 @@ Gli script sono versionati insieme al codice. Se aggiungi:
 
 ---
 
+### verify-phase3-schema.sql
+
+Script SQL per validazione completa dello schema database per Phase 3.
+
+**Uso**:
+```bash
+# Con Supabase CLI
+supabase db execute --file scripts/verify-phase3-schema.sql
+
+# Con psql
+psql <connection-string> -f scripts/verify-phase3-schema.sql
+```
+
+**Cosa Verifica**:
+1. ✅ Tutte le tabelle richieste esistono
+2. ✅ Tutte le colonne richieste esistono in ogni tabella
+3. ✅ Funzioni critiche sono presenti
+4. ✅ Indici essenziali sono creati
+5. ✅ RLS (Row Level Security) è configurato correttamente
+6. ✅ Colonne specifiche come `window_end`, `organization_id`, `action_type`
+
+**Quando Usare**:
+- Prima di deploy Phase 3 migrations
+- Dopo modifiche schema database
+- Durante troubleshooting
+- Come parte della CI/CD pipeline
+
+**Output Atteso**:
+Tutti i check devono mostrare `TRUE` o `✓`. Qualsiasi `FALSE` o `✗` indica una risorsa mancante.
+
+---
+
+### test-phase3-migrations.sql
+
+Script SQL per testare Phase 3 migrations in ambiente test/staging.
+
+**Uso**:
+```bash
+# ⚠️ SOLO in ambiente test/staging!
+supabase db execute --file scripts/test-phase3-migrations.sql
+```
+
+**Cosa Testa**:
+1. ✅ Funzionalità colonne computed (`window_end`)
+2. ✅ Creazione indici su colonne computed
+3. ✅ Performance query con nuovi indici
+4. ✅ Comportamento UPDATE con colonne computed
+5. ✅ Performance query di cleanup
+6. ✅ Preservazione policy RLS
+
+**⚠️ ATTENZIONE**: 
+- Crea dati di test
+- Esegue operazioni INSERT/UPDATE/DELETE
+- NON eseguire in produzione senza backup
+- Solo per ambienti staging/test
+
+**Output Atteso**:
+```
+✓ Test 1 PASSED: window_end column works correctly
+✓ Test 2 PASSED: All indexes created successfully
+✓ Test 3 PASSED: Queries can use window_end indexes
+✓ Test 4 PASSED: UPDATE behavior correct
+✓ Test 5 PASSED: Cleanup query performance acceptable
+✓ Test 6 PASSED: RLS configuration verified
+All Tests PASSED! ✓
+```
+
+---
+
+## 🔧 Quando Usare gli Script
+
+### Prima di Ogni Deploy
+- `verify-role-cleanup.sh` - Verifica pulizia riferimenti ruoli DB
+- `verify-rls-policies.sh` - Verifica compliance RLS policies
+- `verify-sync.sh` - Verifica sincronizzazione completa
+- **`verify-phase3-schema.sql`** - Verifica schema database Phase 3
+
+### In Staging
+- **`test-phase3-migrations.sql`** - Test completo migrations Phase 3
+- Verifica funzionalità colonne computed
+- Test performance indici
+
+### Quotidiano
+- Prima di fare commit importanti
+- Prima di creare PR
+
+### Settimanale
+- Verifica routine sincronizzazione
+- `node scripts/vercel-metrics.cjs` - Monitora usage Vercel
+- Check post-deployment
+
+### Pre-Deploy
+- Prima di merge su main
+- Verifica che tutto sia a posto
+- Esegui validazione schema completa
+
+---
+
+## 💡 Suggerimenti
+
+### Automatizzare con Git Hooks
+
+Puoi configurare il script per eseguire automaticamente prima di ogni commit:
+
+**Setup pre-commit hook**:
+```bash
+# Crea file .git/hooks/pre-commit
+cat > .git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+./scripts/verify-sync.sh
+if [ $? -ne 0 ]; then
+    echo "❌ Verification failed. Commit aborted."
+    exit 1
+fi
+EOF
+
+# Rendi eseguibile
+chmod +x .git/hooks/pre-commit
+```
+
+### Integrazione CI/CD
+
+Lo script può essere integrato in GitHub Actions:
+
+```yaml
+- name: Run Verification Script
+  run: |
+    chmod +x scripts/verify-sync.sh
+    ./scripts/verify-sync.sh
+
+- name: Validate Database Schema
+  run: |
+    supabase db execute --file scripts/verify-phase3-schema.sql
+    
+- name: Test Migrations (staging only)
+  if: github.ref == 'refs/heads/staging'
+  run: |
+    supabase db execute --file scripts/test-phase3-migrations.sql
+```
+
+---
+
+## 🆘 Troubleshooting
+
+### Script Non Esegue
+```bash
+# Assicurati che sia eseguibile
+chmod +x scripts/verify-sync.sh
+
+# Esegui con bash esplicitamente
+bash scripts/verify-sync.sh
+```
+
+### Check Falliti
+Leggi l'output dello script per dettagli su cosa è fallito, poi:
+
+1. **TypeScript errors**: Esegui `npm run lint` per dettagli
+2. **Missing functions**: Verifica directory `supabase/functions/`
+3. **Missing docs**: Controlla che tutti i file documentazione esistano
+4. **Security issues**: Review manuale del codice
+5. **Schema validation fails**: Esegui migration mancante
+6. **Column not exists**: Esegui `20250123000003_add_window_end_to_api_rate_limits.sql`
+
+### Script SQL Fallisce con "table does not exist"
+
+**Soluzione**: Esegui migration che crea la tabella mancante.
+
+```bash
+supabase db execute --file supabase/migrations/<migration_file>.sql
+```
+
+### Script SQL Fallisce con "column does not exist"
+
+**Soluzione**: Esegui migration che aggiunge la colonna mancante.
+
+```bash
+supabase db execute --file supabase/migrations/20250123000003_add_window_end_to_api_rate_limits.sql
+```
+
+---
+
+## 📝 Manutenzione Script
+
+Gli script sono versionati insieme al codice. Se aggiungi:
+- Nuove edge functions → Aggiorna array `EXPECTED_FUNCTIONS` in `verify-sync.sh`
+- Nuovi file documentazione → Aggiorna array `DOC_FILES`
+- Nuovi check → Aggiungi funzione `check_*` e chiamala in `main()`
+- Nuove tabelle database → Aggiorna `verify-phase3-schema.sql`
+- Nuovi requisiti colonne → Aggiorna sezione corrispondente in validation script
+
+---
+
 **Creato da**: AI Chief Engineer  
-**Versione**: 1.0  
-**Ultima Revisione**: 2025-09-30
+**Versione**: 2.0  
+**Ultima Revisione**: 2025-10-03  
+**Aggiornamenti Phase 3**: Schema validation e migration testing

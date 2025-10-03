@@ -50,10 +50,20 @@ CREATE INDEX IF NOT EXISTS idx_audit_org_time
   ON audit_logs(organization_id, created_at DESC)
   WHERE organization_id IS NOT NULL;
 
--- Audit logs: Action type filtering
-CREATE INDEX IF NOT EXISTS idx_audit_action_type
-  ON audit_logs(organization_id, action_type, created_at DESC)
-  WHERE organization_id IS NOT NULL;
+-- Audit logs: Action type filtering (only if column exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'audit_logs'
+    AND column_name = 'action_type'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_audit_action_type
+      ON audit_logs(organization_id, action_type, created_at DESC)
+      WHERE organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- =====================================================
 -- 2. Partial Indexes for Filtered Queries

@@ -103,10 +103,19 @@ BEGIN
   END IF;
 END $$;
 
--- Active integrations
-CREATE INDEX IF NOT EXISTS idx_active_integrations
-  ON integrations(organization_id, integration_type)
-  WHERE is_active = true AND organization_id IS NOT NULL;
+-- Active integrations (if table exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'integrations'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_active_integrations
+      ON integrations(organization_id, integration_type)
+      WHERE is_active = true AND organization_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- =====================================================
 -- 3. Performance Indexes for API Rate Limiting

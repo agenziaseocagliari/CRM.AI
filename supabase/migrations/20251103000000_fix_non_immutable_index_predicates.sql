@@ -35,20 +35,21 @@ END $$;
 -- 2. Fix crm_events upcoming events index
 -- ============================================================================
 -- Original problematic index:
--- CREATE INDEX idx_crm_events_upcoming ON crm_events(organization_id, start_time ASC) 
+-- CREATE INDEX idx_upcoming_events ON crm_events(organization_id, start_time ASC) 
 -- WHERE start_time > NOW() AND organization_id IS NOT NULL;
 
 DO $$
 BEGIN
-  -- Drop the problematic index if it exists
+  -- Drop the problematic index if it exists (handles both old and new names)
   DROP INDEX IF EXISTS idx_crm_events_upcoming;
+  DROP INDEX IF EXISTS idx_upcoming_events;
   
   -- Recreate with only the organization_id predicate (removes NOW() comparison)
-  CREATE INDEX IF NOT EXISTS idx_crm_events_upcoming
+  CREATE INDEX IF NOT EXISTS idx_upcoming_events
     ON crm_events(organization_id, start_time ASC)
     WHERE organization_id IS NOT NULL;
     
-  RAISE NOTICE 'Fixed idx_crm_events_upcoming index (removed NOW() predicate)';
+  RAISE NOTICE 'Fixed idx_upcoming_events index (removed NOW() predicate)';
 END $$;
 
 -- ============================================================================
@@ -78,23 +79,24 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- 4. Fix audit_logs retention index
+-- 4. Fix audit_logs old entries index
 -- ============================================================================
 -- Original problematic index:
--- CREATE INDEX idx_audit_logs_retention ON audit_logs(created_at) 
+-- CREATE INDEX idx_audit_old_entries ON audit_logs(created_at) 
 -- WHERE created_at < NOW() - INTERVAL '90 days';
 
 DO $$
 BEGIN
-  -- Drop the problematic index if it exists
+  -- Drop the problematic index if it exists (handles both old and new names)
   DROP INDEX IF EXISTS idx_audit_logs_retention;
+  DROP INDEX IF EXISTS idx_audit_old_entries;
   
   -- Recreate without WHERE clause (created_at is already indexed elsewhere)
   -- This index is primarily for cleanup queries, which can filter at query time
-  CREATE INDEX IF NOT EXISTS idx_audit_logs_retention
+  CREATE INDEX IF NOT EXISTS idx_audit_old_entries
     ON audit_logs(created_at);
     
-  RAISE NOTICE 'Fixed idx_audit_logs_retention index (removed NOW() predicate)';
+  RAISE NOTICE 'Fixed idx_audit_old_entries index (removed NOW() predicate)';
 END $$;
 
 -- ============================================================================
@@ -126,9 +128,10 @@ FROM pg_indexes
 WHERE schemaname = 'public'
 AND indexname IN (
   'idx_rate_limits_cleanup',
-  'idx_crm_events_upcoming',
+  'idx_upcoming_events',
   'idx_sessions_expiry',
-  'idx_audit_logs_retention'
+  'idx_audit_logs_retention',
+  'idx_audit_old_entries'
 )
 ORDER BY tablename, indexname;
 */

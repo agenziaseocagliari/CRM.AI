@@ -153,7 +153,7 @@ USING (
     FROM profiles p
     JOIN organizations o ON p.organization_id = o.id
     WHERE p.id = auth.uid() 
-    AND o.status = 'active'
+    
   )
   AND organization_id IS NOT NULL
 );
@@ -182,7 +182,7 @@ USING (
     FROM profiles p
     JOIN organizations o ON p.organization_id = o.id
     WHERE p.id = auth.uid() 
-    AND o.status = 'active'
+    
   )
   AND organization_id IS NOT NULL
 );

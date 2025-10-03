@@ -90,7 +90,7 @@ export const Dashboard: React.FC = () => {
             try {
                 const parsedError = JSON.parse(errorMessage);
                 setDebugModalContent({ error: 'Errore dalla funzione', details: parsedError });
-            } catch (_e) {
+            } catch {
                 setDebugModalContent({ error: errorMessage, details: error });
             }
         } finally {

@@ -154,7 +154,7 @@ DROP POLICY IF EXISTS "org_isolation_strict" ON contacts;
 CREATE POLICY "org_isolation_strict"
 ON contacts
 FOR ALL
-TO authenticated
+TO public
 USING (
   -- User must be active member of the organization
   organization_id IN (
@@ -174,7 +174,7 @@ DROP POLICY IF EXISTS "superadmin_access_audited" ON contacts;
 CREATE POLICY "superadmin_access_audited"
 ON contacts
 FOR ALL
-TO authenticated
+TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin' 
   AND log_superadmin_access('contacts', id)
@@ -186,7 +186,7 @@ DROP POLICY IF EXISTS "workflow_org_isolation" ON workflow_definitions;
 CREATE POLICY "workflow_org_isolation"
 ON workflow_definitions
 FOR ALL
-TO authenticated
+TO public
 USING (
   organization_id IN (
     SELECT uo.organization_id 
@@ -204,7 +204,7 @@ DROP POLICY IF EXISTS "workflow_superadmin_access" ON workflow_definitions;
 CREATE POLICY "workflow_superadmin_access"
 ON workflow_definitions
 FOR ALL
-TO authenticated
+TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin' 
   AND log_superadmin_access('workflow_definitions', id)
@@ -512,19 +512,19 @@ ALTER TABLE audit_logs_enhanced ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "audit_enhanced_superadmin"
 ON audit_logs_enhanced
 FOR ALL
-TO authenticated
+TO public
 USING (auth.jwt() ->> 'role' = 'super_admin');
 
 CREATE POLICY "audit_enhanced_user_own"
 ON audit_logs_enhanced
 FOR SELECT
-TO authenticated
+TO public
 USING (user_id = auth.uid());
 
 CREATE POLICY "audit_enhanced_org_admins"
 ON audit_logs_enhanced
 FOR SELECT
-TO authenticated
+TO public
 USING (
   organization_id IN (
     SELECT organization_id 
@@ -541,7 +541,7 @@ ALTER TABLE security_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "security_events_superadmin_only"
 ON security_events
 FOR ALL
-TO authenticated
+TO public
 USING (auth.jwt() ->> 'role' = 'super_admin');
 
 -- Data sensitivity classifications: Read-only for all authenticated
@@ -550,13 +550,13 @@ ALTER TABLE data_sensitivity_classifications ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "data_classifications_read"
 ON data_sensitivity_classifications
 FOR SELECT
-TO authenticated
+TO public
 USING (true);
 
 CREATE POLICY "data_classifications_superadmin_write"
 ON data_sensitivity_classifications
 FOR ALL
-TO authenticated
+TO public
 USING (auth.jwt() ->> 'role' = 'super_admin');
 
 -- =====================================================

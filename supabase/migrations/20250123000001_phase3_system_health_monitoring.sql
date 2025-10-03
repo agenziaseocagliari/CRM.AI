@@ -454,7 +454,7 @@ ALTER TABLE system_metrics ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "system_metrics_superadmin"
 ON system_metrics
 FOR ALL
-TO authenticated
+TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin'
 );
@@ -462,7 +462,7 @@ USING (
 CREATE POLICY "system_metrics_org_users"
 ON system_metrics
 FOR SELECT
-TO authenticated
+TO public
 USING (
   organization_id IN (
     SELECT organization_id 
@@ -478,7 +478,7 @@ ALTER TABLE system_health_checks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "health_checks_superadmin_only"
 ON system_health_checks
 FOR ALL
-TO authenticated
+TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin'
 );
@@ -489,7 +489,7 @@ ALTER TABLE alert_rules ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "alert_rules_superadmin_only"
 ON alert_rules
 FOR ALL
-TO authenticated
+TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin'
 );
@@ -500,7 +500,7 @@ ALTER TABLE alert_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "alert_history_superadmin"
 ON alert_history
 FOR ALL
-TO authenticated
+TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin'
 );
@@ -508,7 +508,7 @@ USING (
 CREATE POLICY "alert_history_acknowledged_user"
 ON alert_history
 FOR SELECT
-TO authenticated
+TO public
 USING (
   acknowledged_by = auth.uid()
 );

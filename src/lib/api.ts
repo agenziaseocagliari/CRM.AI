@@ -1,8 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 import { toast } from 'react-hot-toast';
 
 import { diagnosticLogger } from './mockDiagnosticLogger';
-import { SecureLogger, SecureErrorHandler } from './security/securityUtils';
+import { SecureLogger as _SecureLogger, SecureErrorHandler as _SecureErrorHandler } from './security/securityUtils';
 import { diagnoseJWT } from './jwtUtils';
 import { supabase } from './supabaseClient';
 
@@ -73,7 +73,7 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
                     ...message.split('\n').filter(line => line.trim()).map((line, idx) => 
                         React.createElement('p', { 
                             key: idx,
-                            className: line.trim().startsWith('âš ï¸') || line.trim().startsWith('NOTA:') 
+                            className: line.trim().startsWith('⚠️') || line.trim().startsWith('NOTA:') 
                                 ? 'font-bold text-yellow-700 mb-2' 
                                 : line.match(/^\d+\./) 
                                     ? 'text-sm ml-4 mb-1'
@@ -93,7 +93,7 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
                             window.location.href = '/login';
                         },
                         className: 'bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 font-bold'
-                    }, 'ðŸšª Logout'),
+                    }, '🚪 Logout'),
                     React.createElement('button', {
                         onClick: () => {
                             navigator.clipboard.writeText(diagnosticReport);
@@ -194,7 +194,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         if (!response.ok) {
             const errorText = await response.text();
             let errorJson: any = null;
-            try { errorJson = JSON.parse(errorText); } catch (e) { /* ignore */ }
+            try { errorJson = JSON.parse(errorText); } catch (_e) { /* ignore */ }
             
             diagnosticLogger.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`, errorJson || errorText);
 
@@ -214,7 +214,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
                     userId: session?.user?.id,
                 });
                 
-                const userMessage = 'âš ï¸ Il tuo ruolo utente Ã¨ stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverÃ  il problema.';
+                const userMessage = '⚠️ Il tuo ruolo utente è stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverà il problema.';
                 const diagnosticReport = createDiagnosticReport(
                     userMessage, 
                     functionName, 
@@ -315,7 +315,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             
             const userMessage = isNetworkError 
                 ? 'Errore di rete. Controlla la connessione e riprova.'
-                : 'Errore di comunicazione con il server. Riprova piÃ¹ tardi.';
+                : 'Errore di comunicazione con il server. Riprova più tardi.';
                 
             const diagnosticReport = createDiagnosticReport(
                 userMessage,

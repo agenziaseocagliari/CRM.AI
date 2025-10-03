@@ -1,4 +1,4 @@
-Ôªø// src/components/CalendarView.tsx
+// src/components/CalendarView.tsx
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { useOutletContext, Link } from 'react-router-dom';
@@ -158,7 +158,7 @@ export const CalendarView: React.FC = () => {
             }
             
         } catch (err: any) {
-            // L'errore dettagliato √® gi√†  gestito e mostrato da invokeSupabaseFunction
+            // L'errore dettagliato Ë gi‡  gestito e mostrato da invokeSupabaseFunction
             setIsConnecting(false);
         }
     };
@@ -178,7 +178,7 @@ export const CalendarView: React.FC = () => {
                     <div className="mb-4 p-3 bg-red-50 text-red-800 text-sm rounded-md flex items-start space-x-2">
                         <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                         <span>
-                            La connessione con Google Calendar ha un problema. Le funzionalit√É  del calendario sono limitate.
+                            La connessione con Google Calendar ha un problema. Le funzionalit√  del calendario sono limitate.
                             {' '}
                             <Link to="/settings" className="font-bold underline hover:text-red-900">
                                 Vai alle impostazioni per riconnettere il tuo account.

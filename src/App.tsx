@@ -1,5 +1,5 @@
-﻿import React, { useEffect } from 'react';
-// FIX: Corrected imports for                     IMPORTANTE: Ricaricare la pagina non risolverà il problema. È necessario un nuovo login.     <p className="font-semibold text-lg">⚠️ Sessione Non Valida</p>           <p className="font-semibold text-lg">⚠️ Sessione Non Valida</p>outes              IMPORTANTE: Ricaricare la pagina non risolverà il problema. È necessario un nuovo login. Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
+import React, { useEffect } from 'react';
+// FIX: Corrected imports for                     IMPORTANTE: Ricaricare la pagina non risolver� il problema. � necessario un nuovo login.     <p className="font-semibold text-lg">?? Sessione Non Valida</p>           <p className="font-semibold text-lg">?? Sessione Non Valida</p>outes              IMPORTANTE: Ricaricare la pagina non risolver� il problema. � necessario un nuovo login. Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
@@ -66,18 +66,18 @@ const App: React.FC = () => {
   // JWT Health Check - warn if user_role is missing and force logout
   useEffect(() => {
     if (session && jwtClaims && !userRole) {
-      diagnosticLogger.error('"Œ [App] JWT TOKEN DEFECT: user_role is missing from JWT');
+      diagnosticLogger.error('"�� [App] JWT TOKEN DEFECT: user_role is missing from JWT');
       
       toast.error(
         (t) => (
           <div className="space-y-3">
-            <p className="font-semibold text-lg">"š ï¸ Sessione Non Valida</p>
+            <p className="font-semibold text-lg">"� ️ Sessione Non Valida</p>
             <p className="text-sm">
-              La tua sessione è scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
+              La tua sessione � scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
               <span className="font-bold">superadmin</span> o del tuo account.
             </p>
             <p className="text-xs text-gray-600">
-              IMPORTANTE: Ricaricare la pagina non risolverÃ  il problema. È necessario un nuovo login.
+              IMPORTANTE: Ricaricare la pagina non risolver�  il problema. � necessario un nuovo login.
             </p>
             <button
               onClick={async () => {
@@ -89,7 +89,7 @@ const App: React.FC = () => {
               }}
               className="w-full mt-2 bg-red-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-700"
             >
-              ðŸšª Logout e Torna al Login
+              🚪 Logout e Torna al Login
             </button>
           </div>
         ),
@@ -106,7 +106,7 @@ const App: React.FC = () => {
       // If user_role is missing, warn before reload
       if (session && !userRole) {
         e.preventDefault();
-        e.returnValue = 'La tua sessione non è valida. Ricaricare non risolverÃ  il problema. Devi effettuare il logout e login.';
+        e.returnValue = 'La tua sessione non � valida. Ricaricare non risolver�  il problema. Devi effettuare il logout e login.';
         return e.returnValue;
       }
     };
@@ -123,16 +123,16 @@ const App: React.FC = () => {
     // Register service worker for PWA functionality
     if (process.env.NODE_ENV === 'production') {
       registerSW({
-        onSuccess: (registration) => {
+        onSuccess: (_registration) => {
           diagnosticLogger.info('sw', 'Service worker registered successfully');
           performanceMonitor.trackCustomMetric('sw_registration_success', 1);
         },
-        onUpdate: (registration) => {
+        onUpdate: (_registration) => {
           diagnosticLogger.info('sw', 'New service worker version available');
           // Could show update notification to user
           toast('New version available! Refresh to update.', {
             duration: 5000,
-            icon: '🔄'
+            icon: '??'
           });
         }
       });
@@ -163,10 +163,10 @@ const App: React.FC = () => {
     if (session && location.pathname === '/login') {
       // Role-based redirect after login
       if (userRole === 'super_admin') {
-        diagnosticLogger.info('ðŸ” [App] Super Admin logged in - redirecting to /super-admin/dashboard');
+        diagnosticLogger.info('🔐 [App] Super Admin logged in - redirecting to /super-admin/dashboard');
         navigate('/super-admin/dashboard');
       } else {
-        diagnosticLogger.info('ðŸ‘¤ [App] Standard user logged in - redirecting to /dashboard');
+        diagnosticLogger.info('👤 [App] Standard user logged in - redirecting to /dashboard');
         navigate('/dashboard');
       }
     } else if (!session && location.pathname !== '/login' && location.pathname !== '/') {
@@ -174,7 +174,7 @@ const App: React.FC = () => {
       const publicPaths = ['/', '/login', '/forgot-password', '/reset-password', '/form/', '/privacy-policy', '/terms-of-service'];
       const isPublicPath = publicPaths.some(path => location.pathname.startsWith(path));
       if (!isPublicPath) {
-        diagnosticLogger.info('ðŸ”’ [App] Redirecting to login - no session on protected route');
+        diagnosticLogger.info('🔒 [App] Redirecting to login - no session on protected route');
         navigate('/');
       }
     }
@@ -190,11 +190,11 @@ const App: React.FC = () => {
     );
     
     if (userRole === 'super_admin' && isStandardCrmRoute) {
-      diagnosticLogger.warn('"š ï¸ [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
+      diagnosticLogger.warn('"� ️ [App] Super Admin attempting to access standard CRM route - redirecting to /super-admin/dashboard');
       toast.error('Come Super Admin, devi usare la dashboard dedicata.', { duration: 3000 });
       navigate('/super-admin/dashboard', { replace: true });
     } else if (userRole !== 'super_admin' && isSuperAdminRoute) {
-      diagnosticLogger.warn('"š ï¸ [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
+      diagnosticLogger.warn('"� ️ [App] Non-Super Admin attempting to access Super Admin route - redirecting to /dashboard');
       toast.error('Non hai i permessi per accedere a questa sezione.', { duration: 3000 });
       navigate('/dashboard', { replace: true });
     }

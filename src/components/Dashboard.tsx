@@ -1,4 +1,4 @@
-ï»¿import React, { useState } from 'react';
+import React, { useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
@@ -50,7 +50,7 @@ export const Dashboard: React.FC = () => {
   const totalRevenue = allOpportunities.filter(op => op.stage === 'Won').reduce((sum, op) => sum + op.value, 0);
   
   // Calcolo dinamico basato sui contatti totali, non solo sui lead.
-  // Per una metrica piÃ¹ precisa, potremmo filtrare i contatti creati di recente.
+  // Per una metrica più precisa, potremmo filtrare i contatti creati di recente.
   // Per ora, mostriamo il totale dei contatti.
   const totalContactsCount = contacts?.length || 0;
 
@@ -61,7 +61,7 @@ export const Dashboard: React.FC = () => {
   const pipelineData = Object.values(PipelineStage).map(stage => ({
     name: stage,
     // FIX: Correctly access the length of the array for each stage, handling cases where a stage might have no opportunities.
-    OpportunitÃƒ : opportunities[stage]?.length || 0,
+    OpportunitÃ : opportunities[stage]?.length || 0,
   }));
   
   // Dati mock per il grafico a torta (da sostituire con dati reali quando disponibili)
@@ -106,7 +106,7 @@ export const Dashboard: React.FC = () => {
 
     const handleTriggerCheckToken = () => {
         if (!organization?.id) {
-            toast.error("ID Organizzazione non disponibile. Riprova piÃ¹ tardi.");
+            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
             return;
         }
         runDebugAction(
@@ -119,7 +119,7 @@ export const Dashboard: React.FC = () => {
 
     const handleTriggerCalendarEvents = () => {
         if (!organization?.id) {
-            toast.error("ID Organizzazione non disponibile. Riprova piÃ¹ tardi.");
+            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
             return;
         }
         const timeMin = new Date();
@@ -164,7 +164,7 @@ export const Dashboard: React.FC = () => {
             setWebhookResponseContent(output.trim());
         } catch (error: unknown) {
             const err = error as ApiError;
-            const output = `Si Ã¨ verificato un errore durante l'invio della richiesta.\n---\nMessage: ${err.message}\n---\nControlla la console del browser per maggiori dettagli.`;
+            const output = `Si è verificato un errore durante l'invio della richiesta.\n---\nMessage: ${err.message}\n---\nControlla la console del browser per maggiori dettagli.`;
             setWebhookResponseContent(output.trim());
         } finally {
             setIsLoading(false);
@@ -183,7 +183,7 @@ export const Dashboard: React.FC = () => {
       <SessionHealthIndicator mode="full" autoCheck checkInterval={5} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card title="Fatturato Totale" value={`"â€šÂ¬${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />
+        <Card title="Fatturato Totale" value={`"‚¬${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />
         <Card title="Contatti Totali" value={totalContactsCount.toString()} icon={<UsersIcon className="w-8 h-8 text-white" />} color="bg-green-500" />
         <Card title="Affari Vinti" value={dealsWon.toString()} icon={<CheckCircleIcon className="w-8 h-8 text-white" />} color="bg-yellow-500" />
         <Card title="Tasso di Conversione" value={`${conversionRate}%`} icon={<TrendingUpIcon className="w-8 h-8 text-white" />} color="bg-purple-500" />
@@ -199,7 +199,7 @@ export const Dashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="OpportunitÃƒ " fill="#4f46e5" />
+                <Bar dataKey="OpportunitÃ " fill="#4f46e5" />
               </BarChart>
             </ResponsiveContainer>
         </div>

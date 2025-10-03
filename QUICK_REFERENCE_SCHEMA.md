@@ -179,14 +179,16 @@ USING (user_id = auth.uid());
 ### ✅ Fixed: Non-IMMUTABLE Functions in Indexes
 
 **Problem**: 4 indexes used `NOW()` in WHERE clauses  
-**Fix**: Migration `20251103000000_fix_non_immutable_index_predicates.sql`  
-**Status**: ✅ Applied
+**Fix**: 
+- ✅ Source migration fixed: `20250123000000_phase3_performance_indexes.sql`
+- ✅ Fix migration updated: `20251103000000_fix_non_immutable_index_predicates.sql`  
+**Status**: ✅ Fully Resolved
 
 **Affected Indexes**:
 - `idx_rate_limits_cleanup`
-- `idx_crm_events_upcoming`
-- `idx_sessions_expiry`
-- `idx_audit_logs_retention`
+- `idx_upcoming_events`
+- `idx_sessions_expired`
+- `idx_audit_old_entries`
 
 ### ⚠️ Documented: Missing Core Tables
 
@@ -239,10 +241,10 @@ supabase db execute --file supabase/migrations/20251103000000_fix_non_immutable_
 # Run validation
 supabase db execute --file scripts/verify-phase3-schema.sql
 
-# Check indexes
-SELECT indexname FROM pg_indexes 
+# Check indexes (verify no NOW() predicates)
+SELECT indexname, indexdef FROM pg_indexes 
 WHERE schemaname = 'public' 
-AND indexname IN ('idx_rate_limits_cleanup', 'idx_crm_events_upcoming');
+AND indexname IN ('idx_rate_limits_cleanup', 'idx_upcoming_events', 'idx_sessions_expired', 'idx_audit_old_entries');
 ```
 
 ### 4. Monitor

@@ -1,4 +1,4 @@
-﻿-- =====================================================
+-- =====================================================
 -- Phase 3: Security Hardening - Zero Trust Model
 -- =====================================================
 -- Description: Enhanced RLS policies, audit logging, and security controls

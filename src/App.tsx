@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 // FIX: Corrected imports for                     IMPORTANTE: Ricaricare la pagina non risolver il problema.  necessario un nuovo login.     <p className="font-semibold text-lg">?? Sessione Non Valida</p>           <p className="font-semibold text-lg">?? Sessione Non Valida</p>outes              IMPORTANTE: Ricaricare la pagina non risolver il problema.  necessario un nuovo login. Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
@@ -71,7 +71,7 @@ const App: React.FC = () => {
       toast.error(
         (t) => (
           <div className="space-y-3">
-            <p className="font-semibold text-lg">"  Sessione Non Valida</p>
+            <p className="font-semibold text-lg">&quot;  Sessione Non Valida</p>
             <p className="text-sm">
               La tua sessione  scaduta o non valida. Devi effettuare nuovamente il login con le credenziali {' '}
               <span className="font-bold">superadmin</span> o del tuo account.

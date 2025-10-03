@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
@@ -71,7 +71,7 @@ export const Automations: React.FC = () => {
             setMessages(prev => [...prev, aiMessage]);
             setLastInteraction({ user: userMessage.text, ai: aiMessage.text });
 
-        } catch (err: any) {
+        } catch (_err: unknown) {
             const errorMessage: Message = { sender: 'ai', text: `Mi dispiace, si  verificato un errore. Riprova pi tardi.` };
             setMessages(prev => [...prev, errorMessage]);
             // Error toast is handled by the central helper
@@ -96,8 +96,8 @@ export const Automations: React.FC = () => {
             // Reset chat
             setMessages([]);
             setLastInteraction(null);
-        } catch (err: any) {
-            toast.error(`Errore nel salvataggio: ${err.message}`);
+        } catch (_err: unknown) {
+            toast.error(`Errore nel salvataggio: ${(_err as Error).message}`);
         } finally {
             setIsLoading(false);
         }
@@ -118,8 +118,8 @@ export const Automations: React.FC = () => {
             refetch();
             setDeleteModalOpen(false);
             setAutomationToDelete(null);
-        } catch(err: any) {
-            toast.error(`Errore: ${err.message}`);
+        } catch(err: unknown) {
+            toast.error(`Errore: ${(err as Error).message}`);
         } finally {
             setIsLoading(false);
         }

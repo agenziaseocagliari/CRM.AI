@@ -1,4 +1,4 @@
-﻿// src/components/ContactEventsList.tsx\n/* eslint-disable no-alert */
+// src/components/ContactEventsList.tsx\n/* eslint-disable no-alert */
 import React, { useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -45,7 +45,7 @@ const ReminderStatus: React.FC<{ reminders?: EventReminder[] }> = ({ reminders }
 
                 return (
                     <div key={r.id} title={title} className={`flex items-center space-x-1 p-1 bg-gray-100 rounded-md ${colorClass}`}>
-                        {r.channel === 'WhatsApp' ? <WhatsAppIcon className="w-3.5 h-3.5"/> : 'ðŸ“§'}
+                        {r.channel === 'WhatsApp' ? <WhatsAppIcon className="w-3.5 h-3.5"/> : '📧'}
                         {icon}
                     </div>
                 );
@@ -100,7 +100,7 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
     }, [contact, events]);
 
     const handleDeleteEvent = async (event: CrmEvent) => {
-        if (!window.confirm(`Annullare l'evento "${event.event_summary}"? SarÃ  rimosso anche da Google Calendar (se collegato).`)) {return;}
+        if (!window.window.confirm(`Annullare l'evento "${event.event_summary}"? Sar�  rimosso anche da Google Calendar (se collegato).`)) {return;}
 
         setIsDeleting(event.id);
         const toastId = toast.loading('Annullamento evento...');
@@ -114,7 +114,7 @@ export const ContactEventsList: React.FC<ContactEventsListProps> = ({ contact, e
             );
             toast.success('Evento annullato!', { id: toastId });
             onActionSuccess();
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(`Errore durante l'annullamento.`, { id: toastId });
             diagnosticLogger.error(err);
         } finally {

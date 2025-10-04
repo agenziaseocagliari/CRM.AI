@@ -99,6 +99,40 @@ export class UsageTrackingService {
   }
   
   /**
+   * Genera statistiche di fallback quando il database non è disponibile
+   */
+  private static getFallbackUsageStatistics(_organizationId: string): UsageStatistics {
+    const now = new Date();
+    const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 giorni da ora
+    
+    return {
+      current_period: {
+        start: now.toISOString(),
+        end: periodEnd.toISOString(),
+        days_remaining: 30
+      },
+      usage: {
+        ai_requests: { used: 0, limit: 1000, percentage: 0, overage: 0 },
+        whatsapp_messages: { used: 0, limit: 500, percentage: 0, overage: 0 },
+        email_marketing: { used: 0, limit: 1000, percentage: 0, overage: 0 }
+      },
+      costs: {
+        current_period_cents: 0,
+        overage_cents: 0,
+        total_cents: 0
+      },
+      alerts: {
+        ai_warning: false,
+        ai_critical: false,
+        whatsapp_warning: false,
+        whatsapp_critical: false,
+        email_warning: false,
+        email_critical: false
+      }
+    };
+  }
+
+  /**
    * Get current usage statistics for organization including extra credits
    */
   static async getUsageStatistics(organizationId: string): Promise<UsageStatistics | null> {
@@ -111,8 +145,8 @@ export class UsageTrackingService {
         .single();
       
       if (error || !data) {
-        diagnosticLogger.error('Error getting usage statistics:', error);
-        return null;
+        console.warn('Tabella organization_usage_summary non disponibile, uso dati di fallback:', error);
+        return this.getFallbackUsageStatistics(organizationId);
       }
 
       // Get extended limits with extra credits
@@ -209,6 +243,25 @@ export class UsageTrackingService {
   }
   
   /**
+   * Genera limiti di utilizzo di fallback
+   */
+  private static getFallbackUsageLimits(_organizationId: string): UsageLimits {
+    return {
+      ai_requests: 1000,
+      whatsapp_messages: 500,
+      email_marketing: 1000,
+      contacts: 1000,
+      storage_gb: 5,
+      is_unlimited: false,
+      overage_pricing: {
+        ai_requests: 1, // 1 cent per request
+        whatsapp_messages: 1, // 1 cent per message
+        email_marketing: 0.1 // 0.1 cent per email
+      }
+    };
+  }
+
+  /**
    * Get usage limits for organization
    */
   static async getUsageLimits(organizationId: string): Promise<UsageLimits | null> {
@@ -223,8 +276,8 @@ export class UsageTrackingService {
         .single();
       
       if (error || !data) {
-        diagnosticLogger.error('Error getting usage limits:', error);
-        return null;
+        console.warn('Tabella organization_subscriptions non disponibile, uso limiti di fallback:', error);
+        return this.getFallbackUsageLimits(organizationId);
       }
       
       const tier = data.subscription_tier;
@@ -264,7 +317,19 @@ export class UsageTrackingService {
     try {
       // Get base subscription limits
       const baseLimits = await this.getUsageLimits(organizationId);
-      if (!baseLimits) return null;
+      if (!baseLimits) {
+        console.warn('Impossibile ottenere limiti base, uso fallback');
+        const fallbackLimits = this.getFallbackUsageLimits(organizationId);
+        return {
+          ...fallbackLimits,
+          extra_credits: { ai_credits: 0, whatsapp_credits: 0, email_credits: 0 },
+          total_limits: {
+            ai_requests: fallbackLimits.ai_requests,
+            whatsapp_messages: fallbackLimits.whatsapp_messages,
+            email_marketing: fallbackLimits.email_marketing
+          }
+        } as UsageLimitsWithExtraCredits;
+      }
 
       // Get extra credits from our new view
       const { data: creditsData, error: creditsError } = await supabase

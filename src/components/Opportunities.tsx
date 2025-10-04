@@ -200,10 +200,10 @@ export const Opportunities: React.FC = () => {
             .update({ stage: targetStage })
             .eq('id', opportunityId);
         if (error) {throw error;}
-        toast.success(`OpportunitÃ  spostata in "${targetStage}"`);
+        toast.success(`Opportunità spostata in "${targetStage}"`);
     } catch (err) {
-        toast.error("Errore durante l'aggiornamento dell'opportunitÃ .");
-        diagnosticLogger.error('api', "Errore durante l'aggiornamento dell'opportunitÃ :", err as ApiError);
+        toast.error("Errore durante l'aggiornamento dell'Opportunità .");
+        diagnosticLogger.error('api', "Errore durante l'aggiornamento dell'Opportunità :", err as ApiError);
         setBoardData(originalData); // Ripristina in caso di fallimento
     }
   };
@@ -217,14 +217,14 @@ export const Opportunities: React.FC = () => {
         if (modalMode === 'edit' && opportunityToModify) {
             const { error } = await supabase.from('opportunities').update(formData).eq('id', opportunityToModify.id);
             if (error) {throw error;}
-            successMessage = 'OpportunitÃ  aggiornata con successo!';
+            successMessage = 'Opportunità  aggiornata con successo!';
         } else {
              if (!organization) {
-                throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'opportunitÃ .");
+                throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'Opportunità .");
             }
             const { error } = await supabase.rpc('create_opportunity', formData);
             if (error) {throw error;}
-            successMessage = 'OpportunitÃ  creata con successo!';
+            successMessage = 'Opportunità  creata con successo!';
         }
         refetchData();
         handleCloseModals();
@@ -245,7 +245,7 @@ export const Opportunities: React.FC = () => {
         if (error) {throw error;}
         refetchData();
         handleCloseModals();
-        toast.success('OpportunitÃ  eliminata!');
+        toast.success('Opportunità  eliminata!');
     } catch (err: unknown) {
         const error = err as ApiError;
         toast.error(`Errore: ${error.message}`);
@@ -262,10 +262,10 @@ export const Opportunities: React.FC = () => {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-text-primary">Pipeline OpportunitÃ </h1>
+        <h1 className="text-3xl font-bold text-text-primary">Pipeline Opportunità </h1>
         <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
             <PlusIcon className="w-5 h-5" />
-            <span>Aggiungi OpportunitÃ </span>
+            <span>Aggiungi Opportunità </span>
         </button>
       </div>
       <div className="flex space-x-4 overflow-x-auto pb-4">
@@ -281,7 +281,7 @@ export const Opportunities: React.FC = () => {
         ))}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModals} title={modalMode === 'add' ? 'Crea Nuova OpportunitÃ ' : 'Modifica OpportunitÃ '}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModals} title={modalMode === 'add' ? 'Crea Nuova Opportunità ' : 'Modifica Opportunità '}>
         <form onSubmit={handleSave} className="space-y-4">
             <div>
                 <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700">Contatto *</label>
@@ -313,7 +313,7 @@ export const Opportunities: React.FC = () => {
       </Modal>
 
       <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
-        <p>Sei sicuro di voler eliminare l&apos;opportunitÃ  per <strong>{opportunityToModify?.contact_name}</strong>? Questa azione è irreversibile.</p>
+        <p>Sei sicuro di voler eliminare l&apos;Opportunità  per <strong>{opportunityToModify?.contact_name}</strong>? Questa azione è irreversibile.</p>
         <div className="flex justify-end pt-4 border-t mt-4">
               <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
               <button onClick={handleDelete} disabled={isSaving} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isSaving ? 'Eliminazione...' : 'Elimina'}</button>

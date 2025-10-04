@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 import { useAuth } from '../../contexts/AuthContext';
 import extraCreditsStoreService, { 
-  type ExtraCreditsPackage 
+  type ExtraCreditsPackage as ExtraCreditsPackageType 
 } from '../../lib/services/extraCreditsStoreService';
 import { 
   SparklesIcon,
@@ -50,7 +50,7 @@ const processPayment = async (_packageInfo: ExtraCreditsPackage, _organizationId
 
 const ExtraCreditsStore: React.FC = () => {
   const { session } = useAuth();
-  const [packages, setPackages] = useState<ExtraCreditsPackage[]>([]);
+  const [packages, setPackages] = useState<ExtraCreditsPackageType[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
@@ -74,7 +74,7 @@ const ExtraCreditsStore: React.FC = () => {
     }
   };
 
-  const handlePurchase = async (pkg: ExtraCreditsPackage) => {
+  const handlePurchase = async (pkg: ExtraCreditsPackageType) => {
     if (!organizationId) {
       toast.error('Devi essere loggato per acquistare crediti');
       return;
@@ -147,7 +147,7 @@ const ExtraCreditsStore: React.FC = () => {
     }
     acc[pkg.credit_type].push(pkg);
     return acc;
-  }, {} as Record<string, ExtraCreditsPackage[]>);
+  }, {} as Record<string, ExtraCreditsPackageType[]>);
 
   return (
     <div className="max-w-7xl mx-auto p-6">

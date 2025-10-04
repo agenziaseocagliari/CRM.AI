@@ -11,7 +11,7 @@ import { JWTViewer } from './JWTViewer';
 import { TwoFactorSettings } from './TwoFactorAuth';
 import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons';
 import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
-import { UsageDashboard } from './UsageDashboard';
+import { UsageDashboard } from './usage/UsageDashboard';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
@@ -305,7 +305,7 @@ export const Settings: React.FC = () => {
                     </div>
                 )}
                 
-                {activeTab === 'billing' && <UsageDashboard subscription={subscription} ledger={ledger} />}
+                {activeTab === 'billing' && <UsageDashboard />}
                 
                 {activeTab === 'security' && (
                     <div className="space-y-6">

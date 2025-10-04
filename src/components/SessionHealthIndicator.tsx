@@ -1,5 +1,11 @@
 ﻿/**
- * Session Health Indicator Compon      const intervalId = setInterval(() =          <span className                <div className="flex items-center j                      <button
+ * Session Health Indicator Compon      const intervalId = setInterval(() =          <span className                <div className="flex items-center j                            <button
+          onClick={handleHealthCheck}
+          disabled={isChecking}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 text-sm"
+        >
+          {isChecking ? 'Checking...' : '🔍 Run Check'}
+        </button>on
           onClick={handleHealthCheck}
           disabled={isChecking}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 text-sm"

@@ -33,19 +33,19 @@ CREATE TABLE IF NOT EXISTS extra_credits_packages (
 -- Insert extra credits packages (margini 80%+)
 INSERT INTO extra_credits_packages (name, display_name, credit_type, credits_amount, price_cents, cost_cents) VALUES
 -- AI Credits Packages
-('ai_100', '100 AI Credits', 'ai', 100, 800, 120, TRUE), -- €8, costo €1.20, margine 85%
-('ai_500', '500 AI Credits', 'ai', 500, 3500, 600, TRUE), -- €35, costo €6, margine 83%
-('ai_1000', '1000 AI Credits', 'ai', 1000, 6500, 1200, TRUE), -- €65, costo €12, margine 82%
+('ai_100', '100 AI Credits', 'ai', 100, 800, 120), -- €8, costo €1.20, margine 85%
+('ai_500', '500 AI Credits', 'ai', 500, 3500, 600), -- €35, costo €6, margine 83%
+('ai_1000', '1000 AI Credits', 'ai', 1000, 6500, 1200), -- €65, costo €12, margine 82%
 
 -- WhatsApp Credits Packages  
-('whatsapp_100', '100 WhatsApp Credits', 'whatsapp', 100, 500, 70, TRUE), -- €5, costo €0.70, margine 86%
-('whatsapp_500', '500 WhatsApp Credits', 'whatsapp', 500, 2000, 350, TRUE), -- €20, costo €3.50, margine 83%
-('whatsapp_1000', '1000 WhatsApp Credits', 'whatsapp', 1000, 3500, 700, TRUE), -- €35, costo €7, margine 80%
+('whatsapp_100', '100 WhatsApp Credits', 'whatsapp', 100, 500, 70), -- €5, costo €0.70, margine 86%
+('whatsapp_500', '500 WhatsApp Credits', 'whatsapp', 500, 2000, 350), -- €20, costo €3.50, margine 83%
+('whatsapp_1000', '1000 WhatsApp Credits', 'whatsapp', 1000, 3500, 700), -- €35, costo €7, margine 80%
 
 -- Email Credits Packages
-('email_5000', '5,000 Email Credits', 'email', 5000, 1000, 200, TRUE), -- €10, costo €2, margine 80%
-('email_10000', '10,000 Email Credits', 'email', 10000, 1800, 400, TRUE), -- €18, costo €4, margine 78%
-('email_25000', '25,000 Email Credits', 'email', 25000, 4000, 1000, TRUE) -- €40, costo €10, margine 75%
+('email_5000', '5,000 Email Credits', 'email', 5000, 1000, 200), -- €10, costo €2, margine 80%
+('email_10000', '10,000 Email Credits', 'email', 10000, 1800, 400), -- €18, costo €4, margine 78%
+('email_25000', '25,000 Email Credits', 'email', 25000, 4000, 1000) -- €40, costo €10, margine 75%
 ON CONFLICT (name) DO NOTHING;
 
 -- 2. ORGANIZATION EXTRA CREDITS PURCHASES TABLE

@@ -52,7 +52,7 @@ const KanbanCard: React.FC<{
       className="bg-white p-4 mb-3 rounded-lg shadow cursor-grab active:cursor-grabbing border-l-4 border-primary relative group"
     >
       <p className="font-semibold text-gray-800">{opportunity.contact_name}</p>
-      <p className="text-sm text-gray-600">"‚¬{opportunity.value.toLocaleString('it-IT')}</p>
+      <p className="text-sm text-gray-600">€{opportunity.value.toLocaleString('it-IT')}</p>
       <p className="text-xs text-gray-400 mt-2">Assegnato a: {opportunity.assigned_to}</p>
       <p className="text-xs text-gray-500 mt-1">Scadenza: {new Date(opportunity.close_date).toLocaleDateString('it-IT')}</p>
       
@@ -92,7 +92,7 @@ const KanbanColumn: React.FC<{
         <span className={`font-bold text-sm px-2 py-1 rounded-full ${stageColors[stage]} ${stageTextColors[stage]}`}>{opportunities.length}</span>
       </div>
       <div className='text-sm font-bold text-gray-500 mb-3 px-2'>
-        "‚¬{totalValue.toLocaleString('it-IT')}
+        €{totalValue.toLocaleString('it-IT')}
       </div>
       <div className="h-full">
         {opportunities.map((op) => (
@@ -293,7 +293,7 @@ export const Opportunities: React.FC = () => {
                 </select>
             </div>
              <div>
-                <label htmlFor="value" className="block text-sm font-medium text-gray-700">Valore ("‚¬)</label>
+                <label htmlFor="value" className="block text-sm font-medium text-gray-700">Valore (€)</label>
                 <input type="number" id="value" name="value" value={formData.value} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
             </div>
              <div>

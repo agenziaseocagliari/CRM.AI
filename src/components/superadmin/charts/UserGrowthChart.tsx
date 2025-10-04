@@ -95,7 +95,7 @@ export const UserGrowthChart: React.FC = () => {
             <div className="bg-card dark:bg-dark-card p-6 rounded-lg shadow">
                 <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Crescita Utenti</h2>
                 <div className="flex flex-col items-center justify-center h-64 bg-red-50 dark:bg-red-900/20 rounded-md">
-                    <p className="text-red-600 dark:text-red-400 mb-4">"š ï¸ {error}</p>
+                    <p className="text-red-600 dark:text-red-400 mb-4">⚠️ {error}</p>
                     <button
                         onClick={fetchData}
                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-indigo-700"

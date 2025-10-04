@@ -91,20 +91,6 @@ const SystemHealthDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Generate realistic timestamps in Rome timezone (UTC+2)
-  const generateRomeTimestamp = (minutesAgo: number = 0): string => {
-    const now = new Date();
-    const romeTime = new Date(now.getTime() - (minutesAgo * 60 * 1000));
-    // Format as ISO string but with Rome timezone offset
-    const year = romeTime.getFullYear();
-    const month = String(romeTime.getMonth() + 1).padStart(2, '0');
-    const day = String(romeTime.getDate()).padStart(2, '0');
-    const hours = String(romeTime.getHours()).padStart(2, '0');
-    const minutes = String(romeTime.getMinutes()).padStart(2, '0');
-    const seconds = String(romeTime.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+02:00`;
-  };
-
   const fetchSystemHealth = async () => {
     try {
       setLoading(true);
@@ -128,14 +114,14 @@ const SystemHealthDashboard: React.FC = () => {
           { endpoint: '/api/payments', total: 1890, errors: 0, errorRate: '0.00%', status: 'healthy' }
         ],
         slowQueries: [
-          { query: 'SELECT * FROM orders WHERE...', duration: 2340, timestamp: generateRomeTimestamp(4), table: 'orders' },
-          { query: 'UPDATE users SET...', duration: 1890, timestamp: generateRomeTimestamp(6), table: 'users' }
+          { query: 'SELECT * FROM orders WHERE...', duration: 2340, timestamp: '2024-01-15T10:30:00Z', table: 'orders' },
+          { query: 'UPDATE users SET...', duration: 1890, timestamp: '2024-01-15T10:25:00Z', table: 'users' }
         ],
         errors: [
-          { endpoint: '/api/payments', error_message: 'Connection timeout', status_code: 500, created_at: generateRomeTimestamp(2), severity: 'high' }
+          { endpoint: '/api/payments', error_message: 'Connection timeout', status_code: 500, created_at: '2024-01-15T10:32:00Z', severity: 'high' }
         ],
         alerts: [
-          { id: '1', message: 'High error rate detected on /api/orders', alert_type: 'warning', created_at: generateRomeTimestamp(4), resolved: false }
+          { id: '1', message: 'High error rate detected on /api/orders', alert_type: 'warning', created_at: '2024-01-15T10:30:00Z', resolved: false }
         ]
       };
 
@@ -461,4 +447,3 @@ const SystemHealthDashboard: React.FC = () => {
 };
 
 export default SystemHealthDashboard;
-export { SystemHealthDashboard };

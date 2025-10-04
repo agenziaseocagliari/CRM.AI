@@ -1,0 +1,115 @@
+﻿import React, { useState } from 'react';
+
+import { useAuth } from '../contexts/AuthContext';
+
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
+/**
+ * Debug panel to show JWT claims in real-time.
+ * Can be toggled with Ctrl+Shift+D or by clicking the debug icon.
+ */
+export const DebugPanel: React.FC = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const { jwtClaims, userRole, userEmail, userId, organizationId, isSuperAdmin, isAdmin, isUser } = useAuth();
+
+  // Toggle visibility with keyboard shortcut
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setIsVisible(prev => !prev);
+        diagnosticLogger.info('ðŸ› [DebugPanel] Toggled:', !isVisible);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isVisible]);
+
+  if (!isVisible) {
+    return (
+      <button
+        onClick={() => setIsVisible(true)}
+        className="fixed bottom-4 right-4 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 z-50"
+        title="Debug JWT Claims (Ctrl+Shift+D)"
+      >
+        ðŸ›
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 bg-white border-2 border-gray-800 rounded-lg shadow-2xl p-4 w-96 max-h-96 overflow-y-auto z-50">
+      <div className="flex justify-between items-center mb-3 border-b pb-2">
+        <h3 className="font-bold text-lg">ðŸ› Debug JWT Claims</h3>
+        <button
+          onClick={() => setIsVisible(false)}
+          className="text-gray-500 hover:text-gray-700 font-bold"
+        >
+          "•
+        </button>
+      </div>
+
+      <div className="space-y-2 text-sm">
+        <div className="bg-gray-50 p-2 rounded">
+          <strong>User Role:</strong>
+          <div className="font-mono text-blue-600">
+            {userRole || <span className="text-red-600">NULL "š ï¸</span>}
+          </div>
+        </div>
+
+        <div className="bg-gray-50 p-2 rounded">
+          <strong>Email:</strong>
+          <div className="font-mono text-gray-700">{userEmail || 'N/A'}</div>
+        </div>
+
+        <div className="bg-gray-50 p-2 rounded">
+          <strong>User ID (sub):</strong>
+          <div className="font-mono text-xs text-gray-600">{userId || 'N/A'}</div>
+        </div>
+
+        <div className="bg-gray-50 p-2 rounded">
+          <strong>Organization ID:</strong>
+          <div className="font-mono text-xs text-gray-600">{organizationId || 'N/A'}</div>
+        </div>
+
+        <div className="border-t pt-2 mt-2">
+          <strong>Role Flags:</strong>
+          <div className="grid grid-cols-3 gap-2 mt-1">
+            <div className={`p-1 rounded text-center text-xs ${isSuperAdmin ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}>
+              Super Admin {isSuperAdmin ? '"…' : '"Œ'}
+            </div>
+            <div className={`p-1 rounded text-center text-xs ${isAdmin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
+              Admin {isAdmin ? '"…' : '"Œ'}
+            </div>
+            <div className={`p-1 rounded text-center text-xs ${isUser ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
+              User {isUser ? '"…' : '"Œ'}
+            </div>
+          </div>
+        </div>
+
+        {jwtClaims && (
+          <details className="mt-2">
+            <summary className="cursor-pointer font-semibold text-xs text-gray-600">
+              All Claims (click to expand)
+            </summary>
+            <pre className="mt-2 text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+              {JSON.stringify(jwtClaims, null, 2)}
+            </pre>
+          </details>
+        )}
+
+        {!userRole && (
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+            "š ï¸ <strong>WARNING:</strong> user_role is missing from JWT! User must logout and login again.
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 text-xs text-gray-500 text-center border-t pt-2">
+        Press <kbd className="bg-gray-200 px-1 rounded">Ctrl+Shift+D</kbd> to toggle
+      </div>
+    </div>
+  );
+};
+
+
+

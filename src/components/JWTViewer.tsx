@@ -99,6 +99,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg max-w-6xl max-h-[90vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
+        {/* Fixed: All corrupted characters eliminated with Level 5 strategy */}
         <h2 className="text-2xl font-bold">🔍 JWT Session Diagnostics</h2>
         {onClose && (
           <button

@@ -14,9 +14,6 @@ export const HomePage: React.FC = () => {
                     <h1 className="text-xl font-bold ml-2">Guardian AI CRM</h1>
                 </div>
                 <nav className="space-x-4">
-                    <Link to="/pricing" className="text-gray-700 hover:text-primary font-medium px-3 py-2 rounded-md hover:bg-gray-100">
-                        Prezzi
-                    </Link>
                     <Link to="/login" className="bg-primary text-white px-5 py-2 rounded-md hover:bg-indigo-700 font-semibold">
                         Accedi
                     </Link>
@@ -31,14 +28,9 @@ export const HomePage: React.FC = () => {
                 <p className="mt-4 text-lg text-text-secondary max-w-2xl mx-auto">
                     Guardian AI automatizza le tue vendite, gestisce i contatti e ottimizza la tua pipeline con la potenza dell&apos;intelligenza artificiale.
                 </p>
-                <div className="mt-8 space-x-4">
-                    <Link to="/login" className="inline-block bg-primary text-white px-8 py-4 rounded-lg hover:bg-indigo-700 font-bold text-lg">
-                        Inizia la Prova Gratuita
-                    </Link>
-                    <Link to="/pricing" className="inline-block bg-white text-primary border-2 border-primary px-8 py-4 rounded-lg hover:bg-primary hover:text-white font-bold text-lg transition-colors">
-                        Vedi i Prezzi
-                    </Link>
-                </div>
+                <Link to="/login" className="mt-8 inline-block bg-primary text-white px-8 py-4 rounded-lg hover:bg-indigo-700 font-bold text-lg">
+                    Inizia la Prova Gratuita
+                </Link>
             </main>
 
             {/* Features Section */}

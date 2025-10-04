@@ -1,5 +1,21 @@
 ﻿/**
- * Session Health Indicator Component
+ * Session Health Indicator Compon      const intervalId = setInterval(() =          <span className                <div className="flex items-center j        <button
+               <span className="text-3xl">
+            {healthStatus.isHealthy ? '✅' : '⚠️'}
+          </span>  onClick={handleHealthCheck}
+          disabled={isChecking}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 text-sm"
+        >
+          {isChecking ? 'Checking...' : '🔍 Run Check'}
+        </button>between text-sm">
+                  <span>Valid Session:</span>
+                  <span>{healthStatus.hasValidSession ? '✅' : '❌'}</span>
+                </div>xt-lg">
+            {healthStatus.isHealthy ? '✅' : '⚠️'}
+          </span>
+        diagnosticLogger.info('🏥 [Session Health] Running periodic health check...');
+        performHealthCheck();
+      }, checkInterval * 60 * 1000);
  * 
  * Displays real-time session health status and allows users to run health checks.
  * Can be integrated into dashboard, header, or as a floating widget.
@@ -76,7 +92,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
           title="Session Health Status"
         >
           <span className="text-lg">
-            {healthStatus.isHealthy ? 'âœ…' : 'âš ï¸'}
+            {healthStatus.isHealthy ? '✅' : 'âš ï¸'}
           </span>
           <span className="text-sm font-semibold">
             {healthStatus.isHealthy ? 'Healthy' : 'Issues'}
@@ -93,22 +109,22 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
                   onClick={() => setShowDetails(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  Ã—
+                  ×
                 </button>
               </div>
 
               <div className="space-y-2 mb-3">
                 <div className="flex items-center justify-between text-sm">
                   <span>Valid Session:</span>
-                  <span>{healthStatus.hasValidSession ? 'âœ…' : 'âŒ'}</span>
+                  <span>{healthStatus.hasValidSession ? '✅' : 'âŒ'}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span>Has user_role:</span>
-                  <span>{healthStatus.hasUserRoleClaim ? 'âœ…' : 'âŒ'}</span>
+                  <span>{healthStatus.hasUserRoleClaim ? '✅' : 'âŒ'}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span>Claims Match Storage:</span>
-                  <span>{healthStatus.claimsMatchStorage ? 'âœ…' : 'âŒ'}</span>
+                  <span>{healthStatus.claimsMatchStorage ? '✅' : 'âŒ'}</span>
                 </div>
               </div>
 
@@ -163,7 +179,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
       }`}>
         <div className="flex items-center space-x-3">
           <span className="text-3xl">
-            {healthStatus.isHealthy ? 'âœ…' : 'âš ï¸'}
+            {healthStatus.isHealthy ? '✅' : 'âš ï¸'}
           </span>
           <div>
             <div className="text-lg font-bold">
@@ -185,7 +201,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
         }`}>
           <div className="text-center">
             <div className="text-2xl mb-1">
-              {healthStatus.hasValidSession ? 'âœ…' : 'âŒ'}
+              {healthStatus.hasValidSession ? '✅' : 'âŒ'}
             </div>
             <div className="text-sm font-semibold">Valid Session</div>
           </div>
@@ -198,7 +214,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
         }`}>
           <div className="text-center">
             <div className="text-2xl mb-1">
-              {healthStatus.hasUserRoleClaim ? 'âœ…' : 'âŒ'}
+              {healthStatus.hasUserRoleClaim ? '✅' : 'âŒ'}
             </div>
             <div className="text-sm font-semibold">user_role Claim</div>
           </div>
@@ -211,7 +227,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
         }`}>
           <div className="text-center">
             <div className="text-2xl mb-1">
-              {healthStatus.claimsMatchStorage ? 'âœ…' : 'âŒ'}
+              {healthStatus.claimsMatchStorage ? '✅' : 'âŒ'}
             </div>
             <div className="text-sm font-semibold">Claims Match</div>
           </div>
@@ -221,7 +237,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
       {/* Issues List */}
       {healthStatus.issues.length > 0 && (
         <div className="p-4 bg-red-50 rounded-lg border border-red-300">
-          <h4 className="font-bold text-red-800 mb-2">ðŸš¨ Issues Detected:</h4>
+          <h4 className="font-bold text-red-800 mb-2">🚨 Issues Detected:</h4>
           <ul className="space-y-1">
             {healthStatus.issues.map((issue, idx) => (
               <li key={idx} className="text-sm text-red-700">

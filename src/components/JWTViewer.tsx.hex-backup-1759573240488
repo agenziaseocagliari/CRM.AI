@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 import { useJWTDiagnostics } from '../hooks/useJWTDiagnostics';
@@ -99,13 +99,13 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg max-w-6xl max-h-[90vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">🔍 JWT Session Diagnostics</h2>
+        <h2 className="text-2xl font-bold">ðŸ” JWT Session Diagnostics</h2>
         {onClose && (
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
           >
-            ×
+            Ã—
           </button>
         )}
       </div>
@@ -115,7 +115,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
         <div className="flex justify-between items-center">
           <div>
             <div className="text-lg font-bold">
-              {healthStatus.isHealthy ? '✅ Session Healthy' : '❌ Session Issues Detected'}
+              {healthStatus.isHealthy ? '✅ Session Healthy' : '"Œ Session Issues Detected'}
             </div>
             <div className="text-sm text-gray-600 mt-1">
               Last checked: {new Date(healthStatus.lastChecked).toLocaleString()}
@@ -125,7 +125,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
             onClick={performHealthCheck}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-sm"
           >
-            🔍 Run Health Check
+            ðŸ” Run Health Check
           </button>
         </div>
         {!healthStatus.isHealthy && healthStatus.issues.length > 0 && (
@@ -175,10 +175,10 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
             <div>
               <div className="text-sm font-semibold text-gray-600 mb-1">Ruolo Corrente</div>
               <div className="text-2xl font-bold text-indigo-900">
-                {diagnostics.claims.user_role === 'super_admin' && '🔍 Super Admin'}
-                {diagnostics.claims.user_role === 'admin' && '⚙️ Admin'}
-                {diagnostics.claims.user_role === 'user' && '👤 Utente Standard'}
-                {!['super_admin', 'admin', 'user'].includes(diagnostics.claims.user_role) && `📋 ${diagnostics.claims.user_role}`}
+                {diagnostics.claims.user_role === 'super_admin' && 'ðŸ” Super Admin'}
+                {diagnostics.claims.user_role === 'admin' && '"š™ï¸ Admin'}
+                {diagnostics.claims.user_role === 'user' && 'ðŸ‘¤ Utente Standard'}
+                {!['super_admin', 'admin', 'user'].includes(diagnostics.claims.user_role) && `ðŸ“‹ ${diagnostics.claims.user_role}`}
               </div>
               {diagnostics.claims.email && (
                 <div className="text-sm text-gray-600 mt-1">
@@ -199,7 +199,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
             <div className="text-right">
               <div className="text-xs text-gray-500 mb-1">Per cambiare ruolo:</div>
               <div className="text-xs text-gray-700">
-                Logout → Login con account diverso
+                Logout "†’ Login con account diverso
               </div>
             </div>
           </div>
@@ -210,25 +210,25 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className={`p-4 rounded-lg border-2 ${diagnostics.isValid ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
           <div className="text-sm font-semibold mb-1">Token Valido</div>
-          <div className="text-2xl">{diagnostics.isValid ? '✅ Sì' : '❌ No'}</div>
+          <div className="text-2xl">{diagnostics.isValid ? '✅ Sì' : '"Œ No'}</div>
         </div>
         
         <div className={`p-4 rounded-lg border-2 ${diagnostics.hasUserRole ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
           <div className="text-sm font-semibold mb-1">user_role Presente</div>
-          <div className="text-2xl">{diagnostics.hasUserRole ? '✅ Sì' : '❌ No'}</div>
+          <div className="text-2xl">{diagnostics.hasUserRole ? '✅ Sì' : '"Œ No'}</div>
         </div>
       </div>
 
       {/* TOKEN DEFECT Warning */}
       {!diagnostics.hasUserRole && diagnostics.isValid && (
         <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg">
-          <h3 className="text-xl font-bold text-yellow-800 mb-2">⚠️ TOKEN DEFECT RILEVATO</h3>
+          <h3 className="text-xl font-bold text-yellow-800 mb-2">"š ï¸ TOKEN DEFECT RILEVATO</h3>
           <p className="text-yellow-900 mb-3">
             Il tuo JWT non contiene il claim <code className="bg-yellow-200 px-2 py-1 rounded">user_role</code>.
             Questo significa che il token è stato generato prima della configurazione del custom_access_token_hook.
           </p>
           <div className="bg-white p-3 rounded border border-yellow-300 mb-3">
-            <h4 className="font-semibold mb-2">🔍 Azioni Consigliate:</h4>
+            <h4 className="font-semibold mb-2">ðŸ“ Azioni Consigliate:</h4>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               <li>Effettua un <strong>logout profondo</strong> (pulsante sotto)</li>
               <li>Pulizia completa di storage e cookie (già  inclusa nel logout profondo)</li>
@@ -240,14 +240,14 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
             onClick={handleDeepLogout}
             className="w-full bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600"
           >
-            🔄 Esegui Logout Profondo e Pulizia
+            ðŸ”„ Esegui Logout Profondo e Pulizia
           </button>
         </div>
       )}
 
       {/* Backend Update Warning */}
       <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-500 rounded-lg">
-        <h3 className="text-lg font-bold text-blue-800 mb-2">ℹ️ Importante: Aggiornamenti Backend</h3>
+        <h3 className="text-lg font-bold text-blue-800 mb-2">"„¹ï¸ Importante: Aggiornamenti Backend</h3>
         <p className="text-blue-900 text-sm">
           Dopo ogni aggiornamento backend o delle policy di autenticazione, è <strong>indispensabile rigenerare il JWT</strong>.
           Per farlo, effettua logout e login nuovamente.
@@ -269,7 +269,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       {/* Warnings */}
       {diagnostics.warnings.length > 0 && (
         <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
-          <h3 className="font-bold text-yellow-800 mb-2">⚠️ Avvisi</h3>
+          <h3 className="font-bold text-yellow-800 mb-2">"š ï¸ Avvisi</h3>
           <ul className="list-disc list-inside space-y-1">
             {diagnostics.warnings.map((warning, idx) => (
               <li key={idx} className="text-yellow-700 text-sm">{warning}</li>
@@ -281,7 +281,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       {/* Claims Display */}
       {diagnostics.claims && (
         <div className="mb-4">
-          <h3 className="font-bold mb-2">📋 JWT Claims</h3>
+          <h3 className="font-bold mb-2">ðŸ“‹ JWT Claims</h3>
           <div className="bg-gray-50 p-4 rounded border border-gray-300 font-mono text-sm overflow-x-auto">
             <table className="w-full">
               <tbody>
@@ -308,7 +308,7 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
       {/* Raw Token */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold">🔑 Token Raw</h3>
+          <h3 className="font-bold">ðŸ”‘ Token Raw</h3>
           <button
             onClick={() => setShowRawToken(!showRawToken)}
             className="text-sm text-blue-600 hover:text-blue-800"
@@ -477,15 +477,18 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
           onClick={copyFullDiagnostics}
           className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
         >
-          📋 Copia Report Completo
+          ðŸ“‹ Copia Report Completo
         </button>
         <button
           onClick={loadJWTData}
           className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
         >
-          🔄 Ricarica
+          ðŸ”„ Ricarica
         </button>
       </div>
     </div>
   );
 };
+
+
+

@@ -21,7 +21,7 @@ interface ApiError {
     code?: string;
 }
 
-// Componente per renderizzare dinamicamente i campi del form in anteprima o in modalitÃ  pubblica
+// Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità  pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
     const commonClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
     const label = <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">{field.label}{field.required ? ' *' : ''}</label>;

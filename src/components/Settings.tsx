@@ -202,7 +202,7 @@ export const Settings: React.FC = () => {
     };
     
     const handleGoogleDisconnect = async () => {
-        if (!organization || !window.confirm("Sei sicuro? Questo interromperÃ  la sincronizzazione con Google Calendar.")) {return;}
+        if (!organization || !window.confirm("Sei sicuro? Questo interromperà  la sincronizzazione con Google Calendar.")) {return;}
         try {
             // La disconnessione ora invoca una funzione dedicata per una pulizia completa
             await invokeSupabaseFunction('google-disconnect', { organization_id: organization.id });

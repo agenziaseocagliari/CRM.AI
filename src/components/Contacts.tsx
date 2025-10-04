@@ -51,7 +51,7 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
     if (!fullPhone) {
         return { prefix: '+39', number: '' };
     }
-    // Cerca il prefisso piÃ¹ lungo che corrisponde all'inizio del numero
+    // Cerca il prefisso più lungo che corrisponde all'inizio del numero
     const bestMatch = countryCodes.find(code => fullPhone.startsWith(code.dial_code));
 
     if (bestMatch) {
@@ -66,7 +66,7 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
         // Supponiamo un prefisso di 2 cifre dopo il + come fallback generico
         const prefix = fullPhone.substring(0, 3);
         const number = fullPhone.substring(3);
-        // Controlla se il prefisso trovato Ã¨ valido, altrimenti default
+        // Controlla se il prefisso trovato è valido, altrimenti default
         if (countryCodes.some(c => c.dial_code === prefix)) {
             return { prefix, number };
         }
@@ -448,7 +448,7 @@ export const Contacts: React.FC = () => {
 
             {/* Modal Conferma Eliminazione */}
             <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
-                <p>Sei sicuro di voler eliminare il contatto <strong>{selectedContact?.name}</strong>? Questa azione Ã¨ irreversibile.</p>
+                <p>Sei sicuro di voler eliminare il contatto <strong>{selectedContact?.name}</strong>? Questa azione è irreversibile.</p>
                 <div className="flex justify-end pt-4 border-t mt-4">
                     <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
                     <button onClick={handleDeleteContact} disabled={isSaving} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isSaving ? 'Eliminazione...' : 'Elimina'}</button>

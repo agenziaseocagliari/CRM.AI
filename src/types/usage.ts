@@ -226,6 +226,20 @@ export interface UsageLimits {
   };
 }
 
+// Extended usage limits with extra credits
+export interface UsageLimitsWithExtraCredits extends UsageLimits {
+  extra_credits: {
+    ai_credits: number;
+    whatsapp_credits: number;
+    email_credits: number;
+  };
+  total_limits: {
+    ai_requests: number;
+    whatsapp_messages: number;
+    email_marketing: number;
+  };
+}
+
 // Alert thresholds
 export interface AlertThresholds {
   WARNING_THRESHOLD: 80; // 80%

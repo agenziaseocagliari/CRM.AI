@@ -33,11 +33,13 @@ CREATE TABLE IF NOT EXISTS subscription_tiers (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Insert default tiers
+-- Insert optimized 5-tier structure (margini 80%+)
 INSERT INTO subscription_tiers (name, display_name, price_cents, ai_requests_limit, whatsapp_messages_limit, email_marketing_limit, contacts_limit, storage_limit_gb, features) VALUES
-('starter', 'Starter', 2900, 500, 100, 2000, 1000, 5, '{"super_admin": false, "advanced_ai": false, "priority_support": false}'),
-('professional', 'Professional', 6900, 2000, 500, 8000, 10000, 20, '{"super_admin": false, "advanced_ai": true, "priority_support": true, "automations": true}'),
-('enterprise', 'Enterprise', 14900, -1, -1, -1, -1, -1, '{"super_admin": true, "advanced_ai": true, "priority_support": true, "automations": true, "white_label": true}')
+('starter', 'Starter', 1900, 200, 150, 1000, 500, 5, '{"super_admin": false, "advanced_ai": false, "priority_support": false, "users_limit": 1}'),
+('professional', 'Professional', 3900, 400, 300, 3000, 2000, 10, '{"super_admin": false, "advanced_ai": true, "priority_support": false, "automations": true, "users_limit": 3}'),
+('business', 'Business', 7900, 800, 600, 8000, 5000, 25, '{"super_admin": false, "advanced_ai": true, "priority_support": true, "automations": true, "api_access": true, "users_limit": 10}'),
+('premium', 'Premium', 14900, 1500, 1200, 20000, 15000, 50, '{"super_admin": false, "advanced_ai": true, "priority_support": true, "automations": true, "api_access": true, "advanced_analytics": true, "users_limit": 25}'),
+('enterprise', 'Enterprise', -1, -1, -1, -1, -1, -1, '{"super_admin": true, "advanced_ai": true, "priority_support": true, "automations": true, "api_access": true, "advanced_analytics": true, "white_label": true, "custom_integrations": true, "dedicated_manager": true, "users_limit": -1, "custom_quote": true}')
 ON CONFLICT (name) DO NOTHING;
 
 -- 2. ORGANIZATION SUBSCRIPTIONS TABLE

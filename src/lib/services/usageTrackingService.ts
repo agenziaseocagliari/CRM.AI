@@ -15,7 +15,9 @@ import {
   SERVICE_COSTS,
   USAGE_ALERT_THRESHOLDS,
   SubscriptionTier,
-  OrganizationSubscription
+  OrganizationSubscription,
+  UsageLimits,
+  UsageLimitsWithExtraCredits
 } from '../../types/usage';
 import { diagnosticLogger } from '../mockDiagnosticLogger';
 
@@ -23,15 +25,16 @@ export class UsageTrackingService {
   
   /**
    * Track usage for a specific service
+   * Now includes extra credits consumption with FIFO logic
    */
   static async trackUsage(
     organizationId: string,
     request: TrackUsageRequest
   ): Promise<{ success: boolean; quota_exceeded?: boolean; current_usage?: UsageStatistics }> {
     try {
-      // 1. Get current quota and limits
+      // 1. Get current quota and limits (including extra credits)
       const quota = await this.getCurrentQuota(organizationId);
-      const limits = await this.getUsageLimits(organizationId);
+      const limits = await this.getUsageLimitsWithExtraCredits(organizationId);
       
       if (!quota || !limits) {
         throw new Error('Unable to get usage quota or limits');
@@ -41,12 +44,12 @@ export class UsageTrackingService {
       const costCents = this.calculateServiceCost(request.service_type, request.service_action, request.quantity);
       const billableCents = request.cost_cents || costCents;
       
-      // 3. Check if usage would exceed limits
+      // 3. Check if usage would exceed total limits (subscription + extra credits)
       const currentUsage = this.getCurrentUsageForService(quota, request.service_type);
       const newUsage = currentUsage + (request.quantity || 1);
-      const limit = this.getLimitForService(limits, request.service_type);
+      const totalLimit = this.getTotalLimitForService(limits, request.service_type);
       
-      const quotaExceeded = limit > 0 && newUsage > limit; // limit -1 = unlimited
+      const quotaExceeded = totalLimit > 0 && newUsage > totalLimit; // totalLimit -1 = unlimited
       
       // 4. Track the usage
       const { error: trackingError } = await supabase
@@ -72,9 +75,12 @@ export class UsageTrackingService {
       // 5. Update quota counters
       await this.updateQuotaUsage(organizationId, request.service_type, request.quantity || 1);
       
-      // 6. Check for alerts
+      // 6. Check for alerts (including extra credits consumption if needed)
       if (!quotaExceeded) {
-        await this.checkAndSendAlerts(organizationId, request.service_type, newUsage, limit);
+        await this.checkAndSendAlerts(organizationId, request.service_type, newUsage, totalLimit);
+        
+        // Also consume extra credits if needed
+        await this.consumeExtraCreditsIfNeeded(organizationId, request.service_type, request.quantity || 1);
       }
       
       // 7. Get updated usage statistics
@@ -93,10 +99,11 @@ export class UsageTrackingService {
   }
   
   /**
-   * Get current usage statistics for organization
+   * Get current usage statistics for organization including extra credits
    */
   static async getUsageStatistics(organizationId: string): Promise<UsageStatistics | null> {
     try {
+      // Get base usage data
       const { data, error } = await supabase
         .from('organization_usage_summary')
         .select('*')
@@ -107,11 +114,24 @@ export class UsageTrackingService {
         diagnosticLogger.error('Error getting usage statistics:', error);
         return null;
       }
+
+      // Get extended limits with extra credits
+      const extendedLimits = await this.getUsageLimitsWithExtraCredits(organizationId);
       
       // Calculate current period info
       const currentPeriodEnd = new Date(data.current_period_end);
       const now = new Date();
       const daysRemaining = Math.max(0, Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+      
+      // Use extended limits if available, otherwise fall back to base data
+      const aiLimit = extendedLimits?.total_limits.ai_requests ?? data.ai_limit;
+      const whatsappLimit = extendedLimits?.total_limits.whatsapp_messages ?? data.whatsapp_limit;
+      const emailLimit = extendedLimits?.total_limits.email_marketing ?? data.email_limit;
+      
+      // Calculate percentages with total limits (including extra credits)
+      const aiPercentage = aiLimit > 0 ? Math.round((data.ai_used * 100) / aiLimit) : 0;
+      const whatsappPercentage = whatsappLimit > 0 ? Math.round((data.whatsapp_used * 100) / whatsappLimit) : 0;
+      const emailPercentage = emailLimit > 0 ? Math.round((data.email_used * 100) / emailLimit) : 0;
       
       return {
         current_period: {
@@ -122,21 +142,21 @@ export class UsageTrackingService {
         usage: {
           ai_requests: {
             used: data.ai_used,
-            limit: data.ai_limit,
-            percentage: data.ai_usage_percent,
-            overage: Math.max(0, data.ai_used - data.ai_limit)
+            limit: aiLimit,
+            percentage: aiPercentage,
+            overage: Math.max(0, data.ai_used - aiLimit)
           },
           whatsapp_messages: {
             used: data.whatsapp_used,
-            limit: data.whatsapp_limit,
-            percentage: data.whatsapp_usage_percent,
-            overage: Math.max(0, data.whatsapp_used - data.whatsapp_limit)
+            limit: whatsappLimit,
+            percentage: whatsappPercentage,
+            overage: Math.max(0, data.whatsapp_used - whatsappLimit)
           },
           email_marketing: {
             used: data.email_used,
-            limit: data.email_limit,
-            percentage: data.email_usage_percent,
-            overage: Math.max(0, data.email_used - data.email_limit)
+            limit: emailLimit,
+            percentage: emailPercentage,
+            overage: Math.max(0, data.email_used - emailLimit)
           }
         },
         costs: {
@@ -145,12 +165,12 @@ export class UsageTrackingService {
           total_cents: 0 // Will be calculated
         },
         alerts: {
-          ai_warning: data.ai_usage_percent >= USAGE_ALERT_THRESHOLDS.WARNING_THRESHOLD,
-          ai_critical: data.ai_usage_percent >= USAGE_ALERT_THRESHOLDS.CRITICAL_THRESHOLD,
-          whatsapp_warning: data.whatsapp_usage_percent >= USAGE_ALERT_THRESHOLDS.WARNING_THRESHOLD,
-          whatsapp_critical: data.whatsapp_usage_percent >= USAGE_ALERT_THRESHOLDS.CRITICAL_THRESHOLD,
-          email_warning: data.email_usage_percent >= USAGE_ALERT_THRESHOLDS.WARNING_THRESHOLD,
-          email_critical: data.email_usage_percent >= USAGE_ALERT_THRESHOLDS.CRITICAL_THRESHOLD
+          ai_warning: aiPercentage >= USAGE_ALERT_THRESHOLDS.WARNING_THRESHOLD,
+          ai_critical: aiPercentage >= USAGE_ALERT_THRESHOLDS.CRITICAL_THRESHOLD,
+          whatsapp_warning: whatsappPercentage >= USAGE_ALERT_THRESHOLDS.WARNING_THRESHOLD,
+          whatsapp_critical: whatsappPercentage >= USAGE_ALERT_THRESHOLDS.CRITICAL_THRESHOLD,
+          email_warning: emailPercentage >= USAGE_ALERT_THRESHOLDS.WARNING_THRESHOLD,
+          email_critical: emailPercentage >= USAGE_ALERT_THRESHOLDS.CRITICAL_THRESHOLD
         }
       };
       
@@ -191,7 +211,7 @@ export class UsageTrackingService {
   /**
    * Get usage limits for organization
    */
-  static async getUsageLimits(organizationId: string): Promise<any> {
+  static async getUsageLimits(organizationId: string): Promise<UsageLimits | null> {
     try {
       const { data, error } = await supabase
         .from('organization_subscriptions')
@@ -213,12 +233,17 @@ export class UsageTrackingService {
       // Apply custom limits if they exist
       const customLimits = data.custom_limits || {};
       
+      const aiLimit = customLimits.ai_requests_limit ?? tier.ai_requests_limit;
+      const whatsappLimit = customLimits.whatsapp_messages_limit ?? tier.whatsapp_messages_limit;
+      const emailLimit = customLimits.email_marketing_limit ?? tier.email_marketing_limit;
+      
       return {
-        ai_requests: customLimits.ai_requests_limit ?? tier.ai_requests_limit,
-        whatsapp_messages: customLimits.whatsapp_messages_limit ?? tier.whatsapp_messages_limit,
-        email_marketing: customLimits.email_marketing_limit ?? tier.email_marketing_limit,
+        ai_requests: aiLimit,
+        whatsapp_messages: whatsappLimit,
+        email_marketing: emailLimit,
         contacts: customLimits.contacts_limit ?? tier.contacts_limit,
         storage_gb: customLimits.storage_limit_gb ?? tier.storage_limit_gb,
+        is_unlimited: aiLimit === -1 && whatsappLimit === -1 && emailLimit === -1,
         overage_pricing: {
           ai_requests: tier.ai_overage_cents,
           whatsapp_messages: tier.whatsapp_overage_cents,
@@ -229,6 +254,127 @@ export class UsageTrackingService {
     } catch (error) {
       diagnosticLogger.error('Error in getUsageLimits:', error);
       return null;
+    }
+  }
+
+  /**
+   * Get usage limits including extra credits for organization
+   */
+  static async getUsageLimitsWithExtraCredits(organizationId: string): Promise<UsageLimitsWithExtraCredits | null> {
+    try {
+      // Get base subscription limits
+      const baseLimits = await this.getUsageLimits(organizationId);
+      if (!baseLimits) return null;
+
+      // Get extra credits from our new view
+      const { data: creditsData, error: creditsError } = await supabase
+        .from('organization_credits_balance')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .single();
+
+      if (creditsError && creditsError.code !== 'PGRST116') { // Not found is OK
+        diagnosticLogger.error('Error getting extra credits:', creditsError);
+      }
+
+      const extraCredits = creditsData ? {
+        ai_credits: creditsData.extra_ai_credits || 0,
+        whatsapp_credits: creditsData.extra_whatsapp_credits || 0,
+        email_credits: creditsData.extra_email_credits || 0
+      } : {
+        ai_credits: 0,
+        whatsapp_credits: 0,
+        email_credits: 0
+      };
+
+      // Calculate total limits (subscription + extra credits)
+      const totalLimits = {
+        ai_requests: baseLimits.ai_requests === -1 ? -1 : baseLimits.ai_requests + extraCredits.ai_credits,
+        whatsapp_messages: baseLimits.whatsapp_messages === -1 ? -1 : baseLimits.whatsapp_messages + extraCredits.whatsapp_credits,
+        email_marketing: baseLimits.email_marketing === -1 ? -1 : baseLimits.email_marketing + extraCredits.email_credits
+      };
+
+      return {
+        ...baseLimits,
+        extra_credits: extraCredits,
+        total_limits: totalLimits
+      } as UsageLimitsWithExtraCredits;
+
+    } catch (error) {
+      diagnosticLogger.error('Error in getUsageLimitsWithExtraCredits:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get total limit for a service type including extra credits
+   */
+  static getTotalLimitForService(limits: UsageLimitsWithExtraCredits, serviceType: string): number {
+    if (!limits || !limits.total_limits) return -1;
+    
+    switch (serviceType) {
+      case 'ai_request': return limits.total_limits.ai_requests;
+      case 'whatsapp_message': return limits.total_limits.whatsapp_messages;
+      case 'email_marketing': return limits.total_limits.email_marketing;
+      default: return -1;
+    }
+  }
+
+  /**
+   * Consume extra credits if usage exceeds subscription limits
+   */
+  static async consumeExtraCreditsIfNeeded(
+    organizationId: string, 
+    serviceType: string, 
+    quantity: number
+  ): Promise<boolean> {
+    try {
+      // Get base subscription limits
+      const baseLimits = await this.getUsageLimits(organizationId);
+      if (!baseLimits) return false;
+
+      // Get current usage 
+      const quota = await this.getCurrentQuota(organizationId);
+      if (!quota) return false;
+
+      const currentUsage = this.getCurrentUsageForService(quota, serviceType);
+      const baseLimit = this.getLimitForService(baseLimits, serviceType);
+      
+      // Check if we need to consume extra credits
+      if (baseLimit > 0 && currentUsage > baseLimit) {
+        const excessUsage = currentUsage - baseLimit;
+        const creditsToConsume = Math.min(excessUsage, quantity);
+        
+        // Map service type to credit type for the database function
+        const creditTypeMapping: { [key: string]: string } = {
+          'ai_request': 'ai',
+          'whatsapp_message': 'whatsapp', 
+          'email_marketing': 'email'
+        };
+        
+        const creditType = creditTypeMapping[serviceType];
+        if (!creditType) return false;
+
+        // Call the database function to consume extra credits
+        const { data, error } = await supabase.rpc('consume_extra_credits', {
+          org_id: organizationId,
+          credit_type_param: creditType,
+          amount: creditsToConsume
+        });
+
+        if (error) {
+          diagnosticLogger.error('Error consuming extra credits:', error);
+          return false;
+        }
+
+        return data as boolean;
+      }
+
+      return true; // No extra credits needed
+      
+    } catch (error) {
+      diagnosticLogger.error('Error in consumeExtraCreditsIfNeeded:', error);
+      return false;
     }
   }
   
@@ -420,7 +566,7 @@ export class UsageTrackingService {
     }
   }
   
-  private static getLimitForService(limits: any, serviceType: string): number {
+  private static getLimitForService(limits: UsageLimits, serviceType: string): number {
     switch (serviceType) {
       case 'ai_request': return limits.ai_requests;
       case 'whatsapp_message': return limits.whatsapp_messages;

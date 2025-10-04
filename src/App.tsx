@@ -42,6 +42,7 @@ import {
   SuperAdminAiWorkflows
 } from './components/LazyComponents';
 import { TermsOfService } from './components/TermsOfService';
+import ExtraCreditsStore from './components/store/ExtraCreditsStore';
 
 // Super Admin Imports
 
@@ -274,6 +275,7 @@ const App: React.FC = () => {
           <Route path="meetings" element={<Meetings />} />
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />
+          <Route path="store" element={<ExtraCreditsStore />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

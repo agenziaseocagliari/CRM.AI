@@ -4,14 +4,13 @@
 // Dashboard per visualizzare usage, quote e billing info
 // ===================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
-import { UsageStatistics, OrganizationUsageSummary, PricingCalculation } from '../../types/usage';
+import { UsageStatistics, UsageLimitsWithExtraCredits } from '../../types/usage';
 import { UsageTrackingService } from '../../lib/services/usageTrackingService';
 import { useAuth } from '../../contexts/AuthContext';
 
-import { Card } from '../ui/Card';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '../ui/icons';
 
 // Progress bar component
@@ -44,7 +43,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ percentage, className = '', s
   );
 };
 
-// Usage card component
+// Usage card component with extra credits support
 interface UsageCardProps {
   title: string;
   used: number;
@@ -53,6 +52,8 @@ interface UsageCardProps {
   icon: React.ReactNode;
   overage?: number;
   unit?: string;
+  extraCredits?: number;
+  subscriptionLimit?: number;
 }
 
 const UsageCard: React.FC<UsageCardProps> = ({ 
@@ -62,7 +63,9 @@ const UsageCard: React.FC<UsageCardProps> = ({
   percentage, 
   icon, 
   overage = 0,
-  unit = '' 
+  unit = '',
+  extraCredits = 0,
+  subscriptionLimit 
 }) => {
   const isUnlimited = limit === 999999 || limit === -1;
   const isOverLimit = used > limit && !isUnlimited;
@@ -95,6 +98,11 @@ const UsageCard: React.FC<UsageCardProps> = ({
                 {isUnlimited ? 'Unlimited' : `${used.toLocaleString()} / ${limit.toLocaleString()} ${unit}`}
               </span>
             </div>
+            {extraCredits > 0 && subscriptionLimit && (
+              <div className="mt-1 text-xs text-blue-600 font-medium">
+                + {extraCredits.toLocaleString()} crediti extra
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -181,31 +189,34 @@ const AlertBanner: React.FC<AlertBannerProps> = ({ type, title, message, action 
 export const UsageDashboard: React.FC = () => {
   const { session } = useAuth();
   const [usageStats, setUsageStats] = useState<UsageStatistics | null>(null);
+  const [extendedLimits, setExtendedLimits] = useState<UsageLimitsWithExtraCredits | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // TODO: Get organization ID from user profile or context
   const organizationId = session?.user?.id; // Temporary - will be replaced with proper org ID
   
-  useEffect(() => {
-    if (organizationId) {
-      loadUsageStatistics();
-    }
-  }, [organizationId]);
-  
-  const loadUsageStatistics = async () => {
+  const loadUsageStatistics = useCallback(async () => {
     if (!organizationId) return;
     
     try {
       setLoading(true);
       setError(null);
       
-      const stats = await UsageTrackingService.getUsageStatistics(organizationId);
+      // Load both usage statistics and extended limits
+      const [stats, limits] = await Promise.all([
+        UsageTrackingService.getUsageStatistics(organizationId),
+        UsageTrackingService.getUsageLimitsWithExtraCredits(organizationId)
+      ]);
       
       if (stats) {
         setUsageStats(stats);
       } else {
         setError('Unable to load usage statistics');
+      }
+      
+      if (limits) {
+        setExtendedLimits(limits);
       }
       
     } catch (err) {
@@ -215,7 +226,13 @@ export const UsageDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId]);
+  
+  useEffect(() => {
+    if (organizationId) {
+      loadUsageStatistics();
+    }
+  }, [organizationId, loadUsageStatistics]);
   
   const handleUpgrade = () => {
     // TODO: Integrate with subscription management
@@ -347,7 +364,7 @@ export const UsageDashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Usage Cards */}
+      {/* Usage Cards with Extra Credits Support */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <UsageCard
           title="AI Requests"
@@ -357,6 +374,8 @@ export const UsageDashboard: React.FC = () => {
           overage={usageStats.usage.ai_requests.overage}
           icon={<div className="w-8 h-8 bg-blue-500 rounded text-white flex items-center justify-center text-sm font-bold">AI</div>}
           unit="requests"
+          extraCredits={extendedLimits?.extra_credits.ai_credits}
+          subscriptionLimit={extendedLimits?.ai_requests}
         />
         
         <UsageCard
@@ -367,6 +386,8 @@ export const UsageDashboard: React.FC = () => {
           overage={usageStats.usage.whatsapp_messages.overage}
           icon={<div className="w-8 h-8 bg-green-500 rounded text-white flex items-center justify-center text-sm font-bold">WA</div>}
           unit="messages"
+          extraCredits={extendedLimits?.extra_credits.whatsapp_credits}
+          subscriptionLimit={extendedLimits?.whatsapp_messages}
         />
         
         <UsageCard
@@ -377,9 +398,55 @@ export const UsageDashboard: React.FC = () => {
           overage={usageStats.usage.email_marketing.overage}
           icon={<div className="w-8 h-8 bg-purple-500 rounded text-white flex items-center justify-center text-sm font-bold">📧</div>}
           unit="emails"
+          extraCredits={extendedLimits?.extra_credits.email_credits}
+          subscriptionLimit={extendedLimits?.email_marketing}
         />
       </div>
       
+      {/* Extra Credits Summary */}
+      {extendedLimits && (extendedLimits.extra_credits.ai_credits > 0 || extendedLimits.extra_credits.whatsapp_credits > 0 || extendedLimits.extra_credits.email_credits > 0) && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+            <CheckCircleIcon className="w-5 h-5 mr-2" />
+            Crediti Extra Disponibili
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {extendedLimits.extra_credits.ai_credits > 0 && (
+              <div className="text-center bg-white rounded-lg p-4">
+                <p className="text-xl font-bold text-blue-600">
+                  {extendedLimits.extra_credits.ai_credits.toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-600">AI Credits Extra</p>
+              </div>
+            )}
+            {extendedLimits.extra_credits.whatsapp_credits > 0 && (
+              <div className="text-center bg-white rounded-lg p-4">
+                <p className="text-xl font-bold text-green-600">
+                  {extendedLimits.extra_credits.whatsapp_credits.toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-600">WhatsApp Credits Extra</p>
+              </div>
+            )}
+            {extendedLimits.extra_credits.email_credits > 0 && (
+              <div className="text-center bg-white rounded-lg p-4">
+                <p className="text-xl font-bold text-purple-600">
+                  {extendedLimits.extra_credits.email_credits.toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-600">Email Credits Extra</p>
+              </div>
+            )}
+          </div>
+          <div className="mt-4 text-center">
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              onClick={() => toast.success('Redirecting to credits store...')}
+            >
+              Acquista Altri Crediti
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Costs Summary */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Period Costs</h3>

@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ organization, onLogout }) => {
       
       <div className="flex items-center space-x-4">
         {/* Session Health Indicator - Compact */}
-        <SessionHealthIndicator mode="compact" autoCheck checkInterval={5} />
+        <SessionHealthIndicator compact={true} checkInterval={5} />
         
         <div className="relative">
           <input 

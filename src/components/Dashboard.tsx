@@ -176,7 +176,7 @@ export const Dashboard: React.FC = () => {
       </div>
       
       {/* Session Health Indicator */}
-      <SessionHealthIndicator mode="full" autoCheck checkInterval={5} />
+      <SessionHealthIndicator compact={false} checkInterval={5} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card title="Fatturato Totale" value={`€${totalRevenue.toLocaleString('it-IT')}`} icon={<DollarSignIcon className="w-8 h-8 text-white" />} color="bg-blue-500" />

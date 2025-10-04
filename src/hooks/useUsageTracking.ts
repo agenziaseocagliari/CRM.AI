@@ -160,15 +160,18 @@ export const useUsageTracking = (organizationId?: string): UseUsageTrackingRetur
     if (!usageStats) return true; // Allow if no stats available
     
     switch (serviceType) {
-      case 'ai_request':
+      case 'ai_request': {
         const aiRemaining = usageStats.usage.ai_requests.limit - usageStats.usage.ai_requests.used;
         return aiRemaining >= quantity;
-      case 'whatsapp_message':
+      }
+      case 'whatsapp_message': {
         const whatsappRemaining = usageStats.usage.whatsapp_messages.limit - usageStats.usage.whatsapp_messages.used;
         return whatsappRemaining >= quantity;
-      case 'email_marketing':
+      }
+      case 'email_marketing': {
         const emailRemaining = usageStats.usage.email_marketing.limit - usageStats.usage.email_marketing.used;
         return emailRemaining >= quantity;
+      }
       default:
         return true;
     }

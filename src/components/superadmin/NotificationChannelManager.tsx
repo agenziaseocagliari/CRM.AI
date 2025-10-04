@@ -1,4 +1,3 @@
-/* eslint-disable no-alert */
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 

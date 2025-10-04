@@ -1,40 +1,19 @@
-﻿import React, { useState } from 'react';
-// FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import toast from 'react-hot-toast';
+﻿import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { BarChart, Bar, CartesianGrid, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from 'recharts';
-
 import { useCrmData } from '../hooks/useCrmData';
-import { invokeSupabaseFunction } from '../lib/api';
 import { Opportunity, PipelineStage } from '../types';
-
 import { SessionHealthIndicator } from './SessionHealthIndicator';
 import { Card } from './ui/Card';
 import { CheckCircleIcon, DollarSignIcon, TrendingUpIcon, UsersIcon } from './ui/icons';
-import { Modal } from './ui/Modal';
-
-// Error interface for proper typing
-interface ApiError {
-    message: string;
-    status?: number;
-    code?: string;
-}
 
 
 
 
-import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 export const Dashboard: React.FC = () => {
-  const { opportunities, contacts, organization } = useOutletContext<ReturnType<typeof useCrmData>>();
+  const { opportunities, contacts } = useOutletContext<ReturnType<typeof useCrmData>>();
 
-  // --- START DEBUG INTERFACE STATE ---
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
-  const [debugModalTitle, setDebugModalTitle] = useState('');
-  const [debugModalContent, setDebugModalContent] = useState<unknown>(null);
-  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
-  const [webhookResponseContent, setWebhookResponseContent] = useState('');
-  // --- END DEBUG INTERFACE STATE ---
+
 
   // FIX: Switched from `Object.values` to `Object.keys` to work around a type
   // inference issue where `val` was incorrectly inferred as `unknown`, causing a
@@ -69,104 +48,7 @@ export const Dashboard: React.FC = () => {
   ];
   const COLORS = ['#4f46e5', '#34d399', '#f59e0b', '#ec4899'];
 
-  // --- START DEBUG INTERFACE LOGIC ---
-    const runDebugAction = async (title: string, action: () => Promise<unknown>) => {
-        setIsLoading(true);
-        setDebugModalTitle(title);
-        try {
-            const result = await action();
-            diagnosticLogger.info(`--- DEBUG [${title}] RESULT ---`);
-            diagnosticLogger.info(result);
-            setDebugModalContent(result);
-        } catch (error: unknown) {
-            const err = error as ApiError;
-            diagnosticLogger.error(`--- DEBUG [${title}] ERROR ---`, err);
-            const errorMessage = err.message || 'Errore sconosciuto';
-            // Check if error message is a JSON string
-            try {
-                const parsedError = JSON.parse(errorMessage);
-                setDebugModalContent({ error: 'Errore dalla funzione', details: parsedError });
-            } catch {
-                setDebugModalContent({ error: errorMessage, details: error });
-            }
-        } finally {
-            setIsDebugModalOpen(true);
-            setIsLoading(false);
-        }
-    };
 
-    const handleTestDebugLogsQuery = () => runDebugAction(
-        "Risultati Query: Ultimi 10 Log",
-        () => invokeSupabaseFunction('run-debug-query', { query_name: 'get_latest_logs' })
-    );
-
-    const handleTriggerCheckToken = () => {
-        if (!organization?.id) {
-            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
-            return;
-        }
-        runDebugAction(
-            "Trigger: Check Token Status",
-            () => invokeSupabaseFunction('check-google-token-status', { 
-                organization_id: organization.id 
-            })
-        );
-    };
-
-    const handleTriggerCalendarEvents = () => {
-        if (!organization?.id) {
-            toast.error("ID Organizzazione non disponibile. Riprova più tardi.");
-            return;
-        }
-        const timeMin = new Date();
-        const timeMax = new Date();
-        timeMax.setDate(timeMin.getDate() + 1);
-
-        runDebugAction(
-            "Trigger: Get Google Calendar Events",
-            () => invokeSupabaseFunction('get-google-calendar-events', { 
-                organization_id: organization.id,
-                timeMin: timeMin.toISOString(),
-                timeMax: timeMax.toISOString()
-            })
-        );
-    };
-
-    const handleClearDebugLogs = () => runDebugAction(
-        "Azione: Pulisci Log di Debug",
-        () => invokeSupabaseFunction('run-debug-query', { query_name: 'clear_logs' })
-    );
-    
-    const handleTriggerN8nWebhook = async () => {
-        setIsLoading(true);
-        setWebhookResponseContent('Invio richiesta in corso...');
-        setIsWebhookModalOpen(true);
-
-        const url = 'https://n8n-5o4j.onrender.com/webhook/ai-studio-export';
-        const payload = {
-            "fileName": "supabase/functions/google-token-exchange/n8n-test-from-n8n.txt",
-            "content": "Test file da workflow n8n - funziona ora!",
-            "commitMessage": "Commit test dopo verifica directory esistente"
-        };
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const responseBody = await response.text();
-            const output = `Status: ${response.status}\nStatus Text: ${response.statusText}\n---\nResponse Body:\n${responseBody}`;
-            setWebhookResponseContent(output.trim());
-        } catch (error: unknown) {
-            const err = error as ApiError;
-            const output = `Si è verificato un errore durante l'invio della richiesta.\n---\nMessage: ${err.message}\n---\nControlla la console del browser per maggiori dettagli.`;
-            setWebhookResponseContent(output.trim());
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    // --- END DEBUG INTERFACE LOGIC ---
 
 
   return (
@@ -230,70 +112,10 @@ export const Dashboard: React.FC = () => {
             </ResponsiveContainer>
         </div>
       </div>
-       {/* --- START DEBUG INTERFACE UI --- */}
-        <div className="mt-8 p-4 border-2 border-dashed border-red-400 rounded-lg bg-red-50">
-            <h2 className="text-xl font-bold text-red-700 mb-4">Pannello di Debug Avanzato</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button
-                    onClick={handleTestDebugLogsQuery}
-                    disabled={isLoading}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                >
-                    {isLoading ? 'Caricamento...' : 'Test Debug Logs Query'}
-                </button>
-                <button
-                    onClick={handleTriggerCheckToken}
-                    disabled={isLoading}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
-                >
-                    {isLoading ? 'Caricamento...' : 'Trigger Check Token'}
-                </button>
-                <button
-                    onClick={handleTriggerCalendarEvents}
-                    disabled={isLoading}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-                >
-                    {isLoading ? 'Caricamento...' : 'Trigger Calendar Events'}
-                </button>
-                <button
-                    onClick={handleClearDebugLogs}
-                    disabled={isLoading}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400"
-                >
-                    {isLoading ? 'Caricamento...' : 'Clear Debug Logs'}
-                </button>
-                 <button
-                    onClick={handleTriggerN8nWebhook}
-                    disabled={isLoading}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
-                >
-                    {isLoading ? 'Caricamento...' : 'Trigger n8n Webhook'}
-                </button>
-            </div>
-        </div>
-        {/* --- END DEBUG INTERFACE UI --- */}
 
-        {/* --- START DEBUG MODAL --- */}
-        <Modal isOpen={isDebugModalOpen} onClose={() => setIsDebugModalOpen(false)} title={debugModalTitle}>
-            <div className="bg-gray-900 text-white p-4 rounded-md max-h-[60vh] overflow-auto">
-                <pre><code>{JSON.stringify(debugModalContent, null, 2)}</code></pre>
-            </div>
-            <div className="flex justify-end pt-4 border-t mt-4">
-                <button type="button" onClick={() => setIsDebugModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Chiudi</button>
-            </div>
-        </Modal>
-        {/* --- END DEBUG MODAL --- */}
-        
-        {/* --- START N8N WEBHOOK MODAL --- */}
-        <Modal isOpen={isWebhookModalOpen} onClose={() => setIsWebhookModalOpen(false)} title="Risposta Webhook n8n">
-            <div className="bg-gray-900 text-white p-4 rounded-md max-h-[60vh] overflow-auto">
-                <pre><code>{webhookResponseContent}</code></pre>
-            </div>
-            <div className="flex justify-end pt-4 border-t mt-4">
-                <button type="button" onClick={() => setIsWebhookModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">Chiudi</button>
-            </div>
-        </Modal>
-        {/* --- END N8N WEBHOOK MODAL --- */}
+
+
+
     </div>
   );
 };

@@ -14,7 +14,7 @@ import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
 import { UsageDashboard } from './usage/UsageDashboard';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
-import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
+import { SecureLogger } from '../lib/security/securityUtils';
 // --- Componente Helper per UI di Stato ---
 const AuthStatusDisplay: React.FC<{
     status: 'loading' | 'success' | 'error';
@@ -107,7 +107,8 @@ export const GoogleAuthCallback: React.FC = () => {
                     navigate('/settings', { replace: true });
                     setTimeout(() => window.location.reload(), 100);
                 }, 2500);
-            } catch (err: any) {
+            } catch (err) {
+                console.error('Auth error:', err);
                 setAuthState({ status: 'error', message: `Connessione fallita. Riprova dalle impostazioni.` });
             }
         };
@@ -124,8 +125,19 @@ export const GoogleAuthCallback: React.FC = () => {
 
 type SettingsTab = 'integrations' | 'billing' | 'security' | 'debug';
 
+interface DiagResult {
+    status: string;
+    message?: string;
+    has_access_token?: boolean;
+    has_refresh_token?: boolean;
+    is_expired?: boolean;
+    expiry_date_utc?: string;
+    error?: boolean;
+    details?: string;
+}
+
 export const Settings: React.FC = () => {
-    const { organization, organizationSettings, subscription, ledger, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const { organization, organizationSettings, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
     const [activeTab, setActiveTab] = useState<SettingsTab>('integrations');
     const [brevoApiKey, setBrevoApiKey] = useState('');
     const [twilioSid, setTwilioSid] = useState('');
@@ -134,7 +146,7 @@ export const Settings: React.FC = () => {
     
     const [isCheckingToken, setIsCheckingToken] = useState(false);
     const [isDiagModalOpen, setIsDiagModalOpen] = useState(false);
-    const [diagResult, setDiagResult] = useState<any>(null);
+    const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
     const [showJWTViewer, setShowJWTViewer] = useState(false);
 
     useEffect(() => {
@@ -183,8 +195,9 @@ export const Settings: React.FC = () => {
             if (error) {throw error;}
             toast.success('Impostazioni salvate con successo!');
             refetch();
-        } catch (err: any) {
-            toast.error(`Errore nel salvataggio: ${err.message}`);
+        } catch (err) {
+            const error = err as Error;
+            toast.error(`Errore nel salvataggio: ${error.message}`);
         } finally {
             setIsSaving(false);
         }
@@ -196,7 +209,7 @@ export const Settings: React.FC = () => {
             localStorage.setItem('oauth_state', state);
             const { url } = await invokeSupabaseFunction('google-auth-url', { state });
             if (url) {window.location.href = url;} else {throw new Error("URL di autenticazione non ricevuto.");}
-        } catch (err: any) {
+        } catch (err) {
             diagnosticLogger.error(err);
         }
     };
@@ -208,7 +221,7 @@ export const Settings: React.FC = () => {
             await invokeSupabaseFunction('google-disconnect', { organization_id: organization.id });
             toast.success("Account Google disconnesso.");
             refetch();
-        } catch (err: any) {
+        } catch (err) {
             // L'errore viene già  mostrato dal gestore API
             diagnosticLogger.error(err);
         }
@@ -222,14 +235,15 @@ export const Settings: React.FC = () => {
         try {
             const result = await invokeSupabaseFunction('check-google-token-status', { organization_id: organization.id });
             setDiagResult(result.diagnostics);
-        } catch (err: any) {
+        } catch (err) {
             // FIX: The catch block now intelligently handles the structured error object
             // thrown by the improved `invokeSupabaseFunction`. It looks for the `error`
             // and `diagnostics` properties within the caught object to provide a rich,
             // informative error display in the modal, instead of failing silently or
             // showing a generic message. This directly fixes the "Nessun Risultato" bug.
-            const errorMessage = err.error || 'Impossibile completare la diagnostica.';
-            const errorDetails = err.diagnostics || { details: err.message || 'Errore sconosciuto.' };
+            const error = err as { error?: string; diagnostics?: DiagResult; message?: string };
+            const errorMessage = error.error || 'Impossibile completare la diagnostica.';
+            const errorDetails = error.diagnostics || { details: error.message || 'Errore sconosciuto.' };
             setDiagResult({ ...errorDetails, status: 'ERROR', message: errorMessage });
         } finally {
             setIsCheckingToken(false);
@@ -351,7 +365,7 @@ export const Settings: React.FC = () => {
                             </ul>
                         )}
                          {diagResult.error && <p className="text-red-600 mt-2"><strong>Dettagli Errore:</strong> {diagResult.details}</p>}
-                        <p className="text-xs text-gray-500 pt-2 border-t mt-3">Se lo stato non è 'FOUND' o il 'Refresh Token' è mancante, per favore <button onClick={handleGoogleDisconnect} className="text-primary underline">disconnetti</button> e ricollega il tuo account.</p>
+                        <p className="text-xs text-gray-500 pt-2 border-t mt-3">Se lo stato non è &apos;FOUND&apos; o il &apos;Refresh Token&apos; è mancante, per favore <button onClick={handleGoogleDisconnect} className="text-primary underline">disconnetti</button> e ricollega il tuo account.</p>
                     </div>
                 ) : <p>Nessun risultato.</p>}
             </Modal>

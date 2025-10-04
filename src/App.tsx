@@ -55,7 +55,7 @@ import { diagnosticLogger } from './lib/mockDiagnosticLogger';
 
 // Performance optimization imports
 import { register as registerSW, checkForUpdates } from './lib/serviceWorkerRegistration';
-import { performanceMonitor, usePerformanceMonitoring as _usePerformanceMonitoring } from './lib/performanceMonitoring';
+import { performanceMonitor } from './lib/performanceMonitoring';
 
 const App: React.FC = () => {
   const { session, userRole, loading, jwtClaims } = useAuth();

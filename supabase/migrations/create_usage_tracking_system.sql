@@ -266,33 +266,33 @@ ALTER TABLE usage_tracking ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_quotas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE billing_events ENABLE ROW LEVEL SECURITY;
 
--- Policies for subscription_tiers (read-only for all authenticated users)
-CREATE POLICY "subscription_tiers_read" ON subscription_tiers FOR SELECT TO authenticated USING (is_active = true);
+-- Policies for subscription_tiers (read-only for all users)
+CREATE POLICY "subscription_tiers_read" ON subscription_tiers FOR SELECT TO public USING (is_active = true);
 
 -- Policies for organization data (users can only see their org data)
-CREATE POLICY "org_subscriptions_policy" ON organization_subscriptions FOR ALL TO authenticated 
+CREATE POLICY "org_subscriptions_policy" ON organization_subscriptions FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
 
-CREATE POLICY "usage_tracking_policy" ON usage_tracking FOR ALL TO authenticated 
+CREATE POLICY "usage_tracking_policy" ON usage_tracking FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
 
-CREATE POLICY "usage_quotas_policy" ON usage_quotas FOR ALL TO authenticated 
+CREATE POLICY "usage_quotas_policy" ON usage_quotas FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
 
-CREATE POLICY "billing_events_policy" ON billing_events FOR ALL TO authenticated 
+CREATE POLICY "billing_events_policy" ON billing_events FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
 
 -- Super admin can see all data
-CREATE POLICY "super_admin_all_access" ON organization_subscriptions FOR ALL TO authenticated 
+CREATE POLICY "super_admin_all_access" ON organization_subscriptions FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
 
-CREATE POLICY "super_admin_usage_access" ON usage_tracking FOR ALL TO authenticated 
+CREATE POLICY "super_admin_usage_access" ON usage_tracking FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
 
-CREATE POLICY "super_admin_quota_access" ON usage_quotas FOR ALL TO authenticated 
+CREATE POLICY "super_admin_quota_access" ON usage_quotas FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
 
-CREATE POLICY "super_admin_billing_access" ON billing_events FOR ALL TO authenticated 
+CREATE POLICY "super_admin_billing_access" ON billing_events FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
 
 -- ===================================================================
@@ -306,10 +306,7 @@ CREATE INDEX IF NOT EXISTS idx_usage_tracking_org_service ON usage_tracking(orga
 CREATE INDEX IF NOT EXISTS idx_usage_quotas_org_period ON usage_quotas(organization_id, period_start, period_end);
 CREATE INDEX IF NOT EXISTS idx_billing_events_org ON billing_events(organization_id);
 
--- Grant permissions
-GRANT USAGE ON SCHEMA public TO authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+-- Note: Permissions managed by Supabase RLS policies
 
 COMMENT ON TABLE subscription_tiers IS 'Definizione dei tier di abbonamento con limiti e prezzi';
 COMMENT ON TABLE organization_subscriptions IS 'Abbonamenti attivi delle organizzazioni';

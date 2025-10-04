@@ -20,11 +20,7 @@ interface ApiError {
     code?: string;
 }
 
-// Chart label interface for proper typing
-interface _ChartLabelProps {
-    name: string;
-    percent: number;
-}
+
 
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';

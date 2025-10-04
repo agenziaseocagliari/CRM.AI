@@ -76,9 +76,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           <div style={{ marginBottom: '16px' }}>
             <strong>Environment Check:</strong>
             <ul style={{ marginTop: '8px', paddingLeft: '20px', fontSize: '14px' }}>
-              <li>VITE_SUPABASE_URL: {(import.meta as any).env?.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</li>
-              <li>VITE_SUPABASE_ANON_KEY: {(import.meta as any).env?.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</li>
-              <li>VITE_APP_ENV: {(import.meta as any).env?.VITE_APP_ENV || 'Not set'}</li>
+              <li>VITE_SUPABASE_URL: {(import.meta as unknown as { env: Record<string, string | undefined> }).env?.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</li>
+              <li>VITE_SUPABASE_ANON_KEY: {(import.meta as unknown as { env: Record<string, string | undefined> }).env?.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</li>
+              <li>VITE_APP_ENV: {(import.meta as unknown as { env: Record<string, string | undefined> }).env?.VITE_APP_ENV || 'Not set'}</li>
             </ul>
           </div>
 

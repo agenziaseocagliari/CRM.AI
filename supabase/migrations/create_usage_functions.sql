@@ -268,13 +268,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Grant execute permissions
-GRANT EXECUTE ON FUNCTION increment_usage_quota(UUID, TEXT, INTEGER) TO authenticated;
-GRANT EXECUTE ON FUNCTION get_usage_limits(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION reset_usage_quota(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION calculate_period_costs(UUID, DATE, DATE) TO authenticated;
-GRANT EXECUTE ON FUNCTION get_usage_summary(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION create_billing_event(UUID, TEXT, INTEGER, JSONB, TEXT) TO authenticated;
+-- Note: Function permissions managed by Supabase RLS policies
 
 -- Comments for documentation
 COMMENT ON FUNCTION increment_usage_quota IS 'Incrementa il contatore di utilizzo per un servizio specifico';

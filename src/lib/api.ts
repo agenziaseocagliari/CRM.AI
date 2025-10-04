@@ -174,8 +174,8 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         }
     }
 
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseAnonKey) {throw new Error("Supabase URL or Anon Key not configured.");}
     
     const headers = {

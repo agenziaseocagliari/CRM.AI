@@ -26,7 +26,7 @@ export const QuotaManagement: React.FC = () => {
         throw new Error('No session found');
       }
 
-      const supabaseUrl = process.env.VITE_SUPABASE_URL;
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
       
       const response = await fetch(
         `${supabaseUrl}/functions/v1/superadmin-quota-management`,

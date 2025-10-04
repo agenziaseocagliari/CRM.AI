@@ -1,1 +1,0 @@
-﻿Get-ChildItem -Path "src" -Recurse -Include "*.tsx","*.ts" | ForEach-Object { $path = $_.FullName; $content = Get-Content $path -Raw; if ($content -match "[^\x00-\x7F]") { Write-Host "File: $path has non-ASCII characters" } }

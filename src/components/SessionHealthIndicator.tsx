@@ -1,5 +1,20 @@
 ﻿/**
- * Session Health Indicator Compon      const intervalId = setInterval(() =          <span className                <div className="flex items-center j                            <button
+ * Session Health Indicator Compon      const intervalId = setInterval(()    if (checkInterval > 0) {
+      const intervalId = setInterval(() => {
+        diagnos              <button
+                onClick={handleHealthCheck}
+                disabled={isChecking}
+                className="w-full bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 text-sm"
+              >
+                {isChecking ? 'Checking...' : '🔍 Run Health Check'}ger.info('🏥 [Session Health] Running periodic health check...');
+        performHealthCheck();
+      }, checkInterval * 60 * 1000);       <span className                <div className="flex items-center j                                  <button
+          onClick={handleHealthCheck}
+          disabled={isChecking}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 text-sm"
+        >
+          {isChecking ? 'Checking...' : '🔍 Run Check'}
+        </button>on
           onClick={handleHealthCheck}
           disabled={isChecking}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 text-sm"
@@ -72,7 +87,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
   useEffect(() => {
     if (checkInterval > 0) {
       const intervalId = setInterval(() => {
-        diagnosticLogger.info('ðŸ¥ [Session Health] Running periodic health check...');
+        diagnosticLogger.info('🔍¥ [Session Health] Running periodic health check...');
         performHealthCheck();
       }, checkInterval * 60 * 1000);
 
@@ -151,7 +166,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
                   <div className="text-xs font-semibold text-red-800 mb-1">Issues:</div>
                   <ul className="text-xs text-red-700 space-y-1">
                     {healthStatus.issues.slice(0, 3).map((issue, idx) => (
-                      <li key={idx}>â€¢ {issue}</li>
+                      <li key={idx}>• {issue}</li>
                     ))}
                   </ul>
                 </div>
@@ -162,7 +177,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
                 disabled={isChecking}
                 className="w-full bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 text-sm"
               >
-                {isChecking ? 'Checking...' : 'ðŸ” Run Health Check'}
+                {isChecking ? 'Checking...' : '🔍 Run Health Check'}
               </button>
 
               <div className="mt-2 text-xs text-gray-500 text-center">
@@ -185,7 +200,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
           disabled={isChecking}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 text-sm"
         >
-          {isChecking ? 'Checking...' : 'ðŸ” Run Check'}
+          {isChecking ? 'Checking...' : '🔍 Run Check'}
         </button>
       </div>
 
@@ -259,7 +274,7 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
           <ul className="space-y-1">
             {healthStatus.issues.map((issue, idx) => (
               <li key={idx} className="text-sm text-red-700">
-                â€¢ {issue}
+                • {issue}
               </li>
             ))}
           </ul>
@@ -275,4 +290,5 @@ export const SessionHealthIndicator: React.FC<SessionHealthIndicatorProps> = ({
     </div>
   );
 };
+
 

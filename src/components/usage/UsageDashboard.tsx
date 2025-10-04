@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { UsageStatistics, UsageLimitsWithExtraCredits } from '../../types/usage';
 import { UsageTrackingService } from '../../lib/services/usageTrackingService';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabaseClient';
 
 import { CheckCircleIcon, ExclamationTriangleIcon } from '../ui/icons';
 
@@ -193,8 +194,35 @@ export const UsageDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // TODO: Get organization ID from user profile or context
-  const organizationId = session?.user?.id; // Temporary - will be replaced with proper org ID
+  // Get organization ID from user profile
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  
+  // Load organization ID from user profile
+  useEffect(() => {
+    const loadOrganizationId = async () => {
+      if (!session?.user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (data && !error) {
+          setOrganizationId(data.organization_id);
+        } else {
+          // Fallback to user ID if no organization_id found
+          setOrganizationId(session.user.id);
+        }
+      } catch (err) {
+        console.error('Error loading organization ID:', err);
+        setOrganizationId(session.user.id);
+      }
+    };
+    
+    loadOrganizationId();
+  }, [session?.user?.id]);
   
   const loadUsageStatistics = useCallback(async () => {
     if (!organizationId) return;
@@ -212,7 +240,34 @@ export const UsageDashboard: React.FC = () => {
       if (stats) {
         setUsageStats(stats);
       } else {
-        setError('Unable to load usage statistics');
+        // Initialize with default data if none found
+        const defaultStats: UsageStatistics = {
+          current_period: {
+            start: new Date().toISOString(),
+            end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            days_remaining: 30
+          },
+          usage: {
+            ai_requests: { used: 0, limit: 1000, percentage: 0, overage: 0 },
+            whatsapp_messages: { used: 0, limit: 500, percentage: 0, overage: 0 },
+            email_marketing: { used: 0, limit: 1000, percentage: 0, overage: 0 }
+          },
+          costs: {
+            current_period_cents: 0,
+            overage_cents: 0,
+            total_cents: 0
+          },
+          alerts: {
+            ai_warning: false,
+            ai_critical: false,
+            whatsapp_warning: false,
+            whatsapp_critical: false,
+            email_warning: false,
+            email_critical: false
+          }
+        };
+        setUsageStats(defaultStats);
+        setError('No usage data available yet. Start using the system to see statistics.');
       }
       
       if (limits) {

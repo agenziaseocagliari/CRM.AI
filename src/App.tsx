@@ -25,6 +25,7 @@ import { Login } from './components/Login';
 import { MainLayout } from './components/MainLayout';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { PublicForm } from './components/PublicForm';
+import { PublicPricingPage } from './components/PublicPricingPage';
 import { ResetPassword } from './components/ResetPassword';
 import { GoogleAuthCallback } from './components/Settings';
 // Super Admin lazy components - Heavy components for performance
@@ -256,7 +257,7 @@ const App: React.FC = () => {
 
         <Route path="/form/:formId" element={<PublicForm />} />
 
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />`n        <Route path="/pricing" element={<PublicPricingPage />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
 
         <Route path="/settings/oauth/google" element={session ? <GoogleAuthCallback /> : <Navigate to="/login" />} />
@@ -310,5 +311,7 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+
 
 

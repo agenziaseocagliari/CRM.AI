@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 
 import { useAuth } from '../contexts/AuthContext';
 
-import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon, AdminPanelIcon } from './ui/icons';
+import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon, AdminPanelIcon, CreditCardIcon } from './ui/icons';
 
 const NavItem: React.FC<{
   to: string;
@@ -75,6 +75,11 @@ export const Sidebar: React.FC = () => {
             icon={<AutomationIcon className="w-6 h-6" />}
             label="Automazioni"
           />
+          <NavItem
+            to="/store"
+            icon={<CreditCardIcon className="w-6 h-6" />}
+            label="Prezzi"
+          />
         </ul>
       </nav>
       <div className="mt-auto">
@@ -96,3 +101,4 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
+

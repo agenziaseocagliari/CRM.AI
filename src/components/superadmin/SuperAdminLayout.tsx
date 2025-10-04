@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Outlet, useNavigate } from 'react-router-dom';
 
@@ -17,23 +17,23 @@ export const SuperAdminLayout: React.FC = () => {
     if (loading) {return;}
     
     // Log the authorization check
-    diagnosticLogger.info('ðŸ”’ [SuperAdminLayout] Authorization check:', {
+    diagnosticLogger.info('🔒 [SuperAdminLayout] Authorization check:', {
       userRole,
       isSuperAdmin,
       timestamp: new Date().toISOString(),
     });
     
     if (!isSuperAdmin) {
-      diagnosticLogger.warn('âš ï¸ [SuperAdminLayout] UNAUTHORIZED ACCESS ATTEMPT!');
-      diagnosticLogger.warn('âš ï¸ [SuperAdminLayout] User role:', userRole || 'NULL');
-      diagnosticLogger.warn('âš ï¸ [SuperAdminLayout] Expected: super_admin');
+      diagnosticLogger.warn('⚠️ [SuperAdminLayout] UNAUTHORIZED ACCESS ATTEMPT!');
+      diagnosticLogger.warn('⚠️ [SuperAdminLayout] User role:', userRole || 'NULL');
+      diagnosticLogger.warn('⚠️ [SuperAdminLayout] Expected: super_admin');
       
       toast.error(
         (t) => (
           <div className="space-y-2">
             <p className="font-semibold">🚫 Accesso Negato</p>
             <p className="text-sm">
-              Il tuo ruolo attuale Ã¨: <strong>{userRole || 'non definito'}</strong>
+              Il tuo ruolo attuale è: <strong>{userRole || 'non definito'}</strong>
             </p>
             <p className="text-xs text-gray-600">
               Per accedere alla dashboard Super Admin devi:
@@ -85,7 +85,7 @@ export const SuperAdminLayout: React.FC = () => {
               Il tuo ruolo attuale (<strong>{userRole || 'non definito'}</strong>) non ha accesso a questa sezione.
             </p>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left mb-4">
-              <p className="text-sm font-semibold text-yellow-800 mb-2">ðŸ“‹ Come accedere:</p>
+              <p className="text-sm font-semibold text-yellow-800 mb-2">📋 Come accedere:</p>
               <ol className="text-xs text-yellow-700 list-decimal list-inside space-y-1">
                 <li>Effettua logout completo dall'account corrente</li>
                 <li>Accedi con le credenziali Super Admin</li>

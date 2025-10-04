@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -75,7 +75,7 @@ const AccountMenu: React.FC<{ onClose: () => void; onOpenSettings: () => void; o
             <div className="p-3 border-b dark:border-gray-600">
                 <p className="font-semibold text-text-primary dark:text-dark-text-primary text-sm">{userEmail}</p>
                 <p className="text-xs text-text-secondary dark:text-dark-text-secondary">
-                    {userRole === 'super_admin' ? 'ðŸ” Super Admin' : userRole}
+                    {userRole === 'super_admin' ? '🛡️ Super Admin' : userRole}
                 </p>
             </div>
             <div className="py-1">
@@ -128,7 +128,7 @@ export const SuperAdminHeader: React.FC = () => {
         setAccountMenuOpen(false);
         
         try {
-            diagnosticLogger.info('ðŸ‘‹ [SuperAdminHeader] Initiating logout...');
+            diagnosticLogger.info('👋 [SuperAdminHeader] Initiating logout...');
             
             // Show loading toast
             const loadingToast = toast.loading('Disconnessione in corso...');
@@ -141,15 +141,15 @@ export const SuperAdminHeader: React.FC = () => {
             const { error } = await supabase.auth.signOut();
             
             if (error) {
-                diagnosticLogger.error('âŒ [SuperAdminHeader] Logout error:', error);
+                diagnosticLogger.error('❌ [SuperAdminHeader] Logout error:', error);
                 toast.error('Errore durante il logout: ' + error.message, { id: loadingToast });
             } else {
-                diagnosticLogger.info('âœ… [SuperAdminHeader] Logout successful');
+                diagnosticLogger.info('✅ [SuperAdminHeader] Logout successful');
                 toast.success('Disconnessione avvenuta con successo', { id: loadingToast });
                 // Navigation will be handled by AuthContext
             }
         } catch (error) {
-            diagnosticLogger.error('âŒ [SuperAdminHeader] Unexpected logout error:', error);
+            diagnosticLogger.error('❌ [SuperAdminHeader] Unexpected logout error:', error);
             toast.error('Errore imprevisto durante il logout');
         } finally {
             setIsLoggingOut(false);
@@ -220,14 +220,14 @@ export const SuperAdminHeader: React.FC = () => {
                             disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                         />
-                        <p className="mt-1 text-xs text-gray-500">L'email non puÃ² essere modificata</p>
+                        <p className="mt-1 text-xs text-gray-500">L'email non può essere modificata</p>
                     </div>
                     
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Ruolo</label>
                         <input
                             type="text"
-                            value={userRole === 'super_admin' ? 'ðŸ” Super Admin' : userRole || ''}
+                            value={userRole === 'super_admin' ? '🛡️ Super Admin' : userRole || ''}
                             disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                         />
@@ -241,14 +241,14 @@ export const SuperAdminHeader: React.FC = () => {
                                 onClick={toggleTheme}
                                 className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
                             >
-                                {theme === 'light' ? '☀️ Chiaro' : '🌙 Scuro'}
+                                {theme === 'light' ? '☀️ Chiaro' : '🌙 Scuro'}
                             </button>
                         </div>
                     </div>
 
                     <div className="pt-4 border-t border-gray-200">
                         <p className="text-xs text-gray-500">
-                            ðŸ’¡ Per ulteriori impostazioni avanzate, contatta il supporto tecnico.
+                            💡 Per ulteriori impostazioni avanzate, contatta il supporto tecnico.
                         </p>
                     </div>
                 </div>
@@ -263,4 +263,3 @@ const InfoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
     </svg>
 );
-

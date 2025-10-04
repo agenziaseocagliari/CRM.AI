@@ -249,15 +249,15 @@ export const TwoFactorSettings: React.FC<TwoFactorSettingsProps> = ({ className 
           <h3 className="text-lg font-medium text-gray-900 mb-3">Security Tips</h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex items-start">
-              <span className="mr-2">"\u2022</span>
+              <span className="mr-2">•</span>
               <span>Use an authenticator app like Google Authenticator or Authy for the best security</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2">"\u2022</span>
+              <span className="mr-2">•</span>
               <span>Save your backup codes in a secure location</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2">"\u2022</span>
+              <span className="mr-2">•</span>
               <span>Review and remove trusted devices you no longer use</span>
             </li>
           </ul>

@@ -74,9 +74,14 @@ const WhatsAppModule: React.FC = () => {
   
   // Template creation modal
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [templateForm, setTemplateForm] = useState({
+  const [templateForm, setTemplateForm] = useState<{
+    name: string;
+    category: 'marketing' | 'utility' | 'authentication';
+    language: string;
+    prompt: string;
+  }>({
     name: '',
-    category: 'marketing' as const,
+    category: 'marketing',
     language: 'it',
     prompt: ''
   });
@@ -167,13 +172,19 @@ const WhatsAppModule: React.FC = () => {
       
       if (response.success) {
         // Add new template to list
+        const responseData = response.data as {
+          components?: unknown[];
+          messageTemplate?: string;
+          automationFlow?: unknown[];
+          complianceChecks?: unknown[];
+        };
         const newTemplate: WhatsAppTemplate = {
           id: Date.now().toString(),
           name: templateForm.name,
           category: templateForm.category,
           status: 'pending',
           language: templateForm.language,
-          components: response.data.components || [],
+          components: (responseData?.components as WhatsAppTemplate['components']) || [],
           createdAt: new Date().toISOString().split('T')[0],
           aiGenerated: true
         };
@@ -384,7 +395,7 @@ const WhatsAppModule: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
                 <select
                   value={templateForm.category}
-                  onChange={(e) => setTemplateForm(prev => ({ ...prev, category: e.target.value as any }))}
+                  onChange={(e) => setTemplateForm(prev => ({ ...prev, category: e.target.value as 'marketing' | 'utility' | 'authentication' }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="marketing">Marketing</option>
@@ -468,7 +479,7 @@ const WhatsAppModule: React.FC = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-white text-green-600 shadow-sm'

@@ -74,9 +74,15 @@ const EmailMarketingModule: React.FC = () => {
   
   // Template creation modal
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [templateForm, setTemplateForm] = useState({
+  const [templateForm, setTemplateForm] = useState<{
+    name: string;
+    category: 'marketing' | 'transactional' | 'newsletter' | 'follow_up';
+    targetAudience: string;
+    goal: string;
+    prompt: string;
+  }>({
     name: '',
-    category: 'marketing' as const,
+    category: 'marketing',
     targetAudience: '',
     goal: '',
     prompt: ''
@@ -179,16 +185,21 @@ const EmailMarketingModule: React.FC = () => {
       });
       
       if (response.success) {
+        const responseData = response.data as {
+          emailContent?: { subject?: string; body?: string; cta?: string };
+          personalizations?: string[];
+          optimizations?: string[];
+        };
         const newTemplate: EmailTemplate = {
           id: Date.now().toString(),
           name: templateForm.name,
-          subject: response.data.emailContent?.subject || 'AI Generated Subject',
+          subject: responseData?.emailContent?.subject || 'AI Generated Subject',
           category: templateForm.category,
           content: {
-            html: response.data.emailContent?.body || '',
-            text: response.data.emailContent?.body?.replace(/<[^>]*>/g, '') || ''
+            html: responseData?.emailContent?.body || '',
+            text: responseData?.emailContent?.body?.replace(/<[^>]*>/g, '') || ''
           },
-          variables: response.data.personalizations || [],
+          variables: responseData?.personalizations || [],
           status: 'draft',
           createdAt: new Date().toISOString().split('T')[0],
           aiGenerated: true

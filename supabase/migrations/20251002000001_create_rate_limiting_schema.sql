@@ -227,6 +227,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to update quota usage on new tracking records
+DROP TRIGGER IF EXISTS update_quota_usage_trigger ON rate_limit_tracking;
+
 CREATE TRIGGER update_quota_usage_trigger
     AFTER INSERT ON rate_limit_tracking
     FOR EACH ROW

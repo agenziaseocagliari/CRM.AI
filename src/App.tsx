@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-// FIX: Corrected imports for                     IMPORTANTE: Ricaricare la pagina non risolver il problema.  necessario un nuovo login.     <p className="font-semibold text-lg">?? Sessione Non Valida</p>           <p className="font-semibold text-lg">?? Sessione Non Valida</p>outes              IMPORTANTE: Ricaricare la pagina non risolver il problema.  necessario un nuovo login. Route, useNavigate, useLocation, and Navigate from 'react-router-dom' to resolve module export errors.
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 
 
 // Lazy components for performance optimization - temporarily disabled
@@ -216,7 +216,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <>
+    <HelmetProvider>
       <Toaster position="top-center" reverseOrder={false} />
       {/* Debug Panel - Only visible when logged in */}
       {session && <DebugPanel />}
@@ -277,7 +277,7 @@ const App: React.FC = () => {
           } replace />
         } />
       </Routes>
-    </>
+    </HelmetProvider>
   );
 };
 

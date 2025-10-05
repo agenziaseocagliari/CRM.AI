@@ -1,0 +1,731 @@
+﻿import React from 'react';import React from 'react';import React from 'react';
+
+import { Link } from 'react-router-dom';
+
+import { CheckCircleIcon, SparklesIcon, ShieldCheckIcon, CpuChipIcon } from './ui/icons';import { Link } from 'react-router-dom';import { Link } from 'react-router-dom';
+
+import { PublicHeader } from './PublicHeader';
+
+import { PublicFooter } from './PublicFooter';import { CheckCircleIcon, SparklesIcon, ShieldCheckIcon, CpuChipIcon } from './ui/icons';import { CheckCircleIcon, SparklesIcon, ShieldCheckIcon, CpuChipIcon } from './ui/icons';
+
+
+
+export const HomePage: React.FC = () => {import { PublicHeader } from './PublicHeader';import { PublicHeader } from './PublicHeader';
+
+    return (
+
+        <div className="bg-white min-h-screen">import { PublicFooter } from './PublicFooter';import { PublicFooter } from './PublicFooter';
+
+            <PublicHeader />
+
+
+
+            {/* Hero Section */}
+
+            <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">export const HomePage: React.FC = () => {export const HomePage: React.FC = () => {
+
+                <div className="container mx-auto px-6 text-center">
+
+                    <h1 className="text-5xl font-bold text-gray-900 mb-6">    return (    return (
+
+                        Il Primo CRM <span className="text-primary">100% AI Nativo</span> in Italia
+
+                    </h1>        <div className="bg-white min-h-screen">        <div className="bg-white min-h-screen">
+
+                    <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+
+                        Trasforma il tuo business con l&apos;intelligenza artificiale integrata nativamente.             <PublicHeader />            <PublicHeader />
+
+                        Automazione completa, margini sostenibili e crescita scalabile.
+
+                    </p>                        <Link to="/pricing" className="text-gray-700 hover:text-primary transition-colors">Prezzi</Link>
+
+                    
+
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">            {/* Hero Section */}                        
+
+                        <Link 
+
+                            to="/login"             <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">                        {/* Solutions Dropdown */}
+
+                            className="bg-primary text-white px-8 py-4 rounded-lg font-semibold hover:bg-primary-dark transition-colors"
+
+                        >                <div className="container mx-auto px-6 text-center">                        <div className="relative">
+
+                            Prova Gratuita 14 Giorni
+
+                        </Link>                    <h1 className="text-5xl font-bold text-gray-900 mb-6">                            <button
+
+                        <button className="border-2 border-primary text-primary px-8 py-4 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors">
+
+                            Richiedi Demo                        Il Primo CRM <span className="text-primary">100% AI Nativo</span> in Italia                                onClick={() => setDropdownOpen(!dropdownOpen)}
+
+                        </button>
+
+                    </div>                    </h1>                                className="text-gray-700 hover:text-primary transition-colors flex items-center space-x-1"
+
+
+
+                    {/* Stats */}                    <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">                            >
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">                        Trasforma il tuo business con l&apos;intelligenza artificiale integrata nativamente.                                 <span>Le Nostre Soluzioni</span>
+
+                            <div className="text-3xl font-bold text-primary mb-2">97.7%</div>
+
+                            <div className="text-gray-600">Riduzione Errori</div>                        Automazione completa, margini sostenibili e crescita scalabile.                                <svg className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                        </div>
+
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">                    </p>                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+
+                            <div className="text-3xl font-bold text-primary mb-2">10x</div>
+
+                            <div className="text-gray-600">Velocità Processi</div>                                                    </svg>
+
+                        </div>
+
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">                    <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">                            </button>
+
+                            <div className="text-3xl font-bold text-primary mb-2">24/7</div>
+
+                            <div className="text-gray-600">Automazione AI</div>                        <Link                             
+
+                        </div>
+
+                    </div>                            to="/login"                             {dropdownOpen && (
+
+                </div>
+
+            </section>                            className="bg-primary text-white px-8 py-4 rounded-lg font-semibold hover:bg-primary-dark transition-colors"                                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+
+
+
+            {/* Features Section */}                        >                                    <Link 
+
+            <section className="py-20 bg-white">
+
+                <div className="container mx-auto px-6">                            Prova Gratuita 14 Giorni                                        to="/verticals/insurance-agency" 
+
+                    <div className="text-center mb-16">
+
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">                        </Link>                                        className="flex items-center px-4 py-3 text-blue-600 hover:bg-blue-50 transition-colors"
+
+                            Perché Guardian AI è Diverso
+
+                        </h2>                        <button className="border-2 border-primary text-primary px-8 py-4 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors">                                        onClick={() => setDropdownOpen(false)}
+
+                        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+
+                            Non un CRM con AI aggiunta, ma AI nativa che pensa per te                            Richiedi Demo                                    >
+
+                        </p>
+
+                    </div>                        </button>                                        <span className="text-2xl mr-3">🛡️</span>
+
+
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">                    </div>                                        <div>
+
+                        <div className="text-center p-6">
+
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">                                            <div className="font-semibold">Assicurazioni</div>
+
+                                <CpuChipIcon className="w-8 h-8 text-blue-600" />
+
+                            </div>                    {/* Stats */}                                            <div className="text-sm text-gray-500">CRM per agenzie assicurative</div>
+
+                            <h3 className="text-xl font-bold mb-3">AI Nativo</h3>
+
+                            <p className="text-gray-600">                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">                                        </div>
+
+                                Intelligenza artificiale integrata fin dal core, non come add-on
+
+                            </p>                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">                                    </Link>
+
+                        </div>
+
+                                                    <div className="text-3xl font-bold text-primary mb-2">97.7%</div>                                    <Link 
+
+                        <div className="text-center p-6">
+
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">                            <div className="text-gray-600">Riduzione Errori</div>                                        to="/verticals/marketing-agency" 
+
+                                <SparklesIcon className="w-8 h-8 text-green-600" />
+
+                            </div>                        </div>                                        className="flex items-center px-4 py-3 text-purple-600 hover:bg-purple-50 transition-colors"
+
+                            <h3 className="text-xl font-bold mb-3">Automazione Totale</h3>
+
+                            <p className="text-gray-600">                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">                                        onClick={() => setDropdownOpen(false)}
+
+                                Processi completamente automatizzati che lavorano mentre dormi
+
+                            </p>                            <div className="text-3xl font-bold text-primary mb-2">10x</div>                                    >
+
+                        </div>
+
+                                                    <div className="text-gray-600">Velocità Processi</div>                                        <span className="text-2xl mr-3">📊</span>
+
+                        <div className="text-center p-6">
+
+                            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">                        </div>                                        <div>
+
+                                <ShieldCheckIcon className="w-8 h-8 text-purple-600" />
+
+                            </div>                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">                                            <div className="font-semibold">Marketing</div>
+
+                            <h3 className="text-xl font-bold mb-3">Sicurezza Assoluta</h3>
+
+                            <p className="text-gray-600">                            <div className="text-3xl font-bold text-primary mb-2">24/7</div>                                            <div className="text-sm text-gray-500">CRM per agenzie marketing</div>
+
+                                Conformità GDPR nativa e crittografia end-to-end
+
+                            </p>                            <div className="text-gray-600">Automazione AI</div>                                        </div>
+
+                        </div>
+
+                                                </div>                                    </Link>
+
+                        <div className="text-center p-6">
+
+                            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">                    </div>                                    <div className="border-t border-gray-100 mt-2 pt-2">
+
+                                <CheckCircleIcon className="w-8 h-8 text-orange-600" />
+
+                            </div>                </div>                                        <div className="px-4 py-2 text-sm text-gray-400">
+
+                            <h3 className="text-xl font-bold mb-3">Setup Immediato</h3>
+
+                            <p className="text-gray-600">            </section>                                            Prossimamente: Healthcare, Legal, Consulting
+
+                                Operativo in 5 minuti, senza configurazioni complesse
+
+                            </p>                                        </div>
+
+                        </div>
+
+                    </div>            {/* Features Section */}                                    </div>
+
+                </div>
+
+            </section>            <section className="py-20 bg-white">                                </div>
+
+
+
+            {/* Solutions Section */}                <div className="container mx-auto px-6">                            )}
+
+            <section className="py-20 bg-gray-50">
+
+                <div className="container mx-auto px-6">                    <div className="text-center mb-16">                        </div>
+
+                    <div className="text-center mb-16">
+
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">                        <h2 className="text-4xl font-bold text-gray-900 mb-4">                        
+
+                            Soluzioni Verticali
+
+                        </h2>                            Perché Guardian AI è Diverso                        <Link to="/login" className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">Accedi</Link>
+
+                        <p className="text-xl text-gray-600">
+
+                            Specificamente progettate per il tuo settore                        </h2>                    </nav>
+
+                        </p>
+
+                    </div>                        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+
+
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">                            Non un CRM con AI aggiunta, ma AI nativa che pensa per te                    {/* Mobile menu button */}
+
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+
+                            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-8 text-white">                        </p>                    <div className="md:hidden">
+
+                                <h3 className="text-2xl font-bold mb-3">Assicurazioni</h3>
+
+                                <p className="text-blue-100">                    </div>                        <Link to="/login" className="bg-primary text-white px-4 py-2 rounded text-sm">Accedi</Link>
+
+                                    CRM specializzato per agenti e broker assicurativi
+
+                                </p>                    </div>
+
+                            </div>
+
+                            <div className="p-8">                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">                </div>
+
+                                <ul className="space-y-3 mb-6">
+
+                                    <li className="flex items-center">                        <div className="text-center p-6">            </header>
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />
+
+                                        Gestione completa polizze e sinistri                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+
+                                    </li>
+
+                                    <li className="flex items-center">                                <CpuChipIcon className="w-8 h-8 text-blue-600" />            {/* Hero Section */}
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />
+
+                                        Automazione processi assicurativi                            </div>            <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+
+                                    </li>
+
+                                    <li className="flex items-center">                            <h3 className="text-xl font-bold mb-3">AI Nativo</h3>                <div className="container mx-auto px-6 text-center">
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />
+
+                                        Conformità normative automatica                            <p className="text-gray-600">                    <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+
+                                    </li>
+
+                                </ul>                                Intelligenza artificiale integrata fin dal core, non come add-on                        Guardian AI CRM
+
+                                <Link 
+
+                                    to="/verticals/insurance-agency"                            </p>                    </h1>
+
+                                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block"
+
+                                >                        </div>                    <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto">
+
+                                    Scopri di Più
+
+                                </Link>                                                La soluzione CRM completa potenziata dall&apos;Intelligenza Artificiale per ogni settore
+
+                            </div>
+
+                        </div>                        <div className="text-center p-6">                    </p>
+
+
+
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">                    <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto">
+
+                            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-8 text-white">
+
+                                <h3 className="text-2xl font-bold mb-3">Marketing</h3>                                <SparklesIcon className="w-8 h-8 text-green-600" />                        Automatizza i tuoi processi, ottimizza le vendite e migliora la customer experience con la prima piattaforma CRM italiana completamente AI-powered
+
+                                <p className="text-purple-100">
+
+                                    Automazione completa per agenzie di marketing                            </div>                    </p>
+
+                                </p>
+
+                            </div>                            <h3 className="text-xl font-bold mb-3">Automazione Totale</h3>                    <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+
+                            <div className="p-8">
+
+                                <ul className="space-y-3 mb-6">                            <p className="text-gray-600">                        <Link 
+
+                                    <li className="flex items-center">
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                                Processi completamente automatizzati che lavorano mentre dormi                            to="/login" 
+
+                                        Campagne automatizzate multi-canale
+
+                                    </li>                            </p>                            className="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+
+                                    <li className="flex items-center">
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                        </div>                        >
+
+                                        Lead scoring e nurturing AI
+
+                                    </li>                                                    Inizia Gratis Ora
+
+                                    <li className="flex items-center">
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                        <div className="text-center p-6">                        </Link>
+
+                                        Analytics predittivi avanzati
+
+                                    </li>                            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">                        <Link 
+
+                                </ul>
+
+                                <Link                                 <ShieldCheckIcon className="w-8 h-8 text-purple-600" />                            to="/pricing" 
+
+                                    to="/verticals/marketing-agency"
+
+                                    className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors inline-block"                            </div>                            className="border-2 border-primary text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-50 transition-colors"
+
+                                >
+
+                                    Scopri di Più                            <h3 className="text-xl font-bold mb-3">Sicurezza Assoluta</h3>                        >
+
+                                </Link>
+
+                            </div>                            <p className="text-gray-600">                            Scopri i Prezzi
+
+                        </div>
+
+                    </div>                                Conformità GDPR nativa e crittografia end-to-end                        </Link>
+
+                </div>
+
+            </section>                            </p>                    </div>
+
+
+
+            {/* CTA Section */}                        </div>                    
+
+            <section className="py-20 bg-primary text-white">
+
+                <div className="container mx-auto px-6 text-center">                                            {/* Stats */}
+
+                    <h2 className="text-4xl font-bold mb-6">
+
+                        Pronto a Trasformare il Tuo Business?                        <div className="text-center p-6">                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto">
+
+                    </h2>
+
+                    <p className="text-xl mb-8 opacity-90">                            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">                        <div className="text-center">
+
+                        Unisciti a centinaia di aziende che hanno già scelto Guardian AI CRM
+
+                    </p>                                <CheckCircleIcon className="w-8 h-8 text-orange-600" />                            <div className="text-3xl font-bold text-primary">500+</div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+                        <Link                             </div>                            <div className="text-gray-600">Aziende Attive</div>
+
+                            to="/login"
+
+                            className="bg-white text-primary px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors"                            <h3 className="text-xl font-bold mb-3">Setup Immediato</h3>                        </div>
+
+                        >
+
+                            Inizia Gratis Oggi                            <p className="text-gray-600">                        <div className="text-center">
+
+                        </Link>
+
+                        <Link                                 Operativo in 5 minuti, senza configurazioni complesse                            <div className="text-3xl font-bold text-primary">98%</div>
+
+                            to="/pricing"
+
+                            className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors"                            </p>                            <div className="text-gray-600">Soddisfazione Cliente</div>
+
+                        >
+
+                            Vedi Prezzi                        </div>                        </div>
+
+                        </Link>
+
+                    </div>                    </div>                        <div className="text-center">
+
+                </div>
+
+            </section>                </div>                            <div className="text-3xl font-bold text-primary">24/7</div>
+
+
+
+            <PublicFooter />            </section>                            <div className="text-gray-600">Supporto AI</div>
+
+        </div>
+
+    );                        </div>
+
+};
+            {/* Solutions Section */}                    </div>
+
+            <section className="py-20 bg-gray-50">                </div>
+
+                <div className="container mx-auto px-6">            </section>
+
+                    <div className="text-center mb-16">
+
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">            {/* Features Section */}
+
+                            Soluzioni Verticali            <section className="py-20 bg-white">
+
+                        </h2>                <div className="container mx-auto px-6">
+
+                        <p className="text-xl text-gray-600">                    <div className="text-center mb-16">
+
+                            Specificamente progettate per il tuo settore                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+
+                        </p>                            Perché Scegliere Guardian AI CRM
+
+                    </div>                        </h2>
+
+                        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">                            La prima piattaforma CRM italiana che combina potenza dell&apos;AI con semplicità d&apos;uso
+
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">                        </p>
+
+                            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-8 text-white">                    </div>
+
+                                <h3 className="text-2xl font-bold mb-3">Assicurazioni</h3>
+
+                                <p className="text-blue-100">                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+                                    CRM specializzato per agenti e broker assicurativi                        <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+
+                                </p>                            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+
+                            </div>                                <CpuChipIcon className="w-8 h-8 text-primary" />
+
+                            <div className="p-8">                            </div>
+
+                                <ul className="space-y-3 mb-6">                            <h3 className="text-xl font-semibold mb-3">AI Avanzata</h3>
+
+                                    <li className="flex items-center">                            <p className="text-gray-600">
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                                Algoritmi di machine learning per predire comportamenti e ottimizzare le vendite
+
+                                        Gestione completa polizze e sinistri                            </p>
+
+                                    </li>                        </div>
+
+                                    <li className="flex items-center">
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                        <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+
+                                        Automazione processi assicurativi                            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+
+                                    </li>                                <SparklesIcon className="w-8 h-8 text-green-600" />
+
+                                    <li className="flex items-center">                            </div>
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                            <h3 className="text-xl font-semibold mb-3">Automazione Smart</h3>
+
+                                        Conformità normative automatica                            <p className="text-gray-600">
+
+                                    </li>                                Workflow intelligenti che si adattano automaticamente al tuo business
+
+                                </ul>                            </p>
+
+                                <Link                         </div>
+
+                                    to="/verticals/insurance-agency"
+
+                                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block"                        <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+
+                                >                            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+
+                                    Scopri di Più                                <ShieldCheckIcon className="w-8 h-8 text-purple-600" />
+
+                                </Link>                            </div>
+
+                            </div>                            <h3 className="text-xl font-semibold mb-3">Sicurezza Totale</h3>
+
+                        </div>                            <p className="text-gray-600">
+
+                                Crittografia end-to-end e compliance GDPR per proteggere i tuoi dati
+
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">                            </p>
+
+                            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-8 text-white">                        </div>
+
+                                <h3 className="text-2xl font-bold mb-3">Marketing</h3>
+
+                                <p className="text-purple-100">                        <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+
+                                    Automazione completa per agenzie di marketing                            <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+
+                                </p>                                <CheckCircleIcon className="w-8 h-8 text-yellow-600" />
+
+                            </div>                            </div>
+
+                            <div className="p-8">                            <h3 className="text-xl font-semibold mb-3">Setup Facile</h3>
+
+                                <ul className="space-y-3 mb-6">                            <p className="text-gray-600">
+
+                                    <li className="flex items-center">                                Configurazione in 5 minuti con import automatico dei tuoi dati esistenti
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                            </p>
+
+                                        Campagne automatizzate multi-canale                        </div>
+
+                                    </li>                    </div>
+
+                                    <li className="flex items-center">                </div>
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />            </section>
+
+                                        Lead scoring e nurturing AI
+
+                                    </li>            {/* Solutions Section */}
+
+                                    <li className="flex items-center">            <section className="py-20 bg-gray-50">
+
+                                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3" />                <div className="container mx-auto px-6">
+
+                                        Analytics predittivi avanzati                    <div className="text-center mb-16">
+
+                                    </li>                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+
+                                </ul>                            Soluzioni Verticali Specializzate
+
+                                <Link                         </h2>
+
+                                    to="/verticals/marketing-agency"                        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+
+                                    className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors inline-block"                            CRM ottimizzato per le specifiche esigenze del tuo settore
+
+                                >                        </p>
+
+                                    Scopri di Più                    </div>
+
+                                </Link>
+
+                            </div>                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+
+                        </div>                        <Link 
+
+                    </div>                            to="/verticals/insurance-agency"
+
+                </div>                            className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-2 border-transparent hover:border-blue-200"
+
+            </section>                        >
+
+                            <div className="flex items-center mb-4">
+
+            {/* CTA Section */}                                <span className="text-4xl mr-4">🛡️</span>
+
+            <section className="py-20 bg-primary text-white">                                <h3 className="text-2xl font-bold text-blue-600">Agenzie Assicurative</h3>
+
+                <div className="container mx-auto px-6 text-center">                            </div>
+
+                    <h2 className="text-4xl font-bold mb-6">                            <p className="text-gray-600 mb-4">
+
+                        Pronto a Trasformare il Tuo Business?                                Gestione polizze, rinnovi automatici, calcolo premi e compliance normativa integrata
+
+                    </h2>                            </p>
+
+                    <p className="text-xl mb-8 opacity-90">                            <div className="text-blue-600 font-semibold">Scopri di più →</div>
+
+                        Unisciti a centinaia di aziende che hanno già scelto Guardian AI CRM                        </Link>
+
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">                        <Link 
+
+                        <Link                             to="/verticals/marketing-agency"
+
+                            to="/login"                            className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-2 border-transparent hover:border-purple-200"
+
+                            className="bg-white text-primary px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors"                        >
+
+                        >                            <div className="flex items-center mb-4">
+
+                            Inizia Gratis Oggi                                <span className="text-4xl mr-4">📊</span>
+
+                        </Link>                                <h3 className="text-2xl font-bold text-purple-600">Agenzie Marketing</h3>
+
+                        <Link                             </div>
+
+                            to="/pricing"                            <p className="text-gray-600 mb-4">
+
+                            className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors"                                Campaign management, lead scoring, ROI tracking e analytics avanzate integrate
+
+                        >                            </p>
+
+                            Vedi Prezzi                            <div className="text-purple-600 font-semibold">Scopri di più →</div>
+
+                        </Link>                        </Link>
+
+                    </div>                    </div>
+
+                </div>
+
+            </section>                    <div className="text-center mt-12">
+
+                        <p className="text-gray-600 mb-4">Altri settori in arrivo:</p>
+
+            <PublicFooter />                        <div className="flex flex-wrap justify-center gap-4">
+
+        </div>                            <span className="bg-white px-4 py-2 rounded-full text-gray-600 border">🏥 Healthcare</span>
+
+    );                            <span className="bg-white px-4 py-2 rounded-full text-gray-600 border">⚖️ Legal</span>
+
+};                            <span className="bg-white px-4 py-2 rounded-full text-gray-600 border">💼 Consulting</span>
+                            <span className="bg-white px-4 py-2 rounded-full text-gray-600 border">🏗️ Construction</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-20 bg-primary text-white">
+                <div className="container mx-auto px-6 text-center">
+                    <h2 className="text-4xl font-bold mb-6">
+                        Pronto a Trasformare il Tuo Business?
+                    </h2>
+                    <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+                        Unisciti a centinaia di aziende italiane che hanno già scelto Guardian AI CRM per crescere
+                    </p>
+                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <Link 
+                            to="/login" 
+                            className="bg-white text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+                        >
+                            Inizia Gratis per 30 Giorni
+                        </Link>
+                        <Link 
+                            to="/pricing" 
+                            className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+                        >
+                            Vedi Tutti i Piani
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="bg-gray-900 text-white py-12">
+                <div className="container mx-auto px-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div>
+                            <div className="flex items-center space-x-2 mb-4">
+                                <GuardianIcon className="w-8 h-8 text-primary" />
+                                <span className="text-xl font-bold">Guardian AI CRM</span>
+                            </div>
+                            <p className="text-gray-400 mb-4">
+                                La prima piattaforma CRM italiana completamente potenziata dall&apos;Intelligenza Artificiale
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold mb-4">Soluzioni</h3>
+                            <ul className="space-y-2 text-gray-400">
+                                <li><Link to="/verticals/insurance-agency" className="hover:text-white transition-colors">Assicurazioni</Link></li>
+                                <li><Link to="/verticals/marketing-agency" className="hover:text-white transition-colors">Marketing</Link></li>
+                                <li><span className="text-gray-500">Healthcare (Soon)</span></li>
+                                <li><span className="text-gray-500">Legal (Soon)</span></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold mb-4">Azienda</h3>
+                            <ul className="space-y-2 text-gray-400">
+                                <li><Link to="/pricing" className="hover:text-white transition-colors">Prezzi</Link></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Chi Siamo</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Contatti</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold mb-4">Supporto</h3>
+                            <ul className="space-y-2 text-gray-400">
+                                <li><a href="#" className="hover:text-white transition-colors">Documentazione</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                        <p>&copy; 2025 Guardian AI CRM. Tutti i diritti riservati.</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    );
+};

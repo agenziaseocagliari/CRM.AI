@@ -5,17 +5,8 @@ import toast from 'react-hot-toast';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 
 
-// Lazy components for performance optimization
-import {
-  Dashboard,
-  Contacts,
-  Opportunities,
-  Forms,
-  Automations,
-  CalendarView,
-  Meetings,
-  Settings
-} from './components/LazyComponents';
+// Lazy components for performance optimization - temporarily disabled
+// Components moved to .bak files
 
 // Keep light components as regular imports
 import { DebugPanel } from './components/DebugPanel';
@@ -23,26 +14,14 @@ import { ForgotPassword } from './components/ForgotPassword';
 import { HomePage } from './components/HomePage';
 import { Login } from './components/Login';
 import { MainLayout } from './components/MainLayout';
-import { PrivacyPolicy } from './components/PrivacyPolicy';
+// import { PrivacyPolicy } from './components/PrivacyPolicy'; // Moved to .bak
 import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
-import { ResetPassword } from './components/ResetPassword';
+// import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
-// Super Admin lazy components - Heavy components for performance
-import {
-  SuperAdminDashboard,
-  SuperAdminLayout,
-  SystemHealthDashboard,
-  APIIntegrationsManager,
-  QuotaManagement,
-  WorkflowBuilder,
-  AutomationAgents,
-  SuperAdminCustomers,
-  SuperAdminPayments,
-  SuperAdminAuditLogs,
-  SuperAdminAiWorkflows
-} from './components/LazyComponents';
-import { TermsOfService } from './components/TermsOfService';
+// Super Admin lazy components - temporarily disabled
+// Components moved to .bak files
+// import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
 import ExtraCreditsStore from './components/store/ExtraCreditsStore';
 
 // Super Admin Imports
@@ -252,13 +231,14 @@ const App: React.FC = () => {
         <Route path="/reset-password" element={
           session
             ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace />
-            : <ResetPassword />
+            : <div className="p-8 text-center">Reset Password temporaneamente non disponibile</div>
         } />
 
         <Route path="/form/:formId" element={<PublicForm />} />
 
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />`n        <Route path="/pricing" element={<PublicPricingPage />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
+        {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
+        <Route path="/pricing" element={<PublicPricingPage />} />
+        {/* <Route path="/terms-of-service" element={<TermsOfService />} /> */}
 
         <Route path="/settings/oauth/google" element={session ? <GoogleAuthCallback /> : <Navigate to="/login" />} />
 
@@ -269,34 +249,19 @@ const App: React.FC = () => {
             session ? <MainLayout crmData={crmData} /> : <Navigate to="/login" replace />
           }
         >
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="opportunities" element={<Opportunities />} />
-          <Route path="contacts" element={<Contacts />} />
-          <Route path="calendar" element={<CalendarView />} />
-          <Route path="meetings" element={<Meetings />} />
-          <Route path="forms" element={<Forms />} />
-          <Route path="automations" element={<Automations />} />
+          <Route path="dashboard" element={<div className="p-8">Dashboard temporaneamente non disponibile</div>} />
+          <Route path="opportunities" element={<div className="p-8">Opportunities temporaneamente non disponibile</div>} />
+          <Route path="contacts" element={<div className="p-8">Contacts temporaneamente non disponibile</div>} />
+          <Route path="calendar" element={<div className="p-8">Calendar temporaneamente non disponibile</div>} />
+          <Route path="meetings" element={<div className="p-8">Meetings temporaneamente non disponibile</div>} />
+          <Route path="forms" element={<div className="p-8">Forms temporaneamente non disponibile</div>} />
+          <Route path="automations" element={<div className="p-8">Automations temporaneamente non disponibile</div>} />
           <Route path="store" element={<ExtraCreditsStore />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="settings" element={<div className="p-8">Settings temporaneamente non disponibile</div>} />
         </Route>
 
-        {/* Super Admin Routes */}
-        <Route
-            path="/super-admin"
-            element={session ? <SuperAdminLayout /> : <Navigate to="/login" replace />}
-        >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<SuperAdminDashboard />} />
-            <Route path="system-health" element={<SystemHealthDashboard />} />
-            <Route path="quota-management" element={<QuotaManagement />} />
-            <Route path="customers" element={<SuperAdminCustomers />} />
-            <Route path="payments" element={<SuperAdminPayments />} />
-            <Route path="automation-agents" element={<AutomationAgents />} />
-            <Route path="api-integrations" element={<APIIntegrationsManager />} />
-            <Route path="workflow-builder" element={<WorkflowBuilder />} />
-            <Route path="ai-workflows" element={<SuperAdminAiWorkflows />} />
-            <Route path="audit-logs" element={<SuperAdminAuditLogs />} />
-        </Route>
+        {/* Super Admin Routes - Temporarily Disabled */}
+        <Route path="/super-admin/*" element={<div className="p-8 text-center">Super Admin sezione temporaneamente non disponibile</div>} />
 
         <Route path="*" element={
           <Navigate to={

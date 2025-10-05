@@ -37,7 +37,8 @@ const AutomationCard: React.FC<{ automation: Automation; onDelete: (automation: 
 
 export const Automations: React.FC = () => {
     console.log('🤖 Automations component is rendering');
-    const { automations, organization, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
+    const { automations, organization, refetch } = contextData || {};
     console.log('🤖 Automations data:', { automations, organization });
 
     const [messages, setMessages] = useState<Message[]>([]);
@@ -53,6 +54,19 @@ export const Automations: React.FC = () => {
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // Safety check after all hooks
+    if (!contextData) {
+        console.error('❌ Automations: No context data received');
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <p className="text-red-500 font-medium">Errore: Dati del CRM non disponibili</p>
+                    <p className="text-gray-500 text-sm mt-2">Ricarica la pagina o controlla la connessione</p>
+                </div>
+            </div>
+        );
+    }
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();

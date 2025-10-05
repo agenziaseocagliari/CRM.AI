@@ -117,9 +117,12 @@ const initialFormState: OpportunityFormData = {
 
 export const Opportunities: React.FC = () => {
   console.log('🔄 Opportunities component is rendering');
-  const { opportunities: initialData, contacts, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
+  
+  // Get context data safely
+  const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
+  const { opportunities: initialData, contacts, organization, refetch: refetchData } = contextData || {};
   console.log('📊 Opportunities data:', { initialData, contacts, organization });
-  const [boardData, setBoardData] = useState<OpportunitiesData>(initialData);
+  const [boardData, setBoardData] = useState<OpportunitiesData>(initialData || {});
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -132,8 +135,21 @@ export const Opportunities: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setBoardData(initialData);
+    setBoardData(initialData || {});
   }, [initialData]);
+
+  // Safety check after all hooks
+  if (!contextData) {
+    console.error('❌ Opportunities: No context data received');
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-500 font-medium">Errore: Dati del CRM non disponibili</p>
+          <p className="text-gray-500 text-sm mt-2">Ricarica la pagina o controlla la connessione</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleOpenAddModal = () => {
     setModalMode('add');

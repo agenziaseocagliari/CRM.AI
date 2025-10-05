@@ -9,6 +9,7 @@ import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
 
 import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
+import AIAgentsPanel from './AIAgentsPanel';
 
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
@@ -286,6 +287,20 @@ export const Opportunities: React.FC = () => {
             <span>Aggiungi Opportunità </span>
         </button>
       </div>
+
+      {/* AI Agents Panel per Opportunities */}
+      <div className="mb-6">
+        <AIAgentsPanel 
+          context="opportunities" 
+          contextData={{ 
+            opportunities: initialData, 
+            contacts, 
+            totalValue: Object.values(boardData).flat().reduce((sum, op) => sum + op.value, 0),
+            opportunityCount: Object.values(boardData).flat().length 
+          }} 
+        />
+      </div>
+
       <div className="flex space-x-4 overflow-x-auto pb-4">
         {Object.values(PipelineStage).map(stage => (
             <KanbanColumn

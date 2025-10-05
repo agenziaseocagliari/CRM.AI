@@ -4,7 +4,8 @@ import { NavLink } from 'react-router-dom';
 
 import { useAuth } from '../contexts/AuthContext';
 
-import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, VideoIcon, AdminPanelIcon, CreditCardIcon } from './ui/icons';
+import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, AdminPanelIcon, CreditCardIcon } from './ui/icons';
+import { MessageCircle, Mail } from 'lucide-react';
 
 const NavItem: React.FC<{
   to: string;
@@ -60,11 +61,7 @@ export const Sidebar: React.FC = () => {
             icon={<CalendarIcon className="w-6 h-6" />}
             label="Calendario"
           />
-          <NavItem
-            to="meetings"
-            icon={<VideoIcon className="w-6 h-6" />}
-            label="Meeting"
-          />
+
           <NavItem
             to="forms"
             icon={<FormsIcon className="w-6 h-6" />}
@@ -75,6 +72,24 @@ export const Sidebar: React.FC = () => {
             icon={<AutomationIcon className="w-6 h-6" />}
             label="Automazioni"
           />
+          
+          {/* Enterprise AI Modules */}
+          <div className="border-t border-gray-700 my-4 pt-4">
+            <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold px-3 mb-3">
+              🤖 AI Enterprise
+            </p>
+            <NavItem
+              to="whatsapp"
+              icon={<MessageCircle className="w-6 h-6" />}
+              label="WhatsApp"
+            />
+            <NavItem
+              to="email-marketing"
+              icon={<Mail className="w-6 h-6" />}
+              label="Email Marketing"
+            />
+          </div>
+          
           <NavItem
             to="store"
             icon={<CreditCardIcon className="w-6 h-6" />}

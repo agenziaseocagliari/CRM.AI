@@ -29,6 +29,8 @@ import { Automations } from './components/Automations';
 import { CalendarView } from './components/CalendarView';
 import { Settings } from './components/Settings';
 import { TestComponent } from './components/TestComponent';
+import WhatsAppModule from './components/WhatsAppModule';
+import EmailMarketingModule from './components/EmailMarketingModule';
 // Super Admin lazy components - temporarily disabled
 // Components moved to .bak files
 // import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
@@ -180,7 +182,7 @@ const App: React.FC = () => {
     if (loading || !session) {return;}
 
     const isSuperAdminRoute = location.pathname.startsWith('/super-admin');
-    const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/settings'].some(
+    const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/whatsapp', '/email-marketing', '/settings'].some(
       path => location.pathname.startsWith(path)
     );
 
@@ -269,9 +271,14 @@ const App: React.FC = () => {
           <Route path="opportunities" element={<Opportunities />} />
           <Route path="contacts" element={<Contacts />} />
           <Route path="calendar" element={<CalendarView />} />
-          <Route path="meetings" element={<div className="p-8">Meetings temporaneamente non disponibile</div>} />
+
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />
+          
+          {/* Enterprise AI Modules */}
+          <Route path="whatsapp" element={<WhatsAppModule />} />
+          <Route path="email-marketing" element={<EmailMarketingModule />} />
+          
           <Route path="test" element={<TestComponent />} />
           <Route path="store" element={<ExtraCreditsStore />} />
           <Route path="settings" element={<Settings />} />

@@ -52,6 +52,10 @@ CREATE TABLE IF NOT EXISTS system_health_checks (
   CONSTRAINT valid_status CHECK (status IN ('healthy', 'degraded', 'down'))
 );
 
+-- Drop health check indexes if they exist to ensure idempotent migration
+DROP INDEX IF EXISTS idx_health_checks_time;
+DROP INDEX IF EXISTS idx_health_checks_status;
+
 CREATE INDEX idx_health_checks_time ON system_health_checks(checked_at DESC);
 CREATE INDEX idx_health_checks_status ON system_health_checks(status, checked_at DESC)
   WHERE status != 'healthy';
@@ -80,6 +84,9 @@ CREATE TABLE IF NOT EXISTS alert_rules (
   CONSTRAINT valid_condition CHECK (condition IN ('greater_than', 'less_than', 'equal', 'not_equal'))
 );
 
+-- Drop alert rules indexes if they exist to ensure idempotent migration
+DROP INDEX IF EXISTS idx_alert_rules_active;
+
 CREATE INDEX idx_alert_rules_active ON alert_rules(is_active, metric_name)
   WHERE is_active = true;
 
@@ -103,6 +110,11 @@ CREATE TABLE IF NOT EXISTS alert_history (
   
   CONSTRAINT valid_alert_status CHECK (status IN ('triggered', 'acknowledged', 'resolved'))
 );
+
+-- Drop alert history indexes if they exist to ensure idempotent migration
+DROP INDEX IF EXISTS idx_alert_history_time;
+DROP INDEX IF EXISTS idx_alert_history_unresolved;
+DROP INDEX IF EXISTS idx_alert_history_rule;
 
 CREATE INDEX idx_alert_history_time ON alert_history(triggered_at DESC);
 CREATE INDEX idx_alert_history_unresolved ON alert_history(status, triggered_at DESC)

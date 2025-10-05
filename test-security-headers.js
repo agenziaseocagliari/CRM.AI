@@ -1,7 +1,7 @@
 // Test per verificare che il plugin security headers sia configurato correttamente
 // Questo script può essere eseguito per verificare la configurazione
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 console.log('🔒 Testing Security Headers Configuration...\n');
@@ -25,8 +25,7 @@ try {
     
     // Verifica presenza dei file di sicurezza
     const securityUtilsPath = join(process.cwd(), 'src', 'lib', 'security', 'securityUtils.ts');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const hasSecurityUtils = require('fs').existsSync(securityUtilsPath);
+    const hasSecurityUtils = existsSync(securityUtilsPath);
     
     console.log('\n✅ Security Files Check:');
     console.log(`   - Security Utils: ${hasSecurityUtils ? '✅ EXISTS' : '❌ MISSING'}`);

@@ -178,7 +178,7 @@ async function handleStaticAsset(request) {
     }
     
     return networkResponse;
-  } catch (_error) {
+  } catch {
     console.error('❌ Failed to fetch static asset:', request.url);
     return new Response('Asset not available', { status: 404 });
   }

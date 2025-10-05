@@ -66,7 +66,7 @@ export const Automations: React.FC = () => {
             const data = await invokeSupabaseFunction('process-automation-request', { prompt: userMessage.text });
 
             // Type guard for API response
-            if (!data || typeof data !== 'object' || !('reply' in data) || typeof (data as any).reply !== 'string') {
+            if (!data || typeof data !== 'object' || !('reply' in data) || typeof (data as Record<string, unknown>).reply !== 'string') {
                 throw new Error("La risposta dell'AI non è valida.");
             }
 

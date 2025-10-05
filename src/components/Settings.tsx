@@ -210,7 +210,7 @@ export const Settings: React.FC = () => {
             const data = await invokeSupabaseFunction('google-auth-url', { state });
             
             // Type guard for API response
-            if (!data || typeof data !== 'object' || !('url' in data) || typeof (data as any).url !== 'string') {
+            if (!data || typeof data !== 'object' || !('url' in data) || typeof (data as Record<string, unknown>).url !== 'string') {
                 throw new Error('Risposta API non valida');
             }
             
@@ -244,7 +244,7 @@ export const Settings: React.FC = () => {
             
             // Type guard for API response
             if (result && typeof result === 'object' && 'diagnostics' in result) {
-                setDiagResult((result as { diagnostics: any }).diagnostics);
+                setDiagResult((result as { diagnostics: DiagResult }).diagnostics);
             } else {
                 setDiagResult({ status: 'ERROR', message: 'Nessun risultato diagnostico disponibile' });
             }

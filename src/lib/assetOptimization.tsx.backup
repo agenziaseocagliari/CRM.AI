@@ -1,8 +1,11 @@
 // Asset Optimization React hooks and components for Guardian AI CRM
 // Contains only React-specific functionality for Fast Refresh compatibility
-/* eslint-disable react-refresh/only-export-components */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { compressImage, preloadAssets, supportsWebP, getOptimalImageSrc, analyzeAssetSize } from './assetOptimizationUtils';
+
+// Re-export utilities for backward compatibility
+export { compressImage, preloadAssets, supportsWebP, getOptimalImageSrc, analyzeAssetSize };
 
 // Image compression utility
 export const compressImage = (

@@ -540,7 +540,7 @@ The Guardian AI CRM Team`,
 
       return {
         success: true,
-        result: (result as any).data || result,
+        result: (result as { data?: unknown }).data || result,
         cached: false,
         cacheHit: false,
         processingTime: 0, // Will be set by caller

@@ -133,7 +133,7 @@ export const Forms: React.FC = () => {
             const data = await invokeSupabaseFunction('generate-form-fields', { prompt: sanitizedPrompt });
             
             // Type guard for API response
-            if (!data || typeof data !== 'object' || !('fields' in data) || !Array.isArray((data as any).fields)) {
+            if (!data || typeof data !== 'object' || !('fields' in data) || !Array.isArray((data as Record<string, unknown>).fields)) {
                 throw new Error('Risposta API non valida');
             }
             

@@ -1,7 +1,7 @@
 // Script per verificare lo stato della migrazione nel database CORRETTO
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   'https://qjtaqrlpronohgpfdxsi.supabase.co',

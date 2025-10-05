@@ -252,7 +252,7 @@ export class InputValidator {
       }
       
       return this.sanitizeObject(parsed);
-    } catch (error) {
+    } catch {
       SecureLogger.warn('security', 'Invalid JSON input detected', { input: input.slice(0, 100) });
       return null;
     }
@@ -359,7 +359,7 @@ export class SecureErrorHandler {
   /**
    * Create user-safe error message (no sensitive info leak)
    */
-  static createSafeErrorMessage(error: any, context?: string): string {
+  static createSafeErrorMessage(error: Error | unknown, context?: string): string {
     // Log full error internally (masked)
     SecureLogger.error('security', `Error in ${context || 'unknown context'}`, {
       error: error instanceof Error ? error.message : error,
@@ -388,7 +388,7 @@ export class SecureErrorHandler {
   /**
    * Handle API errors securely
    */
-  static handleAPIError(error: any, endpoint: string): never {
+  static handleAPIError(error: Error | unknown, endpoint: string): never {
     const safeMessage = this.createSafeErrorMessage(error, `API ${endpoint}`);
     
     // Create error object without sensitive information

@@ -280,7 +280,7 @@ export const Contacts: React.FC = () => {
             });
             
             // Type guard for API response
-            if (data && typeof data === 'object' && 'email' in data && typeof (data as any).email === 'string') {
+            if (data && typeof data === 'object' && 'email' in data && typeof (data as Record<string, unknown>).email === 'string') {
                 setGeneratedContent((data as { email: string }).email);
             } else {
                 throw new Error('Risposta API non valida');
@@ -308,7 +308,7 @@ export const Contacts: React.FC = () => {
             });
             
             // Type guard for API response
-            if (data && typeof data === 'object' && 'message' in data && typeof (data as any).message === 'string') {
+            if (data && typeof data === 'object' && 'message' in data && typeof (data as Record<string, unknown>).message === 'string') {
                 setGeneratedContent((data as { message: string }).message);
             } else {
                 throw new Error('Risposta API non valida');

@@ -44,10 +44,6 @@ export const IncidentDashboard: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    loadIncidents();
-  }, [filterStatus, filterSeverity, page]);
-
   const loadIncidents = useCallback(async () => {
     try {
       setIsLoading(true);

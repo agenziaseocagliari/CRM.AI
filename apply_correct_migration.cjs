@@ -1,6 +1,6 @@
 // Applica migrazione database con credenziali corrette
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const fs = require('fs');
+import fs from 'fs';
 
 async function applyMigrationWithCorrectCredentials() {
   const supabaseUrl = 'https://qjtaqrlpronohgpfdxsi.supabase.co';

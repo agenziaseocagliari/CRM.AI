@@ -1,0 +1,237 @@
+/**
+ * GUARDIAN AI CRM - ACCOUNT SETUP PROGRESS COMPONENT
+ * Componente per mostrare progresso setup account verticale
+ * Data: 2025-10-05
+ */
+
+import React from 'react';
+import { getAccountTypeConfig, getAccountTypeIcon } from '../../lib/verticalAccounts/types';
+import { useAccountSetup } from '../../lib/verticalAccounts/useAccountSetup';
+
+interface AccountSetupProgressProps {
+  organizationId: string;
+  accountType: string;
+  userId: string;
+  onSetupComplete?: () => void;
+}
+
+const AccountSetupProgress: React.FC<AccountSetupProgressProps> = ({
+  organizationId,
+  accountType,
+  userId,
+  onSetupComplete
+}) => {
+  const { setupAccount, isSettingUp, setupResult, error } = useAccountSetup();
+  const config = getAccountTypeConfig(accountType as any);
+
+  const handleStartSetup = async () => {
+    const result = await setupAccount({
+      organizationId,
+      accountType: accountType as any,
+      userId
+    });
+
+    if (result.success && onSetupComplete) {
+      onSetupComplete();
+    }
+  };
+
+  if (!config) {
+    return (
+      <div className="p-6 text-center text-red-600">
+        Tipo di account non riconosciuto: {accountType}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="text-4xl mb-4">{getAccountTypeIcon(accountType as any)}</div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Configura il tuo {config.displayName}
+        </h2>
+        <p className="text-gray-600">
+          Personalizzeremo Guardian AI per le esigenze specifiche della tua {config.displayName.toLowerCase()}
+        </p>
+      </div>
+
+      {/* Setup Steps */}
+      <div className="space-y-4 mb-8">
+        <div className="flex items-center">
+          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 font-semibold">1</span>
+          </div>
+          <div className="ml-4">
+            <h3 className="font-semibold text-gray-900">Configurazione Terminologia</h3>
+            <p className="text-gray-600 text-sm">
+              Adatteremo il linguaggio dell&apos;interfaccia per il tuo settore
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center">
+          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 font-semibold">2</span>
+          </div>
+          <div className="ml-4">
+            <h3 className="font-semibold text-gray-900">Campi Personalizzati</h3>
+            <p className="text-gray-600 text-sm">
+              Aggiungeremo campi specifici per il tuo tipo di business
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center">
+          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 font-semibold">3</span>
+          </div>
+          <div className="ml-4">
+            <h3 className="font-semibold text-gray-900">Automazioni Predefinite</h3>
+            <p className="text-gray-600 text-sm">
+              Configureremo workflow automatici per il tuo settore
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center">
+          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 font-semibold">4</span>
+          </div>
+          <div className="ml-4">
+            <h3 className="font-semibold text-gray-900">Dati di Esempio</h3>
+            <p className="text-gray-600 text-sm">
+              Caricheremo alcuni dati di esempio per iniziare subito
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      {isSettingUp && (
+        <div className="mb-6">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Configurazione in corso...</span>
+            <span>75%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+              style={{ width: '75%' }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Success Result */}
+      {setupResult?.success && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <div className="text-green-600 text-xl mr-3">✅</div>
+            <div>
+              <h3 className="font-semibold text-green-800">Setup Completato!</h3>
+              <p className="text-green-700 text-sm">
+                Abbiamo configurato {setupResult.templatesApplied.length} template e 
+                creato {setupResult.customFieldsCreated} campi personalizzati.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center">
+            <div className="text-red-600 text-xl mr-3">❌</div>
+            <div>
+              <h3 className="font-semibold text-red-800">Errore durante il Setup</h3>
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Button */}
+      {!setupResult?.success && (
+        <div className="text-center">
+          <button
+            onClick={handleStartSetup}
+            disabled={isSettingUp}
+            className={`px-8 py-3 rounded-lg font-semibold text-lg transition-colors ${
+              isSettingUp
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {isSettingUp ? 'Configurazione in corso...' : 'Inizia Configurazione'}
+          </button>
+        </div>
+      )}
+
+      {/* Complete Button */}
+      {setupResult?.success && (
+        <div className="text-center">
+          <button
+            onClick={onSetupComplete}
+            className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors"
+          >
+            Continua verso Dashboard
+          </button>
+        </div>
+      )}
+
+      {/* Features Preview */}
+      <div className="mt-8 pt-8 border-t border-gray-200">
+        <h3 className="font-semibold text-gray-900 mb-4">
+          Cosa otterrai con la configurazione {config.displayName}:
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✓</span>
+            <span className="text-gray-700">Terminologia specializzata</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✓</span>
+            <span className="text-gray-700">Dashboard personalizzata</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✓</span>
+            <span className="text-gray-700">Workflow automatizzati</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✓</span>
+            <span className="text-gray-700">Report specifici del settore</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✓</span>
+            <span className="text-gray-700">Template comunicazioni</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✓</span>
+            <span className="text-gray-700">Integrazioni predefinite</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing Info */}
+      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-semibold text-blue-900">Piano {config.displayName}</h4>
+            <p className="text-blue-700 text-sm">Inizia con 30 giorni gratuiti</p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-blue-600">
+              €{Math.round(config.basePriceCents / 100)}
+            </div>
+            <div className="text-blue-600 text-sm">/mese</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AccountSetupProgress;

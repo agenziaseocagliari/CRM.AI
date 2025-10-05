@@ -4,7 +4,7 @@
 import { invokeSupabaseFunction } from '../api';
 import { diagnosticLogger } from '../mockDiagnosticLogger';
 import { 
-  EnhancedPromptSystem, 
+ 
   createLeadScoringPrompt, 
   createEmailGenerationPrompt,
   createWhatsAppPrompt,
@@ -19,7 +19,7 @@ export interface OptimizedAIRequest {
   organizationId: string;
   organizationContext: OrganizationContext;
   actionType: 'lead-scoring' | 'email-generation' | 'whatsapp-generation';
-  inputData: any;
+  inputData: unknown;
   options?: {
     useCache?: boolean;
     maxCacheAge?: number;
@@ -29,7 +29,7 @@ export interface OptimizedAIRequest {
   };
 }
 
-export interface OptimizedAIResponse<T = any> {
+export interface OptimizedAIResponse<T = unknown> {
   success: boolean;
   result?: T;
   cached?: boolean;
@@ -56,7 +56,7 @@ export class OptimizedAIService {
   /**
    * Process AI request with enhanced prompts, intelligent caching, and circuit breaker
    */
-  async processRequest<T = any>(request: OptimizedAIRequest): Promise<OptimizedAIResponse<T>> {
+  async processRequest<T = unknown>(request: OptimizedAIRequest): Promise<OptimizedAIResponse<T>> {
     const startTime = performance.now();
     
     // Get circuit breaker for this action type
@@ -189,6 +189,7 @@ export class OptimizedAIService {
 
       return {
         ...aiResult,
+        result: aiResult.result as T,
         cached: false,
         cacheHit: false,
         processingTime,
@@ -202,8 +203,6 @@ export class OptimizedAIService {
       };
 
     } catch (error) {
-      const processingTime = performance.now() - startTime;
-      
       diagnosticLogger.error('ai-optimization', 'Main operation failed', error);
       
       // Re-throw to let circuit breaker handle it
@@ -218,9 +217,6 @@ export class OptimizedAIService {
     request: OptimizedAIRequest,
     startTime: number
   ): Promise<FallbackResponse> {
-    
-    const processingTime = performance.now() - startTime;
-    
     // Try cache-only mode first
     if (request.options?.useCache !== false) {
       try {
@@ -258,7 +254,7 @@ export class OptimizedAIService {
             result: JSON.parse(cachedResult.response.content),
             degraded: true,
             fallbackReason: 'AI service unavailable - using cached similar response',
-            confidence: cachedResult.similarity! > 0.7 ? 'high' : 'medium',
+            confidence: (cachedResult.similarity ?? 0) > 0.7 ? 'high' : 'medium',
             metadata: {
               circuitState: 'OPEN',
               fallbackStrategy: 'cache_similar',
@@ -291,7 +287,7 @@ export class OptimizedAIService {
   /**
    * Get default response for action type
    */
-  private getDefaultResponseForAction(actionType: string): any {
+  private getDefaultResponseForAction(actionType: string): unknown {
     switch (actionType) {
       case 'lead-scoring':
         return {
@@ -339,7 +335,7 @@ The Guardian AI CRM Team`,
    * Lead Scoring with Optimization
    */
   async scoreContactLead(
-    contact: any,
+    contact: Record<string, unknown>,
     organizationId: string,
     organizationContext: OrganizationContext,
     options?: OptimizedAIRequest['options']
@@ -371,7 +367,7 @@ The Guardian AI CRM Team`,
    * Email Generation with Optimization
    */
   async generateEmailContent(
-    emailContext: any,
+    emailContext: Record<string, unknown>,
     organizationId: string,
     organizationContext: OrganizationContext,
     options?: OptimizedAIRequest['options']
@@ -401,7 +397,7 @@ The Guardian AI CRM Team`,
    * WhatsApp Message Generation with Optimization
    */
   async generateWhatsAppMessage(
-    messageContext: any,
+    messageContext: Record<string, unknown>,
     organizationId: string,
     organizationContext: OrganizationContext,
     options?: OptimizedAIRequest['options']
@@ -455,7 +451,7 @@ The Guardian AI CRM Team`,
   private async checkCache(
     templateId: string,
     organizationId: string,
-    inputData: any,
+    inputData: unknown,
     options: NonNullable<OptimizedAIRequest['options']>
   ): Promise<AICacheEntry | null> {
     
@@ -477,7 +473,7 @@ The Guardian AI CRM Team`,
   private async cacheResult(
     templateId: string,
     organizationId: string,
-    inputData: any,
+    inputData: unknown,
     response: {
       content: string;
       model: string;
@@ -518,7 +514,7 @@ The Guardian AI CRM Team`,
 
       // Prepare enhanced payload with context
       const enhancedPayload = {
-        ...request.inputData,
+        ...(typeof request.inputData === 'object' && request.inputData !== null ? request.inputData as Record<string, unknown> : {}),
         organizationId: request.organizationId,
         organizationContext: request.organizationContext,
         promptTemplate: {
@@ -572,7 +568,7 @@ The Guardian AI CRM Team`,
   /**
    * Estimate token usage for cost calculation
    */
-  private estimateTokens(promptTemplate: PromptTemplate, inputData: any): number {
+  private estimateTokens(promptTemplate: PromptTemplate, inputData: unknown): number {
     const systemTokens = Math.ceil(promptTemplate.systemContext.length / 4);
     const userTokens = Math.ceil(promptTemplate.userContext.length / 4);
     const inputTokens = Math.ceil(JSON.stringify(inputData).length / 4);
@@ -597,8 +593,8 @@ The Guardian AI CRM Team`,
   /**
    * Get optimization metrics
    */
-  async getOptimizationMetrics(organizationId: string): Promise<{
-    cacheMetrics: any;
+  async getOptimizationMetrics(_organizationId: string): Promise<{
+    cacheMetrics: Record<string, unknown>;
     costSavings: number;
     performanceGains: number;
     accuracyImprovement: number;
@@ -607,7 +603,7 @@ The Guardian AI CRM Team`,
     const cacheMetrics = aiCache.getMetrics();
     
     return {
-      cacheMetrics,
+      cacheMetrics: cacheMetrics as unknown as Record<string, unknown>,
       costSavings: cacheMetrics.costSavings,
       performanceGains: cacheMetrics.hitRate > 0 ? 
         (cacheMetrics.avgResponseTime / 3000) * 100 : 0, // Cache responses are ~10x faster
@@ -641,7 +637,7 @@ export const optimizedAIService = new OptimizedAIService();
 
 // Convenience functions for backward compatibility
 export async function optimizedLeadScoring(
-  contact: any,
+  contact: Record<string, unknown>,
   organizationId: string,
   organizationContext: OrganizationContext
 ) {
@@ -649,7 +645,7 @@ export async function optimizedLeadScoring(
 }
 
 export async function optimizedEmailGeneration(
-  emailContext: any,
+  emailContext: Record<string, unknown>,
   organizationId: string,
   organizationContext: OrganizationContext
 ) {
@@ -657,7 +653,7 @@ export async function optimizedEmailGeneration(
 }
 
 export async function optimizedWhatsAppGeneration(
-  messageContext: any,
+  messageContext: Record<string, unknown>,
   organizationId: string,
   organizationContext: OrganizationContext
 ) {

@@ -12,14 +12,14 @@ import { diagnosticLogger } from '../mockDiagnosticLogger';
 export interface AIRequestConfig {
   organizationId: string;
   actionType: string;
-  input: any;
+  input: unknown;
   model?: string;
   priority?: 'critical' | 'standard' | 'background';
   bypassCache?: boolean;
   organizationContext?: OrganizationAIContext;
 }
 
-export interface AIResponse<T = any> {
+export interface AIResponse<T = unknown> {
   result: T;
   success: boolean;
   cached: boolean;
@@ -38,6 +38,13 @@ export interface AIResponse<T = any> {
     requestId: string;
   };
   error?: string;
+}
+
+interface PromptTemplate {
+  systemContext: string;
+  userContext: string;
+  examples: Array<{ input: string; output: string }>;
+  constraints: string[];
 }
 
 export interface AIMetrics {
@@ -71,7 +78,7 @@ class EnhancedAIService {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
-  async processAIRequest<T = any>(config: AIRequestConfig): Promise<AIResponse<T>> {
+  async processAIRequest<T = unknown>(config: AIRequestConfig): Promise<AIResponse<T>> {
     const startTime = Date.now();
     const requestId = this.generateRequestId();
     const model = config.model || this.DEFAULT_MODEL;
@@ -227,8 +234,10 @@ class EnhancedAIService {
         }
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorTime = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown AI processing error';
+      const errorType = error instanceof Error ? error.constructor.name : 'UnknownError';
       
       // Track error metrics
       await this.trackMetrics({
@@ -239,7 +248,7 @@ class EnhancedAIService {
         responseTimeMs: errorTime,
         success: false,
         cached: false,
-        errorType: error.constructor.name,
+        errorType,
         timestamp: new Date()
       });
 
@@ -255,14 +264,14 @@ class EnhancedAIService {
           actionType: config.actionType,
           requestId
         },
-        error: error.message || 'Unknown AI processing error'
+        error: errorMessage
       };
     }
   }
 
   // Specialized methods for each AI action type
   async scoreContactLead(
-    contact: any,
+    contact: Record<string, unknown>,
     organizationId: string,
     organizationContext?: OrganizationAIContext,
     priority: 'critical' | 'standard' | 'background' = 'critical'
@@ -284,7 +293,7 @@ class EnhancedAIService {
   }
 
   async generateEmailContent(
-    emailContext: any,
+    emailContext: Record<string, unknown>,
     organizationId: string,
     organizationContext?: OrganizationAIContext,
     priority: 'critical' | 'standard' | 'background' = 'standard'
@@ -304,7 +313,7 @@ class EnhancedAIService {
   }
 
   async generateWhatsAppMessage(
-    messageContext: any,
+    messageContext: Record<string, unknown>,
     organizationId: string,
     organizationContext?: OrganizationAIContext,
     priority: 'critical' | 'standard' | 'background' = 'standard'
@@ -319,7 +328,7 @@ class EnhancedAIService {
   }
 
   // Utility methods
-  private buildFinalPrompt(template: any, input: any): string {
+  private buildFinalPrompt(template: PromptTemplate, input: unknown): string {
     const inputStr = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
     
     return `${template.systemContext}
@@ -331,7 +340,7 @@ ${inputStr}
 
 ${template.examples.length > 0 ? `
 EXAMPLES:
-${template.examples.map((ex: any, i: number) => 
+${template.examples.map((ex, i: number) => 
   `Example ${i + 1}:
   Input: ${ex.input}
   Output: ${ex.output}`
@@ -339,7 +348,7 @@ ${template.examples.map((ex: any, i: number) =>
 ` : ''}
 
 CONSTRAINTS:
-${template.constraints.map((c: any) => `- ${c}`).join('\n')}
+${template.constraints.map((c: string) => `- ${c}`).join('\n')}
 
 Please analyze the input data and provide your response in the specified format.`;
   }
@@ -362,7 +371,7 @@ Please analyze the input data and provide your response in the specified format.
     }
   }
 
-  private getSchemaForAction(actionType: string): any {
+  private getSchemaForAction(actionType: string): Record<string, unknown> | undefined {
     switch (actionType) {
       case 'ai_lead_scoring':
         return {
@@ -473,7 +482,7 @@ Please analyze the input data and provide your response in the specified format.
   async checkAIHealth(): Promise<{
     status: 'healthy' | 'degraded' | 'unavailable';
     responseTime: number;
-    details: Record<string, any>;
+    details: Record<string, unknown>;
   }> {
     const start = Date.now();
     
@@ -501,12 +510,12 @@ Please analyze the input data and provide your response in the specified format.
         }
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         status: 'unavailable',
         responseTime: Date.now() - start,
         details: {
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
           model: this.DEFAULT_MODEL
         }
       };
@@ -519,7 +528,7 @@ export const enhancedAIService = new EnhancedAIService();
 
 // Convenience functions for backward compatibility
 export async function scoreContactLead(
-  contact: any,
+  contact: Record<string, unknown>,
   organizationId: string,
   organizationContext?: OrganizationAIContext
 ) {
@@ -527,7 +536,7 @@ export async function scoreContactLead(
 }
 
 export async function generateEmailContent(
-  emailContext: any,
+  emailContext: Record<string, unknown>,
   organizationId: string,
   organizationContext?: OrganizationAIContext
 ) {
@@ -535,7 +544,7 @@ export async function generateEmailContent(
 }
 
 export async function generateWhatsAppMessage(
-  messageContext: any,
+  messageContext: Record<string, unknown>,
   organizationId: string,
   organizationContext?: OrganizationAIContext
 ) {

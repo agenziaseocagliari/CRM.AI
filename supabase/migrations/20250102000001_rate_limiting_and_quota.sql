@@ -224,7 +224,10 @@ DROP POLICY IF EXISTS "Users can view their organization api stats" ON api_usage
 -- 8. Helper Functions
 -- =====================================================
 
--- Function to check if rate limit is exceeded
+-- Function to check if rate limit is exceeded (drop all variants for idempotency)
+DROP FUNCTION IF EXISTS check_rate_limit(UUID, UUID, TEXT, INTEGER, INTEGER) CASCADE;
+DROP FUNCTION IF EXISTS check_rate_limit(UUID, TEXT, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS check_rate_limit(UUID, TEXT) CASCADE;
 CREATE OR REPLACE FUNCTION check_rate_limit(
     p_organization_id UUID,
     p_user_id UUID,

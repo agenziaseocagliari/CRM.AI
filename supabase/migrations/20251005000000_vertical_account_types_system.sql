@@ -26,7 +26,9 @@ CREATE TYPE account_type_enum AS ENUM (
 );
 
 -- Tabella configurazioni per ogni account type
-CREATE TABLE IF NOT EXISTS vertical_account_configs (
+-- Use DROP IF EXISTS to handle cascading dependency from enum recreation
+DROP TABLE IF EXISTS vertical_account_configs CASCADE;
+CREATE TABLE vertical_account_configs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_type account_type_enum NOT NULL UNIQUE,
     display_name TEXT NOT NULL,
@@ -63,9 +65,18 @@ CREATE TABLE IF NOT EXISTS vertical_account_configs (
 -- 2. EXTEND ORGANIZATIONS TABLE FOR VERTICAL SUPPORT
 -- ===================================================================
 
--- Add account type to organizations
+-- Add account type to organizations (handle enum dependency properly)
+-- First add the account_type column after enum is recreated
+DO $$
+BEGIN
+    -- Drop the column if it exists to handle enum recreation
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'organizations' AND column_name = 'account_type') THEN
+        ALTER TABLE organizations DROP COLUMN account_type;
+    END IF;
+END $$;
+
 ALTER TABLE organizations 
-ADD COLUMN IF NOT EXISTS account_type account_type_enum DEFAULT 'generic',
+ADD COLUMN account_type account_type_enum DEFAULT 'generic',
 ADD COLUMN IF NOT EXISTS vertical_config JSONB DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS custom_modules JSONB DEFAULT '[]', -- Per enterprise customizations
 ADD COLUMN IF NOT EXISTS enterprise_features JSONB DEFAULT '{}'; -- Custom features per enterprise
@@ -79,7 +90,9 @@ CREATE INDEX IF NOT EXISTS idx_organizations_vertical_config ON organizations US
 -- ===================================================================
 
 -- Templates storage per ogni vertical
-CREATE TABLE IF NOT EXISTS vertical_templates (
+-- Use DROP IF EXISTS to handle cascading dependency from enum recreation
+DROP TABLE IF EXISTS vertical_templates CASCADE;
+CREATE TABLE vertical_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_type account_type_enum NOT NULL,
     template_type TEXT NOT NULL, -- 'dashboard_widget', 'email_template', 'form_template', 'automation_rule'
@@ -115,7 +128,9 @@ CREATE INDEX IF NOT EXISTS idx_vertical_templates_active ON vertical_templates(i
 -- ===================================================================
 
 -- Campi personalizzati per ogni vertical
-CREATE TABLE IF NOT EXISTS vertical_custom_fields (
+-- Use DROP IF EXISTS to handle cascading dependency from enum recreation
+DROP TABLE IF EXISTS vertical_custom_fields CASCADE;
+CREATE TABLE vertical_custom_fields (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_type account_type_enum NOT NULL,
     entity_type TEXT NOT NULL, -- 'contact', 'opportunity', 'organization'

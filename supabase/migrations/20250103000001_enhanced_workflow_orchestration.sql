@@ -430,6 +430,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_auto_version_workflow ON workflow_definitions;
+DROP TRIGGER IF EXISTS trigger_auto_version_workflow ON workflow_definitions;
+
 CREATE TRIGGER trigger_auto_version_workflow
     BEFORE UPDATE ON workflow_definitions
     FOR EACH ROW

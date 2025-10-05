@@ -425,9 +425,13 @@ CREATE TABLE IF NOT EXISTS testing.testing_logs (
 );
 
 -- Add triggers to testing tables
+DROP TRIGGER IF EXISTS testing_organizations_log ON testing_organizations;
+
 CREATE TRIGGER testing_organizations_log 
     AFTER INSERT OR UPDATE OR DELETE ON testing.organizations
     FOR EACH ROW EXECUTE FUNCTION testing.log_testing_activity();
+
+DROP TRIGGER IF EXISTS testing_customizations_log ON testing_customizations;
 
 CREATE TRIGGER testing_customizations_log 
     AFTER INSERT OR UPDATE OR DELETE ON testing.enterprise_customizations

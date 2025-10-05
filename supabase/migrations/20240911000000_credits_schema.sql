@@ -81,6 +81,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for organization_credits
+DROP TRIGGER IF EXISTS update_organization_credits_updated_at ON organization_credits;
+
 CREATE TRIGGER update_organization_credits_updated_at
     BEFORE UPDATE ON organization_credits
     FOR EACH ROW

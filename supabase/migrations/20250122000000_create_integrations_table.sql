@@ -104,6 +104,8 @@ DROP POLICY IF EXISTS "Admins can delete integrations" ON integrations;CREATE PO
 -- =====================================================
 
 DROP TRIGGER IF EXISTS update_integrations_updated_at ON integrations;
+DROP TRIGGER IF EXISTS update_integrations_updated_at ON integrations;
+
 CREATE TRIGGER update_integrations_updated_at
     BEFORE UPDATE ON integrations
     FOR EACH ROW

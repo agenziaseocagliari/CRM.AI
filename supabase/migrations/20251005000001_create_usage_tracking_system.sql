@@ -173,8 +173,14 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers for updated_at
+DROP TRIGGER IF EXISTS update_subscription_tiers_updated_at ON subscription_tiers;
+
 CREATE TRIGGER update_subscription_tiers_updated_at BEFORE UPDATE ON subscription_tiers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_organization_subscriptions_updated_at ON organization_subscriptions;
+
 CREATE TRIGGER update_organization_subscriptions_updated_at BEFORE UPDATE ON organization_subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_usage_quotas_updated_at ON usage_quotas;
+
 CREATE TRIGGER update_usage_quotas_updated_at BEFORE UPDATE ON usage_quotas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to initialize quota for new subscriptions
@@ -195,6 +201,8 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
+
+DROP TRIGGER IF EXISTS init_quota_on_subscription ON organization_subscriptions;
 
 CREATE TRIGGER init_quota_on_subscription AFTER INSERT ON organization_subscriptions FOR EACH ROW EXECUTE FUNCTION initialize_usage_quota();
 

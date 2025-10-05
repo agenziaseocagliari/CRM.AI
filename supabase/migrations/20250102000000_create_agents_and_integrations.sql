@@ -395,18 +395,24 @@ $$ LANGUAGE plpgsql;
 
 -- Add triggers for updated_at
 DROP TRIGGER IF EXISTS update_automation_agents_updated_at ON automation_agents;
+DROP TRIGGER IF EXISTS update_automation_agents_updated_at ON automation_agents;
+
 CREATE TRIGGER update_automation_agents_updated_at
     BEFORE UPDATE ON automation_agents
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 DROP TRIGGER IF EXISTS update_api_integrations_updated_at ON api_integrations;
+DROP TRIGGER IF EXISTS update_api_integrations_updated_at ON api_integrations;
+
 CREATE TRIGGER update_api_integrations_updated_at
     BEFORE UPDATE ON api_integrations
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 DROP TRIGGER IF EXISTS update_workflow_definitions_updated_at ON workflow_definitions;
+DROP TRIGGER IF EXISTS update_workflow_definitions_updated_at ON workflow_definitions;
+
 CREATE TRIGGER update_workflow_definitions_updated_at
     BEFORE UPDATE ON workflow_definitions
     FOR EACH ROW

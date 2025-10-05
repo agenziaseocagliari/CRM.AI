@@ -527,24 +527,32 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS update_incidents_updated_at ON incidents;
+DROP TRIGGER IF EXISTS update_incidents_updated_at ON incidents;
+
 CREATE TRIGGER update_incidents_updated_at
     BEFORE UPDATE ON incidents
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_timestamp();
 
 DROP TRIGGER IF EXISTS update_notification_rules_updated_at ON notification_rules;
+DROP TRIGGER IF EXISTS update_notification_rules_updated_at ON notification_rules;
+
 CREATE TRIGGER update_notification_rules_updated_at
     BEFORE UPDATE ON notification_rules
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_timestamp();
 
 DROP TRIGGER IF EXISTS update_escalation_rules_updated_at ON escalation_rules;
+DROP TRIGGER IF EXISTS update_escalation_rules_updated_at ON escalation_rules;
+
 CREATE TRIGGER update_escalation_rules_updated_at
     BEFORE UPDATE ON escalation_rules
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_timestamp();
 
 DROP TRIGGER IF EXISTS update_rollback_procedures_updated_at ON rollback_procedures;
+DROP TRIGGER IF EXISTS update_rollback_procedures_updated_at ON rollback_procedures;
+
 CREATE TRIGGER update_rollback_procedures_updated_at
     BEFORE UPDATE ON rollback_procedures
     FOR EACH ROW

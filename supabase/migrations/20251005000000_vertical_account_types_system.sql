@@ -255,13 +255,19 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers for updated_at
+DROP TRIGGER IF EXISTS update_vertical_account_configs_updated_at ON vertical_account_configs;
+
 CREATE TRIGGER update_vertical_account_configs_updated_at
     BEFORE UPDATE ON vertical_account_configs
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_vertical_templates_updated_at ON vertical_templates;
+
 CREATE TRIGGER update_vertical_templates_updated_at
     BEFORE UPDATE ON vertical_templates
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_enterprise_customizations_updated_at ON enterprise_customizations;
 
 CREATE TRIGGER update_enterprise_customizations_updated_at
     BEFORE UPDATE ON enterprise_customizations

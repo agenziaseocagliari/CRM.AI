@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS ip_whitelist (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_ip_whitelist_org ON ip_whitelist(organization_id);
-CREATE INDEX idx_ip_whitelist_active ON ip_whitelist(organization_id, is_active);
-CREATE INDEX idx_ip_whitelist_expires ON ip_whitelist(expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_ip_whitelist_org ON ip_whitelist(organization_id);
+CREATE INDEX IF NOT EXISTS idx_ip_whitelist_active ON ip_whitelist(organization_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_ip_whitelist_expires ON ip_whitelist(expires_at) WHERE expires_at IS NOT NULL;
 
 -- Full-text search on label and description
 CREATE INDEX idx_ip_whitelist_search ON ip_whitelist USING GIN(

@@ -165,6 +165,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to maintain search vector
+DROP TRIGGER IF EXISTS audit_log_search_vector_update ON audit_logs;
+
 CREATE TRIGGER audit_log_search_vector_update
     BEFORE INSERT OR UPDATE ON audit_logs
     FOR EACH ROW

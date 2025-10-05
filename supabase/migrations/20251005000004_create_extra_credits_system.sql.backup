@@ -1,4 +1,4 @@
-﻿-- ===================================================================
+-- ===================================================================
 -- GUARDIAN AI CRM - EXTRA CREDITS SYSTEM
 -- Migration: Sistema Acquisto Crediti Extra per Revenue Aggiuntivo
 -- Data: 2025-10-04
@@ -29,9 +29,6 @@ CREATE TABLE IF NOT EXISTS extra_credits_packages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Add UNIQUE constraint on name column to support ON CONFLICT
-ALTER TABLE extra_credits_packages ADD CONSTRAINT unique_extra_credits_packages_name_temp UNIQUE (name);
 
 -- Insert extra credits packages (margini 80%+)
 INSERT INTO extra_credits_packages (name, display_name, credit_type, credits_amount, price_cents, cost_cents) VALUES

@@ -1,6 +1,8 @@
 // AI Agents Orchestrator - Guardian AI CRM Enterprise Architecture
 // This file defines the AI Agent system that transforms Guardian AI into an enterprise platform
 
+import { isDevelopmentEnterpriseUser, getEffectiveUserTier } from '../enterpriseOverride';
+
 export interface AIAgent {
   id: string;
   name: string;
@@ -319,7 +321,12 @@ export class AIOrchestrator {
     };
   }
   
-  getAvailableAgents(_pricingTier: string): AIAgent[] {
+  getAvailableAgents(_pricingTier: string, userEmail?: string): AIAgent[] {
+    // 🚀 ENTERPRISE OVERRIDE: Force all agents for enterprise development user
+    if (isDevelopmentEnterpriseUser(userEmail)) {
+      return AI_AGENTS; // All agents including coming_soon for enterprise test user
+    }
+    
     // 🚀 NEW STRATEGY: All agents available from base tier
     // Monetization through credits/quota system instead of tier restrictions
     return AI_AGENTS.filter(agent => agent.status === 'active' || agent.status === 'beta');
@@ -330,7 +337,14 @@ export class AIOrchestrator {
     return true;
   }
   
-  getAgentQuotaLimits(pricingTier: string, agentId: string): { daily: number; monthly: number } {
+  getAgentQuotaLimits(pricingTier: string, agentId: string, userEmail?: string): { daily: number; monthly: number } {
+    // 🚀 ENTERPRISE OVERRIDE: Unlimited quotas for enterprise development user
+    if (isDevelopmentEnterpriseUser(userEmail)) {
+      return { daily: 1000, monthly: 30000 };
+    }
+    
+    const effectiveTier = getEffectiveUserTier(userEmail, pricingTier);
+    
     const quotaMultipliers = {
       'freelancer': 1,
       'startup': 3,
@@ -339,7 +353,7 @@ export class AIOrchestrator {
     };
     
     const baseQuota = AI_AGENTS.find(a => a.id === agentId)?.quotaLimits || { daily: 10, monthly: 100 };
-    const multiplier = quotaMultipliers[pricingTier as keyof typeof quotaMultipliers] || 1;
+    const multiplier = quotaMultipliers[effectiveTier as keyof typeof quotaMultipliers] || 1;
     
     return {
       daily: baseQuota.daily * multiplier,

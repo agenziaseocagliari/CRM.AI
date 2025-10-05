@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Bot, Sparkles, Zap, Brain, Target, Calendar } from 'lucide-react';
 import { useAIOrchestrator } from '../lib/ai/useAIOrchestrator';
 import { AI_AGENTS } from '../lib/ai/aiOrchestrator';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AIAgentsPanelProps {
   context: 'dashboard' | 'opportunities' | 'contacts' | 'forms' | 'automations' | 'calendar';
@@ -13,12 +14,20 @@ interface AIAgentsPanelProps {
 }
 
 export default function AIAgentsPanel({ context, contextData, className = '' }: AIAgentsPanelProps) {
-  const { isProcessing, processRequest, getAgentsByCategory } = useAIOrchestrator();
+  const { isProcessing, processRequest } = useAIOrchestrator();
+  const { session } = useAuth();
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
 
-  // Get relevant agents based on context
+  // Get relevant agents based on context and user tier
   const getRelevantAgents = () => {
+    const userEmail = session?.user?.email;
+    
+    // 🚀 ENTERPRISE OVERRIDE: Show all agents for webproseoid@gmail.com
+    if (userEmail === 'webproseoid@gmail.com') {
+      return AI_AGENTS; // All agents including enterprise features
+    }
+    
     switch (context) {
       case 'dashboard':
         return AI_AGENTS.filter(agent => 
@@ -188,12 +197,14 @@ export default function AIAgentsPanel({ context, contextData, className = '' }: 
                 {/* Pricing Tier Badge */}
                 <div className="absolute top-2 right-2">
                   <span className={`text-xs px-2 py-1 rounded-full ${
+                    // Show 'enterprise' for webproseoid@gmail.com, otherwise show original tier
+                    (session?.user?.email === 'webproseoid@gmail.com') ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700' :
                     agent.pricingTier === 'freelancer' ? 'bg-green-100 text-green-600' :
                     agent.pricingTier === 'startup' ? 'bg-blue-100 text-blue-600' :
                     agent.pricingTier === 'business' ? 'bg-purple-100 text-purple-600' :
                     'bg-orange-100 text-orange-600'
                   }`}>
-                    {agent.pricingTier}
+                    {session?.user?.email === 'webproseoid@gmail.com' ? 'enterprise' : agent.pricingTier}
                   </span>
                 </div>
               </button>

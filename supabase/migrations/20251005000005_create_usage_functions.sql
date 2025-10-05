@@ -275,5 +275,5 @@ COMMENT ON FUNCTION increment_usage_quota IS 'Incrementa il contatore di utilizz
 COMMENT ON FUNCTION get_usage_limits IS 'Restituisce i limiti di utilizzo per una organizzazione';
 COMMENT ON FUNCTION reset_usage_quota IS 'Resetta le quote di utilizzo per un nuovo periodo di fatturazione';
 COMMENT ON FUNCTION calculate_period_costs IS 'Calcola i costi per un periodo specifico';
-COMMENT ON FUNCTION get_usage_summary IS 'Restituisce un riepilogo completo dell\'utilizzo per una organizzazione';
+COMMENT ON FUNCTION get_usage_summary IS 'Restituisce un riepilogo completo dell''utilizzo per una organizzazione';
 COMMENT ON FUNCTION create_billing_event IS 'Crea un evento di fatturazione';

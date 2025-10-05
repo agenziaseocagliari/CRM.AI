@@ -4,9 +4,11 @@
 -- Data: 2025-10-04
 -- ===================================================================
 
--- 1. SUBSCRIPTION TIERS TABLE
+-- 1. SUBSCRIPTION TIERS TABLE  
 -- ===================================================================
-CREATE TABLE IF NOT EXISTS subscription_tiers (
+-- 🔧 LEVEL 6 FIX: Add minimal idempotency to prevent SQLSTATE 42703 column reference errors
+DROP TABLE IF EXISTS subscription_tiers CASCADE;
+CREATE TABLE subscription_tiers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE, -- 'starter', 'professional', 'enterprise'
   display_name TEXT NOT NULL, -- 'Starter', 'Professional', 'Enterprise'

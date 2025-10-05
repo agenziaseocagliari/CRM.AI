@@ -19,6 +19,15 @@ import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
 // import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
+
+// CRM Components - Riattivati
+import { Dashboard } from './components/Dashboard';
+import { Opportunities } from './components/Opportunities';
+import { Contacts } from './components/Contacts';
+import { Forms } from './components/Forms';
+import { Automations } from './components/Automations';
+import { CalendarView } from './components/CalendarView';
+import { Settings } from './components/Settings';
 // Super Admin lazy components - temporarily disabled
 // Components moved to .bak files
 // import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
@@ -255,15 +264,15 @@ const App: React.FC = () => {
             session ? <MainLayout crmData={crmData} /> : <Navigate to="/login" replace />
           }
         >
-          <Route index element={<div className="p-8">Dashboard temporaneamente non disponibile</div>} />
-          <Route path="opportunities" element={<div className="p-8">Opportunities temporaneamente non disponibile</div>} />
-          <Route path="contacts" element={<div className="p-8">Contacts temporaneamente non disponibile</div>} />
-          <Route path="calendar" element={<div className="p-8">Calendar temporaneamente non disponibile</div>} />
+          <Route index element={<Dashboard />} />
+          <Route path="opportunities" element={<Opportunities />} />
+          <Route path="contacts" element={<Contacts />} />
+          <Route path="calendar" element={<CalendarView />} />
           <Route path="meetings" element={<div className="p-8">Meetings temporaneamente non disponibile</div>} />
-          <Route path="forms" element={<div className="p-8">Forms temporaneamente non disponibile</div>} />
-          <Route path="automations" element={<div className="p-8">Automations temporaneamente non disponibile</div>} />
+          <Route path="forms" element={<Forms />} />
+          <Route path="automations" element={<Automations />} />
           <Route path="store" element={<ExtraCreditsStore />} />
-          <Route path="settings" element={<div className="p-8">Settings temporaneamente non disponibile</div>} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* Super Admin Routes - Temporarily Disabled */}

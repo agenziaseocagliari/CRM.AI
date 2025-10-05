@@ -81,6 +81,11 @@ export const PublicPricingPage: React.FC = () => {
             
             {/* Starter Plan */}
             <div className="bg-white rounded-2xl shadow-xl p-6 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                  PROVA 14 GIORNI GRATIS
+                </span>
+              </div>
               <div className="text-center">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Starter</h3>
                 <p className="text-gray-600 mb-4">Perfetto per iniziare</p>
@@ -113,8 +118,8 @@ export const PublicPricingPage: React.FC = () => {
                 </li>
               </ul>
               
-              <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
-                Inizia Subito
+              <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm">
+                Prova 14 Giorni Gratis
               </button>
             </div>
 
@@ -153,7 +158,7 @@ export const PublicPricingPage: React.FC = () => {
               </ul>
               
               <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
-                Scegli Professional
+                Acquista Ora
               </button>
             </div>
 
@@ -198,7 +203,7 @@ export const PublicPricingPage: React.FC = () => {
               </ul>
               
               <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
-                Scegli Business
+                Acquista Ora
               </button>
             </div>
 
@@ -237,7 +242,7 @@ export const PublicPricingPage: React.FC = () => {
               </ul>
               
               <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 transition-colors text-sm">
-                Scegli Premium
+                Acquista Ora
               </button>
             </div>
 

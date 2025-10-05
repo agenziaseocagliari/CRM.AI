@@ -170,6 +170,11 @@ const MarketingAgencyLandingPage: React.FC = () => {
             {/* Freelancer */}
             <div className="bg-white rounded-xl shadow-sm border p-6 relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                  PROVA 14 GIORNI GRATIS
+                </span>
+              </div>
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
                   LANCIO -37%
                 </span>
@@ -198,16 +203,16 @@ const MarketingAgencyLandingPage: React.FC = () => {
               
               <Link 
                 to="/register?plan=freelancer&account_type=marketing_agency"
-                className="w-full bg-gray-100 text-gray-900 py-2 px-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block text-sm"
+                className="w-full bg-green-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-colors text-center block text-sm"
               >
-                Inizia Gratis
+                Prova 14 Giorni Gratis
               </Link>
             </div>
 
             {/* Agency */}
             <div className="bg-white rounded-xl shadow-md border-2 border-purple-500 p-6 relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
                   POPOLARE -34%
                 </span>
               </div>
@@ -234,10 +239,10 @@ const MarketingAgencyLandingPage: React.FC = () => {
               </ul>
               
               <Link 
-                to="/register?plan=agency&account_type=marketing_agency"
+                to="/checkout?plan=agency&account_type=marketing_agency"
                 className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-purple-700 transition-colors text-center block text-sm"
               >
-                Inizia Gratis
+                Acquista Ora
               </Link>
             </div>
 
@@ -271,10 +276,10 @@ const MarketingAgencyLandingPage: React.FC = () => {
               </ul>
               
               <Link 
-                to="/register?plan=studio&account_type=marketing_agency"
-                className="w-full bg-gray-100 text-gray-900 py-2 px-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block text-sm"
+                to="/checkout?plan=studio&account_type=marketing_agency"
+                className="w-full bg-gray-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-gray-700 transition-colors text-center block text-sm"
               >
-                Inizia Gratis
+                Acquista Ora
               </Link>
             </div>
 

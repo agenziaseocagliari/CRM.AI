@@ -104,7 +104,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Comunicazione Multi-canale</h3>
               <p className="text-gray-600">
-                Email, WhatsApp, SMS automatici per clienti e prospect
+                Email e WhatsApp automatici per clienti e prospect
               </p>
             </div>
 
@@ -170,7 +170,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
             {/* Starter */}
             <div className="bg-white rounded-xl shadow-sm border p-4 relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
                   LANCIO -26%
                 </span>
               </div>

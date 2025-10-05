@@ -233,16 +233,17 @@ export const COMPETITIVE_PRICING = {
     freelancer: {
       name: 'Freelancer',
       description: 'Perfetto per freelancer e consulenti',
-      price: 29,
-      launch_price: 19, // primi 6 mesi
+      price: 49,
+      launch_price: 29, // primi 6 mesi
       billing: 'mensile',
       popular: false,
       tier_level: 1,
       features: [
         '100 clienti',
-        '25 progetti attivi',
         '5 campagne simultanee',
-        '5.000 email/mese',
+        '3.000 email/mese',
+        '500 WhatsApp/mese',
+        '5 automazioni marketing',
         '5 landing page',
         '1GB storage',
         'Analytics base',
@@ -264,20 +265,21 @@ export const COMPETITIVE_PRICING = {
     agency: {
       name: 'Agency',
       description: 'Per piccole agenzie di marketing',
-      price: 59,
-      launch_price: 39, // primi 6 mesi
+      price: 89,
+      launch_price: 59, // primi 6 mesi
       billing: 'mensile',
       popular: true,
       tier_level: 2,
       features: [
         '500 clienti',
-        '100 progetti attivi',
         '20 campagne simultanee',
-        '15.000 email/mese',
+        '8.000 email/mese',
+        '1.500 WhatsApp/mese',
+        '20 automazioni marketing',
         '20 landing page',
         '5GB storage',
-        'ROI tracking',
-        'Report clienti',
+        'ROI tracking avanzato',
+        'Report clienti personalizzati',
         'Supporto prioritario'
       ],
       limits: {
@@ -296,21 +298,22 @@ export const COMPETITIVE_PRICING = {
     professional: {
       name: 'Professional',
       description: 'Per agenzie in crescita con più servizi',
-      price: 89,
-      launch_price: 69, // primi 6 mesi
+      price: 149,
+      launch_price: 99, // primi 6 mesi
       billing: 'mensile',
       popular: false,
       tier_level: 3,
       features: [
         '1.000 clienti',
-        '200 progetti attivi',
         '30 campagne simultanee',
-        '25.000 email/mese',
+        '15.000 email/mese',
+        '3.000 WhatsApp/mese',
+        '50 automazioni marketing',
         '30 landing page',
         '10GB storage',
         'A/B testing avanzato',
         'ROI tracking dettagliato',
-        'Automazioni email avanzate',
+        'Automazioni multi-canale',
         'Report personalizzati'
       ],
       limits: {
@@ -329,16 +332,17 @@ export const COMPETITIVE_PRICING = {
     studio: {
       name: 'Studio',
       description: 'Per studi creativi e agenzie medie',
-      price: 199,
-      launch_price: 159, // primi 6 mesi
+      price: 299,
+      launch_price: 199, // primi 6 mesi
       billing: 'mensile',
       popular: false,
       tier_level: 4,
       features: [
         '3.000 clienti',
-        '750 progetti attivi',
         '75 campagne simultanee',
-        '75.000 email/mese',
+        '40.000 email/mese',
+        '8.000 WhatsApp/mese',
+        '100 automazioni marketing',
         '75 landing page',
         '30GB storage',
         'A/B testing avanzato',
@@ -364,20 +368,21 @@ export const COMPETITIVE_PRICING = {
     business: {
       name: 'Business',
       description: 'Per network e holding di agenzie',
-      price: 399,
-      launch_price: 319, // primi 6 mesi
+      price: 599,
+      launch_price: 399, // primi 6 mesi
       billing: 'mensile',
       popular: false,
       tier_level: 4,
       features: [
         '10.000 clienti',
-        '2.000 progetti attivi',
         '200 campagne simultanee',
-        '200.000 email/mese',
+        '100.000 email/mese',
+        '20.000 WhatsApp/mese',
+        '500 automazioni marketing',
         '200 landing page',
         '100GB storage',
-        'White label',
-        'Multi-agency',
+        'White label completo',
+        'Multi-agency management',
         'API personalizzate',
         'SLA garantito'
       ],
@@ -404,9 +409,10 @@ export const COMPETITIVE_PRICING = {
       tier_level: 5,
       features: [
         'Clienti illimitati',
-        'Progetti illimitati',
         'Campagne illimitate',
         'Email illimitate',
+        'WhatsApp illimitato',
+        'Automazioni illimitate',
         'Landing page illimitate',
         'Storage illimitato',
         'Sviluppo personalizzato completo',

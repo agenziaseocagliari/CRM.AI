@@ -140,11 +140,11 @@ DROP POLICY IF EXISTS "extra_credits_packages_read" ON extra_credits_packages;CR
 
 -- Organization extra credits purchases - solo la propria org
 DROP POLICY IF EXISTS "extra_credits_purchases_policy" ON organization_extra_credits_purchases;CREATE POLICY "extra_credits_purchases_policy" ON organization_extra_credits_purchases FOR ALL TO public 
-USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
+USING (organization_id IN (SELECT organization_id FROM profiles WHERE id = auth.uid()));
 
 -- Super admin può vedere tutto
 DROP POLICY IF EXISTS "super_admin_extra_credits_purchases" ON organization_extra_credits_purchases;CREATE POLICY "super_admin_extra_credits_purchases" ON organization_extra_credits_purchases FOR ALL TO public 
-USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
+USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin'));
 
 -- 6. FUNCTIONS PER GESTIONE CREDITI
 -- ===================================================================

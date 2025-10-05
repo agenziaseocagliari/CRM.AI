@@ -457,9 +457,9 @@ export const JWTViewer: React.FC<JWTViewerProps> = ({ onClose }) => {
                           </span>
                         </div>
                         <div className="font-semibold mb-1">[{log.category}] {log.message}</div>
-                        {log.context && Object.keys(log.context).length > 0 && (
+                        {log.context && Object.keys(log.context as Record<string, unknown>).length > 0 && (
                           <div className="text-xs text-gray-600 mt-1 font-mono">
-                            {JSON.stringify(log.context, null, 2)}
+                            {String(JSON.stringify(log.context as Record<string, unknown>, null, 2))}
                           </div>
                         )}
                       </div>

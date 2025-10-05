@@ -343,7 +343,7 @@ export function getPromptTemplate(
 
 // Prompt Template Validation
 export function validatePromptOutput(
-  output: any,
+  output: unknown,
   template: PromptTemplate
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -358,13 +358,14 @@ export function validatePromptOutput(
     
     // Validate specific constraints based on action type
     if (template === leadScoringPrompt) {
-      if (!output.score || output.score < 1 || output.score > 100) {
+      const leadOutput = output as { score?: number; category?: string; reasoning?: string };
+      if (!leadOutput.score || leadOutput.score < 1 || leadOutput.score > 100) {
         errors.push('Score must be between 1-100');
       }
-      if (!['Hot', 'Warm', 'Cold'].includes(output.category)) {
+      if (!['Hot', 'Warm', 'Cold'].includes(leadOutput.category || '')) {
         errors.push('Category must be Hot, Warm, or Cold');
       }
-      if (!output.reasoning || output.reasoning.length > 150) {
+      if (!leadOutput.reasoning || leadOutput.reasoning.length > 150) {
         errors.push('Reasoning must be 1-150 characters');
       }
     }

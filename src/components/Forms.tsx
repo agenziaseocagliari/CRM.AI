@@ -132,7 +132,12 @@ export const Forms: React.FC = () => {
         try {
             const data = await invokeSupabaseFunction('generate-form-fields', { prompt: sanitizedPrompt });
             
-            const fields = data.fields as FormField[];
+            // Type guard for API response
+            if (!data || typeof data !== 'object' || !('fields' in data) || !Array.isArray((data as any).fields)) {
+                throw new Error('Risposta API non valida');
+            }
+            
+            const fields = (data as { fields: FormField[] }).fields;
             if (!fields || !Array.isArray(fields) || fields.length === 0) {
                 throw new Error("L'AI ha restituito una struttura non valida o vuota.");
             }

@@ -9,7 +9,7 @@ import { diagnosticLogger } from '../mockDiagnosticLogger';
 
 export interface CacheEntry {
   key: string;
-  result: any;
+  result: unknown;
   timestamp: number;
   ttl: number; // Time to live in seconds
   actionType: string;
@@ -28,7 +28,7 @@ export interface SemanticCacheEntry {
   inputHash: string;
   inputText: string;
   embedding: number[];
-  result: any;
+  result: unknown;
   actionType: string;
   organizationId: string;
   similarity_threshold: number;
@@ -52,8 +52,8 @@ class AICache {
   private readonly DEFAULT_TTL = 3600; // 1 hour
   private readonly SIMILARITY_THRESHOLD = 0.85;
   private supabase = createClient(
-    process.env.VITE_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.VITE_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   );
 
   // Layer 1: Exact Match Cache (immediate results)
@@ -61,7 +61,7 @@ class AICache {
     input: string,
     actionType: string,
     organizationId: string
-  ): Promise<any | null> {
+  ): Promise<unknown | null> {
     const cacheKey = this.createCacheKey(input, actionType, organizationId);
     
     // Check in-memory cache first
@@ -106,7 +106,7 @@ class AICache {
 
   async setExactMatch(
     input: string,
-    result: any,
+    result: unknown,
     actionType: string,
     organizationId: string,
     metadata?: CacheEntry['metadata'],
@@ -157,7 +157,7 @@ class AICache {
     actionType: string,
     organizationId: string,
     threshold: number = this.SIMILARITY_THRESHOLD
-  ): Promise<any | null> {
+  ): Promise<unknown | null> {
     if (actionType !== 'ai_lead_scoring') {
       return null; // Only use semantic matching for lead scoring
     }
@@ -216,7 +216,7 @@ class AICache {
 
   async setSemanticMatch(
     input: string,
-    result: any,
+    result: unknown,
     actionType: string,
     organizationId: string
   ): Promise<void> {
@@ -251,7 +251,7 @@ class AICache {
     input: string,
     actionType: string,
     organizationId: string
-  ): Promise<any | null> {
+  ): Promise<unknown | null> {
     if (!['ai_email_generation', 'ai_whatsapp_generation'].includes(actionType)) {
       return null;
     }
@@ -291,7 +291,7 @@ class AICache {
 
   async setTemplateMatch(
     input: string,
-    result: any,
+    result: unknown,
     actionType: string,
     organizationId: string
   ): Promise<void> {
@@ -326,7 +326,7 @@ class AICache {
     input: string,
     actionType: string,
     organizationId: string
-  ): Promise<{ result: any; cacheType: 'exact' | 'semantic' | 'template' } | null> {
+  ): Promise<{ result: unknown; cacheType: 'exact' | 'semantic' | 'template' } | null> {
     
     // 1. Try exact match first
     const exactResult = await this.getExactMatch(input, actionType, organizationId);
@@ -351,7 +351,7 @@ class AICache {
 
   async set(
     input: string,
-    result: any,
+    result: unknown,
     actionType: string,
     organizationId: string,
     metadata?: CacheEntry['metadata']
@@ -452,18 +452,24 @@ class AICache {
   }
 
   private adaptSemanticResult(
-    originalResult: any,
+    originalResult: unknown,
     _currentInput: string,
     similarity: number
-  ): any {
-    // Adapt the cached result for the current input
-    if (originalResult.score) {
+  ): unknown {
+    // Type guard for result with score
+    if (
+      originalResult && 
+      typeof originalResult === 'object' &&
+      'score' in originalResult &&
+      typeof (originalResult as Record<string, unknown>).score === 'number'
+    ) {
+      const result = originalResult as { score: number; reasoning?: string; [key: string]: unknown };
       // Adjust score based on similarity
-      const adjustedScore = Math.round(originalResult.score * similarity);
+      const adjustedScore = Math.round(result.score * similarity);
       return {
-        ...originalResult,
+        ...result,
         score: adjustedScore,
-        reasoning: `${originalResult.reasoning} (adapted from similar lead)`,
+        reasoning: `${result.reasoning || ''} (adapted from similar lead)`,
         confidence: similarity
       };
     }
@@ -471,7 +477,7 @@ class AICache {
     return originalResult;
   }
 
-  private extractTemplateVariables(input: string): Record<string, any> {
+  private extractTemplateVariables(input: string): Record<string, unknown> {
     try {
       const inputObj = JSON.parse(input);
       return {
@@ -486,8 +492,8 @@ class AICache {
   }
 
   private calculateTemplateMatch(
-    vars1: Record<string, any>,
-    vars2: Record<string, any>
+    vars1: Record<string, unknown>,
+    vars2: Record<string, unknown>
   ): number {
     const keys1 = Object.keys(vars1);
     const keys2 = Object.keys(vars2);
@@ -501,13 +507,14 @@ class AICache {
 
   private personalizeTemplate(
     template: string,
-    variables: Record<string, any>
+    variables: Record<string, unknown>
   ): string {
     let personalized = template;
     
     Object.entries(variables).forEach(([key, value]) => {
       const placeholder = `{{${key}}}`;
-      personalized = personalized.replace(new RegExp(placeholder, 'g'), value);
+      const stringValue = typeof value === 'string' ? value : String(value);
+      personalized = personalized.replace(new RegExp(placeholder, 'g'), stringValue);
     });
     
     return personalized;
@@ -590,14 +597,14 @@ export async function getCachedAIResult(
   input: string,
   actionType: string, 
   organizationId: string
-): Promise<any | null> {
+): Promise<unknown | null> {
   const cached = await aiCache.get(input, actionType, organizationId);
   return cached?.result || null;
 }
 
 export async function setCachedAIResult(
   input: string,
-  result: any,
+  result: unknown,
   actionType: string,
   organizationId: string,
   metadata?: CacheEntry['metadata']

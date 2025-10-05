@@ -84,7 +84,7 @@ class PerformanceMonitor {
     try {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1] as any;
+        const lastEntry = entries[entries.length - 1] as PerformanceEntry;
         
         if (lastEntry) {
           const lcp = Math.round(lastEntry.startTime);
@@ -107,9 +107,10 @@ class PerformanceMonitor {
     try {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          if (entry.name === 'first-input') {
-            const fid = Math.round(entry.processingStart - entry.startTime);
+        entries.forEach((entry) => {
+          const fidEntry = entry as PerformanceEventTiming;
+          if (fidEntry.name === 'first-input') {
+            const fid = Math.round(fidEntry.processingStart - fidEntry.startTime);
             this.updateMetric('fid', fid);
             diagnosticLogger.debug('performance', `FID measured: ${fid}ms`);
           }
@@ -131,9 +132,9 @@ class PerformanceMonitor {
       let clsValue = 0;
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach((entry: PerformanceEntry & { hadRecentInput?: boolean; value?: number }) => {
           if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+            clsValue += entry.value || 0;
           }
         });
         
@@ -339,7 +340,14 @@ class PerformanceMonitor {
   }
 
   private getConnectionType(): string | undefined {
-    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    type NavigatorWithConnection = Navigator & {
+      connection?: { effectiveType?: string };
+      mozConnection?: { effectiveType?: string };
+      webkitConnection?: { effectiveType?: string };
+    };
+    const connection = (navigator as NavigatorWithConnection).connection ||
+                      (navigator as NavigatorWithConnection).mozConnection ||
+                      (navigator as NavigatorWithConnection).webkitConnection;
     return connection?.effectiveType;
   }
 

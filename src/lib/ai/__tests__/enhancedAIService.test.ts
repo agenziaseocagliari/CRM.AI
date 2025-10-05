@@ -249,9 +249,9 @@ describe('EnhancedAIService', () => {
 
       if (result.success && !result.cached) {
         expect(result.tokenUsage).toBeDefined();
-        expect(result.tokenUsage!.input).toBeGreaterThan(0);
-        expect(result.tokenUsage!.output).toBeGreaterThan(0);
-        expect(result.tokenUsage!.total).toBeGreaterThan(0);
+        expect(result.tokenUsage?.input).toBeGreaterThan(0);
+        expect(result.tokenUsage?.output).toBeGreaterThan(0);
+        expect(result.tokenUsage?.total).toBeGreaterThan(0);
       }
     });
   });

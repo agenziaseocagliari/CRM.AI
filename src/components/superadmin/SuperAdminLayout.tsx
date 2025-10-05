@@ -87,7 +87,7 @@ export const SuperAdminLayout: React.FC = () => {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left mb-4">
               <p className="text-sm font-semibold text-yellow-800 mb-2">📋 Come accedere:</p>
               <ol className="text-xs text-yellow-700 list-decimal list-inside space-y-1">
-                <li>Effettua logout completo dall'account corrente</li>
+                <li>Effettua logout completo dall&apos;account corrente</li>
                 <li>Accedi con le credenziali Super Admin</li>
               </ol>
             </div>

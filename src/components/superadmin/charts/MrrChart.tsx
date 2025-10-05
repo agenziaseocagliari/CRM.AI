@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { diagnosticLogger } from '../../../lib/mockDiagnosticLogger';
@@ -16,7 +16,7 @@ export const MrrChart: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [period, setPeriod] = useState<'6m' | '12m'>('6m');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         
@@ -34,11 +34,11 @@ export const MrrChart: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [period]);
 
     useEffect(() => {
         fetchData();
-    }, [period]);
+    }, [period, fetchData]);
 
     const generateMockMrrData = (period: string): MrrData[] => {
         const months = period === '6m' ? 6 : 12;
@@ -192,7 +192,7 @@ export const MrrChart: React.FC = () => {
             </ResponsiveContainer>
             
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                💡 Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l'endpoint API appropriato.
+                💡 Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l&apos;endpoint API appropriato.
             </div>
         </div>
     );

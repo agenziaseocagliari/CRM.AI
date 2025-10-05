@@ -2,7 +2,8 @@ import React from 'react';
 import { toast } from 'react-hot-toast';
 
 import { diagnosticLogger } from './mockDiagnosticLogger';
-import { SecureLogger as _SecureLogger, SecureErrorHandler as _SecureErrorHandler } from './security/securityUtils';
+// Unused security imports available for future features
+// import { SecureLogger as _SecureLogger, SecureErrorHandler as _SecureErrorHandler } from './security/securityUtils';
 import { diagnoseJWT } from './jwtUtils';
 import { supabase } from './supabaseClient';
 
@@ -26,7 +27,7 @@ function getOrganizationIdFromStorage(): string | null {
 function createDiagnosticReport(
     userMessage: string,
     functionName: string,
-    rawErrorPayload: any,
+    rawErrorPayload: unknown,
     errorObject?: Error
 ): string {
     let report = `==== Guardian AI CRM Diagnostic Report ====\n\n`;
@@ -120,7 +121,7 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
  * @param isRetry A flag to prevent infinite retry loops.
  * @returns {Promise<any>} A promise that resolves with the function's response data.
  */
-export async function invokeSupabaseFunction(functionName: string, payload: object = {}, isRetry: boolean = false): Promise<any> {
+export async function invokeSupabaseFunction(functionName: string, payload: object = {}, isRetry: boolean = false): Promise<unknown> {
     diagnosticLogger.info(`[API Helper] Invoking '${functionName}'...`, { isRetry });
 
     // 1. Pre-flight security check: Ensure a user is logged in.
@@ -134,7 +135,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
     }
 
     // 2. Prepare payload with organization_id.
-    const finalPayload: any = { ...payload };
+    const finalPayload: Record<string, unknown> = { ...payload };
     
     const urlParams = new URLSearchParams(window.location.search);
     const isDebugMode = urlParams.get('debug_mode') === 'true';
@@ -174,8 +175,8 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         }
     }
 
-    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseAnonKey) {throw new Error("Supabase URL or Anon Key not configured.");}
     
     const headers = {
@@ -193,13 +194,15 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
 
         if (!response.ok) {
             const errorText = await response.text();
-            let errorJson: any = null;
-            try { errorJson = JSON.parse(errorText); } catch (_e) { /* ignore */ }
+            let errorJson: unknown = null;
+            try { errorJson = JSON.parse(errorText); } catch { /* ignore */ }
             
             diagnosticLogger.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`, errorJson || errorText);
 
             // Check for JWT custom claim error specifically
-            const errorMessage = errorJson?.error || errorText || '';
+            const errorMessage = (errorJson && typeof errorJson === 'object' && 'error' in errorJson && typeof errorJson.error === 'string') 
+                ? errorJson.error 
+                : errorText || '';
             const isJwtClaimError = (response.status === 403 || response.status === 401) && 
                                    /user_role not found|JWT custom claim|custom claim.*not found|logout and login again|Please logout and login|role was recently changed/i.test(errorMessage);
             
@@ -256,7 +259,9 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
                 return invokeSupabaseFunction(functionName, payload, true);
             }
             
-            const userMessage = errorJson?.error || `Errore del server (${response.status})`;
+            const userMessage = (errorJson && typeof errorJson === 'object' && 'error' in errorJson && typeof errorJson.error === 'string') 
+                ? errorJson.error 
+                : `Errore del server (${response.status})`;
             const diagnosticReport = createDiagnosticReport(userMessage, functionName, errorJson || errorText);
             
             diagnosticLogger.error('api', `API error on ${functionName}`, {
@@ -287,7 +292,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
 
         return data;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         // This catch block handles three types of errors:
         // 1. True network errors from `fetch` (e.g., DNS, CORS, no connection). These are typically TypeErrors.
         // 2. JSON parsing errors if the success response from the server is malformed.
@@ -297,7 +302,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         // Case #3 errors already have a specific, useful message from the backend and have been toasted.
         
         // Check if this is a re-thrown error from our handling (has custom structure)
-        if (error.isJwtError || error.requiresRelogin || typeof error.error !== 'undefined') {
+        if (error && typeof error === 'object' && ('isJwtError' in error || 'requiresRelogin' in error || 'error' in error)) {
             // This is an already-processed application error, just re-throw
             diagnosticLogger.info(`[API Helper] Re-throwing processed error from '${functionName}'`);
             throw error;

@@ -1,4 +1,5 @@
 // Applica migrazione database con credenziali corrette
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require('fs');
 
 async function applyMigrationWithCorrectCredentials() {

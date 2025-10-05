@@ -207,7 +207,14 @@ export const Settings: React.FC = () => {
         try {
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
-            const { url } = await invokeSupabaseFunction('google-auth-url', { state });
+            const data = await invokeSupabaseFunction('google-auth-url', { state });
+            
+            // Type guard for API response
+            if (!data || typeof data !== 'object' || !('url' in data) || typeof (data as any).url !== 'string') {
+                throw new Error('Risposta API non valida');
+            }
+            
+            const url = (data as { url: string }).url;
             if (url) {window.location.href = url;} else {throw new Error("URL di autenticazione non ricevuto.");}
         } catch (err) {
             diagnosticLogger.error(err);
@@ -234,7 +241,13 @@ export const Settings: React.FC = () => {
         setIsDiagModalOpen(true);
         try {
             const result = await invokeSupabaseFunction('check-google-token-status', { organization_id: organization.id });
-            setDiagResult(result.diagnostics);
+            
+            // Type guard for API response
+            if (result && typeof result === 'object' && 'diagnostics' in result) {
+                setDiagResult((result as { diagnostics: any }).diagnostics);
+            } else {
+                setDiagResult({ status: 'ERROR', message: 'Nessun risultato diagnostico disponibile' });
+            }
         } catch (err) {
             // FIX: The catch block now intelligently handles the structured error object
             // thrown by the improved `invokeSupabaseFunction`. It looks for the `error`

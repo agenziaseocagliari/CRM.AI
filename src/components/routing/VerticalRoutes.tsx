@@ -6,17 +6,17 @@
 
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import InsuranceAgencyLanding from '../../pages/verticals/InsuranceAgencyLanding';
-import MarketingAgencyLanding from '../../pages/verticals/MarketingAgencyLanding';
+// import InsuranceAgencyLanding from '../../pages/verticals/InsuranceAgencyLanding';
+// import MarketingAgencyLanding from '../../pages/verticals/MarketingAgencyLanding';
 
 const VerticalRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Vertical Landing Pages */}
-      <Route path="/assicurazioni" element={<InsuranceAgencyLanding />} />
+      {/* Vertical Landing Pages - Temporarily disabled */}
+      {/* <Route path="/assicurazioni" element={<InsuranceAgencyLanding />} />
       <Route path="/insurance-agency" element={<InsuranceAgencyLanding />} />
       <Route path="/marketing" element={<MarketingAgencyLanding />} />
-      <Route path="/marketing-agency" element={<MarketingAgencyLanding />} />
+      <Route path="/marketing-agency" element={<MarketingAgencyLanding />} /> */}
       
       {/* Future Verticals - Placeholder routes */}
       <Route path="/real-estate" element={<div>Real Estate Landing (Coming Soon)</div>} />

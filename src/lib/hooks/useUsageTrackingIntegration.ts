@@ -17,7 +17,7 @@ interface UseUsageTrackingIntegrationProps {
 export const useUsageTrackingIntegration = ({
   organizationId,
   onQuotaExceeded,
-  onQuotaWarning
+  onQuotaWarning: _onQuotaWarning
 }: UseUsageTrackingIntegrationProps) => {
   const { trackUsage, checkQuota, isLoading } = useUsageTracking();
 
@@ -25,8 +25,8 @@ export const useUsageTrackingIntegration = ({
    * Wrapper per le chiamate AI che include il tracking automatico
    */
   const trackAIRequest = useCallback(async (
-    originalFunction: () => Promise<any>,
-    metadata?: Record<string, any>
+    originalFunction: () => Promise<unknown>,
+    metadata?: Record<string, unknown>
   ) => {
     try {
       // Verifica quota prima della chiamata
@@ -77,9 +77,9 @@ export const useUsageTrackingIntegration = ({
    * Wrapper per l'invio di messaggi WhatsApp
    */
   const trackWhatsAppMessage = useCallback(async (
-    originalFunction: () => Promise<any>,
+    originalFunction: () => Promise<unknown>,
     recipientCount: number = 1,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) => {
     try {
       // Verifica quota
@@ -129,9 +129,9 @@ export const useUsageTrackingIntegration = ({
    * Wrapper per l'invio di email marketing
    */
   const trackEmailMarketing = useCallback(async (
-    originalFunction: () => Promise<any>,
+    originalFunction: () => Promise<unknown>,
     recipientCount: number,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) => {
     try {
       // Verifica quota

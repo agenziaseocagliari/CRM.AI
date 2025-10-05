@@ -9,7 +9,7 @@ export interface AICacheEntry {
   promptHash: string;
   organizationId: string;
   templateId: string;
-  inputData: any;
+  inputData: Record<string, unknown>;
   response: {
     content: string;
     metadata: {
@@ -122,7 +122,7 @@ export class AIIntelligentCache {
   async getCachedResponse(
     templateId: string,
     organizationId: string,
-    inputData: any,
+    inputData: Record<string, unknown>,
     options: {
       maxAge?: number;
       minSimilarity?: number;
@@ -189,7 +189,7 @@ export class AIIntelligentCache {
   async storeResponse(
     templateId: string,
     organizationId: string,
-    inputData: any,
+    inputData: Record<string, unknown>,
     response: {
       content: string;
       model: string;
@@ -260,7 +260,7 @@ export class AIIntelligentCache {
   /**
    * Generate semantic hash for input data
    */
-  private async generatePromptHash(templateId: string, inputData: any): Promise<string> {
+  private async generatePromptHash(templateId: string, inputData: Record<string, unknown>): Promise<string> {
     // Normalize input data
     const normalized = this.normalizeInputData(inputData);
     const content = `${templateId}:${JSON.stringify(normalized)}`;
@@ -310,7 +310,7 @@ export class AIIntelligentCache {
   private async getSimilarMatch(
     templateId: string,
     organizationId: string,
-    inputData: any,
+    inputData: Record<string, unknown>,
     minSimilarity: number
   ): Promise<AICacheEntry | null> {
     
@@ -354,7 +354,7 @@ export class AIIntelligentCache {
   /**
    * Calculate semantic similarity between two input datasets
    */
-  private async calculateSimilarity(inputA: any, inputB: any): Promise<number> {
+  private async calculateSimilarity(inputA: Record<string, unknown>, inputB: Record<string, unknown>): Promise<number> {
     try {
       // Extract text content for comparison
       const textA = this.extractTextContent(inputA);
@@ -378,7 +378,7 @@ export class AIIntelligentCache {
   /**
    * Extract text content from input data
    */
-  private extractTextContent(data: any): string {
+  private extractTextContent(data: Record<string, unknown>): string {
     if (typeof data === 'string') return data;
     if (typeof data === 'object' && data !== null) {
       return Object.values(data)
@@ -404,7 +404,7 @@ export class AIIntelligentCache {
   /**
    * Calculate structural similarity between objects
    */
-  private calculateStructuralSimilarity(objA: any, objB: any): number {
+  private calculateStructuralSimilarity(objA: Record<string, unknown>, objB: Record<string, unknown>): number {
     if (typeof objA !== 'object' || typeof objB !== 'object') {
       return objA === objB ? 1 : 0;
     }
@@ -433,14 +433,16 @@ export class AIIntelligentCache {
       this.semanticIndex.set(templateId, []);
     }
     
-    const entries = this.semanticIndex.get(templateId)!;
-    entries.push(entry);
-    
-    // Keep only recent entries for performance
-    const strategy = this.strategies.get(templateId);
-    if (strategy && entries.length > strategy.maxEntries) {
-      entries.sort((a, b) => b.usage.lastAccessed - a.usage.lastAccessed);
-      this.semanticIndex.set(templateId, entries.slice(0, strategy.maxEntries));
+    const entries = this.semanticIndex.get(templateId);
+    if (entries) {
+      entries.push(entry);
+      
+      // Keep only recent entries for performance
+      const strategy = this.strategies.get(templateId);
+      if (strategy && entries.length > strategy.maxEntries) {
+        entries.sort((a, b) => b.usage.lastAccessed - a.usage.lastAccessed);
+        this.semanticIndex.set(templateId, entries.slice(0, strategy.maxEntries));
+      }
     }
   }
 
@@ -484,18 +486,18 @@ export class AIIntelligentCache {
   /**
    * Normalize input data for consistent hashing
    */
-  private normalizeInputData(data: any): any {
+  private normalizeInputData(data: Record<string, unknown>): Record<string, unknown> {
     if (typeof data !== 'object' || data === null) return data;
     
-    const normalized: any = {};
+    const normalized: Record<string, unknown> = {};
     
     // Sort keys and normalize values
     Object.keys(data).sort().forEach(key => {
       const value = data[key];
       if (typeof value === 'string') {
         normalized[key] = value.trim().toLowerCase();
-      } else if (typeof value === 'object') {
-        normalized[key] = this.normalizeInputData(value);
+      } else if (typeof value === 'object' && value !== null) {
+        normalized[key] = this.normalizeInputData(value as Record<string, unknown>);
       } else {
         normalized[key] = value;
       }
@@ -507,20 +509,20 @@ export class AIIntelligentCache {
   /**
    * Sanitize input data for storage (remove sensitive info)
    */
-  private sanitizeInputData(data: any): any {
+  private sanitizeInputData(data: Record<string, unknown>): Record<string, unknown> {
     const sanitized = JSON.parse(JSON.stringify(data));
     
     // Remove potentially sensitive fields
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'phone', 'email'];
     
-    function removeSensitive(obj: any): any {
+    function removeSensitive(obj: Record<string, unknown>): Record<string, unknown> {
       if (typeof obj !== 'object' || obj === null) return obj;
       
       Object.keys(obj).forEach(key => {
         if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
           obj[key] = '[REDACTED]';
-        } else if (typeof obj[key] === 'object') {
-          obj[key] = removeSensitive(obj[key]);
+        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+          obj[key] = removeSensitive(obj[key] as Record<string, unknown>);
         }
       });
       

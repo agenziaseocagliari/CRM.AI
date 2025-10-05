@@ -21,6 +21,9 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
   "files.exclude": {
     "node_modules": true,
     ".env": false,
@@ -43,5 +46,8 @@
   "git.enableSmartCommit": true,
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "debug.console.fontSize": 14,
-  "debug.internalConsoleOptions": "openOnSessionStart"
+  "debug.internalConsoleOptions": "openOnSessionStart",
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore"
 }

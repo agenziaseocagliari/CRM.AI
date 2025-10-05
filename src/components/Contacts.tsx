@@ -278,7 +278,13 @@ export const Contacts: React.FC = () => {
                 prompt: aiPrompt, 
                 contact: selectedContact,
             });
-            setGeneratedContent(data.email);
+            
+            // Type guard for API response
+            if (data && typeof data === 'object' && 'email' in data && typeof (data as any).email === 'string') {
+                setGeneratedContent((data as { email: string }).email);
+            } else {
+                throw new Error('Risposta API non valida');
+            }
             toast.success('Email generata!', { id: toastId });
         } catch (err: unknown) {
             const error = err as ApiError;
@@ -300,7 +306,13 @@ export const Contacts: React.FC = () => {
                 prompt: aiPrompt, 
                 contact: selectedContact,
             });
-            setGeneratedContent(data.message);
+            
+            // Type guard for API response
+            if (data && typeof data === 'object' && 'message' in data && typeof (data as any).message === 'string') {
+                setGeneratedContent((data as { message: string }).message);
+            } else {
+                throw new Error('Risposta API non valida');
+            }
             toast.success('Messaggio pronto!', { id: toastId });
         } catch (err: unknown) {
             const error = err as ApiError;

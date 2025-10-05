@@ -457,8 +457,9 @@ export const APIIntegrationsManager: React.FC = () => {
 
             setEditModalOpen(false);
             loadIntegrations();
-        } catch (error: any) {
-            toast.error(`Errore: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.error(`Errore: ${errorMessage}`);
         }
     };
 

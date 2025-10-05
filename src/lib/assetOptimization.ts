@@ -12,7 +12,11 @@ export const compressImage = (
 ): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      reject(new Error('Could not get 2D context'));
+      return;
+    }
     const img = new Image();
 
     img.onload = () => {

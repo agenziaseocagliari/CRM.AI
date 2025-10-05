@@ -107,7 +107,7 @@ class EnhancedAIService {
           });
 
           return {
-            result: cached,
+            result: cached as T,
             success: true,
             cached: true,
             cacheType: 'exact',

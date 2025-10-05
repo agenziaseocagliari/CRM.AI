@@ -15,13 +15,13 @@ const STATIC_ASSETS = [
   // Add critical CSS and JS files after build
 ];
 
-// API endpoints to cache
-const API_ENDPOINTS = [
-  '/api/users',
-  '/api/contacts',
-  '/api/dashboard/stats',
-  '/api/activities',
-];
+// API endpoints to cache (currently unused but available for future features)
+// const API_ENDPOINTS = [
+//   '/api/users',
+//   '/api/contacts',
+//   '/api/dashboard/stats',
+//   '/api/activities',
+// ];
 
 // Cache duration settings (in seconds)
 const CACHE_DURATION = {
@@ -130,7 +130,7 @@ async function handleApiRequest(request) {
     
     return networkResponse;
   } catch (error) {
-    console.log('🔄 Network failed, trying cache for:', url.pathname);
+    console.log('🔄 Network failed, trying cache for:', url.pathname, error);
     
     // Network failed, try cache
     const cachedResponse = await caches.match(request);
@@ -178,7 +178,7 @@ async function handleStaticAsset(request) {
     }
     
     return networkResponse;
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Failed to fetch static asset:', request.url);
     return new Response('Asset not available', { status: 404 });
   }
@@ -204,7 +204,7 @@ async function handleImageRequest(request) {
     
     return networkResponse;
   } catch (error) {
-    console.log('🔄 Image failed to load:', request.url);
+    console.log('🔄 Image failed to load:', request.url, error);
     
     // Return placeholder image for failed requests
     return new Response(
@@ -236,7 +236,7 @@ async function handlePageRequest(request) {
     
     return networkResponse;
   } catch (error) {
-    console.log('🔄 Network failed, trying cache for page:', request.url);
+    console.log('🔄 Network failed, trying cache for page:', request.url, error);
     
     const cachedResponse = await caches.match(request);
     

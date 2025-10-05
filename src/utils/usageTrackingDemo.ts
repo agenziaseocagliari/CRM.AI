@@ -248,7 +248,7 @@ export class UsageTrackingDemo {
     console.log('⚡ Testing Performance with Concurrent Requests...');
     
     const startTime = Date.now();
-    const promises: Promise<any>[] = [];
+    const promises: Promise<unknown>[] = [];
     
     // Simula 20 richieste concorrenti
     for (let i = 0; i < 20; i++) {
@@ -274,7 +274,7 @@ export class UsageTrackingDemo {
       const endTime = Date.now();
       const duration = endTime - startTime;
       
-      const successCount = results.filter(r => r.success).length;
+      const successCount = results.filter(r => (r as { success: boolean }).success).length;
       
       console.log(`✅ Performance Test Results:`);
       console.log(`   - Total Requests: 20`);
@@ -297,7 +297,7 @@ export async function runUsageTrackingDemo(organizationId: string) {
 
 // Export per uso in development
 if (typeof window !== 'undefined') {
-  (window as any).runUsageTrackingDemo = runUsageTrackingDemo;
+  (window as { runUsageTrackingDemo?: typeof runUsageTrackingDemo }).runUsageTrackingDemo = runUsageTrackingDemo;
   console.log('🔧 Usage Tracking Demo available: runUsageTrackingDemo("your-org-id")');
 }
 

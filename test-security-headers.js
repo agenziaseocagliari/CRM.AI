@@ -25,6 +25,7 @@ try {
     
     // Verifica presenza dei file di sicurezza
     const securityUtilsPath = join(process.cwd(), 'src', 'lib', 'security', 'securityUtils.ts');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const hasSecurityUtils = require('fs').existsSync(securityUtilsPath);
     
     console.log('\n✅ Security Files Check:');

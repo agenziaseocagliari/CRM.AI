@@ -341,7 +341,7 @@ Urgency: High`,
 // Dynamic Context Injection
 export function injectDynamicContext(
   basePrompt: PromptTemplate,
-  leadData: any,
+  leadData: Record<string, unknown>,
   orgContext: OrganizationContext
 ): PromptTemplate {
   
@@ -384,17 +384,19 @@ ${similarConversions.length > 0 ? `
   return enhancedPrompt;
 }
 
-function analyzeLeadCharacteristics(leadData: any): string[] {
+function analyzeLeadCharacteristics(leadData: Record<string, unknown>): string[] {
   const characteristics: string[] = [];
   
-  if (leadData.email?.includes('@')) {
+  // Type guard for email
+  if (typeof leadData.email === 'string' && leadData.email.includes('@')) {
     const domain = leadData.email.split('@')[1];
     if (domain.includes('.com') && !['gmail.com', 'yahoo.com', 'hotmail.com'].includes(domain)) {
       characteristics.push('corporate_email');
     }
   }
   
-  if (leadData.title) {
+  // Type guard for title
+  if (typeof leadData.title === 'string') {
     const title = leadData.title.toLowerCase();
     if (title.includes('ceo') || title.includes('founder')) characteristics.push('executive');
     if (title.includes('cto') || title.includes('engineering')) characteristics.push('technical');
@@ -403,11 +405,15 @@ function analyzeLeadCharacteristics(leadData: any): string[] {
   
   if (leadData.company) {
     characteristics.push('company_provided');
-    if (leadData.employees > 100) characteristics.push('medium_enterprise');
-    if (leadData.employees > 1000) characteristics.push('large_enterprise');
+    // Type guard for employees
+    if (typeof leadData.employees === 'number') {
+      if (leadData.employees > 100) characteristics.push('medium_enterprise');
+      if (leadData.employees > 1000) characteristics.push('large_enterprise');
+    }
   }
   
-  if (leadData.message) {
+  // Type guard for message
+  if (typeof leadData.message === 'string') {
     const message = leadData.message.toLowerCase();
     if (message.includes('api') || message.includes('integration')) characteristics.push('technical_needs');
     if (message.includes('demo') || message.includes('trial')) characteristics.push('ready_to_evaluate');

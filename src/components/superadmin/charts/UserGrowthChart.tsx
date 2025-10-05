@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { diagnosticLogger } from '../../../lib/mockDiagnosticLogger';
@@ -16,7 +16,7 @@ export const UserGrowthChart: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         
@@ -34,11 +34,11 @@ export const UserGrowthChart: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [dateRange]);
 
     useEffect(() => {
         fetchData();
-    }, [dateRange]);
+    }, [dateRange, fetchData]);
 
     const generateMockData = (range: string): UserGrowthData[] => {
         const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
@@ -172,7 +172,7 @@ export const UserGrowthChart: React.FC = () => {
             </ResponsiveContainer>
             
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                💡 Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l'endpoint API appropriato.
+                💡 Nota: Questi dati sono generati per dimostrazione. Per dati reali, configurare l&apos;endpoint API appropriato.
             </div>
         </div>
     );

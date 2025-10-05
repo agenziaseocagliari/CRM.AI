@@ -65,9 +65,12 @@ export const Automations: React.FC = () => {
         try {
             const data = await invokeSupabaseFunction('process-automation-request', { prompt: userMessage.text });
 
-            if (!data.reply) {throw new Error("La risposta dell'AI non  valida.");}
+            // Type guard for API response
+            if (!data || typeof data !== 'object' || !('reply' in data) || typeof (data as any).reply !== 'string') {
+                throw new Error("La risposta dell'AI non è valida.");
+            }
 
-            const aiMessage: Message = { sender: 'ai', text: data.reply };
+            const aiMessage: Message = { sender: 'ai', text: (data as { reply: string }).reply };
             setMessages(prev => [...prev, aiMessage]);
             setLastInteraction({ user: userMessage.text, ai: aiMessage.text });
 

@@ -26,7 +26,7 @@ export const QuotaManagement: React.FC = () => {
         throw new Error('No session found');
       }
 
-      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
       
       const response = await fetch(
         `${supabaseUrl}/functions/v1/superadmin-quota-management`,
@@ -46,7 +46,7 @@ export const QuotaManagement: React.FC = () => {
 
       const data = await response.json();
       setStats(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       diagnosticLogger.error('Error fetching quota stats:', error);
       toast.error('Failed to load quota statistics');
     } finally {

@@ -582,7 +582,7 @@ export function getAllAccountTypes(): AccountType[] {
   return Object.keys(ACCOUNT_TYPE_CONFIGS) as AccountType[];
 }
 
-export function getAccountTypesByCategory(category?: string): AccountType[] {
+export function getAccountTypesByCategory(_category?: string): AccountType[] {
   // Future enhancement: categorize account types
   return getAllAccountTypes();
 }

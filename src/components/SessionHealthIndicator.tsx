@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useJWTDiagnostics } from '../lib/auth/jwtDiagnostics';
-import { diagnosticLogger } from '../lib/diagnosticLogger';
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 
 interface SessionHealthIndicatorProps {
   compact?: boolean;

@@ -20,7 +20,9 @@
     '*.optimization.ts',
     'types.ts',
     'vite.config.*.ts',
-    'scripts/**/*'
+    'scripts/**/*',
+    'src/index.css',
+    '**/*.css'
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {

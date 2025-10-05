@@ -1,5 +1,5 @@
 ﻿// src/components/superadmin/incidents/IncidentDashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 import { invokeSupabaseFunction } from '../../../lib/api';
@@ -48,7 +48,7 @@ export const IncidentDashboard: React.FC = () => {
     loadIncidents();
   }, [filterStatus, filterSeverity, page]);
 
-  const loadIncidents = async () => {
+  const loadIncidents = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -62,12 +62,22 @@ export const IncidentDashboard: React.FC = () => {
         per_page: 20,
       });
 
-      setIncidents(result.incidents || []);
-      setTotalPages(result.pagination?.total_pages || 1);
+      // Type guard for API response
+      if (!result || typeof result !== 'object') {
+        throw new Error('Risposta API non valida');
+      }
+
+      const typedResult = result as {
+        incidents?: Incident[];
+        pagination?: { total_pages?: number; total?: number };
+      };
+
+      setIncidents(typedResult.incidents || []);
+      setTotalPages(typedResult.pagination?.total_pages || 1);
 
       // Calculate stats
       const newStats: IncidentStats = {
-        total: result.pagination?.total || 0,
+        total: typedResult.pagination?.total || 0,
         open: 0,
         investigating: 0,
         resolved: 0,
@@ -75,7 +85,7 @@ export const IncidentDashboard: React.FC = () => {
         high: 0,
       };
 
-      result.incidents?.forEach((incident: Incident) => {
+      typedResult.incidents?.forEach((incident: Incident) => {
         if (incident.status === 'open') {newStats.open++;}
         if (incident.status === 'investigating') {newStats.investigating++;}
         if (incident.status === 'resolved') {newStats.resolved++;}
@@ -90,7 +100,11 @@ export const IncidentDashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filterStatus, filterSeverity, page]);
+
+  useEffect(() => {
+    loadIncidents();
+  }, [loadIncidents]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

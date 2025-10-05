@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
-import { supabase } from '../../lib/supabaseClient';
+// import { supabase } from '../../lib/supabaseClient'; // Unused
 
 import { diagnosticLogger } from '../../lib/mockDiagnosticLogger';
 
@@ -105,7 +105,7 @@ const SystemHealthDashboard: React.FC = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+02:00`;
   };
 
-  const fetchSystemHealth = async () => {
+  const fetchSystemHealth = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -149,14 +149,14 @@ const SystemHealthDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSystemHealth();
     // Refresh every 30 seconds
     const interval = setInterval(fetchSystemHealth, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchSystemHealth]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

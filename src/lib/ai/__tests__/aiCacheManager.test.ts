@@ -63,8 +63,8 @@ describe('AI Cache Manager', () => {
       const cached = await aiCache.get(mockInput, mockActionType, mockOrgId);
       
       expect(cached).toBeDefined();
-      expect(cached!.result).toEqual(mockResult);
-      expect(cached!.cacheType).toBe('exact');
+      expect(cached?.result).toEqual(mockResult);
+      expect(cached?.cacheType).toBe('exact');
     });
 
     it('should return null for cache miss', async () => {
@@ -140,7 +140,7 @@ describe('AI Cache Manager', () => {
       );
       
       expect(result).toBeDefined();
-      expect(result.score).toBe(74); // 82 * 0.9 (adapted score)
+      expect((result as { score: number }).score).toBe(74); // 82 * 0.9 (adapted score)
     });
 
     it('should store semantic matches for lead scoring', async () => {

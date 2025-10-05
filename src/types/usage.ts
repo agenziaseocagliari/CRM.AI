@@ -93,7 +93,7 @@ export interface UsageTracking {
     duration_ms?: number;
     success?: boolean;
     error_code?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   
   // References
@@ -152,7 +152,7 @@ export interface BillingEvent {
     description?: string;
     service_type?: string;
     overage_quantity?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   
   created_at: string;

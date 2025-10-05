@@ -6,11 +6,11 @@ export interface DiagnosticLogEntry {
   level: LogLevel;
   category: 'jwt' | 'session' | 'auth' | 'api' | 'healthcheck';
   message: string;
-  context?: any;
+  context?: unknown;
 }
 
 export const diagnosticLogger = {
-  info: (...args: any[]) => {
+  info: (...args: unknown[]) => {
     // Handle both patterns: (category, message, context) and (message, context)
     if (args.length >= 2 && typeof args[0] === 'string' && typeof args[1] === 'string') {
       console.log(`[INFO][${args[0]}]`, args[1], ...args.slice(2));
@@ -18,22 +18,22 @@ export const diagnosticLogger = {
       console.log('[INFO]', ...args);
     }
   },
-  warn: (...args: any[]) => {
+  warn: (...args: unknown[]) => {
     if (args.length >= 2 && typeof args[0] === 'string' && typeof args[1] === 'string') {
       console.warn(`[WARN][${args[0]}]`, args[1], ...args.slice(2));
     } else {
       console.warn('[WARN]', ...args);
     }
   },
-  error: (...args: any[]) => {
+  error: (...args: unknown[]) => {
     if (args.length >= 2 && typeof args[0] === 'string' && typeof args[1] === 'string') {
       console.error(`[ERROR][${args[0]}]`, args[1], ...args.slice(2));
     } else {
       console.error('[ERROR]', ...args);
     }
   },
-  debug: (...args: any[]) => console.debug('[DEBUG]', ...args),
-  critical: (...args: any[]) => {
+  debug: (...args: unknown[]) => console.debug('[DEBUG]', ...args),
+  critical: (...args: unknown[]) => {
     if (args.length >= 2 && typeof args[0] === 'string' && typeof args[1] === 'string') {
       console.error(`[CRITICAL][${args[0]}]`, args[1], ...args.slice(2));
     } else {

@@ -40,9 +40,9 @@ export interface SecurityMaskingConfig {
  * Mask sensitive information in strings
  */
 export function maskSensitiveData(
-  data: string | object | any,
+  data: string | object | unknown,
   config: Partial<SecurityMaskingConfig> = {}
-): string | object | any {
+): string | object | unknown {
   
   const defaultConfig: SecurityMaskingConfig = {
     maskEmails: true,
@@ -57,7 +57,7 @@ export function maskSensitiveData(
   }
   
   if (typeof data === 'object' && data !== null) {
-    return maskObject(data, defaultConfig);
+    return maskObject(data as Record<string, unknown>, defaultConfig);
   }
   
   return data;
@@ -106,7 +106,7 @@ function maskString(str: string, config: SecurityMaskingConfig): string {
 /**
  * Mask sensitive information in objects
  */
-function maskObject(obj: any, config: SecurityMaskingConfig): any {
+function maskObject(obj: Record<string, unknown> | unknown[], config: SecurityMaskingConfig): Record<string, unknown> | unknown[] {
   if (obj === null || obj === undefined) return obj;
   
   // Handle arrays
@@ -116,7 +116,7 @@ function maskObject(obj: any, config: SecurityMaskingConfig): any {
   
   // Handle objects
   if (typeof obj === 'object') {
-    const masked: any = {};
+    const masked: Record<string, unknown> = {};
     
     for (const [key, value] of Object.entries(obj)) {
       const keyLower = key.toLowerCase();
@@ -150,7 +150,7 @@ export class SecureLogger {
   /**
    * Log with automatic sensitive data masking
    */
-  static log(level: 'info' | 'warn' | 'error' | 'debug', category: string, message: string, context?: any): void {
+  static log(level: 'info' | 'warn' | 'error' | 'debug', category: string, message: string, context?: unknown): void {
     // Mask message
     const maskedMessage = maskSensitiveData(message, { completeRedaction: false });
     
@@ -179,19 +179,19 @@ export class SecureLogger {
     }
   }
 
-  static info(category: string, message: string, context?: any): void {
+  static info(category: string, message: string, context?: unknown): void {
     this.log('info', category, message, context);
   }
 
-  static warn(category: string, message: string, context?: any): void {
+  static warn(category: string, message: string, context?: unknown): void {
     this.log('warn', category, message, context);
   }
 
-  static error(category: string, message: string, context?: any): void {
+  static error(category: string, message: string, context?: unknown): void {
     this.log('error', category, message, context);
   }
 
-  static debug(category: string, message: string, context?: any): void {
+  static debug(category: string, message: string, context?: unknown): void {
     this.log('debug', category, message, context);
   }
 }
@@ -261,15 +261,15 @@ export class InputValidator {
   /**
    * Recursively sanitize object properties
    */
-  private static sanitizeObject(obj: any): any {
+  private static sanitizeObject(obj: Record<string, unknown> | unknown[]): Record<string, unknown> | unknown[] {
     if (obj === null || obj === undefined) return obj;
     
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeObject(item));
+      return obj.map(item => this.sanitizeObject(item as Record<string, unknown>));
     }
     
     if (typeof obj === 'object') {
-      const sanitized: any = {};
+      const sanitized: Record<string, unknown> = {};
       
       for (const [key, value] of Object.entries(obj)) {
         // Sanitize key name
@@ -278,7 +278,7 @@ export class InputValidator {
         if (typeof value === 'string') {
           sanitized[sanitizedKey] = this.sanitizeString(value);
         } else {
-          sanitized[sanitizedKey] = this.sanitizeObject(value);
+          sanitized[sanitizedKey] = this.sanitizeObject(value as Record<string, unknown>);
         }
       }
       

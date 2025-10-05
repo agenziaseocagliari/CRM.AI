@@ -84,7 +84,7 @@ export class OptimizedAIService {
       
       return {
         success: fallback.success,
-        result: fallback.result,
+        result: fallback.result as T,
         cached: false,
         cacheHit: false,
         processingTime,
@@ -107,7 +107,7 @@ export class OptimizedAIService {
    */
   private async executeMainAIOperation<T>(
     request: OptimizedAIRequest,
-    startTime: number
+    _startTime: number
   ): Promise<OptimizedAIResponse<T>> {
     
     try {
@@ -120,7 +120,7 @@ export class OptimizedAIService {
       // Inject dynamic context
       const contextualPrompt = injectDynamicContext(
         promptTemplate,
-        request.inputData,
+        request.inputData as Record<string, unknown>,
         request.organizationContext
       );
 
@@ -129,12 +129,12 @@ export class OptimizedAIService {
         const cachedResult = await this.checkCache(
           contextualPrompt.id,
           request.organizationId,
-          request.inputData,
+          request.inputData as Record<string, unknown>,
           request.options || {}
         );
 
         if (cachedResult) {
-          const processingTime = performance.now() - startTime;
+          const processingTime = performance.now() - _startTime;
           
           diagnosticLogger.info('ai-optimization', 'Cache hit', {
             templateId: contextualPrompt.id,
@@ -169,7 +169,7 @@ export class OptimizedAIService {
         contextualPrompt
       );
 
-      const processingTime = performance.now() - startTime;
+      const processingTime = performance.now() - _startTime;
 
       // Cache the result (if it meets criteria)
       if (request.options?.useCache !== false && aiResult.success && aiResult.cost > 0.001) {
@@ -215,7 +215,7 @@ export class OptimizedAIService {
    */
   private async executeFallbackStrategy(
     request: OptimizedAIRequest,
-    startTime: number
+    _startTime: number
   ): Promise<FallbackResponse> {
     // Try cache-only mode first
     if (request.options?.useCache !== false) {
@@ -227,14 +227,14 @@ export class OptimizedAIService {
 
         const contextualPrompt = injectDynamicContext(
           promptTemplate,
-          request.inputData,
+          request.inputData as Record<string, unknown>,
           request.organizationContext
         );
 
         const cachedResult = await this.checkCache(
           contextualPrompt.id,
           request.organizationId,
-          request.inputData,
+          request.inputData as Record<string, unknown>,
           { 
             ...request.options,
             minSimilarity: 0.5, // Lower similarity threshold for fallback
@@ -451,14 +451,14 @@ The Guardian AI CRM Team`,
   private async checkCache(
     templateId: string,
     organizationId: string,
-    inputData: unknown,
+    inputData: Record<string, unknown>,
     options: NonNullable<OptimizedAIRequest['options']>
   ): Promise<AICacheEntry | null> {
     
     return aiCache.getCachedResponse(
       templateId,
       organizationId,
-      inputData,
+      inputData as Record<string, unknown>,
       {
         maxAge: options.maxCacheAge,
         minSimilarity: options.minSimilarity,
@@ -486,7 +486,7 @@ The Guardian AI CRM Team`,
     return aiCache.storeResponse(
       templateId,
       organizationId,
-      inputData,
+      inputData as Record<string, unknown>,
       response
     );
   }
@@ -540,7 +540,7 @@ The Guardian AI CRM Team`,
 
       return {
         success: true,
-        result: result.data || result,
+        result: (result as any).data || result,
         cached: false,
         cacheHit: false,
         processingTime: 0, // Will be set by caller

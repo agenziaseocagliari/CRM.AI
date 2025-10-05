@@ -13,7 +13,7 @@ export interface CacheConfig {
 }
 
 // Cache Entry Interface
-export interface CacheEntry<T = any> {
+export interface CacheEntry<T = unknown> {
   data: T;
   timestamp: number;
   ttl: number;
@@ -63,7 +63,7 @@ class AdvancedCache {
   }
 
   // Get item from cache
-  async get<T = any>(key: string): Promise<T | null> {
+  async get<T = unknown>(key: string): Promise<T | null> {
     const cacheKey = this.getCacheKey(key);
     
     // Check memory cache first
@@ -71,7 +71,7 @@ class AdvancedCache {
     if (memoryEntry && this.isValidEntry(memoryEntry)) {
       this.stats.hits++;
       this.updateStats();
-      return memoryEntry.data;
+      return memoryEntry.data as T;
     }
 
     // Check persistent cache
@@ -90,7 +90,7 @@ class AdvancedCache {
   }
 
   // Set item in cache
-  async set<T = any>(key: string, data: T, customTtl?: number): Promise<void> {
+  async set<T = unknown>(key: string, data: T, customTtl?: number): Promise<void> {
     const cacheKey = this.getCacheKey(key);
     const ttl = customTtl || this.config.maxAge;
     
@@ -160,7 +160,7 @@ class AdvancedCache {
   }
 
   // Cache strategies implementation
-  async fetchWithStrategy<T = any>(
+  async fetchWithStrategy<T = unknown>(
     key: string,
     fetchFunction: () => Promise<T>,
     options?: { ttl?: number }
@@ -273,7 +273,7 @@ class AdvancedCache {
     return !isExpired && isVersionValid;
   }
 
-  private calculateSize(data: any): number {
+  private calculateSize(data: unknown): number {
     try {
       return new Blob([JSON.stringify(data)]).size;
     } catch {
@@ -282,7 +282,6 @@ class AdvancedCache {
   }
 
   private cleanup(): void {
-    const now = Date.now();
     let cleanedCount = 0;
 
     for (const [key, entry] of this.memoryCache.entries()) {
@@ -343,16 +342,16 @@ class AdvancedCache {
     }
   }
 
-  private async getFromPersistentCache<T>(key: string): Promise<CacheEntry<T> | null> {
+  private async getFromPersistentCache<T>(_key: string): Promise<CacheEntry<T> | null> {
     // Simplified implementation - would use IndexedDB in production
     return null;
   }
 
-  private async setInPersistentCache(key: string, entry: CacheEntry): Promise<void> {
+  private async setInPersistentCache(_key: string, _entry: CacheEntry): Promise<void> {
     // Simplified implementation - would use IndexedDB in production
   }
 
-  private async removeFromPersistentCache(key: string): Promise<void> {
+  private async removeFromPersistentCache(_key: string): Promise<void> {
     // Simplified implementation - would use IndexedDB in production
   }
 

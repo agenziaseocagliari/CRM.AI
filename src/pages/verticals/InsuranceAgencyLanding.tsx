@@ -55,7 +55,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Aumenta le vendite, automatizza i rinnovi e migliora la soddisfazione dei clienti 
-              con l'unico CRM progettato specificamente per le Agenzie Assicurative italiane.
+              con l&apos;unico CRM progettato specificamente per le Agenzie Assicurative italiane.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 

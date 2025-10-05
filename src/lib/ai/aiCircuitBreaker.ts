@@ -27,7 +27,7 @@ export interface CircuitBreakerMetrics {
 
 export interface FallbackResponse {
   success: boolean;
-  result: any;
+  result: unknown;
   degraded: true;
   fallbackReason: string;
   confidence: 'high' | 'medium' | 'low';
@@ -169,7 +169,7 @@ export class AICircuitBreaker {
   /**
    * Handle failure response
    */
-  private onFailure(error: any): void {
+  private onFailure(error: unknown): void {
     this.failureCount++;
     this.totalFailures++;
     this.lastFailureTime = Date.now();
@@ -336,7 +336,7 @@ export class AICircuitBreaker {
   /**
    * Get default response for action type when degraded
    */
-  private getDefaultResponseForAction(): any {
+  private getDefaultResponseForAction(): unknown {
     switch (this.actionType) {
       case 'ai_lead_scoring':
         return {
@@ -446,7 +446,11 @@ export class AICircuitBreakerManager {
       this.breakers.set(key, new AICircuitBreaker(actionType, organizationId, config));
     }
     
-    return this.breakers.get(key)!;
+    const breaker = this.breakers.get(key);
+    if (!breaker) {
+      throw new Error(`Circuit breaker not found for key: ${key}`);
+    }
+    return breaker;
   }
 
   /**

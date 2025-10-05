@@ -24,12 +24,15 @@ CREATE TABLE IF NOT EXISTS system_metrics (
   CONSTRAINT valid_metric_type CHECK (metric_type IN ('gauge', 'counter', 'histogram'))
 );
 
-CREATE INDEX idx_metrics_name_time ON system_metrics(metric_name, recorded_at DESC);
-CREATE INDEX idx_metrics_org_time ON system_metrics(organization_id, recorded_at DESC) 
-  WHERE organization_id IS NOT NULL;
-CREATE INDEX idx_metrics_tags ON system_metrics USING GIN(tags);
+-- Drop indexes if they exist to ensure idempotent migration
+DROP INDEX IF EXISTS idx_metrics_name_time;
+DROP INDEX IF EXISTS idx_metrics_org_time;
+DROP INDEX IF EXISTS idx_metrics_tags;
 
--- Partition by time for better performance (optional, for high volume)
+CREATE INDEX idx_metrics_name_time ON system_metrics(metric_name, recorded_at DESC);
+CREATE INDEX idx_metrics_org_time ON system_metrics(organization_id, recorded_at DESC)
+  WHERE organization_id IS NOT NULL;
+CREATE INDEX idx_metrics_tags ON system_metrics USING GIN(tags);-- Partition by time for better performance (optional, for high volume)
 -- Would be implemented if metrics volume exceeds 10M records
 
 -- =====================================================

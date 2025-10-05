@@ -509,6 +509,7 @@ BEGIN
     RAISE NOTICE '- testing.sync_from_production()';
     RAISE NOTICE '- testing.run_all_tests()';
     RAISE NOTICE 'Test organizations created with IDs: 001, 002, 003';
+END $$;
 
 */
 -- End of commented out testing setup. Re-enable after account_type column migration is verified.

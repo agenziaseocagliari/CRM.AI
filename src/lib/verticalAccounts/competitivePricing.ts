@@ -36,15 +36,15 @@ export const COMPETITIVE_PRICING = {
       name: 'Starter',
       description: 'Perfetto per piccole agenzie che iniziano',
       price: 49,
-      launch_price: 39, // primi 6 mesi
+      launch_price: 29, // primi 6 mesi
       billing: 'mensile',
       popular: false,
       tier_level: 1,
       features: [
-        '500 clienti',
-        '100 polizze gestite',
+        '200 clienti',
+        '50 polizze gestite',
         '2.000 email/mese',
-        '200 WhatsApp/mese',
+        '300 WhatsApp/mese',
         '2GB storage documenti',
         'Gestione rinnovi automatica',
         'Report base',
@@ -66,15 +66,15 @@ export const COMPETITIVE_PRICING = {
       name: 'Professional',
       description: 'Per agenzie in crescita con più clienti',
       price: 89,
-      launch_price: 69, // primi 6 mesi
+      launch_price: 59, // primi 6 mesi
       billing: 'mensile',
       popular: true,
       tier_level: 2,
       features: [
-        '2.000 clienti',
-        '500 polizze gestite',
-        '8.000 email/mese',
-        '800 WhatsApp/mese',
+        '800 clienti',
+        '200 polizze gestite',
+        '6.000 email/mese',
+        '1.000 WhatsApp/mese',
         '8GB storage documenti',
         'Automazioni avanzate',
         'Integrazioni IVASS',

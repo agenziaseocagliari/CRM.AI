@@ -116,7 +116,9 @@ const initialFormState: OpportunityFormData = {
 };
 
 export const Opportunities: React.FC = () => {
+  console.log('🔄 Opportunities component is rendering');
   const { opportunities: initialData, contacts, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
+  console.log('📊 Opportunities data:', { initialData, contacts, organization });
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData);
   
   const [isModalOpen, setIsModalOpen] = useState(false);

@@ -71,7 +71,9 @@ const FormCard: React.FC<FormCardProps> = ({ form, onDelete, onPreview, onGetCod
 
 
 export const Forms: React.FC = () => {
+    console.log('📋 Forms component is rendering');
     const { forms, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
+    console.log('📋 Forms data:', { forms, organization });
 
     // Stati per le modali
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);

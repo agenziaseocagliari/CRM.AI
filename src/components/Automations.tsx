@@ -36,7 +36,9 @@ const AutomationCard: React.FC<{ automation: Automation; onDelete: (automation: 
 
 
 export const Automations: React.FC = () => {
+    console.log('🤖 Automations component is rendering');
     const { automations, organization, refetch } = useOutletContext<ReturnType<typeof useCrmData>>();
+    console.log('🤖 Automations data:', { automations, organization });
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');

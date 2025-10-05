@@ -77,7 +77,9 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
 
 
 export const Contacts: React.FC = () => {
+    console.log('👥 Contacts component is rendering');
     const { contacts, organization, crmEvents, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
+    console.log('👥 Contacts data:', { contacts, organization, crmEvents, isCalendarLinked });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

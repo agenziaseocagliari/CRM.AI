@@ -32,6 +32,14 @@ CREATE TABLE IF NOT EXISTS audit_logs_enhanced (
   CONSTRAINT valid_risk_level CHECK (risk_level IN ('low', 'medium', 'high', 'critical'))
 );
 
+-- Drop audit log indexes if they exist to ensure idempotent migration
+DROP INDEX IF EXISTS idx_audit_enhanced_search;
+DROP INDEX IF EXISTS idx_audit_enhanced_org_time;
+DROP INDEX IF EXISTS idx_audit_enhanced_user_time;
+DROP INDEX IF EXISTS idx_audit_enhanced_risk;
+DROP INDEX IF EXISTS idx_audit_enhanced_resource;
+DROP INDEX IF EXISTS idx_audit_enhanced_tags;
+
 -- Indexes for audit logs
 CREATE INDEX idx_audit_enhanced_search ON audit_logs_enhanced USING GIN(search_vector);
 CREATE INDEX idx_audit_enhanced_org_time ON audit_logs_enhanced(organization_id, created_at DESC)
@@ -70,6 +78,12 @@ CREATE TABLE IF NOT EXISTS security_events (
   CONSTRAINT valid_severity CHECK (severity IN ('info', 'warning', 'critical'))
 );
 
+-- Drop security event indexes if they exist to ensure idempotent migration
+DROP INDEX IF EXISTS idx_security_events_time;
+DROP INDEX IF EXISTS idx_security_events_unresolved;
+DROP INDEX IF EXISTS idx_security_events_user;
+DROP INDEX IF EXISTS idx_security_events_org;
+
 CREATE INDEX idx_security_events_time ON security_events(created_at DESC);
 CREATE INDEX idx_security_events_unresolved ON security_events(severity, created_at DESC)
   WHERE is_resolved = false;
@@ -99,6 +113,9 @@ BEGIN
     ALTER TABLE ip_whitelist ADD COLUMN allow_vpn BOOLEAN DEFAULT false;
     ALTER TABLE ip_whitelist ADD COLUMN geolocation_country TEXT;
     ALTER TABLE ip_whitelist ADD COLUMN last_used_at TIMESTAMPTZ;
+    
+    -- Drop IP whitelist index if exists to ensure idempotent migration
+    DROP INDEX IF EXISTS idx_ip_whitelist_cidr;
     
     CREATE INDEX idx_ip_whitelist_cidr ON ip_whitelist USING GIST(cidr_range inet_ops)
       WHERE cidr_range IS NOT NULL;

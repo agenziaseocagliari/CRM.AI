@@ -204,10 +204,12 @@ ALTER TABLE vertical_custom_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE enterprise_customizations ENABLE ROW LEVEL SECURITY;
 
 -- Policies for vertical_account_configs (public read, admin write)
+DROP POLICY IF EXISTS vertical_configs_public_read ON vertical_account_configs;
 CREATE POLICY vertical_configs_public_read ON vertical_account_configs
     FOR SELECT
     USING (TRUE); -- Public read for account type selection
 
+DROP POLICY IF EXISTS vertical_configs_admin_write ON vertical_account_configs;
 CREATE POLICY vertical_configs_admin_write ON vertical_account_configs
     FOR ALL
     USING (
@@ -219,10 +221,12 @@ CREATE POLICY vertical_configs_admin_write ON vertical_account_configs
     );
 
 -- Policies for vertical_templates (public read system templates, org-specific for custom)
+DROP POLICY IF EXISTS vertical_templates_system_read ON vertical_templates;
 CREATE POLICY vertical_templates_system_read ON vertical_templates
     FOR SELECT
     USING (is_system_template = TRUE OR is_system_template IS NULL);
 
+DROP POLICY IF EXISTS vertical_templates_admin_write ON vertical_templates;
 CREATE POLICY vertical_templates_admin_write ON vertical_templates
     FOR ALL
     USING (
@@ -234,10 +238,12 @@ CREATE POLICY vertical_templates_admin_write ON vertical_templates
     );
 
 -- Policies for vertical_custom_fields
+DROP POLICY IF EXISTS vertical_custom_fields_read ON vertical_custom_fields;
 CREATE POLICY vertical_custom_fields_read ON vertical_custom_fields
     FOR SELECT
     USING (TRUE); -- Public read
 
+DROP POLICY IF EXISTS vertical_custom_fields_admin_write ON vertical_custom_fields;
 CREATE POLICY vertical_custom_fields_admin_write ON vertical_custom_fields
     FOR ALL
     USING (
@@ -249,6 +255,7 @@ CREATE POLICY vertical_custom_fields_admin_write ON vertical_custom_fields
     );
 
 -- Policies for enterprise_customizations (organization-specific)
+DROP POLICY IF EXISTS enterprise_customizations_org_access ON enterprise_customizations;
 CREATE POLICY enterprise_customizations_org_access ON enterprise_customizations
     FOR ALL
     USING (

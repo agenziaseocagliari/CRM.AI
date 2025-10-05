@@ -265,8 +265,7 @@ LEFT JOIN organization_subscriptions os ON o.id = os.organization_id
 LEFT JOIN subscription_tiers st ON os.subscription_tier_id = st.id
 LEFT JOIN usage_quotas uq ON o.id = uq.organization_id 
     AND uq.period_start <= NOW() 
-    AND uq.period_end > NOW()
-WHERE o.deleted_at IS NULL;
+    AND uq.period_end > NOW();
 
 -- ===================================================================
 -- SECURITY & RLS POLICIES

@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_ip_whitelist_active ON ip_whitelist(organization_
 CREATE INDEX IF NOT EXISTS idx_ip_whitelist_expires ON ip_whitelist(expires_at) WHERE expires_at IS NOT NULL;
 
 -- Full-text search on label and description
-CREATE INDEX idx_ip_whitelist_search ON ip_whitelist USING GIN(
+CREATE INDEX IF NOT EXISTS idx_ip_whitelist_search ON ip_whitelist USING GIN(
     to_tsvector('english', COALESCE(label, '') || ' ' || COALESCE(description, ''))
 );
 
@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS geo_restrictions (
 );
 
 -- Indexes
-CREATE INDEX idx_geo_restrictions_org ON geo_restrictions(organization_id);
-CREATE INDEX idx_geo_restrictions_active ON geo_restrictions(organization_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_geo_restrictions_org ON geo_restrictions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_geo_restrictions_active ON geo_restrictions(organization_id, is_active);
 
 COMMENT ON TABLE geo_restrictions IS 'Geographic restrictions for organization access';
 COMMENT ON COLUMN geo_restrictions.country_code IS 'ISO 3166-1 alpha-2 country code';
@@ -85,10 +85,10 @@ CREATE TABLE IF NOT EXISTS ip_access_log (
 );
 
 -- Indexes for performance and analytics
-CREATE INDEX idx_ip_access_log_org ON ip_access_log(organization_id);
-CREATE INDEX idx_ip_access_log_ip ON ip_access_log(ip_address);
-CREATE INDEX idx_ip_access_log_blocked ON ip_access_log(organization_id, is_blocked);
-CREATE INDEX idx_ip_access_log_time ON ip_access_log(access_time DESC);
+CREATE INDEX IF NOT EXISTS idx_ip_access_log_org ON ip_access_log(organization_id);
+CREATE INDEX IF NOT EXISTS idx_ip_access_log_ip ON ip_access_log(ip_address);
+CREATE INDEX IF NOT EXISTS idx_ip_access_log_blocked ON ip_access_log(organization_id, is_blocked);
+CREATE INDEX IF NOT EXISTS idx_ip_access_log_time ON ip_access_log(access_time DESC);
 
 -- Partitioning by time (for scalability)
 -- Note: In production, consider partitioning by month

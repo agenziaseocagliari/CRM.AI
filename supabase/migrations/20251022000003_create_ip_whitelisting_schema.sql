@@ -104,7 +104,7 @@ ALTER TABLE geo_restrictions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ip_access_log ENABLE ROW LEVEL SECURITY;
 
 -- IP Whitelist Policies
-CREATE POLICY "Users can view their organization's IP whitelist"
+DROP POLICY IF EXISTS "Users can view their organization's IP whitelist" ON ip_whitelist;CREATE POLICY "Users can view their organization's IP whitelist"
     ON ip_whitelist FOR SELECT
     TO public
     USING (
@@ -112,6 +112,8 @@ CREATE POLICY "Users can view their organization's IP whitelist"
             SELECT organization_id FROM profiles WHERE id = auth.uid()
         )
     );
+
+DROP POLICY IF EXISTS "Admins can insert IP whitelist entries" ON ip_whitelist;
 
 CREATE POLICY "Admins can insert IP whitelist entries"
     ON ip_whitelist FOR INSERT
@@ -124,6 +126,8 @@ CREATE POLICY "Admins can insert IP whitelist entries"
         )
     );
 
+DROP POLICY IF EXISTS "Admins can update IP whitelist entries" ON ip_whitelist;
+
 CREATE POLICY "Admins can update IP whitelist entries"
     ON ip_whitelist FOR UPDATE
     TO public
@@ -134,6 +138,8 @@ CREATE POLICY "Admins can update IP whitelist entries"
             AND role IN ('admin', 'super_admin')
         )
     );
+
+DROP POLICY IF EXISTS "Admins can delete IP whitelist entries" ON ip_whitelist;
 
 CREATE POLICY "Admins can delete IP whitelist entries"
     ON ip_whitelist FOR DELETE
@@ -147,7 +153,7 @@ CREATE POLICY "Admins can delete IP whitelist entries"
     );
 
 -- Geo-Restrictions Policies
-CREATE POLICY "Users can view their organization's geo-restrictions"
+DROP POLICY IF EXISTS "Users can view their organization's geo-restrictions" ON geo_restrictions;CREATE POLICY "Users can view their organization's geo-restrictions"
     ON geo_restrictions FOR SELECT
     TO public
     USING (
@@ -155,6 +161,8 @@ CREATE POLICY "Users can view their organization's geo-restrictions"
             SELECT organization_id FROM profiles WHERE id = auth.uid()
         )
     );
+
+DROP POLICY IF EXISTS "Admins can manage geo-restrictions" ON geo_restrictions;
 
 CREATE POLICY "Admins can manage geo-restrictions"
     ON geo_restrictions FOR ALL
@@ -168,7 +176,7 @@ CREATE POLICY "Admins can manage geo-restrictions"
     );
 
 -- IP Access Log Policies
-CREATE POLICY "Admins can view their organization's IP access logs"
+DROP POLICY IF EXISTS "Admins can view their organization's IP access logs" ON ip_access_log;CREATE POLICY "Admins can view their organization's IP access logs"
     ON ip_access_log FOR SELECT
     TO public
     USING (
@@ -180,7 +188,7 @@ CREATE POLICY "Admins can view their organization's IP access logs"
     );
 
 -- System can insert access logs (via SECURITY DEFINER functions)
-CREATE POLICY "System can insert IP access logs"
+DROP POLICY IF EXISTS "System can insert IP access logs" ON ip_access_log;CREATE POLICY "System can insert IP access logs"
     ON ip_access_log FOR INSERT
     TO public
     WITH CHECK (

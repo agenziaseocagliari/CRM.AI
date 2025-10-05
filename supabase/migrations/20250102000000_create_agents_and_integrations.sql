@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_automation_agents_status ON automation_agents(sta
 ALTER TABLE automation_agents ENABLE ROW LEVEL SECURITY;
 
 -- Only super admins can access agents
-CREATE POLICY "Super admins can view all agents" ON automation_agents
+DROP POLICY IF EXISTS "Super admins can view all agents" ON automation_agents;CREATE POLICY "Super admins can view all agents" ON automation_agents
     FOR SELECT
     TO public
     USING (
@@ -40,6 +40,8 @@ CREATE POLICY "Super admins can view all agents" ON automation_agents
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "Super admins can insert agents" ON automation_agents;
 
 CREATE POLICY "Super admins can insert agents" ON automation_agents
     FOR INSERT
@@ -52,6 +54,8 @@ CREATE POLICY "Super admins can insert agents" ON automation_agents
         )
     );
 
+DROP POLICY IF EXISTS "Super admins can update agents" ON automation_agents;
+
 CREATE POLICY "Super admins can update agents" ON automation_agents
     FOR UPDATE
     TO public
@@ -62,6 +66,8 @@ CREATE POLICY "Super admins can update agents" ON automation_agents
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "Super admins can delete agents" ON automation_agents;
 
 CREATE POLICY "Super admins can delete agents" ON automation_agents
     FOR DELETE
@@ -98,7 +104,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_execution_logs_created_at ON agent_executio
 ALTER TABLE agent_execution_logs ENABLE ROW LEVEL SECURITY;
 
 -- Only super admins can access agent logs
-CREATE POLICY "Super admins can view all agent logs" ON agent_execution_logs
+DROP POLICY IF EXISTS "Super admins can view all agent logs" ON agent_execution_logs;CREATE POLICY "Super admins can view all agent logs" ON agent_execution_logs
     FOR SELECT
     TO public
     USING (
@@ -108,6 +114,8 @@ CREATE POLICY "Super admins can view all agent logs" ON agent_execution_logs
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "Super admins can insert agent logs" ON agent_execution_logs;
 
 CREATE POLICY "Super admins can insert agent logs" ON agent_execution_logs
     FOR INSERT
@@ -148,7 +156,7 @@ CREATE INDEX IF NOT EXISTS idx_api_integrations_status ON api_integrations(statu
 ALTER TABLE api_integrations ENABLE ROW LEVEL SECURITY;
 
 -- Only super admins can access API integrations
-CREATE POLICY "Super admins can view all integrations" ON api_integrations
+DROP POLICY IF EXISTS "Super admins can view all integrations" ON api_integrations;CREATE POLICY "Super admins can view all integrations" ON api_integrations
     FOR SELECT
     TO public
     USING (
@@ -158,6 +166,8 @@ CREATE POLICY "Super admins can view all integrations" ON api_integrations
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "Super admins can insert integrations" ON api_integrations;
 
 CREATE POLICY "Super admins can insert integrations" ON api_integrations
     FOR INSERT
@@ -170,6 +180,8 @@ CREATE POLICY "Super admins can insert integrations" ON api_integrations
         )
     );
 
+DROP POLICY IF EXISTS "Super admins can update integrations" ON api_integrations;
+
 CREATE POLICY "Super admins can update integrations" ON api_integrations
     FOR UPDATE
     TO public
@@ -180,6 +192,8 @@ CREATE POLICY "Super admins can update integrations" ON api_integrations
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "Super admins can delete integrations" ON api_integrations;
 
 CREATE POLICY "Super admins can delete integrations" ON api_integrations
     FOR DELETE
@@ -217,7 +231,7 @@ CREATE INDEX IF NOT EXISTS idx_integration_usage_logs_created_at ON integration_
 ALTER TABLE integration_usage_logs ENABLE ROW LEVEL SECURITY;
 
 -- Only super admins can access integration logs
-CREATE POLICY "Super admins can view all integration logs" ON integration_usage_logs
+DROP POLICY IF EXISTS "Super admins can view all integration logs" ON integration_usage_logs;CREATE POLICY "Super admins can view all integration logs" ON integration_usage_logs
     FOR SELECT
     TO public
     USING (
@@ -227,6 +241,8 @@ CREATE POLICY "Super admins can view all integration logs" ON integration_usage_
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "Super admins can insert integration logs" ON integration_usage_logs;
 
 CREATE POLICY "Super admins can insert integration logs" ON integration_usage_logs
     FOR INSERT
@@ -267,7 +283,7 @@ CREATE INDEX IF NOT EXISTS idx_workflow_definitions_trigger_type ON workflow_def
 ALTER TABLE workflow_definitions ENABLE ROW LEVEL SECURITY;
 
 -- Organization users can view their workflows
-CREATE POLICY "Users can view organization workflows" ON workflow_definitions
+DROP POLICY IF EXISTS "Users can view organization workflows" ON workflow_definitions;CREATE POLICY "Users can view organization workflows" ON workflow_definitions
     FOR SELECT
     TO public
     USING (
@@ -282,7 +298,7 @@ CREATE POLICY "Users can view organization workflows" ON workflow_definitions
     );
 
 -- Organization admins can insert workflows
-CREATE POLICY "Admins can insert workflows" ON workflow_definitions
+DROP POLICY IF EXISTS "Admins can insert workflows" ON workflow_definitions;CREATE POLICY "Admins can insert workflows" ON workflow_definitions
     FOR INSERT
     TO public
     WITH CHECK (
@@ -292,7 +308,7 @@ CREATE POLICY "Admins can insert workflows" ON workflow_definitions
     );
 
 -- Organization admins can update workflows
-CREATE POLICY "Admins can update workflows" ON workflow_definitions
+DROP POLICY IF EXISTS "Admins can update workflows" ON workflow_definitions;CREATE POLICY "Admins can update workflows" ON workflow_definitions
     FOR UPDATE
     TO public
     USING (
@@ -302,7 +318,7 @@ CREATE POLICY "Admins can update workflows" ON workflow_definitions
     );
 
 -- Organization admins can delete workflows
-CREATE POLICY "Admins can delete workflows" ON workflow_definitions
+DROP POLICY IF EXISTS "Admins can delete workflows" ON workflow_definitions;CREATE POLICY "Admins can delete workflows" ON workflow_definitions
     FOR DELETE
     TO public
     USING (
@@ -335,7 +351,7 @@ CREATE INDEX IF NOT EXISTS idx_workflow_execution_logs_created_at ON workflow_ex
 ALTER TABLE workflow_execution_logs ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their workflow logs
-CREATE POLICY "Users can view workflow logs" ON workflow_execution_logs
+DROP POLICY IF EXISTS "Users can view workflow logs" ON workflow_execution_logs;CREATE POLICY "Users can view workflow logs" ON workflow_execution_logs
     FOR SELECT
     TO public
     USING (
@@ -350,6 +366,8 @@ CREATE POLICY "Users can view workflow logs" ON workflow_execution_logs
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "System can insert workflow logs" ON workflow_execution_logs;
 
 CREATE POLICY "System can insert workflow logs" ON workflow_execution_logs
     FOR INSERT

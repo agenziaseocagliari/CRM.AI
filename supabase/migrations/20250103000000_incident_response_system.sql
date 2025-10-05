@@ -224,7 +224,7 @@ ALTER TABLE rollback_executions ENABLE ROW LEVEL SECURITY;
 -- =====================================================
 
 -- Super admins can see all incidents
-CREATE POLICY "Super admins can view all incidents" ON incidents
+DROP POLICY IF EXISTS "Super admins can view all incidents" ON incidents;CREATE POLICY "Super admins can view all incidents" ON incidents
     FOR SELECT
     TO public
     USING (
@@ -234,6 +234,8 @@ CREATE POLICY "Super admins can view all incidents" ON incidents
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "Super admins can manage all incidents" ON incidents;
 
 CREATE POLICY "Super admins can manage all incidents" ON incidents
     FOR ALL
@@ -247,7 +249,7 @@ CREATE POLICY "Super admins can manage all incidents" ON incidents
     );
 
 -- Users can see incidents for their organization
-CREATE POLICY "Users can view organization incidents" ON incidents
+DROP POLICY IF EXISTS "Users can view organization incidents" ON incidents;CREATE POLICY "Users can view organization incidents" ON incidents
     FOR SELECT
     TO public
     USING (
@@ -258,7 +260,7 @@ CREATE POLICY "Users can view organization incidents" ON incidents
     );
 
 -- Incident actions policies
-CREATE POLICY "Super admins can view all incident actions" ON incident_actions
+DROP POLICY IF EXISTS "Super admins can view all incident actions" ON incident_actions;CREATE POLICY "Super admins can view all incident actions" ON incident_actions
     FOR SELECT
     TO public
     USING (
@@ -268,6 +270,8 @@ CREATE POLICY "Super admins can view all incident actions" ON incident_actions
             AND profiles.role = 'super_admin'
         )
     );
+
+DROP POLICY IF EXISTS "System can insert incident actions" ON incident_actions;
 
 CREATE POLICY "System can insert incident actions" ON incident_actions
     FOR INSERT
@@ -283,7 +287,7 @@ CREATE POLICY "System can insert incident actions" ON incident_actions
     );
 
 -- Notification rules policies
-CREATE POLICY "Super admins can manage notification rules" ON notification_rules
+DROP POLICY IF EXISTS "Super admins can manage notification rules" ON notification_rules;CREATE POLICY "Super admins can manage notification rules" ON notification_rules
     FOR ALL
     TO public
     USING (
@@ -295,7 +299,7 @@ CREATE POLICY "Super admins can manage notification rules" ON notification_rules
     );
 
 -- Notification logs policies
-CREATE POLICY "Super admins can view notification logs" ON notification_logs
+DROP POLICY IF EXISTS "Super admins can view notification logs" ON notification_logs;CREATE POLICY "Super admins can view notification logs" ON notification_logs
     FOR SELECT
     TO public
     USING (
@@ -307,7 +311,7 @@ CREATE POLICY "Super admins can view notification logs" ON notification_logs
     );
 
 -- Escalation rules policies
-CREATE POLICY "Super admins can manage escalation rules" ON escalation_rules
+DROP POLICY IF EXISTS "Super admins can manage escalation rules" ON escalation_rules;CREATE POLICY "Super admins can manage escalation rules" ON escalation_rules
     FOR ALL
     TO public
     USING (
@@ -319,7 +323,7 @@ CREATE POLICY "Super admins can manage escalation rules" ON escalation_rules
     );
 
 -- Rollback procedures policies
-CREATE POLICY "Super admins can manage rollback procedures" ON rollback_procedures
+DROP POLICY IF EXISTS "Super admins can manage rollback procedures" ON rollback_procedures;CREATE POLICY "Super admins can manage rollback procedures" ON rollback_procedures
     FOR ALL
     TO public
     USING (
@@ -331,7 +335,7 @@ CREATE POLICY "Super admins can manage rollback procedures" ON rollback_procedur
     );
 
 -- Rollback executions policies
-CREATE POLICY "Super admins can view rollback executions" ON rollback_executions
+DROP POLICY IF EXISTS "Super admins can view rollback executions" ON rollback_executions;CREATE POLICY "Super admins can view rollback executions" ON rollback_executions
     FOR SELECT
     TO public
     USING (

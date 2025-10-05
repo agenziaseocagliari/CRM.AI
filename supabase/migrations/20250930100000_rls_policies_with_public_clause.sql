@@ -22,7 +22,7 @@ BEGIN
         AND table_name = 'superadmin_logs'
     ) THEN
         DROP POLICY IF EXISTS "Super admins can view all audit logs" ON superadmin_logs;
-        CREATE POLICY "Super admins can view all audit logs" ON superadmin_logs
+        DROP POLICY IF EXISTS "Super admins can view all audit logs" ON superadmin_logs;                CREATE POLICY "Super admins can view all audit logs" ON superadmin_logs
             FOR SELECT
             TO public
             USING (
@@ -34,7 +34,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can insert audit logs" ON superadmin_logs;
-        CREATE POLICY "Super admins can insert audit logs" ON superadmin_logs
+        DROP POLICY IF EXISTS "Super admins can insert audit logs" ON superadmin_logs;                CREATE POLICY "Super admins can insert audit logs" ON superadmin_logs
             FOR INSERT
             TO public
             WITH CHECK (
@@ -58,7 +58,7 @@ BEGIN
         AND table_name = 'profiles'
     ) THEN
         DROP POLICY IF EXISTS "Super admins can view all profiles" ON profiles;
-        CREATE POLICY "Super admins can view all profiles" ON profiles
+        DROP POLICY IF EXISTS "Super admins can view all profiles" ON profiles;                CREATE POLICY "Super admins can view all profiles" ON profiles
             FOR SELECT
             TO public
             USING (
@@ -67,7 +67,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can update all profiles" ON profiles;
-        CREATE POLICY "Super admins can update all profiles" ON profiles
+        DROP POLICY IF EXISTS "Super admins can update all profiles" ON profiles;                CREATE POLICY "Super admins can update all profiles" ON profiles
             FOR UPDATE
             TO public
             USING (
@@ -91,7 +91,7 @@ BEGIN
         AND table_name = 'organizations'
     ) THEN
         DROP POLICY IF EXISTS "Super admins can view all organizations" ON organizations;
-        CREATE POLICY "Super admins can view all organizations" ON organizations
+        DROP POLICY IF EXISTS "Super admins can view all organizations" ON organizations;                CREATE POLICY "Super admins can view all organizations" ON organizations
             FOR SELECT
             TO public
             USING (
@@ -106,7 +106,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can update all organizations" ON organizations;
-        CREATE POLICY "Super admins can update all organizations" ON organizations
+        DROP POLICY IF EXISTS "Super admins can update all organizations" ON organizations;                CREATE POLICY "Super admins can update all organizations" ON organizations
             FOR UPDATE
             TO public
             USING (
@@ -118,7 +118,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can insert organizations" ON organizations;
-        CREATE POLICY "Super admins can insert organizations" ON organizations
+        DROP POLICY IF EXISTS "Super admins can insert organizations" ON organizations;                CREATE POLICY "Super admins can insert organizations" ON organizations
             FOR INSERT
             TO public
             WITH CHECK (
@@ -142,7 +142,7 @@ BEGIN
         AND table_name = 'organization_credits'
     ) THEN
         DROP POLICY IF EXISTS "Users can view credits for their organization" ON organization_credits;
-        CREATE POLICY "Users can view credits for their organization" ON organization_credits
+        DROP POLICY IF EXISTS "Users can view credits for their organization" ON organization_credits;                CREATE POLICY "Users can view credits for their organization" ON organization_credits
             FOR SELECT
             TO public
             USING (
@@ -152,7 +152,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;
-        CREATE POLICY "Super admins can view all organization credits" ON organization_credits
+        DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;                CREATE POLICY "Super admins can view all organization credits" ON organization_credits
             FOR SELECT
             TO public
             USING (
@@ -167,7 +167,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can update all organization credits" ON organization_credits;
-        CREATE POLICY "Super admins can update all organization credits" ON organization_credits
+        DROP POLICY IF EXISTS "Super admins can update all organization credits" ON organization_credits;                CREATE POLICY "Super admins can update all organization credits" ON organization_credits
             FOR UPDATE
             TO public
             USING (
@@ -191,7 +191,7 @@ BEGIN
         AND table_name = 'credit_consumption_logs'
     ) THEN
         DROP POLICY IF EXISTS "Users can view consumption logs for their organization" ON credit_consumption_logs;
-        CREATE POLICY "Users can view consumption logs for their organization" ON credit_consumption_logs
+        DROP POLICY IF EXISTS "Users can view consumption logs for their organization" ON credit_consumption_logs;                CREATE POLICY "Users can view consumption logs for their organization" ON credit_consumption_logs
             FOR SELECT
             TO public
             USING (
@@ -201,7 +201,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can view all credit consumption logs" ON credit_consumption_logs;
-        CREATE POLICY "Super admins can view all credit consumption logs" ON credit_consumption_logs
+        DROP POLICY IF EXISTS "Super admins can view all credit consumption logs" ON credit_consumption_logs;                CREATE POLICY "Super admins can view all credit consumption logs" ON credit_consumption_logs
             FOR SELECT
             TO public
             USING (
@@ -228,7 +228,7 @@ BEGIN
         AND table_name = 'crm_events'
     ) THEN
         DROP POLICY IF EXISTS "Users can view events in their organization" ON crm_events;
-        CREATE POLICY "Users can view events in their organization" ON crm_events
+        DROP POLICY IF EXISTS "Users can view events in their organization" ON crm_events;                CREATE POLICY "Users can view events in their organization" ON crm_events
             FOR SELECT
             TO public
             USING (
@@ -238,7 +238,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Users can insert events in their organization" ON crm_events;
-        CREATE POLICY "Users can insert events in their organization" ON crm_events
+        DROP POLICY IF EXISTS "Users can insert events in their organization" ON crm_events;                CREATE POLICY "Users can insert events in their organization" ON crm_events
             FOR INSERT
             TO public
             WITH CHECK (
@@ -248,7 +248,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Users can update events in their organization" ON crm_events;
-        CREATE POLICY "Users can update events in their organization" ON crm_events
+        DROP POLICY IF EXISTS "Users can update events in their organization" ON crm_events;                CREATE POLICY "Users can update events in their organization" ON crm_events
             FOR UPDATE
             TO public
             USING (
@@ -258,7 +258,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Users can delete events in their organization" ON crm_events;
-        CREATE POLICY "Users can delete events in their organization" ON crm_events
+        DROP POLICY IF EXISTS "Users can delete events in their organization" ON crm_events;                CREATE POLICY "Users can delete events in their organization" ON crm_events
             FOR DELETE
             TO public
             USING (
@@ -280,7 +280,7 @@ BEGIN
         AND table_name = 'event_reminders'
     ) THEN
         DROP POLICY IF EXISTS "Users can view reminders in their organization" ON event_reminders;
-        CREATE POLICY "Users can view reminders in their organization" ON event_reminders
+        DROP POLICY IF EXISTS "Users can view reminders in their organization" ON event_reminders;                CREATE POLICY "Users can view reminders in their organization" ON event_reminders
             FOR SELECT
             TO public
             USING (
@@ -290,7 +290,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Users can insert reminders in their organization" ON event_reminders;
-        CREATE POLICY "Users can insert reminders in their organization" ON event_reminders
+        DROP POLICY IF EXISTS "Users can insert reminders in their organization" ON event_reminders;                CREATE POLICY "Users can insert reminders in their organization" ON event_reminders
             FOR INSERT
             TO public
             WITH CHECK (
@@ -300,7 +300,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Users can update reminders in their organization" ON event_reminders;
-        CREATE POLICY "Users can update reminders in their organization" ON event_reminders
+        DROP POLICY IF EXISTS "Users can update reminders in their organization" ON event_reminders;                CREATE POLICY "Users can update reminders in their organization" ON event_reminders
             FOR UPDATE
             TO public
             USING (
@@ -310,7 +310,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Users can delete reminders in their organization" ON event_reminders;
-        CREATE POLICY "Users can delete reminders in their organization" ON event_reminders
+        DROP POLICY IF EXISTS "Users can delete reminders in their organization" ON event_reminders;                CREATE POLICY "Users can delete reminders in their organization" ON event_reminders
             FOR DELETE
             TO public
             USING (
@@ -332,7 +332,7 @@ BEGIN
         AND table_name = 'debug_logs'
     ) THEN
         DROP POLICY IF EXISTS "Users can view debug logs for their organization" ON debug_logs;
-        CREATE POLICY "Users can view debug logs for their organization" ON debug_logs
+        DROP POLICY IF EXISTS "Users can view debug logs for their organization" ON debug_logs;                CREATE POLICY "Users can view debug logs for their organization" ON debug_logs
             FOR SELECT
             TO public
             USING (
@@ -344,7 +344,7 @@ BEGIN
 
         DROP POLICY IF EXISTS "Service role can insert debug logs" ON debug_logs;
         DROP POLICY IF EXISTS "Authenticated users can insert debug logs" ON debug_logs;
-        CREATE POLICY "Authenticated users can insert debug logs" ON debug_logs
+        DROP POLICY IF EXISTS "Authenticated users can insert debug logs" ON debug_logs;                CREATE POLICY "Authenticated users can insert debug logs" ON debug_logs
             FOR INSERT
             TO public
             WITH CHECK (auth.uid() IS NOT NULL);

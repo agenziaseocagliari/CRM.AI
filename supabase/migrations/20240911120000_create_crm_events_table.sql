@@ -21,8 +21,9 @@ CREATE INDEX IF NOT EXISTS idx_crm_events_start_time ON crm_events(event_start_t
 -- Enable Row Level Security
 ALTER TABLE crm_events ENABLE ROW LEVEL SECURITY;
 
--- Create policy for organization access
-CREATE POLICY "Users can view events in their organization" ON crm_events
+-- Create policy for organization access (drop first for idempotency)
+DROP POLICY IF EXISTS "Users can view events in their organization" ON crm_events;
+DROP POLICY IF EXISTS "Users can view events in their organization" ON crm_events;CREATE POLICY "Users can view events in their organization" ON crm_events
     FOR SELECT
     TO public
     USING (
@@ -31,7 +32,8 @@ CREATE POLICY "Users can view events in their organization" ON crm_events
         )
     );
 
-CREATE POLICY "Users can insert events in their organization" ON crm_events
+DROP POLICY IF EXISTS "Users can insert events in their organization" ON crm_events;
+DROP POLICY IF EXISTS "Users can insert events in their organization" ON crm_events;CREATE POLICY "Users can insert events in their organization" ON crm_events
     FOR INSERT
     TO public
     WITH CHECK (
@@ -40,7 +42,8 @@ CREATE POLICY "Users can insert events in their organization" ON crm_events
         )
     );
 
-CREATE POLICY "Users can update events in their organization" ON crm_events
+DROP POLICY IF EXISTS "Users can update events in their organization" ON crm_events;
+DROP POLICY IF EXISTS "Users can update events in their organization" ON crm_events;CREATE POLICY "Users can update events in their organization" ON crm_events
     FOR UPDATE
     TO public
     USING (
@@ -49,7 +52,8 @@ CREATE POLICY "Users can update events in their organization" ON crm_events
         )
     );
 
-CREATE POLICY "Users can delete events in their organization" ON crm_events
+DROP POLICY IF EXISTS "Users can delete events in their organization" ON crm_events;
+DROP POLICY IF EXISTS "Users can delete events in their organization" ON crm_events;CREATE POLICY "Users can delete events in their organization" ON crm_events
     FOR DELETE
     TO public
     USING (

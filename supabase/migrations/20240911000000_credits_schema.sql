@@ -52,7 +52,7 @@ ALTER TABLE organization_credits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE credit_consumption_logs ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for organization_credits
-CREATE POLICY "Users can view credits for their organization" ON organization_credits
+DROP POLICY IF EXISTS "Users can view credits for their organization" ON organization_credits;CREATE POLICY "Users can view credits for their organization" ON organization_credits
     FOR SELECT
     TO public
     USING (
@@ -62,7 +62,7 @@ CREATE POLICY "Users can view credits for their organization" ON organization_cr
     );
 
 -- Create policies for credit_consumption_logs
-CREATE POLICY "Users can view consumption logs for their organization" ON credit_consumption_logs
+DROP POLICY IF EXISTS "Users can view consumption logs for their organization" ON credit_consumption_logs;CREATE POLICY "Users can view consumption logs for their organization" ON credit_consumption_logs
     FOR SELECT
     TO public
     USING (

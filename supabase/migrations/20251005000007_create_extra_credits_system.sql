@@ -136,14 +136,14 @@ ALTER TABLE extra_credits_packages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organization_extra_credits_purchases ENABLE ROW LEVEL SECURITY;
 
 -- Extra credits packages sono pubblici (tutti possono vedere)
-CREATE POLICY "extra_credits_packages_read" ON extra_credits_packages FOR SELECT TO public USING (is_active = true);
+DROP POLICY IF EXISTS "extra_credits_packages_read" ON extra_credits_packages;CREATE POLICY "extra_credits_packages_read" ON extra_credits_packages FOR SELECT TO public USING (is_active = true);
 
 -- Organization extra credits purchases - solo la propria org
-CREATE POLICY "extra_credits_purchases_policy" ON organization_extra_credits_purchases FOR ALL TO public 
+DROP POLICY IF EXISTS "extra_credits_purchases_policy" ON organization_extra_credits_purchases;CREATE POLICY "extra_credits_purchases_policy" ON organization_extra_credits_purchases FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
 
 -- Super admin può vedere tutto
-CREATE POLICY "super_admin_extra_credits_purchases" ON organization_extra_credits_purchases FOR ALL TO public 
+DROP POLICY IF EXISTS "super_admin_extra_credits_purchases" ON organization_extra_credits_purchases;CREATE POLICY "super_admin_extra_credits_purchases" ON organization_extra_credits_purchases FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
 
 -- 6. FUNCTIONS PER GESTIONE CREDITI

@@ -33,7 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_integrations_is_active ON integrations(is_active)
 ALTER TABLE integrations ENABLE ROW LEVEL SECURITY;
 
 -- Organization users can view their integrations
-CREATE POLICY "Users can view organization integrations" ON integrations
+DROP POLICY IF EXISTS "Users can view organization integrations" ON integrations;CREATE POLICY "Users can view organization integrations" ON integrations
     FOR SELECT
     TO public
     USING (
@@ -49,7 +49,7 @@ CREATE POLICY "Users can view organization integrations" ON integrations
     );
 
 -- Organization admins can insert integrations
-CREATE POLICY "Admins can insert integrations" ON integrations
+DROP POLICY IF EXISTS "Admins can insert integrations" ON integrations;CREATE POLICY "Admins can insert integrations" ON integrations
     FOR INSERT
     TO public
     WITH CHECK (
@@ -66,7 +66,7 @@ CREATE POLICY "Admins can insert integrations" ON integrations
     );
 
 -- Organization admins can update integrations
-CREATE POLICY "Admins can update integrations" ON integrations
+DROP POLICY IF EXISTS "Admins can update integrations" ON integrations;CREATE POLICY "Admins can update integrations" ON integrations
     FOR UPDATE
     TO public
     USING (
@@ -83,7 +83,7 @@ CREATE POLICY "Admins can update integrations" ON integrations
     );
 
 -- Organization admins can delete integrations
-CREATE POLICY "Admins can delete integrations" ON integrations
+DROP POLICY IF EXISTS "Admins can delete integrations" ON integrations;CREATE POLICY "Admins can delete integrations" ON integrations
     FOR DELETE
     TO public
     USING (

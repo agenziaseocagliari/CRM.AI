@@ -131,7 +131,7 @@ ALTER TABLE api_usage_statistics ENABLE ROW LEVEL SECURITY;
 -- =====================================================
 
 -- api_rate_limits: Only super admins can view
-CREATE POLICY "Super admins can view all rate limits" ON api_rate_limits
+DROP POLICY IF EXISTS "Super admins can view all rate limits" ON api_rate_limits;CREATE POLICY "Super admins can view all rate limits" ON api_rate_limits
     FOR SELECT
     TO public
     USING (
@@ -143,7 +143,7 @@ CREATE POLICY "Super admins can view all rate limits" ON api_rate_limits
     );
 
 -- quota_policies: Super admins full access, users can read
-CREATE POLICY "Super admins full access to quota policies" ON quota_policies
+DROP POLICY IF EXISTS "Super admins full access to quota policies" ON quota_policies;CREATE POLICY "Super admins full access to quota policies" ON quota_policies
     FOR ALL
     TO public
     USING (
@@ -154,13 +154,15 @@ CREATE POLICY "Super admins full access to quota policies" ON quota_policies
         )
     );
 
+DROP POLICY IF EXISTS "Users can view quota policies" ON quota_policies;
+
 CREATE POLICY "Users can view quota policies" ON quota_policies
     FOR SELECT
     TO public
     USING (is_active = true);
 
 -- organization_quota_overrides: Super admins only
-CREATE POLICY "Super admins can manage quota overrides" ON organization_quota_overrides
+DROP POLICY IF EXISTS "Super admins can manage quota overrides" ON organization_quota_overrides;CREATE POLICY "Super admins can manage quota overrides" ON organization_quota_overrides
     FOR ALL
     TO public
     USING (
@@ -172,7 +174,7 @@ CREATE POLICY "Super admins can manage quota overrides" ON organization_quota_ov
     );
 
 -- quota_alerts: Users see their org's alerts, super admins see all
-CREATE POLICY "Users can view their organization quota alerts" ON quota_alerts
+DROP POLICY IF EXISTS "Users can view their organization quota alerts" ON quota_alerts;CREATE POLICY "Users can view their organization quota alerts" ON quota_alerts
     FOR SELECT
     TO public
     USING (
@@ -188,6 +190,8 @@ CREATE POLICY "Users can view their organization quota alerts" ON quota_alerts
         )
     );
 
+DROP POLICY IF EXISTS "Super admins can manage all quota alerts" ON quota_alerts;
+
 CREATE POLICY "Super admins can manage all quota alerts" ON quota_alerts
     FOR ALL
     TO public
@@ -200,7 +204,7 @@ CREATE POLICY "Super admins can manage all quota alerts" ON quota_alerts
     );
 
 -- api_usage_statistics: Users see their org's stats, super admins see all
-CREATE POLICY "Users can view their organization api stats" ON api_usage_statistics
+DROP POLICY IF EXISTS "Users can view their organization api stats" ON api_usage_statistics;CREATE POLICY "Users can view their organization api stats" ON api_usage_statistics
     FOR SELECT
     TO public
     USING (

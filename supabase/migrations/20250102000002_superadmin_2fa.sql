@@ -113,10 +113,12 @@ ALTER TABLE trusted_devices ENABLE ROW LEVEL SECURITY;
 -- =====================================================
 
 -- user_2fa_settings: Users can manage their own, super admins can view all
-CREATE POLICY "Users can manage their own 2FA settings" ON user_2fa_settings
+DROP POLICY IF EXISTS "Users can manage their own 2FA settings" ON user_2fa_settings;CREATE POLICY "Users can manage their own 2FA settings" ON user_2fa_settings
     FOR ALL
     TO public
     USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Super admins can view all 2FA settings" ON user_2fa_settings;
 
 CREATE POLICY "Super admins can view all 2FA settings" ON user_2fa_settings
     FOR SELECT
@@ -130,10 +132,12 @@ CREATE POLICY "Super admins can view all 2FA settings" ON user_2fa_settings
     );
 
 -- user_2fa_attempts: Users can view their own, super admins can view all
-CREATE POLICY "Users can view their own 2FA attempts" ON user_2fa_attempts
+DROP POLICY IF EXISTS "Users can view their own 2FA attempts" ON user_2fa_attempts;CREATE POLICY "Users can view their own 2FA attempts" ON user_2fa_attempts
     FOR SELECT
     TO public
     USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Super admins can view all 2FA attempts" ON user_2fa_attempts;
 
 CREATE POLICY "Super admins can view all 2FA attempts" ON user_2fa_attempts
     FOR SELECT
@@ -147,7 +151,7 @@ CREATE POLICY "Super admins can view all 2FA attempts" ON user_2fa_attempts
     );
 
 -- login_attempts: Super admins only (security data)
-CREATE POLICY "Super admins can view all login attempts" ON login_attempts
+DROP POLICY IF EXISTS "Super admins can view all login attempts" ON login_attempts;CREATE POLICY "Super admins can view all login attempts" ON login_attempts
     FOR SELECT
     TO public
     USING (
@@ -159,16 +163,20 @@ CREATE POLICY "Super admins can view all login attempts" ON login_attempts
     );
 
 -- security_alerts: Users see their own, super admins see all
-CREATE POLICY "Users can view their own security alerts" ON security_alerts
+DROP POLICY IF EXISTS "Users can view their own security alerts" ON security_alerts;CREATE POLICY "Users can view their own security alerts" ON security_alerts
     FOR SELECT
     TO public
     USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can acknowledge their own alerts" ON security_alerts;
 
 CREATE POLICY "Users can acknowledge their own alerts" ON security_alerts
     FOR UPDATE
     TO public
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Super admins can manage all security alerts" ON security_alerts;
 
 CREATE POLICY "Super admins can manage all security alerts" ON security_alerts
     FOR ALL
@@ -182,7 +190,7 @@ CREATE POLICY "Super admins can manage all security alerts" ON security_alerts
     );
 
 -- trusted_devices: Users can manage their own
-CREATE POLICY "Users can manage their own trusted devices" ON trusted_devices
+DROP POLICY IF EXISTS "Users can manage their own trusted devices" ON trusted_devices;CREATE POLICY "Users can manage their own trusted devices" ON trusted_devices
     FOR ALL
     TO public
     USING (user_id = auth.uid());

@@ -56,7 +56,7 @@ ALTER TABLE superadmin_logs ENABLE ROW LEVEL SECURITY;
 -- 4. Create RLS Policies for superadmin_logs
 -- =====================================================
 -- Only super admins can view audit logs
-CREATE POLICY "Super admins can view all audit logs" ON superadmin_logs
+DROP POLICY IF EXISTS "Super admins can view all audit logs" ON superadmin_logs;CREATE POLICY "Super admins can view all audit logs" ON superadmin_logs
     FOR SELECT
     TO public
     USING (
@@ -68,7 +68,7 @@ CREATE POLICY "Super admins can view all audit logs" ON superadmin_logs
     );
 
 -- Only super admins can insert audit logs (via edge functions)
-CREATE POLICY "Super admins can insert audit logs" ON superadmin_logs
+DROP POLICY IF EXISTS "Super admins can insert audit logs" ON superadmin_logs;CREATE POLICY "Super admins can insert audit logs" ON superadmin_logs
     FOR INSERT
     TO public
     WITH CHECK (
@@ -92,7 +92,7 @@ BEGIN
         AND table_name = 'profiles'
     ) THEN
         DROP POLICY IF EXISTS "Super admins can view all profiles" ON profiles;
-        CREATE POLICY "Super admins can view all profiles" ON profiles
+        DROP POLICY IF EXISTS "Super admins can view all profiles" ON profiles;                CREATE POLICY "Super admins can view all profiles" ON profiles
             FOR SELECT
             TO public
             USING (
@@ -101,7 +101,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can update all profiles" ON profiles;
-        CREATE POLICY "Super admins can update all profiles" ON profiles
+        DROP POLICY IF EXISTS "Super admins can update all profiles" ON profiles;                CREATE POLICY "Super admins can update all profiles" ON profiles
             FOR UPDATE
             TO public
             USING (
@@ -124,7 +124,7 @@ BEGIN
         AND table_name = 'organizations'
     ) THEN
         DROP POLICY IF EXISTS "Super admins can view all organizations" ON organizations;
-        CREATE POLICY "Super admins can view all organizations" ON organizations
+        DROP POLICY IF EXISTS "Super admins can view all organizations" ON organizations;                CREATE POLICY "Super admins can view all organizations" ON organizations
             FOR SELECT
             TO public
             USING (
@@ -139,7 +139,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can update all organizations" ON organizations;
-        CREATE POLICY "Super admins can update all organizations" ON organizations
+        DROP POLICY IF EXISTS "Super admins can update all organizations" ON organizations;                CREATE POLICY "Super admins can update all organizations" ON organizations
             FOR UPDATE
             TO public
             USING (
@@ -151,7 +151,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can insert organizations" ON organizations;
-        CREATE POLICY "Super admins can insert organizations" ON organizations
+        DROP POLICY IF EXISTS "Super admins can insert organizations" ON organizations;                CREATE POLICY "Super admins can insert organizations" ON organizations
             FOR INSERT
             TO public
             WITH CHECK (
@@ -174,7 +174,7 @@ BEGIN
         AND table_name = 'organization_credits'
     ) THEN
         DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;
-        CREATE POLICY "Super admins can view all organization credits" ON organization_credits
+        DROP POLICY IF EXISTS "Super admins can view all organization credits" ON organization_credits;                CREATE POLICY "Super admins can view all organization credits" ON organization_credits
             FOR SELECT
             TO public
             USING (
@@ -189,7 +189,7 @@ BEGIN
             );
 
         DROP POLICY IF EXISTS "Super admins can update all organization credits" ON organization_credits;
-        CREATE POLICY "Super admins can update all organization credits" ON organization_credits
+        DROP POLICY IF EXISTS "Super admins can update all organization credits" ON organization_credits;                CREATE POLICY "Super admins can update all organization credits" ON organization_credits
             FOR UPDATE
             TO public
             USING (
@@ -212,7 +212,7 @@ BEGIN
         AND table_name = 'credit_consumption_logs'
     ) THEN
         DROP POLICY IF EXISTS "Super admins can view all credit consumption logs" ON credit_consumption_logs;
-        CREATE POLICY "Super admins can view all credit consumption logs" ON credit_consumption_logs
+        DROP POLICY IF EXISTS "Super admins can view all credit consumption logs" ON credit_consumption_logs;                CREATE POLICY "Super admins can view all credit consumption logs" ON credit_consumption_logs
             FOR SELECT
             TO public
             USING (

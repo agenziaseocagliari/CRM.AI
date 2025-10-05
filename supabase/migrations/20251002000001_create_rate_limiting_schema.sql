@@ -73,7 +73,7 @@ ALTER TABLE rate_limit_tracking ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limit_quota_usage ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for rate_limit_config
-CREATE POLICY "Users can view rate limits for their organization" ON rate_limit_config
+DROP POLICY IF EXISTS "Users can view rate limits for their organization" ON rate_limit_config;CREATE POLICY "Users can view rate limits for their organization" ON rate_limit_config
     FOR SELECT
     TO public
     USING (
@@ -81,6 +81,8 @@ CREATE POLICY "Users can view rate limits for their organization" ON rate_limit_
             SELECT organization_id FROM profiles WHERE id = auth.uid()
         )
     );
+
+DROP POLICY IF EXISTS "Admins can manage rate limits for their organization" ON rate_limit_config;
 
 CREATE POLICY "Admins can manage rate limits for their organization" ON rate_limit_config
     FOR ALL
@@ -101,7 +103,7 @@ CREATE POLICY "Admins can manage rate limits for their organization" ON rate_lim
     );
 
 -- RLS Policies for rate_limit_tracking
-CREATE POLICY "Users can view tracking for their organization" ON rate_limit_tracking
+DROP POLICY IF EXISTS "Users can view tracking for their organization" ON rate_limit_tracking;CREATE POLICY "Users can view tracking for their organization" ON rate_limit_tracking
     FOR SELECT
     TO public
     USING (
@@ -111,13 +113,13 @@ CREATE POLICY "Users can view tracking for their organization" ON rate_limit_tra
     );
 
 -- Only system/service role can insert tracking records
-CREATE POLICY "Service role can insert tracking records" ON rate_limit_tracking
+DROP POLICY IF EXISTS "Service role can insert tracking records" ON rate_limit_tracking;CREATE POLICY "Service role can insert tracking records" ON rate_limit_tracking
     FOR INSERT
     TO public
     WITH CHECK (auth.uid() IS NOT NULL);
 
 -- RLS Policies for rate_limit_quota_usage
-CREATE POLICY "Users can view quota usage for their organization" ON rate_limit_quota_usage
+DROP POLICY IF EXISTS "Users can view quota usage for their organization" ON rate_limit_quota_usage;CREATE POLICY "Users can view quota usage for their organization" ON rate_limit_quota_usage
     FOR SELECT
     TO public
     USING (

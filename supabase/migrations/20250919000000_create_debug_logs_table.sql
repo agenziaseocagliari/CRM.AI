@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_debug_logs_created_at ON debug_logs(created_at DE
 ALTER TABLE debug_logs ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for organization access
-CREATE POLICY "Users can view debug logs for their organization" ON debug_logs
+DROP POLICY IF EXISTS "Users can view debug logs for their organization" ON debug_logs;CREATE POLICY "Users can view debug logs for their organization" ON debug_logs
     FOR SELECT
     TO public
     USING (
@@ -31,7 +31,7 @@ CREATE POLICY "Users can view debug logs for their organization" ON debug_logs
     );
 
 -- Only authenticated users can insert debug logs (typically via edge functions)
-CREATE POLICY "Authenticated users can insert debug logs" ON debug_logs
+DROP POLICY IF EXISTS "Authenticated users can insert debug logs" ON debug_logs;CREATE POLICY "Authenticated users can insert debug logs" ON debug_logs
     FOR INSERT
     TO public
     WITH CHECK (auth.uid() IS NOT NULL);

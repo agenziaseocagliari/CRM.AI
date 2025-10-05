@@ -269,30 +269,42 @@ ALTER TABLE usage_quotas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE billing_events ENABLE ROW LEVEL SECURITY;
 
 -- Policies for subscription_tiers (read-only for all users)
-CREATE POLICY "subscription_tiers_read" ON subscription_tiers FOR SELECT TO public USING (is_active = true);
+DROP POLICY IF EXISTS "subscription_tiers_read" ON subscription_tiers;CREATE POLICY "subscription_tiers_read" ON subscription_tiers FOR SELECT TO public USING (is_active = true);
 
 -- Policies for organization data (users can only see their org data)
-CREATE POLICY "org_subscriptions_policy" ON organization_subscriptions FOR ALL TO public 
+DROP POLICY IF EXISTS "org_subscriptions_policy" ON organization_subscriptions;CREATE POLICY "org_subscriptions_policy" ON organization_subscriptions FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "usage_tracking_policy" ON usage_tracking;
 
 CREATE POLICY "usage_tracking_policy" ON usage_tracking FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "usage_quotas_policy" ON usage_quotas;
+
 CREATE POLICY "usage_quotas_policy" ON usage_quotas FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "billing_events_policy" ON billing_events;
 
 CREATE POLICY "billing_events_policy" ON billing_events FOR ALL TO public 
 USING (organization_id IN (SELECT organization_id FROM user_profiles WHERE user_id = auth.uid()));
 
 -- Super admin can see all data
-CREATE POLICY "super_admin_all_access" ON organization_subscriptions FOR ALL TO public 
+DROP POLICY IF EXISTS "super_admin_all_access" ON organization_subscriptions;CREATE POLICY "super_admin_all_access" ON organization_subscriptions FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
+
+DROP POLICY IF EXISTS "super_admin_usage_access" ON usage_tracking;
 
 CREATE POLICY "super_admin_usage_access" ON usage_tracking FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
 
+DROP POLICY IF EXISTS "super_admin_quota_access" ON usage_quotas;
+
 CREATE POLICY "super_admin_quota_access" ON usage_quotas FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));
+
+DROP POLICY IF EXISTS "super_admin_billing_access" ON billing_events;
 
 CREATE POLICY "super_admin_billing_access" ON billing_events FOR ALL TO public 
 USING (EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'super_admin'));

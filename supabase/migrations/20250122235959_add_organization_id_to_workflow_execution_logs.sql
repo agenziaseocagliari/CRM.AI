@@ -40,7 +40,7 @@ WHERE organization_id IS NOT NULL;
 DROP POLICY IF EXISTS "Users can view workflow logs" ON workflow_execution_logs;
 
 -- Recreate policy with direct organization_id check for better performance
-CREATE POLICY "Users can view workflow logs" ON workflow_execution_logs
+DROP POLICY IF EXISTS "Users can view workflow logs" ON workflow_execution_logs;CREATE POLICY "Users can view workflow logs" ON workflow_execution_logs
     FOR SELECT
     TO public
     USING (
@@ -56,6 +56,8 @@ CREATE POLICY "Users can view workflow logs" ON workflow_execution_logs
     );
 
 -- Update insert policy
+DROP POLICY IF EXISTS "System can insert workflow logs" ON workflow_execution_logs;
+
 DROP POLICY IF EXISTS "System can insert workflow logs" ON workflow_execution_logs;
 
 CREATE POLICY "System can insert workflow logs" ON workflow_execution_logs

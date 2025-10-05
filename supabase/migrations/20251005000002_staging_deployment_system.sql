@@ -498,9 +498,11 @@ ALTER TABLE staging_sync_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE deployment_test_results ENABLE ROW LEVEL SECURITY;
 
 -- Policies for deployment_releases
-CREATE POLICY "Users can view all deployment releases"
+DROP POLICY IF EXISTS "Users can view all deployment releases" ON deployment_releases;CREATE POLICY "Users can view all deployment releases"
   ON deployment_releases FOR SELECT
   USING (true);
+
+DROP POLICY IF EXISTS "Admin users can insert deployment releases" ON deployment_releases;
 
 CREATE POLICY "Admin users can insert deployment releases"
   ON deployment_releases FOR INSERT
@@ -511,6 +513,8 @@ CREATE POLICY "Admin users can insert deployment releases"
       AND raw_user_meta_data->>'role' = 'admin'
     )
   );
+
+DROP POLICY IF EXISTS "Admin users can update deployment releases" ON deployment_releases;
 
 CREATE POLICY "Admin users can update deployment releases"
   ON deployment_releases FOR UPDATE
@@ -523,9 +527,11 @@ CREATE POLICY "Admin users can update deployment releases"
   );
 
 -- Similar policies for other tables
-CREATE POLICY "Users can view deployment steps"
+DROP POLICY IF EXISTS "Users can view deployment steps" ON deployment_steps;CREATE POLICY "Users can view deployment steps"
   ON deployment_steps FOR SELECT
   USING (true);
+
+DROP POLICY IF EXISTS "Admin users can manage deployment steps" ON deployment_steps;
 
 CREATE POLICY "Admin users can manage deployment steps"
   ON deployment_steps FOR ALL

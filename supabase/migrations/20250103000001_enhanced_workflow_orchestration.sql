@@ -165,10 +165,12 @@ ALTER TABLE workflow_execution_steps ENABLE ROW LEVEL SECURITY;
 -- =====================================================
 
 -- Workflow templates - public can view, admins can manage
-CREATE POLICY "Anyone can view public templates" ON workflow_templates
+DROP POLICY IF EXISTS "Anyone can view public templates" ON workflow_templates;CREATE POLICY "Anyone can view public templates" ON workflow_templates
     FOR SELECT
     TO public
     USING (is_public = true);
+
+DROP POLICY IF EXISTS "Super admins can manage all templates" ON workflow_templates;
 
 CREATE POLICY "Super admins can manage all templates" ON workflow_templates
     FOR ALL
@@ -182,7 +184,7 @@ CREATE POLICY "Super admins can manage all templates" ON workflow_templates
     );
 
 -- Workflow conditions - same as parent workflow
-CREATE POLICY "Users can view workflow conditions" ON workflow_conditions
+DROP POLICY IF EXISTS "Users can view workflow conditions" ON workflow_conditions;CREATE POLICY "Users can view workflow conditions" ON workflow_conditions
     FOR SELECT
     TO public
     USING (
@@ -195,7 +197,7 @@ CREATE POLICY "Users can view workflow conditions" ON workflow_conditions
     );
 
 -- Workflow actions - same as parent workflow
-CREATE POLICY "Users can view workflow actions" ON workflow_actions
+DROP POLICY IF EXISTS "Users can view workflow actions" ON workflow_actions;CREATE POLICY "Users can view workflow actions" ON workflow_actions
     FOR SELECT
     TO public
     USING (
@@ -208,7 +210,7 @@ CREATE POLICY "Users can view workflow actions" ON workflow_actions
     );
 
 -- Workflow triggers
-CREATE POLICY "Users can view workflow triggers" ON workflow_triggers
+DROP POLICY IF EXISTS "Users can view workflow triggers" ON workflow_triggers;CREATE POLICY "Users can view workflow triggers" ON workflow_triggers
     FOR SELECT
     TO public
     USING (
@@ -221,7 +223,7 @@ CREATE POLICY "Users can view workflow triggers" ON workflow_triggers
     );
 
 -- Workflow versions
-CREATE POLICY "Users can view workflow versions" ON workflow_versions
+DROP POLICY IF EXISTS "Users can view workflow versions" ON workflow_versions;CREATE POLICY "Users can view workflow versions" ON workflow_versions
     FOR SELECT
     TO public
     USING (
@@ -234,7 +236,7 @@ CREATE POLICY "Users can view workflow versions" ON workflow_versions
     );
 
 -- Workflow variables
-CREATE POLICY "Users can view workflow variables" ON workflow_variables
+DROP POLICY IF EXISTS "Users can view workflow variables" ON workflow_variables;CREATE POLICY "Users can view workflow variables" ON workflow_variables
     FOR SELECT
     TO public
     USING (
@@ -247,7 +249,7 @@ CREATE POLICY "Users can view workflow variables" ON workflow_variables
     );
 
 -- Workflow execution steps
-CREATE POLICY "Users can view their execution steps" ON workflow_execution_steps
+DROP POLICY IF EXISTS "Users can view their execution steps" ON workflow_execution_steps;CREATE POLICY "Users can view their execution steps" ON workflow_execution_steps
     FOR SELECT
     TO public
     USING (

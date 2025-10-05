@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_event_reminders_scheduled_at ON event_reminders(s
 ALTER TABLE event_reminders ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for organization access
-CREATE POLICY "Users can view reminders in their organization" ON event_reminders
+DROP POLICY IF EXISTS "Users can view reminders in their organization" ON event_reminders;CREATE POLICY "Users can view reminders in their organization" ON event_reminders
     FOR SELECT
     TO public
     USING (
@@ -33,6 +33,8 @@ CREATE POLICY "Users can view reminders in their organization" ON event_reminder
             SELECT organization_id FROM profiles WHERE id = auth.uid()
         )
     );
+
+DROP POLICY IF EXISTS "Users can insert reminders in their organization" ON event_reminders;
 
 CREATE POLICY "Users can insert reminders in their organization" ON event_reminders
     FOR INSERT
@@ -43,6 +45,8 @@ CREATE POLICY "Users can insert reminders in their organization" ON event_remind
         )
     );
 
+DROP POLICY IF EXISTS "Users can update reminders in their organization" ON event_reminders;
+
 CREATE POLICY "Users can update reminders in their organization" ON event_reminders
     FOR UPDATE
     TO public
@@ -51,6 +55,8 @@ CREATE POLICY "Users can update reminders in their organization" ON event_remind
             SELECT organization_id FROM profiles WHERE id = auth.uid()
         )
     );
+
+DROP POLICY IF EXISTS "Users can delete reminders in their organization" ON event_reminders;
 
 CREATE POLICY "Users can delete reminders in their organization" ON event_reminders
     FOR DELETE

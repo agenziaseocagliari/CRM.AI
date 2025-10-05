@@ -91,7 +91,7 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log_exports ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for audit_logs
-CREATE POLICY "Users can view audit logs for their organization" ON audit_logs
+DROP POLICY IF EXISTS "Users can view audit logs for their organization" ON audit_logs;CREATE POLICY "Users can view audit logs for their organization" ON audit_logs
     FOR SELECT
     TO public
     USING (
@@ -101,13 +101,13 @@ CREATE POLICY "Users can view audit logs for their organization" ON audit_logs
     );
 
 -- Only system can insert audit logs
-CREATE POLICY "System can insert audit logs" ON audit_logs
+DROP POLICY IF EXISTS "System can insert audit logs" ON audit_logs;CREATE POLICY "System can insert audit logs" ON audit_logs
     FOR INSERT
     TO public
     WITH CHECK (auth.uid() IS NOT NULL);
 
 -- Only superadmins can delete audit logs (for GDPR compliance)
-CREATE POLICY "Superadmins can delete audit logs" ON audit_logs
+DROP POLICY IF EXISTS "Superadmins can delete audit logs" ON audit_logs;CREATE POLICY "Superadmins can delete audit logs" ON audit_logs
     FOR DELETE
     TO public
     USING (
@@ -119,7 +119,7 @@ CREATE POLICY "Superadmins can delete audit logs" ON audit_logs
     );
 
 -- RLS Policies for audit_log_exports
-CREATE POLICY "Users can view their own exports" ON audit_log_exports
+DROP POLICY IF EXISTS "Users can view their own exports" ON audit_log_exports;CREATE POLICY "Users can view their own exports" ON audit_log_exports
     FOR SELECT
     TO public
     USING (
@@ -131,6 +131,8 @@ CREATE POLICY "Users can view their own exports" ON audit_log_exports
         )
     );
 
+DROP POLICY IF EXISTS "Users can create exports for their organization" ON audit_log_exports;
+
 CREATE POLICY "Users can create exports for their organization" ON audit_log_exports
     FOR INSERT
     TO public
@@ -140,6 +142,8 @@ CREATE POLICY "Users can create exports for their organization" ON audit_log_exp
         )
         AND user_id = auth.uid()
     );
+
+DROP POLICY IF EXISTS "Users can update their own exports" ON audit_log_exports;
 
 CREATE POLICY "Users can update their own exports" ON audit_log_exports
     FOR UPDATE

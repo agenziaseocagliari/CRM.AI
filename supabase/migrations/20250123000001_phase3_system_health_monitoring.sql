@@ -460,6 +460,8 @@ INSERT INTO alert_rules (
 -- System metrics: Super admins can see all, users see their org only
 ALTER TABLE system_metrics ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "system_metrics_superadmin" ON system_metrics;
+
 CREATE POLICY "system_metrics_superadmin"
 ON system_metrics
 FOR ALL
@@ -467,6 +469,8 @@ TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin'
 );
+
+DROP POLICY IF EXISTS "system_metrics_org_users" ON system_metrics;
 
 CREATE POLICY "system_metrics_org_users"
 ON system_metrics
@@ -483,6 +487,8 @@ USING (
 -- Health checks: Super admins only
 ALTER TABLE system_health_checks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "health_checks_superadmin_only" ON system_health_checks;
+
 CREATE POLICY "health_checks_superadmin_only"
 ON system_health_checks
 FOR ALL
@@ -493,6 +499,8 @@ USING (
 
 -- Alert rules: Super admins only
 ALTER TABLE alert_rules ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "alert_rules_superadmin_only" ON alert_rules;
 
 CREATE POLICY "alert_rules_superadmin_only"
 ON alert_rules
@@ -505,6 +513,8 @@ USING (
 -- Alert history: Super admins can see all, users can see acknowledged alerts
 ALTER TABLE alert_history ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "alert_history_superadmin" ON alert_history;
+
 CREATE POLICY "alert_history_superadmin"
 ON alert_history
 FOR ALL
@@ -512,6 +522,8 @@ TO public
 USING (
   auth.jwt() ->> 'role' = 'super_admin'
 );
+
+DROP POLICY IF EXISTS "alert_history_acknowledged_user" ON alert_history;
 
 CREATE POLICY "alert_history_acknowledged_user"
 ON alert_history

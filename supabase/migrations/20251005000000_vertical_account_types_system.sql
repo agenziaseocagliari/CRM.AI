@@ -10,6 +10,7 @@
 -- ===================================================================
 
 -- Enum per account types supportati
+DROP TYPE IF EXISTS account_type_enum CASCADE;
 CREATE TYPE account_type_enum AS ENUM (
     'generic',
     'insurance_agency',

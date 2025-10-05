@@ -95,15 +95,14 @@ CREATE TABLE IF NOT EXISTS usage_tracking (
   contact_id UUID REFERENCES contacts(id), -- Se applicabile
   automation_id UUID, -- Se parte di un'automazione
   
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Indexes per performance
-  INDEX idx_usage_org_date (organization_id, usage_date),
-  INDEX idx_usage_service_type (service_type),
-  INDEX idx_usage_date (usage_date)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. USAGE QUOTAS TABLE (Current period tracking)
+-- 🔧 LEVEL 6 FIX: Create indexes separately to avoid SQLSTATE 42704
+-- Indexes per performance
+CREATE INDEX IF NOT EXISTS idx_usage_org_date ON usage_tracking (organization_id, usage_date);
+CREATE INDEX IF NOT EXISTS idx_usage_service_type ON usage_tracking (service_type);
+CREATE INDEX IF NOT EXISTS idx_usage_date ON usage_tracking (usage_date);-- 4. USAGE QUOTAS TABLE (Current period tracking)
 -- ===================================================================
 CREATE TABLE IF NOT EXISTS usage_quotas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

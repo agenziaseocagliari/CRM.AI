@@ -24,6 +24,10 @@ import { GoogleAuthCallback } from './components/Settings';
 // import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
 import ExtraCreditsStore from './components/store/ExtraCreditsStore';
 
+// Vertical Landing Pages
+import InsuranceAgencyLanding from './pages/verticals/InsuranceAgencyLanding';
+import MarketingAgencyLanding from './pages/verticals/MarketingAgencyLanding';
+
 // Super Admin Imports
 
 // Debug Panel
@@ -217,7 +221,8 @@ const App: React.FC = () => {
       {/* Debug Panel - Only visible when logged in */}
       {session && <DebugPanel />}
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        {/* Public Routes */}
+        <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <HomePage />} />
         <Route path="/login" element={
           session
             ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : '/dashboard'} replace />
@@ -235,21 +240,22 @@ const App: React.FC = () => {
         } />
 
         <Route path="/form/:formId" element={<PublicForm />} />
-
-        {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
         <Route path="/pricing" element={<PublicPricingPage />} />
-        {/* <Route path="/terms-of-service" element={<TermsOfService />} /> */}
+        
+        {/* Vertical Landing Pages */}
+        <Route path="/verticals/insurance-agency" element={<InsuranceAgencyLanding />} />
+        <Route path="/verticals/marketing-agency" element={<MarketingAgencyLanding />} />
 
         <Route path="/settings/oauth/google" element={session ? <GoogleAuthCallback /> : <Navigate to="/login" />} />
 
-        {/* Protected Routes */}
+        {/* Protected Routes - Only accessible when logged in */}
         <Route
-          path="/"
+          path="/dashboard/*"
           element={
             session ? <MainLayout crmData={crmData} /> : <Navigate to="/login" replace />
           }
         >
-          <Route path="dashboard" element={<div className="p-8">Dashboard temporaneamente non disponibile</div>} />
+          <Route index element={<div className="p-8">Dashboard temporaneamente non disponibile</div>} />
           <Route path="opportunities" element={<div className="p-8">Opportunities temporaneamente non disponibile</div>} />
           <Route path="contacts" element={<div className="p-8">Contacts temporaneamente non disponibile</div>} />
           <Route path="calendar" element={<div className="p-8">Calendar temporaneamente non disponibile</div>} />

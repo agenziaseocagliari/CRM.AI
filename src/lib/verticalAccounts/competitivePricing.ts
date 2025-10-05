@@ -1,6 +1,14 @@
 /**
  * GUARDIAN AI CRM - SISTEMA PRICING BASATO SU CREDITI E COSTI REALI
- * Implementazione pricing competitivo per mercato italiano
+ * Implementazione pricing         '20.000 e        whatsapp_month: 2000,
+        storage_gb: 20,l/mese',
+           '50.000 em        whatsapp_month: 4000,
+        storage_gb: 50,/mese',
+        '4.000 WhatsApp/mese',
+        '50GB storage documenti', '2.000 WhatsApp/mese',
+        '20GB storage documenti',etitiv        'Email illimitate',
+        'WhatsApp illimitato',
+        'Storage illimitato',r mercato italiano
  * Dat      real_cost: 675.22,
       margin: 68.8
     },
@@ -27,8 +35,8 @@ export const COMPETITIVE_PRICING = {
     starter: {
       name: 'Starter',
       description: 'Perfetto per piccole agenzie che iniziano',
-      price: 39,
-      launch_price: 29, // primi 6 mesi
+      price: 49,
+      launch_price: 39, // primi 6 mesi
       billing: 'mensile',
       popular: false,
       tier_level: 1,
@@ -37,7 +45,6 @@ export const COMPETITIVE_PRICING = {
         '100 polizze gestite',
         '2.000 email/mese',
         '200 WhatsApp/mese',
-        '50 SMS/mese',
         '2GB storage documenti',
         'Gestione rinnovi automatica',
         'Report base',
@@ -48,19 +55,18 @@ export const COMPETITIVE_PRICING = {
         policies: 100,
         emails_month: 2000,
         whatsapp_month: 200,
-        sms_month: 50,
         storage_gb: 2,
         users: 2
       },
-      real_cost: 120.67,
-      margin: 67.7 // margine percentuale
+      real_cost: 25.50,
+      margin: 92.8 // margine percentuale
     },
     
     professional: {
       name: 'Professional',
       description: 'Per agenzie in crescita con più clienti',
-      price: 79,
-      launch_price: 59, // primi 6 mesi
+      price: 89,
+      launch_price: 69, // primi 6 mesi
       billing: 'mensile',
       popular: true,
       tier_level: 2,
@@ -69,7 +75,6 @@ export const COMPETITIVE_PRICING = {
         '500 polizze gestite',
         '8.000 email/mese',
         '800 WhatsApp/mese',
-        '200 SMS/mese',
         '8GB storage documenti',
         'Automazioni avanzate',
         'Integrazioni IVASS',
@@ -81,12 +86,11 @@ export const COMPETITIVE_PRICING = {
         policies: 500,
         emails_month: 8000,
         whatsapp_month: 800,
-        sms_month: 200,
         storage_gb: 8,
         users: 5
       },
-      real_cost: 202.66,
-      margin: 61.0
+      real_cost: 45.80,
+      margin: 89.6
     },
     
     premium: {
@@ -169,7 +173,6 @@ export const COMPETITIVE_PRICING = {
         '5.000 polizze gestite',
         '100.000 email/mese',
         '8.000 WhatsApp/mese',
-        '2.000 SMS/mese',
         '100GB storage documenti',
         'White label completo',
         'Multi-agenzia',
@@ -182,7 +185,6 @@ export const COMPETITIVE_PRICING = {
         policies: 5000,
         emails_month: 100000,
         whatsapp_month: 8000,
-        sms_month: 2000,
         storage_gb: 100,
         users: 50
       },
@@ -220,7 +222,6 @@ export const COMPETITIVE_PRICING = {
         policies: -1,
         emails_month: -1,
         whatsapp_month: -1,
-        sms_month: -1,
         storage_gb: -1,
         users: -1
       },
@@ -241,9 +242,9 @@ export const COMPETITIVE_PRICING = {
       features: [
         '100 clienti',
         '5 campagne simultanee',
-        '3.000 email/mese',
-        '500 WhatsApp/mese',
-        '5 automazioni marketing',
+        '2.000 email/mese',
+        '300 WhatsApp/mese',
+        '3 automazioni marketing',
         '5 landing page',
         '1GB storage',
         'Analytics base',
@@ -258,8 +259,8 @@ export const COMPETITIVE_PRICING = {
         storage_gb: 1,
         users: 1
       },
-      real_cost: 104.05,
-      margin: 72.1
+      real_cost: 22.30,
+      margin: 92.3
     },
     
     agency: {
@@ -272,11 +273,11 @@ export const COMPETITIVE_PRICING = {
       tier_level: 2,
       features: [
         '500 clienti',
-        '20 campagne simultanee',
-        '8.000 email/mese',
-        '1.500 WhatsApp/mese',
-        '20 automazioni marketing',
-        '20 landing page',
+        '15 campagne simultanee',
+        '6.000 email/mese',
+        '1.000 WhatsApp/mese',
+        '15 automazioni marketing',
+        '15 landing page',
         '5GB storage',
         'ROI tracking avanzato',
         'Report clienti personalizzati',
@@ -305,11 +306,11 @@ export const COMPETITIVE_PRICING = {
       tier_level: 3,
       features: [
         '1.000 clienti',
-        '30 campagne simultanee',
-        '15.000 email/mese',
-        '3.000 WhatsApp/mese',
-        '50 automazioni marketing',
-        '30 landing page',
+        '25 campagne simultanee',
+        '12.000 email/mese',
+        '2.000 WhatsApp/mese',
+        '30 automazioni marketing',
+        '25 landing page',
         '10GB storage',
         'A/B testing avanzato',
         'ROI tracking dettagliato',

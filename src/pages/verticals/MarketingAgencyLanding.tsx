@@ -174,11 +174,6 @@ const MarketingAgencyLandingPage: React.FC = () => {
                   PROVA 14 GIORNI GRATIS
                 </span>
               </div>
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                  LANCIO -37%
-                </span>
-              </div>
               <div className="text-center">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Freelancer</h3>
                 <div className="mb-3">

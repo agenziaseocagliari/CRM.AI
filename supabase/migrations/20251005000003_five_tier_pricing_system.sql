@@ -3,11 +3,26 @@
 -- Data: 2025-10-05
 
 -- ===================================================================
--- 1. AGGIORNAMENTO ENUM PRICING TIERS
+-- 1. CREAZIONE ENUM PRICING TIERS
 -- ===================================================================
 
--- Aggiungiamo i nuovi tiers per completare i 5 livelli
-ALTER TYPE pricing_tier ADD VALUE IF NOT EXISTS 'premium' AFTER 'professional';
+-- Creiamo l'enum pricing_tier se non esiste
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pricing_tier') THEN
+        CREATE TYPE pricing_tier AS ENUM (
+            'starter',
+            'freelancer', 
+            'professional',
+            'agency',
+            'premium',
+            'studio',
+            'advanced',
+            'business',
+            'enterprise'
+        );
+    END IF;
+END $$;
 
 -- ===================================================================
 -- 2. AGGIORNAMENTO TABELLA VERTICAL_PRICING_TIERS

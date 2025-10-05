@@ -1,4 +1,4 @@
--- GUARDIAN AI CRM - AGGIORNAMENTO SISTEMA PRICING A 5 LIVELLI
+﻿-- GUARDIAN AI CRM - AGGIORNAMENTO SISTEMA PRICING A 5 LIVELLI
 -- Migrazione per supportare la nuova struttura pricing verticali
 -- Data: 2025-10-05
 
@@ -74,17 +74,7 @@ INSERT INTO vertical_pricing_tiers (
   29.00,
   290.00,
   'Perfetto per piccole agenzie che iniziano',
-  ARRAY[
-    '500 clienti',
-    '100 polizze gestite', 
-    '2.000 email/mese',
-    '200 WhatsApp/mese',
-    '50 SMS/mese',
-    '2GB storage documenti',
-    'Gestione rinnovi automatica',
-    'Report base',
-    'Supporto email'
-  ],
+  '["500 clienti", "100 polizze gestite", "2.000 email/mese", "200 WhatsApp/mese", "50 SMS/mese", "2GB storage documenti", "Gestione rinnovi automatica", "Report base", "Supporto email"]'::jsonb,
   '{"clients": 500, "policies": 100, "emails_month": 2000, "whatsapp_month": 200, "sms_month": 50, "storage_gb": 2, "users": 2}'::jsonb,
   false
 ),
@@ -97,8 +87,8 @@ INSERT INTO vertical_pricing_tiers (
   790.00,
   59.00,
   590.00,
-  'Per agenzie in crescita con più clienti',
-  ARRAY[
+  'Per agenzie in crescita con piÃ¹ clienti',
+  [
     '2.000 clienti',
     '500 polizze gestite',
     '8.000 email/mese', 
@@ -109,7 +99,7 @@ INSERT INTO vertical_pricing_tiers (
     'Integrazioni IVASS',
     'Report avanzati',
     'Supporto prioritario'
-  ],
+  ),
   '{"clients": 2000, "policies": 500, "emails_month": 8000, "whatsapp_month": 800, "sms_month": 200, "storage_gb": 8, "users": 5}'::jsonb,
   true
 ),
@@ -123,7 +113,7 @@ INSERT INTO vertical_pricing_tiers (
   159.00,
   1590.00,
   'Per agenzie multi-compagnia e specializzate',
-  ARRAY[
+  [
     '5.000 clienti',
     '1.000 polizze gestite',
     '20.000 email/mese',
@@ -134,7 +124,7 @@ INSERT INTO vertical_pricing_tiers (
     'API personalizzate limitate',
     'Dashboard personalizzate',
     'Supporto telefonico prioritario'
-  ],
+  ),
   '{"clients": 5000, "policies": 1000, "emails_month": 20000, "whatsapp_month": 2000, "sms_month": 500, "storage_gb": 15, "users": 10}'::jsonb,
   false
 ),
@@ -148,7 +138,7 @@ INSERT INTO vertical_pricing_tiers (
   319.00, 
   3190.00,
   'Per agenzie consolidate con alto volume',
-  ARRAY[
+  [
     '15.000 clienti',
     '3.000 polizze gestite',
     '50.000 email/mese',
@@ -160,7 +150,7 @@ INSERT INTO vertical_pricing_tiers (
     'White label parziale',
     'Integrazioni enterprise',
     'Account manager dedicato'
-  ],
+  ),
   '{"clients": 15000, "policies": 3000, "emails_month": 50000, "whatsapp_month": 5000, "sms_month": 1200, "storage_gb": 50, "users": 25}'::jsonb,
   false
 ),
@@ -174,7 +164,7 @@ INSERT INTO vertical_pricing_tiers (
   559.00,
   5590.00,
   'Per grandi agenzie e broker',
-  ARRAY[
+  [
     '25.000 clienti',
     '5.000 polizze gestite',
     '100.000 email/mese',
@@ -186,7 +176,7 @@ INSERT INTO vertical_pricing_tiers (
     'Integrazioni enterprise complete', 
     'SLA garantito 99.9%',
     'Supporto dedicato 24/7'
-  ],
+  ),
   '{"clients": 25000, "policies": 5000, "emails_month": 100000, "whatsapp_month": 8000, "sms_month": 2000, "storage_gb": 100, "users": 50}'::jsonb,
   false
 ),
@@ -200,7 +190,7 @@ INSERT INTO vertical_pricing_tiers (
   999.00,
   9990.00,
   'Soluzione personalizzata con servizi dedicati',
-  ARRAY[
+  [
     'Clienti illimitati',
     'Polizze illimitate',
     'Email illimitate', 
@@ -216,7 +206,7 @@ INSERT INTO vertical_pricing_tiers (
     'Formazione avanzata inclusa',
     'Consulenza strategica mensile',
     'Backup e disaster recovery dedicato'
-  ],
+  ),
   '{"clients": -1, "policies": -1, "emails_month": -1, "whatsapp_month": -1, "sms_month": -1, "storage_gb": -1, "users": -1}'::jsonb,
   false
 );
@@ -245,7 +235,7 @@ INSERT INTO vertical_pricing_tiers (
   19.00,
   190.00,
   'Perfetto per freelancer e consulenti',
-  ARRAY[
+  [
     '100 clienti',
     '25 progetti attivi',
     '5 campagne simultanee',
@@ -254,7 +244,7 @@ INSERT INTO vertical_pricing_tiers (
     '1GB storage',
     'Analytics base',
     'Supporto email'
-  ],
+  ),
   '{"clients": 100, "projects": 25, "campaigns": 5, "emails_month": 5000, "landing_pages": 5, "storage_gb": 1, "users": 1}'::jsonb,
   false
 ),
@@ -268,17 +258,7 @@ INSERT INTO vertical_pricing_tiers (
   39.00,
   390.00,
   'Per piccole agenzie di marketing',
-  ARRAY[
-    '500 clienti',
-    '100 progetti attivi',
-    '20 campagne simultanee',
-    '15.000 email/mese',
-    '20 landing page',
-    '5GB storage',
-    'ROI tracking',
-    'Report clienti',
-    'Supporto prioritario'
-  ],
+  '["500 clienti", "100 progetti attivi", "20 campagne simultanee", "15.000 email/mese", "20 landing page", "5GB storage", "ROI tracking", "Report clienti", "Supporto prioritario"]'::jsonb,
   '{"clients": 500, "projects": 100, "campaigns": 20, "emails_month": 15000, "landing_pages": 20, "storage_gb": 5, "users": 3}'::jsonb,
   true
 ),
@@ -291,8 +271,8 @@ INSERT INTO vertical_pricing_tiers (
   890.00,
   69.00,
   690.00,
-  'Per agenzie in crescita con più servizi',
-  ARRAY[
+  'Per agenzie in crescita con piÃ¹ servizi',
+  [
     '1.000 clienti',
     '200 progetti attivi',
     '30 campagne simultanee',
@@ -303,7 +283,7 @@ INSERT INTO vertical_pricing_tiers (
     'ROI tracking dettagliato',
     'Automazioni email avanzate',
     'Report personalizzati'
-  ],
+  ),
   '{"clients": 1000, "projects": 200, "campaigns": 30, "emails_month": 25000, "landing_pages": 30, "storage_gb": 10, "users": 5}'::jsonb,
   false
 ),
@@ -317,7 +297,7 @@ INSERT INTO vertical_pricing_tiers (
   159.00,
   1590.00,
   'Per studi creativi e agenzie medie',
-  ARRAY[
+  [
     '3.000 clienti',
     '750 progetti attivi',
     '75 campagne simultanee',
@@ -330,7 +310,7 @@ INSERT INTO vertical_pricing_tiers (
     'Dashboard personalizzate',
     'White label parziale',
     'Account manager dedicato'
-  ],
+  ),
   '{"clients": 3000, "projects": 750, "campaigns": 75, "emails_month": 75000, "landing_pages": 75, "storage_gb": 30, "users": 15}'::jsonb,
   false
 ),
@@ -344,7 +324,7 @@ INSERT INTO vertical_pricing_tiers (
   319.00,
   3190.00,
   'Per network e holding di agenzie',
-  ARRAY[
+  [
     '7.500 clienti',  
     '1.500 progetti attivi',
     '150 campagne simultanee',
@@ -357,7 +337,7 @@ INSERT INTO vertical_pricing_tiers (
     'Integrazioni enterprise',
     'SLA garantito 99.9%',
     'Supporto prioritario 24/7'
-  ],
+  ),
   '{"clients": 7500, "projects": 1500, "campaigns": 150, "emails_month": 150000, "landing_pages": 150, "storage_gb": 75, "users": 30}'::jsonb,
   false
 ),
@@ -371,7 +351,7 @@ INSERT INTO vertical_pricing_tiers (
   699.00,
   6990.00,
   'Soluzione personalizzata con servizi dedicati',
-  ARRAY[
+  [
     'Clienti illimitati',
     'Progetti illimitati',
     'Campagne illimitate',
@@ -387,7 +367,7 @@ INSERT INTO vertical_pricing_tiers (
     'Consulenza strategica settimanale',
     'Formazione avanzata team',
     'Backup e disaster recovery dedicato'
-  ],
+  ),
   '{"clients": -1, "projects": -1, "campaigns": -1, "emails_month": -1, "landing_pages": -1, "storage_gb": -1, "users": -1}'::jsonb,
   false
 );
@@ -480,7 +460,7 @@ RETURNS TABLE (
   launch_price_monthly numeric,
   launch_price_yearly numeric,
   description text,
-  features text[],
+  features text[),
   limits jsonb,
   is_popular boolean
 ) AS $$
@@ -522,3 +502,5 @@ SELECT
   is_popular
 FROM vertical_pricing_tiers 
 ORDER BY account_type, tier_level;
+
+

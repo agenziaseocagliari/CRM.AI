@@ -214,7 +214,7 @@ const EditIntegrationModal: React.FC<{
                     <label className="block text-sm font-medium text-text-primary mb-1">Tipo Provider</label>
                     <select
                         value={formData.provider_type || 'custom'}
-                        onChange={(e) => setFormData({ ...formData, provider_type: e.target.value as any })}
+                        onChange={(e) => setFormData({ ...formData, provider_type: e.target.value as 'messaging' | 'email' | 'ai' | 'custom' })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                         <option value="messaging">Messaging</option>
@@ -315,8 +315,9 @@ const StatsModal: React.FC<{
 
             if (error) {throw error;}
             setLogs(data || []);
-        } catch (error: any) {
-            toast.error(`Errore nel caricamento statistiche: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel caricamento statistiche: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -417,8 +418,9 @@ export const APIIntegrationsManager: React.FC = () => {
 
             if (error) {throw error;}
             setIntegrations(data || []);
-        } catch (error: any) {
-            toast.error(`Errore nel caricamento integrazioni: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel caricamento integrazioni: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -482,8 +484,9 @@ export const APIIntegrationsManager: React.FC = () => {
             if (error) {throw error;}
             toast.success('Integrazione eliminata con successo');
             loadIntegrations();
-        } catch (error: any) {
-            toast.error(`Errore: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore: ${errorMessage}`);
         }
     };
 
@@ -497,8 +500,9 @@ export const APIIntegrationsManager: React.FC = () => {
             if (error) {throw error;}
             toast.success(`Integrazione ${integration.is_active ? 'disattivata' : 'attivata'}`);
             loadIntegrations();
-        } catch (error: any) {
-            toast.error(`Errore: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore: ${errorMessage}`);
         }
     };
 

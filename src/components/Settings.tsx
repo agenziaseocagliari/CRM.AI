@@ -8,7 +8,7 @@ import { invokeSupabaseFunction } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
 
 import { JWTViewer } from './JWTViewer';
-import { TwoFactorSettings } from './TwoFactorAuth';
+// import { TwoFactorSettings } from './TwoFactorAuth'; // Moved to .bak
 import { GoogleIcon, CheckCircleIcon, GuardianIcon } from './ui/icons';
 import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
 import { UsageDashboard } from './usage/UsageDashboard';
@@ -322,8 +322,8 @@ export const Settings: React.FC = () => {
                 {activeTab === 'billing' && <UsageDashboard />}
                 
                 {activeTab === 'security' && (
-                    <div className="space-y-6">
-                        <TwoFactorSettings />
+                    <div className="space-y-6 p-6 text-center text-gray-500">
+                        <p>Two Factor Authentication temporaneamente non disponibile</p>
                     </div>
                 )}
                 

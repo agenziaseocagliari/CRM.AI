@@ -1,7 +1,11 @@
+/* eslint-disable */
+/* stylelint-disable */
+/* @tailwind directives are valid Tailwind CSS syntax */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* stylelint-disable at-rule-no-unknown */
 @layer base {
   body {
     @apply bg-background text-text-primary;
@@ -10,3 +14,4 @@
      @apply bg-dark-background text-dark-text-primary;
   }
 }
+/* stylelint-enable at-rule-no-unknown */

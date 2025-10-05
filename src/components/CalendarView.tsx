@@ -149,7 +149,7 @@ export const CalendarView: React.FC = () => {
             const state = Math.random().toString(36).substring(2, 15);
             localStorage.setItem('oauth_state', state);
 
-            const { url } = await invokeSupabaseFunction('google-auth-url', { state });
+            const result = await invokeSupabaseFunction('google-auth-url', { state }) as { url?: string }; const { url } = result;
             
             if (url) {
                 window.location.href = url;

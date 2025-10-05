@@ -1,4 +1,4 @@
-﻿// Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
+// Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
 import { useState, useEffect, useCallback } from 'react';
 
 import { invokeSupabaseFunction } from '../lib/api';
@@ -140,7 +140,7 @@ export const useCrmData = () => {
 
       if (orgResponse.error) {throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);}
       if (contactsResponse.error) {throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);}
-      if (opportunitiesResponse.error) {throw new Error(`Errore nel caricamento delle opportunitÃ : ${opportunitiesResponse.error.message}`);}
+      if (opportunitiesResponse.error) {throw new Error(`Errore nel caricamento delle opportunit� : ${opportunitiesResponse.error.message}`);}
       if (formsResponse.error) {throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);}
       if (automationsResponse.error) {throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`);}
       if (settingsResponse.error) {throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);}
@@ -157,7 +157,7 @@ export const useCrmData = () => {
       setForms(formsResponse.data || []);
       setAutomations(automationsResponse.data || []);
       setOrganizationSettings(settingsResponse.data);
-      setCrmEvents(eventsResponse?.events || []);
+      setCrmEvents((eventsResponse as { events?: any[] })?.events || []);
       setSubscription(subscriptionResponse.data);
       setLedger(ledgerResponse.data || []);
       setIsCalendarLinked(!!googleCredsResponse.data);

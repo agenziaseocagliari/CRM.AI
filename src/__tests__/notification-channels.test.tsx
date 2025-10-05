@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import '@testing-library/jest-dom/vitest';
-import { NotificationChannelManager } from '../components/superadmin/NotificationChannelManager';
+import NotificationChannelManager from '../components/superadmin/NotificationChannelManager';
 
 describe('Notification Channel Manager E2E Tests', () => {
     beforeEach(() => {

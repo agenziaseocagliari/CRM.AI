@@ -155,13 +155,13 @@ export const AiWorkflows: React.FC = () => {
                               ...exec,
                               status: 'success',
                               endTime,
-                              message: result?.message || 'Workflow completato con successo',
+                              message: (result as { message?: string }).message || 'Workflow completato con successo',
                           }
                         : exec
                 )
             );
 
-            toast.success(result?.message || `Workflow "${workflowName}" completato!`, {
+            toast.success((result as { message?: string }).message || `Workflow "${workflowName}" completato!`, {
                 id: loadingToast,
             });
         } catch (error: any) {

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { invokeSupabaseFunction } from '../lib/api';
 
@@ -80,30 +80,30 @@ export const useSuperAdminData = () => {
                 invokeSupabaseFunction('superadmin-logs'),
             ]);
 
-            setStats(statsData.stats || null);
-            setOrganizations(orgsData.customers || []);
-            setTransactions(transactionsData.payments || []);
-            setAuditLogs(logsData.logs || []);
+            setStats((statsData as { stats?: any }).stats || null);
+            setOrganizations((orgsData as { customers?: any[] }).customers || []);
+            setTransactions((transactionsData as { payments?: any[] }).payments || []);
+            setAuditLogs((logsData as { logs?: any[] }).logs || []);
             
             // Generate notifications based on data
             const newNotifications: Notification[] = [];
             
             // Check for churn risk
-            if (statsData.stats?.churnRiskCount > 0) {
+            if ((statsData as { stats?: any }).stats?.churnRiskCount > 0) {
                 newNotifications.push({
                     id: 'churn-risk',
                     type: 'AI Recommendation',
-                    message: `${statsData.stats.churnRiskCount} organizations at risk of churn (zero credits)`,
+                    message: `${(statsData as { stats?: any }).stats?.churnRiskCount} organizations at risk of churn (zero credits)`,
                     timestamp: new Date().toISOString(),
                 });
             }
             
             // Check for new signups
-            if (statsData.stats?.newSignupsThisWeek > 0) {
+            if ((statsData as { stats?: any }).stats?.newSignupsThisWeek > 0) {
                 newNotifications.push({
                     id: 'new-signups',
                     type: 'System Alert',
-                    message: `${statsData.stats.newSignupsThisWeek} new signups this week`,
+                    message: `${(statsData as { stats?: any }).stats?.newSignupsThisWeek} new signups this week`,
                     timestamp: new Date().toISOString(),
                 });
             }
@@ -153,3 +153,4 @@ export const useSuperAdminData = () => {
         refundPayment,
     };
 };
+

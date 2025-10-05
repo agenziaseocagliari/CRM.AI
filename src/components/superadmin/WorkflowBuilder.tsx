@@ -272,9 +272,9 @@ export const WorkflowBuilder: React.FC = () => {
                 prompt: userMessage.text 
             });
 
-            if (!data.reply) {throw new Error("La risposta dell'AI non è valida.");}
+            if (!(data as { reply?: string }).reply) {throw new Error("La risposta dell'AI non è valida.");}
 
-            const aiMessage: Message = { sender: 'ai', text: data.reply };
+            const aiMessage: Message = { sender: 'ai', text: (data as { reply: string }).reply };
             setMessages(prev => [...prev, aiMessage]);
             setLastInteraction({ user: userMessage.text, ai: aiMessage.text });
         } catch (err: any) {

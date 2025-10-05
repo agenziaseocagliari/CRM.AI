@@ -25,10 +25,28 @@ BEGIN
 END $$;
 
 -- ===================================================================
--- 2. AGGIORNAMENTO TABELLA VERTICAL_PRICING_TIERS
+-- 2. CREAZIONE TABELLA VERTICAL_PRICING_TIERS
 -- ===================================================================
 
--- Aggiorniamo i pricing esistenti e aggiungiamo i nuovi tiers
+-- Creiamo la tabella vertical_pricing_tiers se non esiste
+CREATE TABLE IF NOT EXISTS vertical_pricing_tiers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_type TEXT NOT NULL,
+    tier_name TEXT NOT NULL,
+    tier_level INTEGER NOT NULL CHECK (tier_level >= 1 AND tier_level <= 6),
+    price_monthly DECIMAL(10,2) NOT NULL,
+    price_yearly DECIMAL(10,2) NOT NULL,
+    launch_price_monthly DECIMAL(10,2),
+    launch_price_yearly DECIMAL(10,2),
+    description TEXT,
+    features JSONB DEFAULT '[]'::jsonb,
+    limits JSONB DEFAULT '{}'::jsonb,
+    is_popular BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Puliamo i dati esistenti (se ci sono) e aggiungiamo i nuovi tiers
 DELETE FROM vertical_pricing_tiers WHERE account_type = 'insurance_agency';
 DELETE FROM vertical_pricing_tiers WHERE account_type = 'marketing_agency';
 

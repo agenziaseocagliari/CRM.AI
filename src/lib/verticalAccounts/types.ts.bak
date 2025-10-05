@@ -177,7 +177,6 @@ export const ACCOUNT_TYPE_CONFIGS: Record<AccountType, {
     description: 'CRM standard per tutti i settori',
     icon: '🏢',
     colorScheme: { primary: '#2563eb', secondary: '#64748b' },
-    basePriceCents: 3900,
     features: ['contacts', 'opportunities', 'automations', 'reports']
   },
   
@@ -186,7 +185,6 @@ export const ACCOUNT_TYPE_CONFIGS: Record<AccountType, {
     description: 'CRM specializzato per agenzie assicurative',
     icon: '🛡️',
     colorScheme: { primary: '#1e40af', secondary: '#64748b', accent: '#dc2626' },
-    basePriceCents: 14900,
     features: [
       'policy_management',
       'renewal_tracking', 

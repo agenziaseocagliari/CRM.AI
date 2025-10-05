@@ -224,7 +224,7 @@ const AccountSetupProgress: React.FC<AccountSetupProgressProps> = ({
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-blue-600">
-              €{Math.round(config.basePriceCents / 100)}
+              €29
             </div>
             <div className="text-blue-600 text-sm">/mese</div>
           </div>

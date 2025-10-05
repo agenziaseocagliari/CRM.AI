@@ -288,7 +288,7 @@ export const AccountTypePreview: React.FC<AccountTypePreviewProps> = ({
             className="text-2xl font-bold mb-2"
             style={{ color: config.colorScheme.primary }}
           >
-            {formatPrice(config.basePriceCents)}
+            €29
             <span className="text-sm font-normal text-gray-500">/mese</span>
           </div>
         </div>

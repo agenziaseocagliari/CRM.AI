@@ -6,7 +6,6 @@ import { MessageCircle, Send, Users, Zap, Clock, TrendingUp, Settings, Plus, Fil
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useWhatsAppButlerAI } from '../lib/ai/useAIOrchestrator';
-import AIAgentsPanel from './AIAgentsPanel';
 
 interface WhatsAppTemplate {
   id: string;
@@ -55,7 +54,7 @@ interface WhatsAppMetrics {
 
 const WhatsAppModule: React.FC = () => {
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
-  const { contacts } = contextData || {};
+
   const { generateWhatsAppTemplate, isProcessing } = useWhatsAppButlerAI();
   
   // States
@@ -455,16 +454,7 @@ const WhatsAppModule: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Agents Panel */}
-      <div className="mb-8">
-        <AIAgentsPanel 
-          context="contacts" 
-          contextData={{ 
-            contacts: contacts || [],
-            whatsappMetrics: metrics
-          }} 
-        />
-      </div>
+      {/* AI Agents Panel - REMOVED: Too cluttered, replaced with integrated WhatsAppButler chat */}
 
       {/* Navigation Tabs */}
       <div className="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-xl">

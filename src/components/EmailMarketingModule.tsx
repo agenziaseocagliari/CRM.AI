@@ -6,7 +6,6 @@ import { Mail, Send, Users, BarChart3, Clock, TrendingUp, Settings, Plus, Target
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useEmailGeniusAI } from '../lib/ai/useAIOrchestrator';
-import AIAgentsPanel from './AIAgentsPanel';
 import AIChatEngine from './AIChatEngine';
 
 interface EmailTemplate {
@@ -55,7 +54,6 @@ interface EmailMetrics {
 
 const EmailMarketingModule: React.FC = () => {
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
-  const { contacts } = contextData || {};
   const { generateEmailCampaign, isProcessing } = useEmailGeniusAI();
   
   // States
@@ -508,17 +506,7 @@ const EmailMarketingModule: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Agents Panel */}
-      <div className="mb-8">
-        <AIAgentsPanel 
-          context="contacts" 
-          contextData={{ 
-            contacts: contacts || [],
-            emailMetrics: metrics,
-            templates: templates.length
-          }} 
-        />
-      </div>
+      {/* AI Agents Panel - REMOVED: Too cluttered, replaced with integrated chat */}
 
       {/* Navigation Tabs */}
       <div className="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-xl">
@@ -560,17 +548,29 @@ const EmailMarketingModule: React.FC = () => {
       )}
       {activeTab === 'ai-chat' && (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Email Assistant</h2>
-            <p className="text-gray-600 dark:text-gray-400">Chat with your AI assistant to create, optimize, and manage email campaigns</p>
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white">
+                <Mail className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">EmailGenius AI Assistant</h2>
+                <p className="text-gray-600">Create, optimize, and manage email campaigns with natural language commands</p>
+              </div>
+              <div className="ml-auto">
+                <span className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full text-sm font-medium">
+                  🚀 AI-Powered
+                </span>
+              </div>
+            </div>
+            
+            <AIChatEngine 
+              module="email"
+              agentId="EmailGenius"
+              agentName="EmailGenius AI"
+              className="h-[500px] bg-white rounded-lg border border-purple-100"
+            />
           </div>
-          
-          <AIChatEngine 
-            module="email"
-            agentId="EmailGenius"
-            agentName="Email Genius"
-            className="h-[600px]"
-          />
         </div>
       )}
       {activeTab === 'segments' && (

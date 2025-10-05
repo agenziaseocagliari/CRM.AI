@@ -41,42 +41,42 @@ export const Sidebar: React.FC = () => {
       <nav>
         <ul>
           <NavItem
-            to="/dashboard"
+            to=""
             icon={<DashboardIcon className="w-6 h-6" />}
             label="Dashboard"
           />
           <NavItem
-            to="/opportunities"
+            to="opportunities"
             icon={<PipelineIcon className="w-6 h-6" />}
             label="Opportunità"
           />
           <NavItem
-            to="/contacts"
+            to="contacts"
             icon={<ContactsIcon className="w-6 h-6" />}
             label="Contatti"
           />
            <NavItem
-            to="/calendar"
+            to="calendar"
             icon={<CalendarIcon className="w-6 h-6" />}
             label="Calendario"
           />
           <NavItem
-            to="/meetings"
+            to="meetings"
             icon={<VideoIcon className="w-6 h-6" />}
             label="Meeting"
           />
           <NavItem
-            to="/forms"
+            to="forms"
             icon={<FormsIcon className="w-6 h-6" />}
             label="Form"
           />
           <NavItem
-            to="/automations"
+            to="automations"
             icon={<AutomationIcon className="w-6 h-6" />}
             label="Automazioni"
           />
           <NavItem
-            to="/store"
+            to="store"
             icon={<CreditCardIcon className="w-6 h-6" />}
             label="Prezzi"
           />
@@ -85,7 +85,7 @@ export const Sidebar: React.FC = () => {
       <div className="mt-auto">
         <ul>
             <NavItem
-                to="/settings"
+                to="settings"
                 icon={<SettingsIcon className="w-6 h-6" />}
                 label="Impostazioni"
             />

@@ -46,7 +46,9 @@ ON CONFLICT (name) DO NOTHING;
 
 -- 2. ORGANIZATION SUBSCRIPTIONS TABLE
 -- ===================================================================
-CREATE TABLE IF NOT EXISTS organization_subscriptions (
+-- 🔧 LEVEL 6 FIX: Add idempotency to ensure proper foreign key relationship after subscription_tiers recreation
+DROP TABLE IF EXISTS organization_subscriptions CASCADE;
+CREATE TABLE organization_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   subscription_tier_id UUID NOT NULL REFERENCES subscription_tiers(id),

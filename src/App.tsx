@@ -31,6 +31,7 @@ import { Settings } from './components/Settings';
 import { TestComponent } from './components/TestComponent';
 import WhatsAppModule from './components/WhatsAppModule';
 import EmailMarketingModule from './components/EmailMarketingModule';
+import { UniversalCreditDashboard } from './components/universal/UniversalCreditDashboard';
 // Super Admin lazy components - temporarily disabled
 // Components moved to .bak files
 // import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
@@ -280,6 +281,7 @@ const App: React.FC = () => {
           <Route path="email-marketing" element={<EmailMarketingModule />} />
           
           <Route path="test" element={<TestComponent />} />
+          <Route path="universal-credits" element={<UniversalCreditDashboard />} />
           <Route path="store" element={<ExtraCreditsStore />} />
           <Route path="settings" element={<Settings />} />
         </Route>

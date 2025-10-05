@@ -1,9 +1,6 @@
 import React from 'react';
-// FIX: Corrected the import for NavLink from 'react-router-dom' to resolve module export errors.
 import { NavLink } from 'react-router-dom';
-
 import { useAuth } from '../contexts/AuthContext';
-
 import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, AdminPanelIcon, CreditCardIcon } from './ui/icons';
 import { MessageCircle, Mail } from 'lucide-react';
 
@@ -73,11 +70,14 @@ export const Sidebar: React.FC = () => {
             label="Automazioni"
           />
           
-          {/* Enterprise AI Modules */}
+          {/* Universal Access Modules - All Available */}
           <div className="border-t border-gray-700 my-4 pt-4">
-            <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold px-3 mb-3">
-              🤖 AI Enterprise
-            </p>
+            <div className="flex items-center space-x-2 px-3 mb-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <p className="text-xs text-green-400 uppercase tracking-wide font-semibold">
+                🌍 Accesso Universale
+              </p>
+            </div>
             <NavItem
               to="whatsapp"
               icon={<MessageCircle className="w-6 h-6" />}
@@ -90,6 +90,11 @@ export const Sidebar: React.FC = () => {
             />
           </div>
           
+          <NavItem
+            to="universal-credits"
+            icon={<CreditCardIcon className="w-6 h-6" />}
+            label="Sistema Crediti"
+          />
           <NavItem
             to="store"
             icon={<CreditCardIcon className="w-6 h-6" />}

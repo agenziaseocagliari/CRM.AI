@@ -1,4 +1,4 @@
-﻿-- ===================================================================
+-- ===================================================================
 -- GUARDIAN AI CRM - EXTRA CREDITS SYSTEM
 -- Migration: Sistema Acquisto Crediti Extra per Revenue Aggiuntivo
 -- Data: 2025-10-04

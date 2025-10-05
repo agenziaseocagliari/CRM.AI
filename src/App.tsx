@@ -28,6 +28,7 @@ import { Forms } from './components/Forms';
 import { Automations } from './components/Automations';
 import { CalendarView } from './components/CalendarView';
 import { Settings } from './components/Settings';
+import { TestComponent } from './components/TestComponent';
 // Super Admin lazy components - temporarily disabled
 // Components moved to .bak files
 // import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
@@ -271,6 +272,7 @@ const App: React.FC = () => {
           <Route path="meetings" element={<div className="p-8">Meetings temporaneamente non disponibile</div>} />
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />
+          <Route path="test" element={<TestComponent />} />
           <Route path="store" element={<ExtraCreditsStore />} />
           <Route path="settings" element={<Settings />} />
         </Route>

@@ -7,6 +7,7 @@ import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
 import { Form, FormField } from '../types';
+import { ModuleChat } from './ai/ModuleChat';
 
 import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
@@ -302,6 +303,23 @@ export const Forms: React.FC = () => {
                 <button onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Link copiato!'); }} className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-indigo-700">Copia</button>
             </div>
         </Modal>
+
+        {/* FormMaster AI Chat */}
+        <ModuleChat
+            moduleName="Forms"
+            agentId="FormMaster"
+            agentName="FormMaster"
+            agentColor="from-blue-500 to-cyan-500"
+            placeholder="Chiedi a FormMaster come ottimizzare i tuoi form..."
+            welcomeMessage="Ciao! Sono FormMaster 📝 Ti aiuto a creare form perfetti che convertono di più. Come posso aiutarti oggi?"
+            systemContext="Sei FormMaster, un esperto nella creazione e ottimizzazione di form conversazionali. Aiuti gli utenti a migliorare i tassi di conversione, creare campi efficaci e ottimizzare l'user experience dei form."
+            onMessageSent={(message) => {
+                console.log('User message to FormMaster:', message);
+            }}
+            onAIResponse={(response) => {
+                console.log('FormMaster response:', response);
+            }}
+        />
     </>
     );
 };

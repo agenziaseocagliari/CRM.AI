@@ -7,6 +7,7 @@ import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
 import { Automation } from '../types';
+import { ModuleChat } from './ai/ModuleChat';
 
 import { MessageBotIcon, UserCircleIcon, SparklesIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
@@ -232,6 +233,23 @@ export const Automations: React.FC = () => {
                     <button onClick={handleDeleteAutomation} disabled={isLoading} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isLoading ? 'Eliminazione...' : 'Elimina'}</button>
                 </div>
             </Modal>
+
+            {/* AnalyticsOracle AI Chat */}
+            <ModuleChat
+                moduleName="Automations"
+                agentId="AnalyticsOracle"
+                agentName="AnalyticsOracle"
+                agentColor="from-teal-500 to-blue-500"
+                placeholder="Chiedi ad AnalyticsOracle di analizzare le tue automazioni..."
+                welcomeMessage="Ciao! Sono AnalyticsOracle 📊 Analizzo i dati delle tue automazioni e ti suggerisco ottimizzazioni basate sui risultati. Vuoi che analizzi le performance attuali?"
+                systemContext="Sei AnalyticsOracle, un esperto nell'analisi dei dati e ottimizzazione delle automazioni. Aiuti gli utenti a interpretare le metriche, identificare colli di bottiglia e ottimizzare le performance dei workflow automatizzati."
+                onMessageSent={(message) => {
+                    console.log('User message to AnalyticsOracle:', message);
+                }}
+                onAIResponse={(response) => {
+                    console.log('AnalyticsOracle response:', response);
+                }}
+            />
         </>
     );
 };

@@ -7,6 +7,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useEmailGeniusAI } from '../lib/ai/useAIOrchestrator';
 import AIAgentsPanel from './AIAgentsPanel';
+import AIChatEngine from './AIChatEngine';
 
 interface EmailTemplate {
   id: string;
@@ -58,10 +59,10 @@ const EmailMarketingModule: React.FC = () => {
   const { generateEmailCampaign, isProcessing } = useEmailGeniusAI();
   
   // States
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'templates' | 'campaigns' | 'segments' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'templates' | 'campaigns' | 'ai-chat' | 'segments' | 'settings'>('dashboard');
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
-  const [metrics, setMetrics] = useState<EmailMetrics>({
+  const [metrics] = useState<EmailMetrics>({
     totalSent: 15420,
     openRate: 24.3,
     clickRate: 3.7,
@@ -525,6 +526,7 @@ const EmailMarketingModule: React.FC = () => {
           { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
           { id: 'templates', label: 'Templates', icon: Mail },
           { id: 'campaigns', label: 'Campagne', icon: Send },
+          { id: 'ai-chat', label: '🤖 AI Chat', icon: Send },
           { id: 'segments', label: 'Segmenti', icon: Users },
           { id: 'settings', label: 'Impostazioni', icon: Settings }
         ].map((tab) => {
@@ -554,6 +556,21 @@ const EmailMarketingModule: React.FC = () => {
           <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">Gestione Campagne</h3>
           <p className="text-gray-500">Sistema di campagne automatizzate in sviluppo</p>
+        </div>
+      )}
+      {activeTab === 'ai-chat' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Email Assistant</h2>
+            <p className="text-gray-600 dark:text-gray-400">Chat with your AI assistant to create, optimize, and manage email campaigns</p>
+          </div>
+          
+          <AIChatEngine 
+            module="email"
+            agentId="EmailGenius"
+            agentName="Email Genius"
+            className="h-[600px]"
+          />
         </div>
       )}
       {activeTab === 'segments' && (

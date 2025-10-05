@@ -319,19 +319,32 @@ export class AIOrchestrator {
     };
   }
   
-  getAvailableAgents(pricingTier: string): AIAgent[] {
-    return AI_AGENTS.filter(agent => 
-      agent.pricingTier === pricingTier || 
-      this.tierHasAccess(pricingTier, agent.pricingTier)
-    );
+  getAvailableAgents(_pricingTier: string): AIAgent[] {
+    // 🚀 NEW STRATEGY: All agents available from base tier
+    // Monetization through credits/quota system instead of tier restrictions
+    return AI_AGENTS.filter(agent => agent.status === 'active' || agent.status === 'beta');
   }
   
-  private tierHasAccess(userTier: string, agentTier: string): boolean {
-    const tierHierarchy = ['freelancer', 'startup', 'business', 'enterprise'];
-    const userTierIndex = tierHierarchy.indexOf(userTier);
-    const agentTierIndex = tierHierarchy.indexOf(agentTier);
+  private tierHasAccess(_userTier: string, _agentTier: string): boolean {
+    // All tiers now have access to all agents - quota-based monetization
+    return true;
+  }
+  
+  getAgentQuotaLimits(pricingTier: string, agentId: string): { daily: number; monthly: number } {
+    const quotaMultipliers = {
+      'freelancer': 1,
+      'startup': 3,
+      'business': 10,
+      'enterprise': 50
+    };
     
-    return userTierIndex >= agentTierIndex;
+    const baseQuota = AI_AGENTS.find(a => a.id === agentId)?.quotaLimits || { daily: 10, monthly: 100 };
+    const multiplier = quotaMultipliers[pricingTier as keyof typeof quotaMultipliers] || 1;
+    
+    return {
+      daily: baseQuota.daily * multiplier,
+      monthly: baseQuota.monthly * multiplier
+    };
   }
 }
 

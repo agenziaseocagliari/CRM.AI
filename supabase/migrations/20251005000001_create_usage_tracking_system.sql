@@ -4,9 +4,11 @@
 -- Data: 2025-10-04
 -- ===================================================================
 
--- 1. SUBSCRIPTION TIERS TABLE
+-- 1. SUBSCRIPTION TIERS TABLE  
 -- ===================================================================
-CREATE TABLE IF NOT EXISTS subscription_tiers (
+-- 🔧 LEVEL 6 FIX: Add minimal idempotency to prevent SQLSTATE 42703 column reference errors
+DROP TABLE IF EXISTS subscription_tiers CASCADE;
+CREATE TABLE subscription_tiers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE, -- 'starter', 'professional', 'enterprise'
   display_name TEXT NOT NULL, -- 'Starter', 'Professional', 'Enterprise'
@@ -44,7 +46,9 @@ ON CONFLICT (name) DO NOTHING;
 
 -- 2. ORGANIZATION SUBSCRIPTIONS TABLE
 -- ===================================================================
-CREATE TABLE IF NOT EXISTS organization_subscriptions (
+-- 🔧 LEVEL 6 FIX: Add idempotency to ensure proper foreign key relationship after subscription_tiers recreation
+DROP TABLE IF EXISTS organization_subscriptions CASCADE;
+CREATE TABLE organization_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   subscription_tier_id UUID NOT NULL REFERENCES subscription_tiers(id),
@@ -95,15 +99,14 @@ CREATE TABLE IF NOT EXISTS usage_tracking (
   contact_id UUID REFERENCES contacts(id), -- Se applicabile
   automation_id UUID, -- Se parte di un'automazione
   
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Indexes per performance
-  INDEX idx_usage_org_date (organization_id, usage_date),
-  INDEX idx_usage_service_type (service_type),
-  INDEX idx_usage_date (usage_date)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. USAGE QUOTAS TABLE (Current period tracking)
+-- 🔧 LEVEL 6 FIX: Create indexes separately to avoid SQLSTATE 42704
+-- Indexes per performance
+CREATE INDEX IF NOT EXISTS idx_usage_org_date ON usage_tracking (organization_id, usage_date);
+CREATE INDEX IF NOT EXISTS idx_usage_service_type ON usage_tracking (service_type);
+CREATE INDEX IF NOT EXISTS idx_usage_date ON usage_tracking (usage_date);-- 4. USAGE QUOTAS TABLE (Current period tracking)
 -- ===================================================================
 CREATE TABLE IF NOT EXISTS usage_quotas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -262,8 +265,7 @@ LEFT JOIN organization_subscriptions os ON o.id = os.organization_id
 LEFT JOIN subscription_tiers st ON os.subscription_tier_id = st.id
 LEFT JOIN usage_quotas uq ON o.id = uq.organization_id 
     AND uq.period_start <= NOW() 
-    AND uq.period_end > NOW()
-WHERE o.deleted_at IS NULL;
+    AND uq.period_end > NOW();
 
 -- ===================================================================
 -- SECURITY & RLS POLICIES

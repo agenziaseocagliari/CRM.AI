@@ -117,7 +117,23 @@ export const useCrmData = () => {
         throw new Error(errorMsg);
       }
       
-      const { organization_id } = profileData;
+      // SUPER ADMIN FIX: Se organization_id è "ALL", usa la prima organizzazione disponibile
+      let { organization_id } = profileData;
+      if (organization_id === 'ALL') {
+        diagnosticLogger.info('[useCrmData] Super admin detected with organization_id="ALL", using first available organization');
+        const { data: firstOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        if (firstOrg) {
+          organization_id = firstOrg.id;
+          diagnosticLogger.info('[useCrmData] Using organization:', organization_id);
+        } else {
+          throw new Error('Nessuna organizzazione disponibile per il super admin');
+        }
+      }
       diagnosticLogger.info('[useCrmData] Profile found successfully:', {
         userId: user.id,
         organizationId: organization_id

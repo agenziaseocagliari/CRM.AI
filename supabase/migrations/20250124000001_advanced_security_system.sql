@@ -89,7 +89,7 @@ CREATE POLICY security_admin_failed_logins ON security_failed_logins
 
 -- RLS Policy: Users can only see their own failed logins
 CREATE POLICY user_own_failed_logins ON security_failed_logins
-    FOR SELECT TO authenticated 
+    FOR SELECT TO public 
     USING (user_id = auth.uid());
 
 -- RLS Policy: Audit log - security admin access
@@ -98,7 +98,7 @@ CREATE POLICY security_admin_audit_log ON security_audit_log
 
 -- RLS Policy: Organization audit access
 CREATE POLICY org_audit_log ON security_audit_log
-    FOR SELECT TO authenticated
+    FOR SELECT TO public
     USING (
         organization_id IN (
             SELECT organization_id 
@@ -109,7 +109,7 @@ CREATE POLICY org_audit_log ON security_audit_log
 
 -- RLS Policy: IP whitelist per organization
 CREATE POLICY org_ip_whitelist ON security_ip_whitelist
-    FOR ALL TO authenticated
+    FOR ALL TO public
     USING (
         organization_id IN (
             SELECT organization_id 
@@ -303,10 +303,10 @@ GRANT SELECT ON security_failed_logins TO audit_reader;
 GRANT SELECT ON security_audit_log TO monitoring_agent;
 GRANT EXECUTE ON FUNCTION check_failed_login_attempts TO monitoring_agent;
 
--- Grant authenticated user permissions
-GRANT SELECT ON security_ip_whitelist TO authenticated;
-GRANT EXECUTE ON FUNCTION check_ip_whitelist TO authenticated;
-GRANT EXECUTE ON FUNCTION record_failed_login TO authenticated;
+-- Grant public user permissions
+GRANT SELECT ON security_ip_whitelist TO public;
+GRANT EXECUTE ON FUNCTION check_ip_whitelist TO public;
+GRANT EXECUTE ON FUNCTION record_failed_login TO public;
 
 -- 7. 🔐 INDEXES FOR PERFORMANCE
 -- ==============================

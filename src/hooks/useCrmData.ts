@@ -140,7 +140,7 @@ export const useCrmData = () => {
 
       if (orgResponse.error) {throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);}
       if (contactsResponse.error) {throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);}
-      if (opportunitiesResponse.error) {throw new Error(`Errore nel caricamento delle opportunitÃ : ${opportunitiesResponse.error.message}`);}
+      if (opportunitiesResponse.error) {throw new Error(`Errore nel caricamento delle opportunitï¿½ : ${opportunitiesResponse.error.message}`);}
       if (formsResponse.error) {throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);}
       if (automationsResponse.error) {throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`);}
       if (settingsResponse.error) {throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);}
@@ -157,20 +157,22 @@ export const useCrmData = () => {
       setForms(formsResponse.data || []);
       setAutomations(automationsResponse.data || []);
       setOrganizationSettings(settingsResponse.data);
-      setCrmEvents((eventsResponse as { events?: any[] })?.events || []);
+      setCrmEvents((eventsResponse as { events?: CrmEvent[] })?.events || []);
       setSubscription(subscriptionResponse.data);
       setLedger(ledgerResponse.data || []);
       setIsCalendarLinked(!!googleCredsResponse.data);
 
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
       diagnosticLogger.error('[useCrmData] Error in fetchData:', {
-        error: err,
-        message: err.message,
-        stack: err.stack,
+        error,
+        message: errorMessage,
+        stack: errorStack,
         timestamp: new Date().toISOString()
       });
-      setError(err.message);
-      diagnosticLogger.error(err);
+      setError(errorMessage);
+      diagnosticLogger.error(error);
     } finally {
       setLoading(false);
     }

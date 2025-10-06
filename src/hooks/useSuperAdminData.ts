@@ -50,7 +50,7 @@ export interface AuditLog {
     operationType?: 'CREATE' | 'UPDATE' | 'DELETE' | 'READ' | 'EXECUTE';
     targetType?: 'USER' | 'ORGANIZATION' | 'PAYMENT' | 'SYSTEM';
     result?: 'SUCCESS' | 'FAILURE' | 'PARTIAL';
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     errorMessage?: string;
     ipAddress?: string;
     userAgent?: string;
@@ -80,30 +80,31 @@ export const useSuperAdminData = () => {
                 invokeSupabaseFunction('superadmin-logs'),
             ]);
 
-            setStats((statsData as { stats?: any }).stats || null);
-            setOrganizations((orgsData as { customers?: any[] }).customers || []);
-            setTransactions((transactionsData as { payments?: any[] }).payments || []);
-            setAuditLogs((logsData as { logs?: any[] }).logs || []);
+            setStats((statsData as { stats?: AdminStat }).stats || null);
+            setOrganizations((orgsData as { customers?: AdminOrganization[] }).customers || []);
+            setTransactions((transactionsData as { payments?: Transaction[] }).payments || []);
+            setAuditLogs((logsData as { logs?: AuditLog[] }).logs || []);
             
             // Generate notifications based on data
             const newNotifications: Notification[] = [];
             
             // Check for churn risk
-            if ((statsData as { stats?: any }).stats?.churnRiskCount > 0) {
+            const stats = (statsData as { stats?: AdminStat }).stats;
+            if (stats?.churnRiskCount && stats.churnRiskCount > 0) {
                 newNotifications.push({
                     id: 'churn-risk',
                     type: 'AI Recommendation',
-                    message: `${(statsData as { stats?: any }).stats?.churnRiskCount} organizations at risk of churn (zero credits)`,
+                    message: `${stats.churnRiskCount} organizations at risk of churn (zero credits)`,
                     timestamp: new Date().toISOString(),
                 });
             }
             
             // Check for new signups
-            if ((statsData as { stats?: any }).stats?.newSignupsThisWeek > 0) {
+            if (stats?.newSignupsThisWeek && stats.newSignupsThisWeek > 0) {
                 newNotifications.push({
                     id: 'new-signups',
                     type: 'System Alert',
-                    message: `${(statsData as { stats?: any }).stats?.newSignupsThisWeek} new signups this week`,
+                    message: `${stats.newSignupsThisWeek} new signups this week`,
                     timestamp: new Date().toISOString(),
                 });
             }

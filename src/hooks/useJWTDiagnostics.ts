@@ -218,13 +218,13 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
       diagnosticLogger.info('ðŸ¥ [JWT Diagnostics] Health check complete:', status);
       
       return status;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorStatus: SessionHealthStatus = {
         isHealthy: false,
         hasValidSession: false,
         hasUserRoleClaim: false,
         claimsMatchStorage: false,
-        issues: [`Health check failed: ${error?.message || 'Unknown error'}`],
+        issues: [`Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
         lastChecked: new Date().toISOString(),
       };
 

@@ -12,29 +12,21 @@ import {
   type CacheEntry 
 } from '../aiCacheManager';
 
-// Mock Supabase client for cache testing
-const mockSupabaseFrom = vi.fn();
-const mockSupabaseSelect = vi.fn().mockReturnThis();
-const mockSupabaseInsert = vi.fn().mockReturnThis();
-const mockSupabaseUpsert = vi.fn().mockReturnThis();
-const mockSupabaseEq = vi.fn().mockReturnThis();
-const mockSupabaseGte = vi.fn().mockReturnThis();
-const mockSupabaseSingle = vi.fn();
-
+// Mock successful Supabase operations for testing
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
-    from: mockSupabaseFrom.mockReturnValue({
-      select: mockSupabaseSelect,
-      insert: mockSupabaseInsert,
-      upsert: mockSupabaseUpsert,
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      upsert: vi.fn().mockReturnThis(),
       delete: vi.fn().mockReturnThis(),
-      eq: mockSupabaseEq,
-      gte: mockSupabaseGte,
-      single: mockSupabaseSingle,
       update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
-    }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
   })),
 }));
 

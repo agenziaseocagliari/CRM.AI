@@ -1,7 +1,7 @@
 ﻿// File: src/lib/ai/aiCacheManager.ts
 // Multi-Layer AI Cache System for Guardian AI CRM
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import { diagnosticLogger } from '../mockDiagnosticLogger';
 // Note: This would typically use Redis in production
@@ -51,10 +51,17 @@ class AICache {
   private exactCache = new Map<string, CacheEntry>();
   private readonly DEFAULT_TTL = 3600; // 1 hour
   private readonly SIMILARITY_THRESHOLD = 0.85;
-  private supabase = createClient(
-    process.env.VITE_SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  );
+  private _supabase?: SupabaseClient;
+
+  private get supabase(): SupabaseClient {
+    if (!this._supabase) {
+      this._supabase = createClient(
+        process.env.VITE_SUPABASE_URL || '',
+        process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+      );
+    }
+    return this._supabase;
+  }
 
   // Layer 1: Exact Match Cache (immediate results)
   async getExactMatch(

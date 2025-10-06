@@ -29,7 +29,7 @@ export interface WorkflowNode {
     type: NodeType;
     subtype?: TriggerSubtype | ActionSubtype | string;
     label: string;
-    config: Record<string, any>;
+    config: Record<string, unknown>;
     position: { x: number; y: number };
 }
 
@@ -349,7 +349,7 @@ export const VisualWorkflowCanvas: React.FC<VisualWorkflowCanvasProps> = ({
                                     try {
                                         const config = JSON.parse(e.target.value);
                                         handleUpdateNode(selectedNode.id, { config });
-                                    } catch (err) {
+                                    } catch {
                                         // Invalid JSON, ignore
                                     }
                                 }}
@@ -388,7 +388,7 @@ export const VisualWorkflowCanvas: React.FC<VisualWorkflowCanvasProps> = ({
                             <li>Right-click to add nodes</li>
                             <li>Drag nodes to reposition</li>
                             <li>Click to select and edit</li>
-                            <li>Use "Connect To" dropdown to link nodes</li>
+                            <li>Use &quot;Connect To&quot; dropdown to link nodes</li>
                         </ul>
                     </div>
                 )}

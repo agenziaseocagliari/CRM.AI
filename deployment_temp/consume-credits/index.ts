@@ -29,8 +29,16 @@ serve(async (req) => {
     
     // Utilizza il client con service_role_key per chiamare la funzione RPC
     // Questo è necessario perché la funzione RPC modifica dati e deve avere i permessi per farlo.
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    if (!supabaseUrl) {
+        return new Response(
+            JSON.stringify({ error: 'Missing SUPABASE_URL' }),
+            { status: 500, headers: corsHeaders }
+        );
+    }
+    
     const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL")!,
+        supabaseUrl,
         serviceRoleKey
     );
     
@@ -55,9 +63,10 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
-    console.error("Errore nella funzione `consume-credits`:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Errore nella funzione `consume-credits`:", errorMessage);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

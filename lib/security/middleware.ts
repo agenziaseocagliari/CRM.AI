@@ -48,11 +48,7 @@ interface SecurityEventDetails {
   [key: string]: string | number | boolean | null | undefined;
 }
 
-interface GeoEventDetails extends SecurityEventDetails {
-  country: string;
-  region: string;
-  city: string;
-}
+
 
 const SECURITY_CONFIG: SecurityConfig = {
   rateLimiting: {

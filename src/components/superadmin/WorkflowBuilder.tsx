@@ -158,8 +158,9 @@ const LogsModal: React.FC<{
 
             if (error) {throw error;}
             setLogs(data || []);
-        } catch (error: any) {
-            toast.error(`Errore nel caricamento log: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel caricamento log: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -250,8 +251,9 @@ export const WorkflowBuilder: React.FC = () => {
 
             if (error) {throw error;}
             setWorkflows(data || []);
-        } catch (error: any) {
-            toast.error(`Errore nel caricamento workflow: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel caricamento workflow: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -277,12 +279,13 @@ export const WorkflowBuilder: React.FC = () => {
             const aiMessage: Message = { sender: 'ai', text: (data as { reply: string }).reply };
             setMessages(prev => [...prev, aiMessage]);
             setLastInteraction({ user: userMessage.text, ai: aiMessage.text });
-        } catch (err: any) {
+        } catch (error: unknown) {
             const errorMessage: Message = { 
                 sender: 'ai', 
                 text: `Mi dispiace, si è verificato un errore. Riprova più tardi.` 
             };
             setMessages(prev => [...prev, errorMessage]);
+            console.error('AI Error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -308,8 +311,9 @@ export const WorkflowBuilder: React.FC = () => {
             loadWorkflows();
             setMessages([]);
             setLastInteraction(null);
-        } catch (err: any) {
-            toast.error(`Errore nel salvataggio: ${err.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel salvataggio: ${errorMessage}`);
         } finally {
             setIsLoading(false);
         }
@@ -325,8 +329,9 @@ export const WorkflowBuilder: React.FC = () => {
             if (error) {throw error;}
             toast.success(`Workflow ${workflow.is_active ? 'disattivato' : 'attivato'}`);
             loadWorkflows();
-        } catch (error: any) {
-            toast.error(`Errore: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore: ${errorMessage}`);
         }
     };
 
@@ -352,8 +357,9 @@ export const WorkflowBuilder: React.FC = () => {
             if (error) {throw error;}
             toast.success('Workflow eliminato con successo');
             loadWorkflows();
-        } catch (error: any) {
-            toast.error(`Errore: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore: ${errorMessage}`);
         }
     };
 
@@ -377,7 +383,7 @@ export const WorkflowBuilder: React.FC = () => {
                     Workflow Builder AI
                 </h1>
                 <p className="text-text-secondary dark:text-dark-text-secondary mt-1">
-                    Crea automazioni in linguaggio naturale con l'assistenza AI
+                    Crea automazioni in linguaggio naturale con l&apos;assistenza AI
                 </p>
             </div>
 
@@ -389,7 +395,7 @@ export const WorkflowBuilder: React.FC = () => {
                         AI Workflow Assistant
                     </h2>
                     <p className="text-sm text-text-secondary mt-1">
-                        Descrivi l'automazione che vuoi creare e l'AI ti aiuterà a strutturarla
+                        Descrivi l&apos;automazione che vuoi creare e l&apos;AI ti aiuterà a strutturarla
                     </p>
                 </div>
 
@@ -398,7 +404,7 @@ export const WorkflowBuilder: React.FC = () => {
                         <div className="flex items-center justify-center h-full text-text-secondary">
                             <div className="text-center">
                                 <SparklesIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                                <p>Inizia descrivendo l'automazione che vuoi creare...</p>
+                                <p>Inizia descrivendo l&apos;automazione che vuoi creare...</p>
                             </div>
                         </div>
                     ) : (
@@ -488,7 +494,7 @@ export const WorkflowBuilder: React.FC = () => {
                     <div className="bg-white dark:bg-dark-card rounded-lg shadow border border-gray-200 dark:border-dark-border p-8 text-center">
                         <ClockIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                         <h3 className="text-lg font-medium text-text-primary">Nessun workflow creato ancora</h3>
-                        <p className="text-text-secondary mt-2">Usa l'assistente AI sopra per creare il tuo primo workflow</p>
+                        <p className="text-text-secondary mt-2">Usa l&apos;assistente AI sopra per creare il tuo primo workflow</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

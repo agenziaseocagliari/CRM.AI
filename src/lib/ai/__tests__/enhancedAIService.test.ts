@@ -18,6 +18,10 @@ describe('EnhancedAIService', () => {
     companySize: 'medium',
   };
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const mockLead = {
     name: 'Sarah Johnson',
     email: 'sarah@techcorp.com',

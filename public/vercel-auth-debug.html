@@ -100,7 +100,38 @@
         const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Mzg2NjQsImV4cCI6MjA3MzAxNDY2NH0.kFo4Cj6rrAY4SLcLLwXyTOLi7YhLMHMKSXpqS9RzCmQ';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Wait for Supabase library to load and initialize client
+        let supabase;
+        
+        function initializeSupabase() {
+            try {
+                // Try different ways to access Supabase
+                if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                } else if (typeof window.createClient !== 'undefined') {
+                    supabase = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                } else if (typeof createClient !== 'undefined') {
+                    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                } else {
+                    throw new Error('Supabase library not loaded properly');
+                }
+                console.log('✅ Supabase client initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('❌ Failed to initialize Supabase client:', error);
+                return false;
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (!initializeSupabase()) {
+                    console.warn('⚠️ Retrying Supabase initialization...');
+                    setTimeout(initializeSupabase, 1000);
+                }
+            }, 100);
+        });
         
         console.log('🚀 Vercel Auth Debug Tool initialized');
         
@@ -108,6 +139,16 @@
             const element = document.getElementById(elementId);
             element.textContent = message;
             element.className = `result ${type}`;
+        }
+        
+        function ensureSupabaseReady() {
+            if (!supabase) {
+                const initialized = initializeSupabase();
+                if (!initialized) {
+                    throw new Error('Supabase client not initialized. Please refresh the page.');
+                }
+            }
+            return supabase;
         }
         
         function checkEnvironment() {
@@ -138,8 +179,9 @@
             showResult('authResult', '👤 Checking user authentication...', 'info');
             
             try {
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                const client = ensureSupabaseReady();
+                const { data: { user }, error: userError } = await client.auth.getUser();
+                const { data: { session }, error: sessionError } = await client.auth.getSession();
                 
                 let result = `AUTHENTICATION STATUS:\n\n`;
                 
@@ -188,7 +230,8 @@
             showResult('orgResult', '🏢 Checking organization context...', 'info');
             
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                const client = ensureSupabaseReady();
+                const { data: { user } } = await client.auth.getUser();
                 
                 let result = `ORGANIZATION CONTEXT:\n\n`;
                 
@@ -198,7 +241,7 @@
                 
                 if (user) {
                     // Query user's profile to get organization
-                    const { data: profile, error: profileError } = await supabase
+                    const { data: profile, error: profileError } = await client
                         .from('profiles')
                         .select('id, organization_id, role, email')
                         .eq('id', user.id)
@@ -218,7 +261,7 @@
                         
                         // Query organization details
                         if (profile.organization_id) {
-                            const { data: org, error: orgError } = await supabase
+                            const { data: org, error: orgError } = await client
                                 .from('organizations')
                                 .select('id, name, created_at')
                                 .eq('id', profile.organization_id)
@@ -253,7 +296,8 @@
             showResult('jwtResult', '🧪 Analyzing JWT token...', 'info');
             
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const client = ensureSupabaseReady();
+                const { data: { session } } = await client.auth.getSession();
                 
                 let result = `JWT TOKEN ANALYSIS:\n\n`;
                 
@@ -315,8 +359,9 @@
             showResult('edgeResult', '🌐 Testing FormMaster Edge Function...', 'info');
             
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                const { data: { user } } = await supabase.auth.getUser();
+                const client = ensureSupabaseReady();
+                const { data: { session } } = await client.auth.getSession();
+                const { data: { user } } = await client.auth.getUser();
                 
                 let result = `EDGE FUNCTION TEST:\n\n`;
                 
@@ -384,7 +429,8 @@
         async function forceLogout() {
             console.log('🔧 Force logout...');
             try {
-                await supabase.auth.signOut();
+                const client = ensureSupabaseReady();
+                await client.auth.signOut();
                 localStorage.clear();
                 sessionStorage.clear();
                 alert('✅ Force logout completed. Please login again.');
@@ -397,7 +443,8 @@
         async function refreshSession() {
             console.log('🔧 Refreshing session...');
             try {
-                const { data, error } = await supabase.auth.refreshSession();
+                const client = ensureSupabaseReady();
+                const { data, error } = await client.auth.refreshSession();
                 if (error) {
                     alert('❌ Session refresh error: ' + error.message);
                 } else {

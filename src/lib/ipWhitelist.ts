@@ -539,11 +539,27 @@ export async function getIPAccessLogs(
 // Helper Functions
 // ============================================================================
 
-function mapIPWhitelistFromDB(data: any): IPWhitelist {
+interface IPWhitelistDB {
+  id: string;
+  organization_id: string;
+  ip_address?: string;
+  ip_range_start?: string;
+  ip_range_end?: string;
+  is_range: boolean;
+  label?: string;
+  description?: string;
+  created_by: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  expires_at?: string;
+}
+
+function mapIPWhitelistFromDB(data: IPWhitelistDB): IPWhitelist {
   return {
     id: data.id,
     organizationId: data.organization_id,
-    ipAddress: data.ip_address,
+    ipAddress: data.ip_address || '',
     ipRangeStart: data.ip_range_start,
     ipRangeEnd: data.ip_range_end,
     isRange: data.is_range,
@@ -557,7 +573,20 @@ function mapIPWhitelistFromDB(data: any): IPWhitelist {
   };
 }
 
-function mapGeoRestrictionFromDB(data: any): GeoRestriction {
+interface GeoRestrictionDB {
+  id: string;
+  organization_id: string;
+  country_code: string;
+  restriction_type: 'allow' | 'block';
+  label?: string;
+  description?: string;
+  created_by: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapGeoRestrictionFromDB(data: GeoRestrictionDB): GeoRestriction {
   return {
     id: data.id,
     organizationId: data.organization_id,
@@ -572,7 +601,25 @@ function mapGeoRestrictionFromDB(data: any): GeoRestriction {
   };
 }
 
-function mapIPAccessLogFromDB(data: any): IPAccessLog {
+interface IPAccessLogDB {
+  id: string;
+  organization_id: string;
+  user_id?: string;
+  ip_address: string;
+  country_code?: string;
+  city?: string;
+  is_whitelisted: boolean;
+  is_blocked: boolean;
+  block_reason?: string;
+  user_agent?: string;
+  request_path?: string;
+  endpoint?: string;
+  request_method?: string;
+  access_time?: string;
+  created_at: string;
+}
+
+function mapIPAccessLogFromDB(data: IPAccessLogDB): IPAccessLog {
   return {
     id: data.id,
     organizationId: data.organization_id,
@@ -586,7 +633,7 @@ function mapIPAccessLogFromDB(data: any): IPAccessLog {
     endpoint: data.endpoint,
     requestMethod: data.request_method,
     userAgent: data.user_agent,
-    accessTime: new Date(data.access_time),
+    accessTime: new Date(data.access_time || data.created_at),
   };
 }
 

@@ -15,7 +15,7 @@ export interface JWTClaims {
   iat?: number;
   iss?: string;
   role?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface JWTDiagnostics {
@@ -186,7 +186,7 @@ export function formatJWTDiagnostics(diagnostics: JWTDiagnostics): string {
  * @param session Supabase session object
  * @returns Diagnostics object
  */
-export function checkSessionJWT(session: any): JWTDiagnostics {
+export function checkSessionJWT(session: { access_token?: string } | null): JWTDiagnostics {
   if (!session || !session.access_token) {
     return {
       isValid: false,

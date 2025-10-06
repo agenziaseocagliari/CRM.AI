@@ -176,4 +176,4 @@ MIGRATION HISTORY:
 -- STEP 6: GRANT NECESSARY PERMISSIONS
 -- Ensure the function can be called by Edge Functions
 GRANT EXECUTE ON FUNCTION consume_credits_rpc(UUID, TEXT) TO anon;
-GRANT EXECUTE ON FUNCTION consume_credits_rpc(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION consume_credits_rpc(UUID, TEXT) TO public;

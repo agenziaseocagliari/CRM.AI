@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 import { useSuperAdminData } from '../../../hooks/useSuperAdminData';
@@ -21,19 +21,7 @@ export const AutomaticAlerts: React.FC = () => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [lastCheck, setLastCheck] = useState<Date>(new Date());
 
-    useEffect(() => {
-        // Check for alerts every 30 seconds
-        const interval = setInterval(() => {
-            checkForAlerts();
-        }, 30000);
-
-        // Initial check
-        checkForAlerts();
-
-        return () => clearInterval(interval);
-    }, [stats, transactions]);
-
-    const checkForAlerts = () => {
+    const checkForAlerts = useCallback(() => {
         const newAlerts: Alert[] = [];
         const now = new Date();
 
@@ -111,7 +99,19 @@ export const AutomaticAlerts: React.FC = () => {
         });
 
         setLastCheck(now);
-    };
+    }, [stats, transactions, alerts]);
+
+    useEffect(() => {
+        // Check for alerts every 30 seconds
+        const interval = setInterval(() => {
+            checkForAlerts();
+        }, 30000);
+
+        // Initial check
+        checkForAlerts();
+
+        return () => clearInterval(interval);
+    }, [checkForAlerts]);
 
     // These functions can be used when displaying an alerts panel
     // const dismissAlert = (alertId: string) => {

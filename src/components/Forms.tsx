@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
-import { invokeSupabaseFunction } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
 import { Form, FormField } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
@@ -143,10 +142,42 @@ export const Forms: React.FC = () => {
                 throw new Error('Organization ID non disponibile. Ricarica la pagina e riprova.');
             }
             
-            const data = await invokeSupabaseFunction('generate-form-fields', { 
-                prompt: sanitizedPrompt,
-                organization_id: organization.id 
+            // TEMPORARY FIX: Use direct fetch instead of invokeSupabaseFunction
+            // to bypass retry logic and session refresh issues
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                throw new Error('Sessione non trovata. Ricarica la pagina.');
+            }
+            
+            const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
+            const supabaseAnonKey = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
+            
+            const response = await fetch(`${supabaseUrl}/functions/v1/generate-form-fields`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'apikey': supabaseAnonKey
+                },
+                body: JSON.stringify({
+                    prompt: sanitizedPrompt,
+                    organization_id: organization.id
+                })
             });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMessage = `Server error (${response.status})`;
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.error || errorMessage;
+                } catch {
+                    errorMessage = errorText || errorMessage;
+                }
+                throw new Error(errorMessage);
+            }
+            
+            const data = await response.json();
             
             // Type guard for API response
             if (!data || typeof data !== 'object' || !('fields' in data) || !Array.isArray((data as Record<string, unknown>).fields)) {

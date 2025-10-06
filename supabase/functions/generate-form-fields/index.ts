@@ -41,17 +41,35 @@ serve(async (req) => {
       authPreview: authHeader?.substring(0, 20) || 'none'
     });
 
-    const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
-      body: { organization_id, action_type: ACTION_TYPE },
-      headers: authHeader ? { Authorization: authHeader } : {}
+    // TEMPORARY FIX: Use direct fetch instead of supabaseClient.functions.invoke
+    // to bypass the same issues we had in AI Orchestrator
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    console.log(`[${ACTION_TYPE}] Making direct fetch to consume-credits function`);
+    
+    const creditResponse = await fetch(`${supabaseUrl}/functions/v1/consume-credits`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
+        ...(authHeader ? { 'Authorization': authHeader } : {})
+      },
+      body: JSON.stringify({ organization_id, action_type: ACTION_TYPE })
     });
 
-    console.log(`[${ACTION_TYPE}] Credit verification response:`, { creditData, creditError });
-
-    if (creditError) {
-      console.error(`[${ACTION_TYPE}] Credit verification network error:`, creditError);
-      throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message || creditError}`);
+    if (!creditResponse.ok) {
+      const errorText = await creditResponse.text();
+      console.error(`[${ACTION_TYPE}] Credit verification HTTP error:`, {
+        status: creditResponse.status,
+        statusText: creditResponse.statusText,
+        errorText
+      });
+      throw new Error(`Errore di rete nella verifica dei crediti: HTTP ${creditResponse.status}`);
     }
+
+    const creditData = await creditResponse.json();
+    console.log(`[${ACTION_TYPE}] Credit verification response:`, { creditData });
 
     if (creditData && creditData.error) {
       console.error(`[${ACTION_TYPE}] Credit verification business error:`, creditData.error);

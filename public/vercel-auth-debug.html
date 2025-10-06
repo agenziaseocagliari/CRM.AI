@@ -94,44 +94,66 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script>
         // Initialize Supabase client
         const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Mzg2NjQsImV4cCI6MjA3MzAxNDY2NH0.kFo4Cj6rrAY4SLcLLwXyTOLi7YhLMHMKSXpqS9RzCmQ';
         
-        // Wait for Supabase library to load and initialize client
-        let supabase;
+        // Initialize Supabase client directly - simplified approach
+        let supabase = null;
         
         function initializeSupabase() {
-            try {
-                // Try different ways to access Supabase
-                if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                } else if (typeof window.createClient !== 'undefined') {
-                    supabase = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                } else if (typeof createClient !== 'undefined') {
-                    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                } else {
-                    throw new Error('Supabase library not loaded properly');
+            console.log('🔄 Attempting to initialize Supabase...');
+            
+            // Wait for library to load
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            const tryInit = () => {
+                attempts++;
+                console.log(`Attempt ${attempts}/${maxAttempts} to initialize Supabase`);
+                
+                try {
+                    // Check what's available
+                    console.log('window.supabase:', typeof window.supabase);
+                    console.log('window.createClient:', typeof window.createClient);
+                    console.log('createClient:', typeof createClient);
+                    
+                    if (window.supabase && window.supabase.createClient) {
+                        console.log('Using window.supabase.createClient');
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    } else if (window.createClient) {
+                        console.log('Using window.createClient');
+                        supabase = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    } else if (typeof createClient !== 'undefined') {
+                        console.log('Using global createClient');
+                        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    } else {
+                        throw new Error('Supabase library methods not available');
+                    }
+                    
+                    if (supabase) {
+                        console.log('✅ Supabase client initialized successfully!');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error(`❌ Initialization attempt ${attempts} failed:`, error);
                 }
-                console.log('✅ Supabase client initialized successfully');
-                return true;
-            } catch (error) {
-                console.error('❌ Failed to initialize Supabase client:', error);
+                
+                if (attempts < maxAttempts) {
+                    setTimeout(tryInit, 200);
+                } else {
+                    console.error('❌ Failed to initialize Supabase after all attempts');
+                }
                 return false;
-            }
+            };
+            
+            return tryInit();
         }
         
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                if (!initializeSupabase()) {
-                    console.warn('⚠️ Retrying Supabase initialization...');
-                    setTimeout(initializeSupabase, 1000);
-                }
-            }, 100);
-        });
+        // Start initialization when script loads
+        setTimeout(initializeSupabase, 100);
         
         console.log('🚀 Vercel Auth Debug Tool initialized');
         

@@ -1,124 +1,167 @@
-// Enhanced FormMaster AI - Real API Integration
-// Replaces stub methods with actual Gemini AI processing
+// Real FormMaster AI Implementation - Guardian AI CRM
+// Implementazione reale per FormMaster con integrazione Gemini
 
-import { GoogleGenAI } from '@google/generative-ai';
 import { invokeSupabaseFunction } from '../api';
 
-export class RealFormMasterAI {
-  private geminiAI: GoogleGenAI;
-  
-  constructor() {
-    this.geminiAI = new GoogleGenAI(process.env.GEMINI_API_KEY!);
-  }
-
-  async processFormRequest(request: {
-    userPrompt: string;
-    businessType: string;
-    formGoal: string;
-    targetAudience: string;
-    organizationContext: any;
-  }): Promise<{
-    formFields: FormField[];
-    htmlCode: string;
-    cssStyles: string;
-    conversionTips: string[];
-    mobileOptimizations: string[];
-  }> {
-    
-    const prompt = `
-Sei FormMaster AI, esperto nella creazione di form ad alta conversione.
-
-RICHIESTA UTENTE: "${request.userPrompt}"
-
-CONTESTO BUSINESS:
-- Tipo di business: ${request.businessType}
-- Obiettivo form: ${request.formGoal}
-- Target audience: ${request.targetAudience}
-
-COMPITO:
-1. Analizza la richiesta e crea un form ottimizzato
-2. Genera campi specifici per il business type
-3. Ottimizza per mobile e conversione
-4. Includi design accattivante per WordPress/Kadence
-
-RISPOSTA IN FORMATO JSON:
-{
-  "formFields": [
-    {
-      "name": "campo_nome",
-      "type": "text|email|tel|textarea|select",
-      "label": "Label accattivante",
-      "placeholder": "Placeholder utile",
-      "required": true|false,
-      "validation": "regex pattern se necessario",
-      "helpText": "Testo di aiuto per l'utente"
-    }
-  ],
-  "htmlCode": "HTML completo del form",
-  "cssStyles": "CSS per design accattivante e mobile-friendly",
-  "conversionTips": ["Suggerimento 1", "Suggerimento 2"],
-  "mobileOptimizations": ["Ottimizzazione mobile 1", "Ottimizzazione mobile 2"]
+export interface FormField {
+  name: string;
+  type: 'text' | 'email' | 'phone' | 'select' | 'textarea' | 'checkbox' | 'radio';
+  label: string;
+  required: boolean;
+  placeholder?: string;
+  options?: string[];
+  validation?: {
+    pattern?: string;
+    min?: number;
+    max?: number;
+    message?: string;
+  };
+  conditional?: {
+    dependsOn: string;
+    value: string;
+    operator: 'equals' | 'not_equals' | 'contains';
+  };
 }
 
-ESEMPI CAMPI PER AGENZIA SEO/WEB:
-- Nome/Azienda (obbligatorio)
-- Email aziendale (validazione email business)
-- Telefono (con prefisso internazionale)
-- Tipo di sito necessario (select: E-commerce, Corporate, Blog, Landing)
-- Budget indicativo (range slider)
-- Tempistiche (select: Urgente, 1-2 mesi, 3+ mesi)
-- Note/Requisiti specifici (textarea)
+export interface FormConfiguration {
+  title: string;
+  description: string;
+  fields: FormField[];
+  styling: {
+    theme: 'modern' | 'classic' | 'minimal';
+    primaryColor: string;
+    borderRadius: number;
+  };
+  behavior: {
+    progressBar: boolean;
+    multiStep: boolean;
+    autoSave: boolean;
+    redirectUrl?: string;
+  };
+  integrations: {
+    wordpress: boolean;
+    kadence: boolean;
+    webhook?: string;
+  };
+}
 
-DESIGN REQUIREMENTS:
-- Color scheme professionale
-- Mobile-first approach
-- Micro-interactions CSS
-- Progress indicator per form multi-step
-- CTA accattivante e prominente
+export class RealFormMasterAI {
+  private organizationId: string;
+
+  constructor(organizationId: string) {
+    this.organizationId = organizationId;
+  }
+
+  // Genera form intelligente basato su business context
+  async generateIntelligentForm(prompt: string, businessContext?: any): Promise<FormConfiguration> {
+    try {
+      // Usa la edge function esistente generate-form-fields
+      const response = await invokeSupabaseFunction('generate-form-fields', {
+        prompt,
+        context: businessContext,
+        organization_id: this.organizationId
+      });
+
+      const formData = response as any;
+      
+      // Trasforma la risposta in FormConfiguration
+      return this.transformToFormConfiguration(formData, prompt);
+    } catch (error) {
+      console.error('Errore nella generazione del form:', error);
+      throw error;
+    }
+  }
+
+  private transformToFormConfiguration(geminiResponse: any, originalPrompt: string): FormConfiguration {
+    const fields = geminiResponse?.fields || [];
+    
+    return {
+      title: this.extractFormTitle(originalPrompt),
+      description: 'Form generato automaticamente da AI',
+      fields: fields.map((field: any) => ({
+        name: field.name || 'field',
+        type: field.type || 'text',
+        label: field.label || field.name || 'Campo',
+        required: field.required || false,
+        placeholder: field.placeholder,
+        options: field.options,
+        validation: field.validation,
+        conditional: field.conditional
+      })),
+      styling: {
+        theme: 'modern',
+        primaryColor: '#3B82F6',
+        borderRadius: 8
+      },
+      behavior: {
+        progressBar: fields.length > 5,
+        multiStep: fields.length > 8,
+        autoSave: true
+      },
+      integrations: {
+        wordpress: true,
+        kadence: true
+      }
+    };
+  }
+
+  private extractFormTitle(prompt: string): string {
+    // Estrae un titolo dal prompt
+    if (prompt.toLowerCase().includes('contact')) return 'Modulo di Contatto';
+    if (prompt.toLowerCase().includes('lead')) return 'Genera Lead';
+    if (prompt.toLowerCase().includes('newsletter')) return 'Iscrizione Newsletter';
+    if (prompt.toLowerCase().includes('quote')) return 'Richiedi Preventivo';
+    return 'Modulo Personalizzato';
+  }
+
+  // Ottimizza form esistente per conversione
+  async optimizeFormForConversion(currentForm: FormConfiguration): Promise<FormConfiguration> {
+    try {
+      const optimizationPrompt = `
+Ottimizza questo form per massimizzare la conversione:
+${JSON.stringify(currentForm, null, 2)}
+
+Applica best practices per UX e conversion rate optimization.
 `;
 
-    try {
-      const model = this.geminiAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-      const result = await model.generateContent(prompt);
-      const response = result.response.text();
-      
-      // Parse JSON response
-      const formData = JSON.parse(response);
-      
-      // Log for analytics
-      await this.logFormGeneration(request, formData);
-      
-      return formData;
-      
+      const response = await invokeSupabaseFunction('generate-form-fields', {
+        prompt: optimizationPrompt,
+        context: { currentForm },
+        organization_id: this.organizationId
+      });
+
+      return this.transformToFormConfiguration(response, 'Form Ottimizzato');
     } catch (error) {
-      console.error('FormMaster AI Error:', error);
-      throw new Error('Impossibile generare il form. Riprova tra poco.');
+      console.error('Errore nell\'ottimizzazione del form:', error);
+      return currentForm; // Ritorna il form originale in caso di errore
     }
   }
 
-  private async logFormGeneration(request: any, result: any) {
-    // Track usage for analytics
-    await invokeSupabaseFunction('track-ai-usage', {
-      agent: 'FormMaster',
-      action: 'form_generation',
-      input_tokens: request.userPrompt.length,
-      output_tokens: JSON.stringify(result).length,
-      success: true
-    });
+  // Genera form per WordPress/Kadence
+  async generateWordPressForm(prompt: string): Promise<string> {
+    const formConfig = await this.generateIntelligentForm(prompt);
+    return this.generateKadenceShortcode(formConfig);
+  }
+
+  private generateKadenceShortcode(config: FormConfiguration): string {
+    const fields = config.fields.map(field => {
+      let shortcode = `[kadence_form_field type="${field.type}" label="${field.label}" name="${field.name}"`;
+      
+      if (field.required) shortcode += ' required="true"';
+      if (field.placeholder) shortcode += ` placeholder="${field.placeholder}"`;
+      if (field.options) shortcode += ` options="${field.options.join(',')}"`;
+      
+      shortcode += ']';
+      return shortcode;
+    }).join('\n');
+
+    return `[kadence_form title="${config.title}" description="${config.description}"]
+${fields}
+[/kadence_form]`;
   }
 }
 
-// Form Field Interface
-interface FormField {
-  name: string;
-  type: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'range';
-  label: string;
-  placeholder?: string;
-  required: boolean;
-  options?: string[]; // for select/radio
-  validation?: string; // regex pattern
-  helpText?: string;
-  step?: number; // for range inputs
-  min?: number;
-  max?: number;
-}
+// Factory per creare istanze RealFormMasterAI
+export const createRealFormMasterAI = (organizationId: string) => {
+  return new RealFormMasterAI(organizationId);
+};

@@ -57,7 +57,7 @@ export function decodeJWT(token: string): JWTClaims | null {
     );
 
     return JSON.parse(jsonPayload);
-  } catch (error) {
+  } catch {
     // diagnosticLogger.error('[JWT Utils] Error decoding JWT:', error);
     return null;
   }

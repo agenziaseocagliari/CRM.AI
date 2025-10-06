@@ -119,13 +119,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 INSERT INTO organizations (
     id,
     name,
-    plan,
     created_at,
     updated_at
 ) VALUES (
     '00000000-0000-4000-8000-000000000001',
     'Test Organization',
-    'free',
     NOW(),
     NOW()
 ) ON CONFLICT (id) DO NOTHING;

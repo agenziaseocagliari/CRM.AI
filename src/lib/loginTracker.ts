@@ -54,7 +54,7 @@ export function recordLoginAttempt(attempt: LoginAttempt): void {
     
     localStorage.setItem(LOGIN_HISTORY_KEY, JSON.stringify(history));
     // diagnosticLogger.info('[Login Tracker] Recorded login attempt:', safeAttempt);
-  } catch (error) {
+  } catch {
     // diagnosticLogger.error('[Login Tracker] Failed to record login attempt:', error);
   }
 }
@@ -67,7 +67,7 @@ export function getLoginHistory(): LoginAttempt[] {
     const stored = localStorage.getItem(LOGIN_HISTORY_KEY);
     if (!stored) {return [];}
     return JSON.parse(stored);
-  } catch (error) {
+  } catch {
     // diagnosticLogger.error('[Login Tracker] Failed to get login history:', error);
     return [];
   }

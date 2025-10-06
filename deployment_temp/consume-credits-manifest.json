@@ -1,0 +1,24 @@
+{
+  "function_name": "consume-credits",
+  "runtime": "deno",
+  "main_module": "index.ts",
+  "description": "Advanced credit consumption system with enterprise security",
+  "environment_variables": {
+    "SUPABASE_URL": "Required - Your Supabase project URL",
+    "SUPABASE_SERVICE_ROLE_KEY": "Required - Your Supabase service role key"
+  },
+  "deployment_instructions": [
+    "1. Open Supabase Dashboard → Edge Functions",
+    "2. Create new function named 'consume-credits'",
+    "3. Upload all files from this directory",
+    "4. Set the environment variables above",
+    "5. Deploy and test the function"
+  ],
+  "security_features": [
+    "JWT token validation",
+    "Organization-based access control",
+    "Credit consumption tracking",
+    "Error handling and logging",
+    "Service role authentication"
+  ]
+}

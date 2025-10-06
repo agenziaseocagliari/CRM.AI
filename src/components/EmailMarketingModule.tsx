@@ -2,7 +2,7 @@
 // Modulo avanzato per email marketing con AI Genius
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Send, Users, BarChart3, Clock, TrendingUp, Settings, Plus, Target, Zap } from 'lucide-react';
+import { Mail, Send, Users, BarChart3, TrendingUp, Settings, Plus, Target } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useEmailGeniusAI } from '../lib/ai/useAIOrchestrator';
@@ -53,7 +53,7 @@ interface EmailMetrics {
 }
 
 const EmailMarketingModule: React.FC = () => {
-  const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
+  useOutletContext<ReturnType<typeof useCrmData>>();
   const { generateEmailCampaign, isProcessing } = useEmailGeniusAI();
   
   // States

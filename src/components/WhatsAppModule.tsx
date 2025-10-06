@@ -2,7 +2,7 @@
 // Modulo avanzato per automazione WhatsApp con AI Butler
 
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, Send, Users, Zap, Clock, TrendingUp, Settings, Plus, Filter, Search } from 'lucide-react';
+import { MessageCircle, Send, Users, Zap, Clock, TrendingUp, Settings, Plus } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useWhatsAppButlerAI } from '../lib/ai/useAIOrchestrator';
@@ -62,7 +62,7 @@ const WhatsAppModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'templates' | 'campaigns' | 'contacts' | 'settings'>('dashboard');
   const [templates, setTemplates] = useState<WhatsAppTemplate[]>([]);
   const [campaigns, setCampaigns] = useState<WhatsAppCampaign[]>([]);
-  const [metrics, setMetrics] = useState<WhatsAppMetrics>({
+  const [metrics] = useState<WhatsAppMetrics>({
     totalSent: 1247,
     deliveryRate: 98.5,
     readRate: 76.8,

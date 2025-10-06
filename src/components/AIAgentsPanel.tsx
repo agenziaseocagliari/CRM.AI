@@ -58,18 +58,6 @@ export default function AIAgentsPanel({ context, contextData, className = '' }: 
     }
   };
 
-  const getAgentIcon = (agentId: string) => {
-    switch (agentId) {
-      case 'form_master': return '📋';
-      case 'email_genius': return '📧';
-      case 'whatsapp_butler': return '💬';
-      case 'calendar_wizard': return '🗓️';
-      case 'analytics_oracle': return '🔮';
-      case 'lead_scorer': return '🎯';
-      default: return '🤖';
-    }
-  };
-
   const getAgentIconComponent = (agentId: string) => {
     switch (agentId) {
       case 'form_master': return Bot;

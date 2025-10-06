@@ -63,7 +63,7 @@ export class AIEngineeringPrompting implements PromptEngineering {
     // Intent Analysis con NLP patterns
     let intent: PromptAnalysis['intent'] = 'help';
     let confidence = 0.5;
-    let entities: string[] = [];
+    const entities: string[] = [];
     let suggestedAgent = 'form_master';
     
     // Pattern Analysis

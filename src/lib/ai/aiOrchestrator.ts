@@ -2,7 +2,6 @@
 // This file defines the AI Agent system that transforms Guardian AI into an enterprise platform
 
 import { isDevelopmentEnterpriseUser, getEffectiveUserTier } from '../enterpriseOverride';
-import { supabase } from '../supabaseClient';
 import { invokeSupabaseFunction } from '../api';
 
 export interface AIAgent {

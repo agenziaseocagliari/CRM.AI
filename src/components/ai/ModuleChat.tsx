@@ -199,30 +199,52 @@ export function ModuleChat({
   };
 
   const formatAgentResponse = (agentId: string, data: unknown): string => {
-    const responseData = data as Record<string, any>;
+    const responseData = data as Record<string, unknown>;
     
     switch (agentId) {
       case 'form_master':
-        if (responseData.formFields && responseData.formFields.length > 0) {
-          return `Ho generato ${responseData.formFields.length} campi per il tuo form. Ecco alcune ottimizzazioni che ho applicato:\n\n• ${responseData.conversionOptimizations?.join('\n• ') || ''}`;
+        if (responseData.formFields && Array.isArray(responseData.formFields)) {
+          return `Ho generato ${responseData.formFields.length} campi per il tuo form. Ecco alcune ottimizzazioni che ho applicato:\n\n• ${Array.isArray(responseData.conversionOptimizations) ? responseData.conversionOptimizations.join('\n• ') : ''}`;
         }
         break;
       case 'email_genius':
-        if (responseData.emailContent) {
-          return `Ho creato una email ottimizzata:\n\n**Subject:** ${responseData.emailContent.subject}\n\n**Personalizzazioni applicate:**\n• ${responseData.personalizations?.join('\n• ') || ''}`;
+        if (responseData.emailContent && typeof responseData.emailContent === 'object') {
+          const emailContent = responseData.emailContent as Record<string, unknown>;
+          return `Ho creato una email ottimizzata:\n\n**Subject:** ${emailContent.subject}\n\n**Personalizzazioni applicate:**\n• ${Array.isArray(responseData.personalizations) ? responseData.personalizations.join('\n• ') : ''}`;
         }
         break;
       case 'whatsapp_butler':
-        return `**Messaggio WhatsApp generato:**\n${responseData.messageTemplate}\n\n**Controlli di compliance:**\n• ${responseData.complianceChecks?.join('\n• ') || ''}`;
+        return `**Messaggio WhatsApp generato:**\n${responseData.messageTemplate}\n\n**Controlli di compliance:**\n• ${Array.isArray(responseData.complianceChecks) ? responseData.complianceChecks.join('\n• ') : ''}`;
       case 'lead_scorer': {
-        return `**Lead Score:** ${responseData.leadScore}/100 (${responseData.category})\n\n**Analisi:** ${responseData.reasoning}\n\n**Raccomandazioni:**\n• ${responseData.recommendations?.join('\n• ') || ''}`;
+        return `**Lead Score:** ${responseData.leadScore}/100 (${responseData.category})\n\n**Analisi:** ${responseData.reasoning}\n\n**Raccomandazioni:**\n• ${Array.isArray(responseData.recommendations) ? responseData.recommendations.join('\n• ') : ''}`;
       }
       case 'analytics_oracle': {
-        const insights = responseData.insights?.map((i: any) => `${i.category}: ${i.description}`).join('\n• ') || '';
-        return `**Insights analitici:**\n• ${insights}\n\n**Raccomandazioni prioritarie:**\n• ${responseData.recommendations?.map((r: any) => r.action).join('\n• ') || ''}`;
+        const insights = Array.isArray(responseData.insights) 
+          ? responseData.insights.map((i: unknown) => {
+              const insight = i as Record<string, unknown>;
+              return `${insight.category}: ${insight.description}`;
+            }).join('\n• ') 
+          : '';
+        const actions = Array.isArray(responseData.recommendations)
+          ? responseData.recommendations.map((r: unknown) => {
+              const rec = r as Record<string, unknown>;
+              return rec.action;
+            }).join('\n• ')
+          : '';
+        return `**Insights analitici:**\n• ${insights}\n\n**Raccomandazioni prioritarie:**\n• ${actions}`;
       }
-      case 'calendar_wizard':
-        return `**Ottimizzazioni calendario:**\n• ${responseData.availabilityInsights?.map((i: any) => i.optimization).join('\n• ') || ''}\n\n**Configurazione booking consigliata:** ${responseData.bookingPageConfig?.recommended_duration || '30 minuti'}`;
+      case 'calendar_wizard': {
+        const optimizations = Array.isArray(responseData.availabilityInsights)
+          ? responseData.availabilityInsights.map((i: unknown) => {
+              const insight = i as Record<string, unknown>;
+              return insight.optimization;
+            }).join('\n• ')
+          : '';
+        const duration = responseData.bookingPageConfig && typeof responseData.bookingPageConfig === 'object'
+          ? (responseData.bookingPageConfig as Record<string, unknown>).recommended_duration || '30 minuti'
+          : '30 minuti';
+        return `**Ottimizzazioni calendario:**\n• ${optimizations}\n\n**Configurazione booking consigliata:** ${duration}`;
+      }
       default:
         return JSON.stringify(data, null, 2);
     }

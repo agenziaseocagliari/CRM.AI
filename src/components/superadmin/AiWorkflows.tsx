@@ -164,9 +164,10 @@ export const AiWorkflows: React.FC = () => {
             toast.success((result as { message?: string }).message || `Workflow "${workflowName}" completato!`, {
                 id: loadingToast,
             });
-        } catch (error: any) {
+        } catch (error: unknown) {
             const endTime = new Date();
-            const errorMessage = error?.error || error?.message || 'Errore sconosciuto';
+            const errorObj = error as { error?: string; message?: string };
+            const errorMessage = errorObj?.error || errorObj?.message || 'Errore sconosciuto';
 
             // Determine if it's a network error or timeout
             const isNetworkError = errorMessage.includes('fetch') || errorMessage.includes('network');
@@ -238,7 +239,7 @@ export const AiWorkflows: React.FC = () => {
             </div>
 
             <p className="text-text-secondary dark:text-dark-text-secondary max-w-3xl">
-                Avvia manualmente i processi AI di back-end per l'analisi dei dati, la manutenzione della piattaforma e le comunicazioni programmate.
+                Avvia manualmente i processi AI di back-end per l&apos;analisi dei dati, la manutenzione della piattaforma e le comunicazioni programmate.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">

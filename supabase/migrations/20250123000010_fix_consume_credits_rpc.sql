@@ -121,5 +121,4 @@ INSERT INTO credit_actions (action_type, credits_cost, description) VALUES
     ('ai_lead_scoring', 3, 'AI lead scoring via LeadScorer')
 ON CONFLICT (action_type) DO NOTHING;
 
--- Grant execute permission to the service role
-GRANT EXECUTE ON FUNCTION consume_credits_rpc TO service_role;
+-- Note: SECURITY DEFINER function runs with creator privileges, no explicit GRANT needed

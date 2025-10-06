@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 import { supabase } from '../../lib/supabaseClient';
@@ -142,13 +142,15 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onToggle, onConfigure, onV
     );
 };
 
-const ConfigurationModal: React.FC<{ 
-    agent: AutomationAgent | null; 
-    isOpen: boolean; 
-    onClose: () => void; 
-    onSave: (config: Record<string, any>) => void;
-}> = ({ agent, isOpen, onClose, onSave }) => {
-    const [config, setConfig] = useState<Record<string, any>>({});
+interface ConfigModalProps {
+    agent: AutomationAgent | null;
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (config: Record<string, unknown>) => void;
+}
+
+const ConfigurationModal: React.FC<ConfigModalProps> = ({ agent, isOpen, onClose, onSave }) => {
+    const [config, setConfig] = useState<Record<string, unknown>>({});
 
     useEffect(() => {
         if (agent) {
@@ -176,11 +178,11 @@ const ConfigurationModal: React.FC<{
                 </div>
 
                 <div className="text-sm text-gray-600 space-y-2">
-                    <p><strong>Canali di Alert:</strong> {config.alert_channels?.join(', ') || config.channels?.join(', ') || 'Non configurati'}</p>
-                    {config.check_interval_minutes && (
+                    <p><strong>Canali di Alert:</strong> {Array.isArray(config.alert_channels) ? config.alert_channels.join(', ') : Array.isArray(config.channels) ? config.channels.join(', ') : 'Non configurati'}</p>
+                    {typeof config.check_interval_minutes === 'number' && (
                         <p><strong>Intervallo Check:</strong> {config.check_interval_minutes} minuti</p>
                     )}
-                    {config.thresholds && (
+                    {typeof config.thresholds === 'object' && config.thresholds && (
                         <div>
                             <p><strong>Soglie:</strong></p>
                             <ul className="ml-4 list-disc">
@@ -219,13 +221,7 @@ const LogsModal: React.FC<{
     const [logs, setLogs] = useState<AgentExecutionLog[]>([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (agent && isOpen) {
-            loadLogs();
-        }
-    }, [agent, isOpen]);
-
-    const loadLogs = async () => {
+    const loadLogs = useCallback(async () => {
         if (!agent) {return;}
         setLoading(true);
         try {
@@ -238,12 +234,19 @@ const LogsModal: React.FC<{
 
             if (error) {throw error;}
             setLogs(data || []);
-        } catch (error: any) {
-            toast.error(`Errore nel caricamento log: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel caricamento log: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
-    };
+    }, [agent]);
+
+    useEffect(() => {
+        if (agent && isOpen) {
+            loadLogs();
+        }
+    }, [agent, isOpen, loadLogs]);
 
     if (!agent) {return null;}
 
@@ -324,8 +327,9 @@ export const AutomationAgents: React.FC = () => {
 
             if (error) {throw error;}
             setAgents(data || []);
-        } catch (error: any) {
-            toast.error(`Errore nel caricamento agenti: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel caricamento agenti: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -343,8 +347,9 @@ export const AutomationAgents: React.FC = () => {
 
             toast.success(`Agente ${agent.is_active ? 'disattivato' : 'attivato'} con successo`);
             loadAgents();
-        } catch (error: any) {
-            toast.error(`Errore: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore: ${errorMessage}`);
         } finally {
             setActionLoading(false);
         }
@@ -360,7 +365,7 @@ export const AutomationAgents: React.FC = () => {
         setLogsModalOpen(true);
     };
 
-    const handleSaveConfiguration = async (config: Record<string, any>) => {
+    const handleSaveConfiguration = async (config: Record<string, unknown>) => {
         if (!selectedAgent) {return;}
 
         setActionLoading(true);
@@ -375,8 +380,9 @@ export const AutomationAgents: React.FC = () => {
             toast.success('Configurazione salvata con successo');
             setConfigModalOpen(false);
             loadAgents();
-        } catch (error: any) {
-            toast.error(`Errore nel salvataggio: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error(`Errore nel salvataggio: ${errorMessage}`);
         } finally {
             setActionLoading(false);
         }

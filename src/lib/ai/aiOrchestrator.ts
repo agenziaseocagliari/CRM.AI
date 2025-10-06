@@ -309,12 +309,61 @@ export class AIOrchestrator {
     const startTime = Date.now();
 
     try {
-      // Call the existing generate-form-fields edge function with Gemini
-      const data = await invokeSupabaseFunction('generate-form-fields', {
+      // TEMPORARY FIX: Use direct fetch instead of invokeSupabaseFunction
+      // to bypass retry logic and session refresh issues (same fix as Forms.tsx)
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL,
+        (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY
+      );
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Sessione non trovata. Ricarica la pagina.');
+      }
+      
+      const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
+      
+      console.log('🔍 AI ORCHESTRATOR - FormMaster Request:', {
         prompt: request.prompt,
         organization_id: request.organizationId,
-        context: request.context
-      }) as FormGenerationResponse;
+        timestamp: new Date().toISOString()
+      });
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-form-fields`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': supabaseAnonKey
+        },
+        body: JSON.stringify({
+          prompt: request.prompt,
+          organization_id: request.organizationId,
+          context: request.context
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('🔍 AI ORCHESTRATOR - FormMaster Error:', {
+          status: response.status,
+          errorText,
+          timestamp: new Date().toISOString()
+        });
+        
+        let errorMessage = `Server error (${response.status})`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json() as FormGenerationResponse;
 
       return {
         success: true,

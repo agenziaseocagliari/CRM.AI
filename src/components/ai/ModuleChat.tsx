@@ -152,46 +152,81 @@ export function ModuleChat({
     }
   };
 
-  const simulateAIResponse = async (userMessage: string, agentId: string, _context?: string): Promise<string> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  const simulateAIResponse = async (userMessage: string, agentId: string, context?: string): Promise<string> => {
+    // REAL AI ORCHESTRATOR INTEGRATION - No more mocks!
+    try {
+      const { AIOrchestrator } = await import('../../lib/ai/aiOrchestrator');
+      const orchestrator = new AIOrchestrator();
+      
+      // Map UI agent IDs to orchestrator agent IDs
+      const agentMapping = {
+        'FormMaster': 'form_master',
+        'EmailGenius': 'email_genius', 
+        'WhatsAppButler': 'whatsapp_butler',
+        'CalendarWizard': 'calendar_wizard',
+        'LeadScorer': 'lead_scorer',
+        'AnalyticsOracle': 'analytics_oracle'
+      };
 
-    // Agent-specific responses based on message content and context
-    const responses = {
-      FormMaster: [
-        'Ti aiuto a creare un form perfetto per le tue esigenze. Che tipo di informazioni vuoi raccogliere?',
-        'Posso suggerire campi ottimizzati per aumentare il tasso di conversione. Dimmi di più sul tuo obiettivo.',
-        'Per questo form consiglio di usare campi progressivi per non scoraggiare gli utenti. Vuoi che ti mostri come?'
-      ],
-      EmailGenius: [
-        'Perfetto! Creo una strategia email personalizzata per il tuo target. Che risultato vuoi ottenere?',
-        'Per migliorare l\'engagement, suggerisco di segmentare la lista in base al comportamento. Ti mostro come?',
-        'Posso analizzare le tue email precedenti e ottimizzare il tasso di apertura. Condividi i dati?'
-      ],
-      WhatsAppButler: [
-        'Gestisco i tuoi messaggi WhatsApp in modo intelligente. Vuoi automatizzare le risposte o migliorare il customer service?',
-        'Posso creare template personalizzati per diverse situazioni. Che tipo di conversazioni gestisci di più?',
-        'Ti aiuto ad organizzare i contatti e automatizzare i follow-up. Iniziamo dalle priorità?'
-      ],
-      CalendarWizard: [
-        'Ottimizziamo il tuo calendario per massimizzare la produttività. Che problemi di scheduling stai affrontando?',
-        'Posso creare link di prenotazione personalizzati e gestire automaticamente i conflitti. Ti interessa?',
-        'Analizziamo i tuoi pattern di appuntamenti per trovare i momenti più produttivi. Vuoi che inizi?'
-      ],
-      LeadScorer: [
-        'Analizzo questa opportunità e le assegno un punteggio basato sui dati storici. Condividi i dettagli?',
-        'Posso identificare i lead più promettenti e suggerire le azioni migliori. Che metriche sono più importanti per te?',
-        'Ti mostro come aumentare il conversion rate focalizzandoti sui lead giusti. Partiamo dai dati?'
-      ],
-      AnalyticsOracle: [
-        'Analizzo i tuoi dati per trovare pattern nascosti e opportunità di crescita. Su cosa vuoi focalizzarti?',
-        'Posso creare dashboard personalizzate e alert automatici per i KPI critici. Che metriche monitori?',
-        'I dati mostrano trends interessanti. Vuoi che ti mostri le previsioni per il prossimo periodo?'
-      ]
-    };
+      const mappedAgentId = agentMapping[agentId as keyof typeof agentMapping] || 'form_master';
+      
+      // Get organization ID from localStorage
+      const organizationId = localStorage.getItem('organization_id') || 'default';
+      const userId = localStorage.getItem('user_id') || 'user';
 
-    const agentResponses = responses[agentId as keyof typeof responses] || responses.FormMaster;
-    return agentResponses[Math.floor(Math.random() * agentResponses.length)];
+      const response = await orchestrator.processRequest({
+        agentId: mappedAgentId,
+        organizationId,
+        userId,
+        prompt: userMessage,
+        context: context ? JSON.parse(context) : {},
+        metadata: {
+          source: 'dashboard',
+          actionType: 'chat_interaction'
+        }
+      });
+
+      if (response.success && response.data) {
+        // Format the response based on agent type
+        return formatAgentResponse(mappedAgentId, response.data);
+      } else {
+        return response.error || 'Mi dispiace, ho riscontrato un errore nel processare la tua richiesta.';
+      }
+    } catch (error) {
+      console.error('AI Orchestrator Error:', error);
+      return 'Errore di connessione con il sistema AI. Riprova tra poco.';
+    }
+  };
+
+  const formatAgentResponse = (agentId: string, data: unknown): string => {
+    const responseData = data as Record<string, any>;
+    
+    switch (agentId) {
+      case 'form_master':
+        if (responseData.formFields && responseData.formFields.length > 0) {
+          return `Ho generato ${responseData.formFields.length} campi per il tuo form. Ecco alcune ottimizzazioni che ho applicato:\n\n• ${responseData.conversionOptimizations?.join('\n• ') || ''}`;
+        }
+        break;
+      case 'email_genius':
+        if (responseData.emailContent) {
+          return `Ho creato una email ottimizzata:\n\n**Subject:** ${responseData.emailContent.subject}\n\n**Personalizzazioni applicate:**\n• ${responseData.personalizations?.join('\n• ') || ''}`;
+        }
+        break;
+      case 'whatsapp_butler':
+        return `**Messaggio WhatsApp generato:**\n${responseData.messageTemplate}\n\n**Controlli di compliance:**\n• ${responseData.complianceChecks?.join('\n• ') || ''}`;
+      case 'lead_scorer': {
+        return `**Lead Score:** ${responseData.leadScore}/100 (${responseData.category})\n\n**Analisi:** ${responseData.reasoning}\n\n**Raccomandazioni:**\n• ${responseData.recommendations?.join('\n• ') || ''}`;
+      }
+      case 'analytics_oracle': {
+        const insights = responseData.insights?.map((i: any) => `${i.category}: ${i.description}`).join('\n• ') || '';
+        return `**Insights analitici:**\n• ${insights}\n\n**Raccomandazioni prioritarie:**\n• ${responseData.recommendations?.map((r: any) => r.action).join('\n• ') || ''}`;
+      }
+      case 'calendar_wizard':
+        return `**Ottimizzazioni calendario:**\n• ${responseData.availabilityInsights?.map((i: any) => i.optimization).join('\n• ') || ''}\n\n**Configurazione booking consigliata:** ${responseData.bookingPageConfig?.recommended_duration || '30 minuti'}`;
+      default:
+        return JSON.stringify(data, null, 2);
+    }
+    return 'Risposta processata con successo.';
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

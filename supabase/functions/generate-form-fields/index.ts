@@ -38,9 +38,22 @@ serve(async (req) => {
         body: { organization_id, action_type: ACTION_TYPE },
     });
 
-    if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
-    if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
-    if (!creditData.success) throw new Error("Crediti insufficienti per generare un form.");
+    console.log(`[${ACTION_TYPE}] Credit verification response:`, { creditData, creditError });
+
+    if (creditError) {
+        console.error(`[${ACTION_TYPE}] Credit verification network error:`, creditError);
+        throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message || creditError}`);
+    }
+    
+    if (creditData && creditData.error) {
+        console.error(`[${ACTION_TYPE}] Credit verification business error:`, creditData.error);
+        throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
+    }
+    
+    if (!creditData || !creditData.success) {
+        console.error(`[${ACTION_TYPE}] Credit verification failed:`, creditData);
+        throw new Error(creditData?.error || "Crediti insufficienti per generare un form.");
+    }
     console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
     // --- Fine Integrazione ---
 

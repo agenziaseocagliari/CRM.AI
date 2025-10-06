@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 FormMaster Diagnostica Semplificata</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .btn:hover { background: #005a9e; }
+        .btn.success { background: #28a745; }
+        .btn.danger { background: #dc3545; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .warning { border-color: #ffc107; background: #fff3cd; }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #007acc; margin-top: 30px; }
+        .step { margin: 20px 0; padding: 15px; border-left: 4px solid #007acc; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 FormMaster Diagnostica Semplificata</h1>
+        <p><strong>Purpose:</strong> Diagnosticare il problema FormMaster usando solo Fetch API</p>
+        
+        <div class="step">
+            <h2>🔑 STEP 1: Environment Check</h2>
+            <button class="btn" onclick="checkEnvironment()">Check Configuration</button>
+            <div id="envResult" class="result">Clicca per verificare configurazione...</div>
+        </div>
+
+        <div class="step">
+            <h2>🔐 STEP 2: Authentication Test</h2>
+            <p>Prima fai login nel CRM principale, poi clicca per testare:</p>
+            <button class="btn" onclick="testAuthentication()">Test Auth Headers</button>
+            <div id="authResult" class="result">Clicca per testare autenticazione...</div>
+        </div>
+
+        <div class="step">
+            <h2>🧪 STEP 3: Edge Function Direct Test</h2>
+            <button class="btn" onclick="testEdgeFunctionDirect()">Test Consume-Credits</button>
+            <button class="btn" onclick="testFormGeneration()">Test Form Generation</button>
+            <div id="edgeResult" class="result">Clicca per testare Edge Functions...</div>
+        </div>
+
+        <div class="step">
+            <h2>🌐 STEP 4: Network Analysis</h2>
+            <button class="btn" onclick="analyzeNetwork()">Analyze Network</button>
+            <div id="networkResult" class="result">Clicca per analizzare la rete...</div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Mzg2NjQsImV4cCI6MjA3MzAxNDY2NH0.kFo4Cj6rrAY4SLcLLwXyTOLi7YhLMHMKSXpqS9RzCmQ';
+        
+        console.log('🚀 FormMaster Diagnostica Inizializzata');
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+        
+        function checkEnvironment() {
+            console.log('🔍 Checking environment...');
+            showResult('envResult', '🔍 Checking environment configuration...', 'info');
+            
+            let result = `ENVIRONMENT CONFIGURATION:\n\n`;
+            result += `✅ SUPABASE_URL: ${SUPABASE_URL}\n`;
+            result += `✅ SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY.substring(0, 50)}...\n\n`;
+            
+            result += `BROWSER INFO:\n`;
+            result += `User Agent: ${navigator.userAgent}\n`;
+            result += `Location: ${window.location.href}\n`;
+            result += `Origin: ${window.location.origin}\n\n`;
+            
+            result += `LOCAL STORAGE:\n`;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                result += `${key}: ${value?.substring(0, 100)}${value?.length > 100 ? '...' : ''}\n`;
+            }
+            
+            result += `\nSESSION STORAGE:\n`;
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                result += `${key}: ${value?.substring(0, 100)}${value?.length > 100 ? '...' : ''}\n`;
+            }
+            
+            showResult('envResult', result, 'success');
+        }
+        
+        async function testAuthentication() {
+            console.log('🔐 Testing authentication...');
+            showResult('authResult', '🔐 Testing authentication headers...', 'info');
+            
+            try {
+                // Get all possible auth tokens from storage
+                const tokens = {
+                    supabase_auth_token: localStorage.getItem('supabase.auth.token'),
+                    sb_auth_token: localStorage.getItem('sb-qjtaqrlpronohgpfdxsi-auth-token'),
+                    access_token: localStorage.getItem('access_token'),
+                    authToken: localStorage.getItem('authToken')
+                };
+                
+                let result = `AUTHENTICATION ANALYSIS:\n\n`;
+                
+                for (const [key, value] of Object.entries(tokens)) {
+                    if (value) {
+                        result += `✅ Found ${key}: ${value.substring(0, 50)}...\n`;
+                        try {
+                            const parsed = JSON.parse(value);
+                            if (parsed.access_token) {
+                                result += `  → Access Token: ${parsed.access_token.substring(0, 50)}...\n`;
+                                result += `  → Expires At: ${parsed.expires_at || 'Not specified'}\n`;
+                            }
+                        } catch (e) {
+                            result += `  → Raw token (not JSON)\n`;
+                        }
+                    } else {
+                        result += `❌ Not found: ${key}\n`;
+                    }
+                }
+                
+                // Try to get the most likely auth token
+                let authToken = null;
+                if (tokens.sb_auth_token) {
+                    try {
+                        const parsed = JSON.parse(tokens.sb_auth_token);
+                        authToken = parsed.access_token;
+                    } catch (e) {}
+                }
+                
+                if (authToken) {
+                    result += `\n🔍 Testing token validity...\n`;
+                    
+                    // Test token with Supabase auth endpoint
+                    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'apikey': SUPABASE_ANON_KEY
+                        }
+                    });
+                    
+                    result += `Auth API Response: ${response.status} ${response.statusText}\n`;
+                    
+                    if (response.ok) {
+                        const user = await response.json();
+                        result += `✅ User authenticated: ${user.id}\n`;
+                        result += `  Email: ${user.email}\n`;
+                        result += `  Role: ${user.role || 'not specified'}\n`;
+                    } else {
+                        const error = await response.text();
+                        result += `❌ Auth failed: ${error}\n`;
+                    }
+                } else {
+                    result += `\n❌ No valid access token found\n`;
+                }
+                
+                showResult('authResult', result, authToken ? 'success' : 'error');
+                
+            } catch (error) {
+                console.error('Auth test error:', error);
+                showResult('authResult', `❌ AUTHENTICATION ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testEdgeFunctionDirect() {
+            console.log('🧪 Testing Edge Function directly...');
+            showResult('edgeResult', '🧪 Testing consume-credits Edge Function...', 'info');
+            
+            try {
+                // Get auth token
+                let authToken = null;
+                const authData = localStorage.getItem('sb-qjtaqrlpronohgpfdxsi-auth-token');
+                if (authData) {
+                    try {
+                        const parsed = JSON.parse(authData);
+                        authToken = parsed.access_token;
+                    } catch (e) {}
+                }
+                
+                if (!authToken) {
+                    showResult('edgeResult', '❌ No auth token found. Please login first.', 'error');
+                    return;
+                }
+                
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action_type: 'ai_form_generation',
+                        credits_required: 1
+                    })
+                });
+                
+                let result = `CONSUME-CREDITS TEST:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+                result += `Headers:\n`;
+                for (const [key, value] of response.headers.entries()) {
+                    result += `  ${key}: ${value}\n`;
+                }
+                
+                const responseText = await response.text();
+                result += `\nResponse Body: ${responseText}\n`;
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        result += `\n✅ Success! Credits consumed: ${data.credits_consumed || 0}\n`;
+                        result += `Remaining credits: ${data.remaining_credits || 'unknown'}\n`;
+                    } catch (e) {
+                        result += `\n⚠️ Response not valid JSON\n`;
+                    }
+                } else {
+                    result += `\n❌ Edge Function failed\n`;
+                }
+                
+                showResult('edgeResult', result, response.ok ? 'success' : 'error');
+                
+            } catch (error) {
+                console.error('Edge function test error:', error);
+                showResult('edgeResult', `❌ EDGE FUNCTION ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFormGeneration() {
+            console.log('🧪 Testing Form Generation...');
+            showResult('edgeResult', '🧪 Testing generate-form-fields Edge Function...', 'info');
+            
+            try {
+                // Get auth token
+                let authToken = null;
+                const authData = localStorage.getItem('sb-qjtaqrlpronohgpfdxsi-auth-token');
+                if (authData) {
+                    try {
+                        const parsed = JSON.parse(authData);
+                        authToken = parsed.access_token;
+                    } catch (e) {}
+                }
+                
+                if (!authToken) {
+                    showResult('edgeResult', '❌ No auth token found. Please login first.', 'error');
+                    return;
+                }
+                
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        formName: 'Test Form',
+                        description: 'Simple test form for diagnostics',
+                        targetAudience: 'developers'
+                    })
+                });
+                
+                let result = `GENERATE-FORM-FIELDS TEST:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+                result += `Headers:\n`;
+                for (const [key, value] of response.headers.entries()) {
+                    result += `  ${key}: ${value}\n`;
+                }
+                
+                const responseText = await response.text();
+                result += `\nResponse Body: ${responseText.substring(0, 1000)}${responseText.length > 1000 ? '...' : ''}\n`;
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        result += `\n✅ Form generation successful!\n`;
+                        result += `Generated ${data.fields?.length || 0} fields\n`;
+                    } catch (e) {
+                        result += `\n⚠️ Response not valid JSON\n`;
+                    }
+                } else {
+                    result += `\n❌ Form generation failed\n`;
+                }
+                
+                showResult('edgeResult', result, response.ok ? 'success' : 'error');
+                
+            } catch (error) {
+                console.error('Form generation test error:', error);
+                showResult('edgeResult', `❌ FORM GENERATION ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function analyzeNetwork() {
+            console.log('🌐 Analyzing network...');
+            showResult('networkResult', '🌐 Analyzing network configuration...', 'info');
+            
+            let result = `NETWORK ANALYSIS:\n\n`;
+            
+            // Test connectivity to Supabase
+            try {
+                const startTime = performance.now();
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                    method: 'HEAD',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY
+                    }
+                });
+                const endTime = performance.now();
+                
+                result += `✅ Supabase connectivity: ${response.status} (${Math.round(endTime - startTime)}ms)\n`;
+            } catch (error) {
+                result += `❌ Supabase connectivity failed: ${error.message}\n`;
+            }
+            
+            // Test Edge Functions endpoint
+            try {
+                const startTime = performance.now();
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/`, {
+                    method: 'HEAD',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY
+                    }
+                });
+                const endTime = performance.now();
+                
+                result += `✅ Edge Functions endpoint: ${response.status} (${Math.round(endTime - startTime)}ms)\n`;
+            } catch (error) {
+                result += `❌ Edge Functions endpoint failed: ${error.message}\n`;
+            }
+            
+            // Browser capabilities
+            result += `\nBROWSER CAPABILITIES:\n`;
+            result += `Fetch API: ${typeof fetch !== 'undefined' ? '✅' : '❌'}\n`;
+            result += `Local Storage: ${typeof localStorage !== 'undefined' ? '✅' : '❌'}\n`;
+            result += `Session Storage: ${typeof sessionStorage !== 'undefined' ? '✅' : '❌'}\n`;
+            result += `WebSockets: ${typeof WebSocket !== 'undefined' ? '✅' : '❌'}\n`;
+            
+            showResult('networkResult', result, 'success');
+        }
+        
+        // Auto-run environment check on load
+        setTimeout(checkEnvironment, 500);
+    </script>
+</body>
+</html>

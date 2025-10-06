@@ -115,7 +115,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create test organization with credits for testing
+-- Create test organization with credits for testing (fixed: removed non-existent plan column)
 INSERT INTO organizations (
     id,
     name,

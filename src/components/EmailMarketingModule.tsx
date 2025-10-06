@@ -7,6 +7,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useEmailGeniusAI } from '../lib/ai/useAIOrchestrator';
 import AIChatEngine from './AIChatEngine';
+import { UniversalAIChat } from './ai/UniversalAIChat';
 
 interface EmailTemplate {
   id: string;
@@ -587,6 +588,17 @@ const EmailMarketingModule: React.FC = () => {
           <p className="text-gray-500">SMTP settings e delivery configuration</p>
         </div>
       )}
+
+      {/* Universal AI Chat - Email Genius */}
+      <UniversalAIChat
+        currentModule="Email"
+        organizationId="demo-org"
+        userId="demo-user"
+        onActionTriggered={(action, data) => {
+          console.log('Email AI Action:', action, data);
+          // Handle AI actions (email creation, campaign optimization, etc.)
+        }}
+      />
     </div>
   );
 };

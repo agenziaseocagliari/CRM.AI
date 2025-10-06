@@ -162,6 +162,201 @@ class EnhancedKnowledgeBaseSystem implements KnowledgeBase {
         usefulness: 9.2
       },
       {
+        title: 'WhatsApp Business - Messaggi Inbound: Gestione Completa',
+        content: `
+        ## 🟢 MESSAGGI INBOUND WHATSAPP - PROTOCOLLO COMPLETO
+
+        ### 📱 **1. TIPOLOGIE MESSAGGI IN ARRIVO**
+        
+        **A) RICHIESTE INFORMAZIONI GENERALI**
+        - "Vorrei sapere di più sui vostri servizi"
+        - "Quanto costa Guardian AI?"
+        - "Avete una demo disponibile?"
+        
+        **B) LEAD QUALIFICATI HOT**  
+        - "Sono interessato, possiamo parlarne?"
+        - "Vorrei un preventivo per [specifica esigenza]"
+        - "Quando possiamo fare una chiamata?"
+        
+        **C) RICHIESTE SUPPORTO TECNICO**
+        - "Non riesco ad accedere al CRM"
+        - "Errore durante l'importazione contatti"
+        - "Come si configura l'automazione?"
+        
+        **D) OBIEZIONI/PREOCCUPAZIONI**
+        - "Avete già un CRM, perché cambiare?"
+        - "Siamo indecisi tra voi e [competitor]"
+        - "Il prezzo mi sembra alto"
+
+        ### ⚡ **2. TEMPI DI RISPOSTA STANDARD**
+        - **HOT LEAD**: < 5 minuti (business hours)
+        - **Info generali**: < 30 minuti
+        - **Supporto tecnico**: < 1 ora
+        - **Follow-up**: < 4 ore
+
+        ### 🎯 **3. TEMPLATE RISPOSTE IMMEDIATE**
+        
+        **SALUTO AUTOMATICO**:
+        "Ciao! 👋 Grazie per il tuo interesse in Guardian AI. Sono [Nome], il tuo consulente dedicato. Come posso aiutarti oggi?"
+        
+        **RICHIESTA INFO**:
+        "Perfetto! Guardian AI è un CRM All-in-One con AI integrata che aiuta aziende come la vostra a aumentare le vendite del 40% 📈. Ti va se ci sentiamo 10 minuti per capire le tue esigenze specifiche?"
+        
+        **SUPPORTO TECNICO**:
+        "Grazie per averci contattato! Mi dispiace per l'inconveniente. Per aiutarti al meglio, potresti inviarmi uno screenshot dell'errore? Nel frattempo controllo il tuo account 🔍"
+
+        ### 📋 **4. CHECKLIST QUALIFICAZIONE RAPIDA**
+        ✅ Nome completo e ruolo
+        ✅ Azienda e settore  
+        ✅ Dimensioni team/fatturato
+        ✅ CRM attuale (se presente)
+        ✅ Pain point principale
+        ✅ Budget indicativo
+        ✅ Timeline decisione
+        ✅ Decision maker?
+
+        ### 🚀 **5. ESCALATION PROTOCOL**
+        - **Lead > €10k**: Notifica immediata Sales Manager
+        - **Cliente existing con problema**: Alert Support Team
+        - **Prospect Enterprise**: Coinvolgere Account Manager
+        - **Richiesta partnership**: Forward Business Development
+        `,
+        category: 'communication',
+        tags: ['whatsapp', 'inbound', 'messaggi', 'protocollo', 'customer-service'],
+        organizationId: 'demo-org',
+        createdBy: 'system',
+        version: 1,
+        aiSummary: 'Protocollo completo per gestione messaggi WhatsApp in arrivo con template e procedure',
+        keyInsights: [
+          'Risposta HOT LEAD entro 5 minuti',  
+          'Qualificazione rapida con 8 punti chiave',
+          'Escalation automatica per lead >€10k'
+        ],
+        relatedTopics: ['customer-service', 'lead-qualification', 'whatsapp-marketing'],
+        usefulness: 9.5
+      },
+      {
+        title: 'WhatsApp Business - Campagne Outbound: Strategia Avanzata',
+        content: `
+        ## 🚀 WHATSAPP OUTBOUND - STRATEGIA COMPLETA
+
+        ### 📊 **1. SEGMENTAZIONE AUDIENCE**
+        
+        **LISTA A - HOT PROSPECTS** (Risposta attesa 20-30%)
+        - Hanno visitato sito > 5 volte ultimo mese
+        - Hanno scaricato contenuti premium  
+        - Hanno interagito sui social
+        - Budget validato > €5k
+        
+        **LISTA B - WARM PROSPECTS** (Risposta attesa 10-15%)
+        - Newsletter subscribers > 3 mesi
+        - Hanno partecipato a webinar/eventi
+        - Collegamenti LinkedIn di 2° grado
+        - Aziende target settore
+        
+        **LISTA C - COLD PROSPECTS** (Risposta attesa 3-7%)
+        - Ricerca database lead
+        - Aziende competitor analysis  
+        - Referenze/passaparola
+        - Liste acquistate (attenzione GDPR!)
+
+        ### 📝 **2. TEMPLATE MESSAGGI OUTBOUND**
+        
+        **APPROCCIO SOFT (Lista B/C)**:
+        "Ciao [Nome] 👋 
+        
+        Ho visto che [azienda] opera nel settore [settore]. Stiamo aiutando aziende simili alla vostra a digitalizzare i processi commerciali con risultati notevoli 📈
+        
+        Ti va di vedere in 2 minuti come [competitors/case study simile] ha aumentato le conversioni del 35%?
+        
+        Nessun impegno, solo valore 🎯"
+        
+        **APPROCCIO DIRETTO (Lista A)**:
+        "Ciao [Nome]! 
+        
+        Ho notato il tuo interesse per soluzioni CRM innovative. Guardian AI sta trasformando il modo in cui aziende come [azienda] gestiscono i clienti.
+        
+        3 clienti nel tuo settore hanno già aumentato il fatturato del 40% 🚀
+        
+        Ti mostro come in una demo di 15 minuti?"
+        
+        **FOLLOW-UP SEQUENCE**:
+        
+        **Giorno +3**: "Ciao [Nome], penso possa interessarti questo case study di [azienda similare] che ha risolto esattamente il problema di [pain point]. [link/documento] 📄"
+        
+        **Giorno +7**: "Última chiamata [Nome] 😊 Se stai ancora valutando soluzioni CRM, abbiamo una promozione speciale che scade venerdì. Interessato ai dettagli?"
+        
+        **Giorno +14**: "Ciao [Nome], immagino tu sia molto impegnato. Ti lascio questo video di 3 minuti che spiega perché aziende come [settore] scelgono Guardian AI: [link]. Buona giornata! ✨"
+
+        ### 📈 **3. METRICHE E KPI**
+        
+        **DELIVERY RATES**:
+        - Target: >95% messaggi consegnati
+        - Monitorare: account non verificati, numeri inesistenti
+        
+        **ENGAGEMENT RATES**:
+        - Lista A: >20% risposta
+        - Lista B: >10% risposta  
+        - Lista C: >5% risposta
+        
+        **CONVERSION FUNNEL**:
+        - Messaggio → Risposta: [target %]
+        - Risposta → Chiamata: [target %]
+        - Chiamata → Demo: [target %]
+        - Demo → Proposta: [target %]
+        - Proposta → Chiusura: [target %]
+
+        ### ⚠️ **4. COMPLIANCE E BEST PRACTICES**
+        
+        **GDPR COMPLIANCE**:
+        ✅ Consenso esplicito per contatti B2C
+        ✅ Interesse legittimo per contatti B2B
+        ✅ Opt-out facile e immediato
+        ✅ Data retention policy chiara
+        
+        **WHATSAPP POLICY**:
+        ✅ Non spam (max 3 messaggi senza risposta)
+        ✅ Valore reale in ogni messaggio
+        ✅ Personalizzazione sempre
+        ✅ Orari appropriati (9-18 giorni lavorativi)
+        
+        **TONE OF VOICE**:
+        - Professionale ma friendly 
+        - Uso moderato emoji (2-3 per messaggio)
+        - Personalizzazione evidente  
+        - Call-to-action chiara
+        - Valore prima di vendita
+
+        ### 🔄 **5. AUTOMAZIONE INTELLIGENTE**
+        
+        **TRIGGER AUTOMATIONS**:
+        - Visita pagina pricing → Messaggio dopo 24h
+        - Download risorsa → Follow-up dopo 3 giorni  
+        - Abbandona carrello → Recupero dopo 1 ora
+        - Demo completata → Proposta dopo 2 giorni
+        
+        **A/B TESTING**:
+        - Subject lines diversi
+        - CTA variations
+        - Timing ottimale
+        - Lunghezza messaggi  
+        - Personalizzazione level
+        `,
+        category: 'communication',
+        tags: ['whatsapp', 'outbound', 'marketing', 'automazione', 'campagne'],
+        organizationId: 'demo-org',
+        createdBy: 'system',
+        version: 1,
+        aiSummary: 'Strategia completa per campagne WhatsApp outbound con segmentazione, template e automazioni',
+        keyInsights: [
+          'Segmentazione su 3 liste con tassi risposta attesi differenziati',
+          'Sequence di follow-up automatizzata su 14 giorni',
+          'Compliance GDPR e WhatsApp policy integrate'
+        ],
+        relatedTopics: ['marketing-automation', 'lead-generation', 'whatsapp-inbound'],
+        usefulness: 9.3
+      },
+      {
         title: 'Template Email di Follow-up Post Demo',
         content: `
         **Subject**: Grazie per il tempo dedicato oggi - [Nome Azienda]

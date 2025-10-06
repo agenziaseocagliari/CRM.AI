@@ -10,6 +10,7 @@ import { CrmEvent } from '../types';
 import { ConnectCalendarPrompt } from './ConnectCalendarPrompt';
 import { DayEventsModal } from './DayEventsModal';
 import { InfoIcon, PlusIcon } from './ui/icons';
+import { UniversalAIChat } from './ai/UniversalAIChat';
 
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
@@ -158,7 +159,7 @@ export const CalendarView: React.FC = () => {
             }
             
         } catch {
-            // L'errore dettagliato è già  gestito e mostrato da invokeSupabaseFunction
+            // L'errore dettagliato ï¿½ giï¿½  gestito e mostrato da invokeSupabaseFunction
             setIsConnecting(false);
         }
     };
@@ -178,7 +179,7 @@ export const CalendarView: React.FC = () => {
                     <div className="mb-4 p-3 bg-red-50 text-red-800 text-sm rounded-md flex items-start space-x-2">
                         <InfoIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                         <span>
-                            La connessione con Google Calendar ha un problema. Le funzionalitÃ  del calendario sono limitate.
+                            La connessione con Google Calendar ha un problema. Le funzionalitï¿½  del calendario sono limitate.
                             {' '}
                             <Link to="/settings" className="font-bold underline hover:text-red-900">
                                 Vai alle impostazioni per riconnettere il tuo account.
@@ -260,6 +261,17 @@ export const CalendarView: React.FC = () => {
                         setConnectionStatus('idle'); // Reset to allow a new check
                     }
                 }}}
+            />
+
+            {/* Universal AI Chat - Calendar Wizard */}
+            <UniversalAIChat
+              currentModule="Calendar"
+              organizationId="demo-org"
+              userId="demo-user"
+              onActionTriggered={(action, data) => {
+                console.log('Calendar AI Action:', action, data);
+                // Handle AI actions (calendar optimization, booking setup, etc.)
+              }}
             />
         </>
     );

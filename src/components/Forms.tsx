@@ -152,6 +152,24 @@ export const Forms: React.FC = () => {
             const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
             const supabaseAnonKey = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
             
+            // DETAILED LOGGING FOR DEBUGGING
+            console.log('🔍 FORMMASTER DEBUG - Request Details:', {
+                url: `${supabaseUrl}/functions/v1/generate-form-fields`,
+                organization_id: organization.id,
+                prompt_length: sanitizedPrompt.length,
+                token_length: session.access_token?.length,
+                token_preview: session.access_token?.substring(0, 30),
+                expires_at: session.expires_at,
+                timestamp: new Date().toISOString()
+            });
+            
+            const requestBody = {
+                prompt: sanitizedPrompt,
+                organization_id: organization.id
+            };
+            
+            console.log('🔍 FORMMASTER DEBUG - Request Body:', requestBody);
+            
             const response = await fetch(`${supabaseUrl}/functions/v1/generate-form-fields`, {
                 method: 'POST',
                 headers: {
@@ -159,20 +177,29 @@ export const Forms: React.FC = () => {
                     'Authorization': `Bearer ${session.access_token}`,
                     'apikey': supabaseAnonKey
                 },
-                body: JSON.stringify({
-                    prompt: sanitizedPrompt,
-                    organization_id: organization.id
-                })
+                body: JSON.stringify(requestBody)
             });
+            
+            console.log('🔍 FORMMASTER DEBUG - Response Status:', response.status);
+            console.log('🔍 FORMMASTER DEBUG - Response Headers:', [...response.headers.entries()]);
             
             if (!response.ok) {
                 const errorText = await response.text();
+                console.error('🔍 FORMMASTER DEBUG - Error Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorText: errorText,
+                    timestamp: new Date().toISOString()
+                });
+                
                 let errorMessage = `Server error (${response.status})`;
                 try {
                     const errorData = JSON.parse(errorText);
                     errorMessage = errorData.error || errorMessage;
+                    console.error('🔍 FORMMASTER DEBUG - Parsed Error:', errorData);
                 } catch {
                     errorMessage = errorText || errorMessage;
+                    console.error('🔍 FORMMASTER DEBUG - Raw Error:', errorText);
                 }
                 throw new Error(errorMessage);
             }

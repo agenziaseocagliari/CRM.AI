@@ -445,6 +445,15 @@
                 const session = JSON.parse(authData);
                 const organizationId = localStorage.getItem('organization_id');
                 
+                // CRITICAL DEBUG: Log exact token details
+                console.log('🔍 DIAGNOSTIC TOOL - Token Details:', {
+                    token_length: session.access_token?.length,
+                    token_preview: session.access_token?.substring(0, 30),
+                    expires_at: session.expires_at,
+                    organization_id: organizationId,
+                    timestamp: new Date().toISOString()
+                });
+                
                 if (!organizationId) {
                     showResult('edgeResult', '❌ No organization_id found. Please login first.', 'error');
                     return;

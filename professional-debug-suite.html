@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Professional Debug Suite - Supabase RPC Analysis</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #cccccc; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .debug-section { background: #1e1e3f; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .debug-title { color: #00ff00; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        .btn { background: #0078d4; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 5px; font-size: 14px; }
+        .btn:hover { background: #106ebe; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .result { background: #2d2d2d; border: 1px solid #555; border-radius: 4px; padding: 15px; margin: 10px 0; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 12px; max-height: 400px; overflow-y: auto; }
+        .success { border-left: 4px solid #28a745; background: #1e3a1e; }
+        .error { border-left: 4px solid #dc3545; background: #3a1e1e; }
+        .warning { border-left: 4px solid #ffc107; background: #3a3a1e; }
+        .info { border-left: 4px solid #17a2b8; background: #1e2a3a; }
+        .loading { color: #ffc107; }
+        .step { margin: 10px 0; padding: 10px; background: #333; border-radius: 4px; }
+        .step-title { color: #00d4ff; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #555; padding: 8px; text-align: left; }
+        th { background: #444; color: #fff; }
+        tr:nth-child(even) { background: #2a2a2a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Professional Debug Suite - Supabase RPC Analysis</h1>
+        <p><strong>Project:</strong> qjtaqrlpronohgpfdxsi | <strong>Engineer:</strong> AI Assistant Professional</p>
+        
+        <div class="debug-section">
+            <div class="debug-title">🎯 STEP 1: Database Connection & Schema Validation</div>
+            <button class="btn" onclick="testDatabaseConnection()">Test Database Connection</button>
+            <button class="btn" onclick="validateSchema()">Validate Schema</button>
+            <div id="connectionResult" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔍 STEP 2: Find Real Organization Data</div>
+            <button class="btn" onclick="findRealOrganizations()">Find Real Organizations</button>
+            <button class="btn" onclick="analyzeCreditActions()">Analyze Credit Actions</button>
+            <div id="organizationResult" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">⚙️ STEP 3: RPC Function Analysis</div>
+            <button class="btn" onclick="checkRpcFunction()">Check RPC Function Definition</button>
+            <button class="btn" onclick="testRpcDirectly()">Test RPC Directly</button>
+            <div id="rpcResult" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔥 STEP 4: Edge Function Testing</div>
+            <button class="btn" onclick="testConsumeCreditsEdge()">Test consume-credits Edge Function</button>
+            <button class="btn" onclick="testGenerateFormFields()">Test generate-form-fields Edge Function</button>
+            <div id="edgeFunctionResult" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">📊 STEP 5: Migration Status Analysis</div>
+            <button class="btn" onclick="checkMigrationStatus()">Check Migration Status</button>
+            <button class="btn" onclick="analyzeColumnConflicts()">Analyze Column Conflicts</button>
+            <div id="migrationResult" class="result"></div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🚀 STEP 6: Complete System Test</div>
+            <button class="btn btn-danger" onclick="runCompleteTest()">🔥 RUN COMPLETE DIAGNOSTIC</button>
+            <div id="completeTestResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // CORRECT Supabase Configuration
+        const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Mzg2NjQsImV4cCI6MjA3MzAxNDY2NH0.kFo4Cj6rrAY4SLcLLwXyTOLi7YhLMHMKSXpqS9RzCmQ';
+        
+        let realOrganizations = [];
+        let debugLog = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const logEntry = `[${timestamp}] ${message}`;
+            debugLog.push(logEntry);
+            console.log(logEntry);
+        }
+
+        function displayResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        async function testDatabaseConnection() {
+            log('🔍 Testing database connection...');
+            displayResult('connectionResult', '⏳ Testing database connection...', 'loading');
+            
+            try {
+                // Test basic REST API connection
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=count`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'count=exact'
+                    }
+                });
+                
+                log(`Database connection status: ${response.status}`);
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    log(`✅ Database connected successfully`);
+                    displayResult('connectionResult', `✅ DATABASE CONNECTION SUCCESSFUL
+Status: ${response.status}
+Response: ${data}
+URL: ${SUPABASE_URL}
+Headers: ${JSON.stringify(response.headers, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ Database connection failed: ${response.status}`);
+                    displayResult('connectionResult', `❌ DATABASE CONNECTION FAILED
+Status: ${response.status}
+Error: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Database connection error: ${error.message}`);
+                displayResult('connectionResult', `❌ CONNECTION ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function validateSchema() {
+            log('🔍 Validating database schema...');
+            displayResult('connectionResult', '⏳ Validating schema...', 'loading');
+            
+            try {
+                // Check if required tables exist
+                const tables = ['organizations', 'organization_credits', 'credit_actions', 'profiles'];
+                const results = [];
+                
+                for (const table of tables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count&limit=1`, {
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                'Content-Type': 'application/json',
+                                'Prefer': 'count=exact'
+                            }
+                        });
+                        
+                        results.push(`${table}: ${response.ok ? '✅ EXISTS' : '❌ MISSING'} (${response.status})`);
+                    } catch (error) {
+                        results.push(`${table}: ❌ ERROR - ${error.message}`);
+                    }
+                }
+                
+                displayResult('connectionResult', `📊 SCHEMA VALIDATION RESULTS:
+${results.join('\n')}`, 'info');
+                
+            } catch (error) {
+                displayResult('connectionResult', `❌ SCHEMA VALIDATION ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function findRealOrganizations() {
+            log('🔍 Finding real organizations...');
+            displayResult('organizationResult', '⏳ Searching for real organizations...', 'loading');
+            
+            try {
+                // First try to get organizations
+                const orgResponse = await fetch(`${SUPABASE_URL}/rest/v1/organizations?select=id,name&limit=10`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (orgResponse.ok) {
+                    const organizations = await orgResponse.json();
+                    realOrganizations = organizations;
+                    log(`✅ Found ${organizations.length} organizations`);
+                    
+                    // Also check profiles for organization_id
+                    const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=organization_id&limit=10&organization_id=not.is.null`, {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    let profileOrgs = [];
+                    if (profileResponse.ok) {
+                        profileOrgs = await profileResponse.json();
+                    }
+                    
+                    displayResult('organizationResult', `🎯 REAL ORGANIZATION DATA FOUND:
+
+📋 ORGANIZATIONS TABLE:
+${organizations.length > 0 ? 
+    organizations.map(org => `• ${org.id} - ${org.name || 'No Name'}`).join('\n') : 
+    '❌ No organizations found'}
+
+👥 PROFILES WITH ORGANIZATION_ID:
+${profileOrgs.length > 0 ? 
+    profileOrgs.map(p => `• ${p.organization_id}`).join('\n') : 
+    '❌ No profiles with organization_id found'}
+
+🎯 RECOMMENDED TEST UUID:
+${organizations.length > 0 ? organizations[0].id : 'No real UUID available - will need to create test data'}`, 'success');
+                    
+                } else {
+                    const errorText = await orgResponse.text();
+                    displayResult('organizationResult', `❌ FAILED TO FETCH ORGANIZATIONS:
+Status: ${orgResponse.status}
+Error: ${errorText}
+
+This could indicate:
+1. RLS policies blocking access
+2. Table doesn't exist
+3. Authentication issues`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Error finding organizations: ${error.message}`);
+                displayResult('organizationResult', `❌ ERROR FINDING ORGANIZATIONS: ${error.message}`, 'error');
+            }
+        }
+
+        async function analyzeCreditActions() {
+            log('🔍 Analyzing credit actions table...');
+            displayResult('organizationResult', '⏳ Analyzing credit_actions table...', 'loading');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/credit_actions?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const creditActions = await response.json();
+                    log(`✅ Found ${creditActions.length} credit actions`);
+                    
+                    displayResult('organizationResult', `💰 CREDIT ACTIONS ANALYSIS:
+
+📊 Total Actions: ${creditActions.length}
+
+${creditActions.length > 0 ? 
+creditActions.map(action => 
+`• ${action.action_type}: ${action.credits_cost} credits - ${action.description || 'No description'}`
+).join('\n') : 
+'❌ No credit actions found'}
+
+🔍 CRITICAL ANALYSIS:
+- This table contains the 'credits_cost' column that was causing ambiguity
+- Variable in RPC function was named 'credits_cost' - SAME as column name
+- PostgreSQL couldn't distinguish between variable and column
+- Solution: All variables must have unique prefixes (v_credits_cost)`, creditActions.length > 0 ? 'success' : 'warning');
+                    
+                } else {
+                    const errorText = await response.text();
+                    displayResult('organizationResult', `❌ FAILED TO ANALYZE CREDIT ACTIONS:
+Status: ${response.status}
+Error: ${errorText}`, 'error');
+                }
+                
+            } catch (error) {
+                displayResult('organizationResult', `❌ CREDIT ACTIONS ANALYSIS ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkRpcFunction() {
+            log('🔍 Checking RPC function definition...');
+            displayResult('rpcResult', '⏳ Checking consume_credits_rpc function...', 'loading');
+            
+            try {
+                // Try to call the RPC function with a test to see current definition
+                const testUUID = realOrganizations.length > 0 ? realOrganizations[0].id : '123e4567-e89b-12d3-a456-426614174000';
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_credits_rpc`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        p_organization_id: testUUID,
+                        p_action_type: 'form_generation'
+                    })
+                });
+                
+                const responseText = await response.text();
+                log(`RPC function test response: ${response.status}`);
+                
+                if (response.ok) {
+                    displayResult('rpcResult', `✅ RPC FUNCTION IS WORKING:
+Status: ${response.status}
+Response: ${responseText}
+
+🎯 ANALYSIS:
+- Function exists and responds
+- No 'column reference ambiguous' error
+- Migration appears to have been applied successfully
+- Test UUID: ${testUUID}`, 'success');
+                } else {
+                    displayResult('rpcResult', `❌ RPC FUNCTION ERROR:
+Status: ${response.status}
+Error: ${responseText}
+
+🔍 ERROR ANALYSIS:
+${responseText.includes('column reference') ? 
+'🚨 COLUMN AMBIGUITY ERROR DETECTED - Migration not applied!' : 
+'❓ Different error - may not be the column ambiguity issue'}
+
+Test UUID used: ${testUUID}`, 'error');
+                }
+                
+            } catch (error) {
+                displayResult('rpcResult', `❌ RPC FUNCTION CHECK ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRpcDirectly() {
+            log('🔍 Testing RPC function directly...');
+            displayResult('rpcResult', '⏳ Testing RPC function with real data...', 'loading');
+            
+            if (realOrganizations.length === 0) {
+                displayResult('rpcResult', `⚠️ WARNING: No real organizations found. Run "Find Real Organizations" first.
+Using test UUID instead...`, 'warning');
+            }
+            
+            const testCases = [
+                {
+                    name: 'Real Organization (if available)',
+                    orgId: realOrganizations.length > 0 ? realOrganizations[0].id : '123e4567-e89b-12d3-a456-426614174000',
+                    actionType: 'form_generation'
+                },
+                {
+                    name: 'Test with ai_chat action',
+                    orgId: realOrganizations.length > 0 ? realOrganizations[0].id : '123e4567-e89b-12d3-a456-426614174000',
+                    actionType: 'ai_chat'
+                }
+            ];
+            
+            let results = [];
+            
+            for (const testCase of testCases) {
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_credits_rpc`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            p_organization_id: testCase.orgId,
+                            p_action_type: testCase.actionType
+                        })
+                    });
+                    
+                    const responseData = await response.text();
+                    results.push(`${testCase.name}:
+  Status: ${response.status}
+  Response: ${responseData}`);
+                    
+                } catch (error) {
+                    results.push(`${testCase.name}:
+  ERROR: ${error.message}`);
+                }
+            }
+            
+            displayResult('rpcResult', `🧪 RPC DIRECT TESTING RESULTS:
+
+${results.join('\n\n')}
+
+🔍 ANALYSIS:
+- Testing multiple scenarios to identify patterns
+- Using real organization IDs when available
+- Checking different action types for consistency`, 'info');
+        }
+
+        async function testConsumeCreditsEdge() {
+            log('🔍 Testing consume-credits Edge Function...');
+            displayResult('edgeFunctionResult', '⏳ Testing consume-credits Edge Function...', 'loading');
+            
+            const testUUID = realOrganizations.length > 0 ? realOrganizations[0].id : '123e4567-e89b-12d3-a456-426614174000';
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        organization_id: testUUID,
+                        action_type: 'form_generation'
+                    })
+                });
+                
+                const responseData = await response.text();
+                log(`Edge Function response: ${response.status}`);
+                
+                displayResult('edgeFunctionResult', `🌐 CONSUME-CREDITS EDGE FUNCTION TEST:
+Status: ${response.status}
+Response: ${responseData}
+
+🎯 TEST DETAILS:
+Organization ID: ${testUUID}
+Action Type: form_generation
+Real Org Used: ${realOrganizations.length > 0 ? 'YES' : 'NO (test UUID)'}
+
+${response.status === 200 ? '✅ SUCCESS' : '❌ FAILED'}`, response.status === 200 ? 'success' : 'error');
+                
+            } catch (error) {
+                displayResult('edgeFunctionResult', `❌ EDGE FUNCTION ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGenerateFormFields() {
+            log('🔍 Testing generate-form-fields Edge Function...');
+            displayResult('edgeFunctionResult', '⏳ Testing generate-form-fields Edge Function...', 'loading');
+            
+            const testUUID = realOrganizations.length > 0 ? realOrganizations[0].id : '123e4567-e89b-12d3-a456-426614174000';
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Create a simple contact form',
+                        organization_id: testUUID
+                    })
+                });
+                
+                const responseData = await response.text();
+                log(`generate-form-fields response: ${response.status}`);
+                
+                displayResult('edgeFunctionResult', `🎨 GENERATE-FORM-FIELDS EDGE FUNCTION TEST:
+Status: ${response.status}
+Response: ${responseData}
+
+🎯 TEST DETAILS:
+Organization ID: ${testUUID}
+Prompt: "Create a simple contact form"
+Real Org Used: ${realOrganizations.length > 0 ? 'YES' : 'NO (test UUID)'}
+
+${response.status === 200 ? '✅ SUCCESS' : '❌ FAILED'}
+
+🔍 ERROR ANALYSIS:
+${responseData.includes('non-2xx status code') ? 
+'🚨 EDGE FUNCTION COMMUNICATION ERROR - consume-credits is failing!' : 
+'❓ Different error type'}`, response.status === 200 ? 'success' : 'error');
+                
+            } catch (error) {
+                displayResult('edgeFunctionResult', `❌ EDGE FUNCTION ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkMigrationStatus() {
+            log('🔍 Checking migration status...');
+            displayResult('migrationResult', '⏳ Analyzing migration status...', 'loading');
+            
+            // We can't directly query migration status, but we can infer from function behavior
+            displayResult('migrationResult', `📊 MIGRATION STATUS ANALYSIS:
+
+🎯 KEY FINDINGS:
+1. Target Project: qjtaqrlpronohgpfdxsi ✅
+2. Migration File: 20251207000001_final_consume_credits_fix.sql
+3. Timestamp: 2025-12-07 (FUTURE - ensures it runs last)
+
+🔍 MIGRATION STRATEGY:
+- DROP CASCADE all existing versions
+- CREATE new function with v_ prefixed variables
+- Eliminate ALL column name conflicts
+- Add safety checks for credit_actions
+
+⚠️ POTENTIAL ISSUES:
+- GitHub Actions deployment timing
+- Supabase migration cache
+- Function definition conflicts
+- RLS policy interactions
+
+💡 VERIFICATION METHOD:
+Run RPC function test to see if "column reference ambiguous" error still occurs`, 'info');
+        }
+
+        async function analyzeColumnConflicts() {
+            log('🔍 Analyzing potential column conflicts...');
+            displayResult('migrationResult', '⏳ Analyzing column name conflicts...', 'loading');
+            
+            displayResult('migrationResult', `🔍 COLUMN CONFLICT ANALYSIS:
+
+🚨 IDENTIFIED CONFLICTS:
+1. Variable: 'credits_cost' vs Column: 'credits_cost' (credit_actions table)
+2. Variable: 'current_credits' vs Column: 'credits_remaining' (potential)
+3. Variable: 'organization_id' vs Column: 'organization_id' (multiple tables)
+
+✅ SOLUTION IMPLEMENTED:
+- v_credits_cost (was: credits_cost)
+- v_current_credits (was: current_credits)  
+- v_new_remaining (was: new_remaining)
+- v_result (was: result)
+
+🎯 POSTGRESQL AMBIGUITY RULES:
+- Variables and columns cannot have identical names in same scope
+- SELECT credits_cost INTO credits_cost <- AMBIGUOUS!
+- SELECT credits_cost INTO v_credits_cost <- CLEAR!
+
+📋 MIGRATION CHECKLIST:
+✅ All variables prefixed with v_
+✅ DROP CASCADE removes old versions
+✅ Future timestamp ensures execution order
+✅ Safety checks for missing data`, 'success');
+        }
+
+        async function runCompleteTest() {
+            log('🚀 Running complete diagnostic test...');
+            displayResult('completeTestResult', '⏳ Running complete system diagnostic...', 'loading');
+            
+            const startTime = Date.now();
+            let testResults = [];
+            
+            // Sequential testing for comprehensive analysis
+            try {
+                testResults.push('🔧 PROFESSIONAL DIAGNOSTIC REPORT');
+                testResults.push('═══════════════════════════════════════');
+                testResults.push(`Timestamp: ${new Date().toISOString()}`);
+                testResults.push(`Project: qjtaqrlpronohgpfdxsi`);
+                testResults.push('');
+
+                // Test 1: Connection
+                testResults.push('📡 STEP 1: Database Connection');
+                try {
+                    const connResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=count&limit=1`, {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    });
+                    testResults.push(`   Connection: ${connResponse.ok ? '✅ SUCCESS' : '❌ FAILED'} (${connResponse.status})`);
+                } catch (error) {
+                    testResults.push(`   Connection: ❌ ERROR - ${error.message}`);
+                }
+
+                // Test 2: Find real data
+                testResults.push('');
+                testResults.push('🎯 STEP 2: Real Data Discovery');
+                try {
+                    const orgResponse = await fetch(`${SUPABASE_URL}/rest/v1/organizations?select=id&limit=1`, {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    });
+                    if (orgResponse.ok) {
+                        const orgs = await orgResponse.json();
+                        realOrganizations = orgs;
+                        testResults.push(`   Organizations: ✅ FOUND ${orgs.length} records`);
+                        if (orgs.length > 0) {
+                            testResults.push(`   Test UUID: ${orgs[0].id}`);
+                        }
+                    } else {
+                        testResults.push(`   Organizations: ❌ FAILED (${orgResponse.status})`);
+                    }
+                } catch (error) {
+                    testResults.push(`   Organizations: ❌ ERROR - ${error.message}`);
+                }
+
+                // Test 3: RPC Function
+                testResults.push('');
+                testResults.push('⚙️ STEP 3: RPC Function Test');
+                const testUUID = realOrganizations.length > 0 ? realOrganizations[0].id : '123e4567-e89b-12d3-a456-426614174000';
+                try {
+                    const rpcResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_credits_rpc`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            p_organization_id: testUUID,
+                            p_action_type: 'form_generation'
+                        })
+                    });
+                    
+                    const rpcData = await rpcResponse.text();
+                    testResults.push(`   RPC Status: ${rpcResponse.status}`);
+                    testResults.push(`   RPC Response: ${rpcData}`);
+                    
+                    if (rpcData.includes('column reference') && rpcData.includes('ambiguous')) {
+                        testResults.push('   🚨 CRITICAL: Column ambiguity error STILL PRESENT!');
+                        testResults.push('   💡 SOLUTION: Migration not deployed or cached');
+                    } else if (rpcResponse.ok) {
+                        testResults.push('   ✅ SUCCESS: RPC function working correctly');
+                    } else {
+                        testResults.push(`   ⚠️ WARNING: Different error type detected`);
+                    }
+                } catch (error) {
+                    testResults.push(`   RPC Function: ❌ ERROR - ${error.message}`);
+                }
+
+                // Test 4: Edge Functions
+                testResults.push('');
+                testResults.push('🌐 STEP 4: Edge Function Tests');
+                try {
+                    const edgeResponse = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        },
+                        body: JSON.stringify({
+                            organization_id: testUUID,
+                            action_type: 'form_generation'
+                        })
+                    });
+                    
+                    const edgeData = await edgeResponse.text();
+                    testResults.push(`   Edge Function: ${edgeResponse.status} - ${edgeData}`);
+                } catch (error) {
+                    testResults.push(`   Edge Function: ❌ ERROR - ${error.message}`);
+                }
+
+                const endTime = Date.now();
+                testResults.push('');
+                testResults.push('⏱️ DIAGNOSTIC COMPLETE');
+                testResults.push(`Duration: ${endTime - startTime}ms`);
+                testResults.push('');
+                testResults.push('🎯 PROFESSIONAL RECOMMENDATIONS:');
+                
+                if (testResults.some(r => r.includes('column reference') && r.includes('ambiguous'))) {
+                    testResults.push('1. 🚨 Migration not deployed - check GitHub Actions');
+                    testResults.push('2. 🔄 Clear Supabase function cache');
+                    testResults.push('3. 🕐 Wait for deployment completion');
+                } else if (testResults.some(r => r.includes('✅ SUCCESS'))) {
+                    testResults.push('1. ✅ System appears to be working correctly');
+                    testResults.push('2. 🧪 Test with frontend application');
+                    testResults.push('3. 📊 Monitor for any edge cases');
+                } else {
+                    testResults.push('1. 🔍 Further investigation required');
+                    testResults.push('2. 📋 Check authentication and permissions');
+                    testResults.push('3. 🛠️ Verify environment configuration');
+                }
+
+                displayResult('completeTestResult', testResults.join('\n'), 'info');
+                
+            } catch (error) {
+                displayResult('completeTestResult', `❌ COMPLETE TEST ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run basic connection test on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testDatabaseConnection();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

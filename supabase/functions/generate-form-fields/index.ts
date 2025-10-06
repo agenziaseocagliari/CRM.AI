@@ -30,8 +30,7 @@ serve(async (req) => {
     // --- Integrazione Sistema a Crediti ---
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
@@ -116,7 +115,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Errore nella funzione generate-form-fields:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

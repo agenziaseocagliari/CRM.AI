@@ -23,7 +23,9 @@ serve(async (req) => {
     if (!action_type) throw new Error("`action_type` è obbligatorio.");
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    console.log(`[consume-credits] Service role key check: ${serviceRoleKey ? 'PRESENT' : 'MISSING'}`);
     if (!serviceRoleKey) {
+        console.error("[consume-credits] CRITICAL: SUPABASE_SERVICE_ROLE_KEY environment variable is missing");
         throw new Error("La variabile d'ambiente SUPABASE_SERVICE_ROLE_KEY non è impostata.");
     }
     

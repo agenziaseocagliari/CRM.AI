@@ -133,9 +133,19 @@ export const Forms: React.FC = () => {
 
         const toastId = toast.loading('Generazione campi in corso...');
         try {
+            console.log('🔍 Debugging form generation request:', {
+                organization_id: organization?.id,
+                organization,
+                prompt_length: sanitizedPrompt.length
+            });
+            
+            if (!organization?.id) {
+                throw new Error('Organization ID non disponibile. Ricarica la pagina e riprova.');
+            }
+            
             const data = await invokeSupabaseFunction('generate-form-fields', { 
                 prompt: sanitizedPrompt,
-                organization_id: organization?.id 
+                organization_id: organization.id 
             });
             
             // Type guard for API response

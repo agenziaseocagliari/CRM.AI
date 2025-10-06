@@ -10,22 +10,22 @@ CREATE OR REPLACE FUNCTION consume_credits_rpc(
     p_action_type TEXT
 ) RETURNS JSON AS $$
 DECLARE
-    credits_cost INTEGER;
+    v_credits_cost INTEGER;
     current_credits INTEGER;
     new_remaining INTEGER;
     result JSON;
 BEGIN
     -- Get the cost for this action type
-    SELECT credits_cost INTO credits_cost
+    SELECT credits_cost INTO v_credits_cost
     FROM credit_actions
     WHERE action_type = p_action_type;
     
     -- If action type doesn't exist, add it with default cost of 1
-    IF credits_cost IS NULL THEN
+    IF v_credits_cost IS NULL THEN
         INSERT INTO credit_actions (action_type, credits_cost, description)
         VALUES (p_action_type, 1, 'Auto-generated action type')
         ON CONFLICT (action_type) DO NOTHING;
-        credits_cost := 1;
+        v_credits_cost := 1;
     END IF;
     
     -- Get current credits for organization FROM CORRECT TABLE
@@ -54,12 +54,12 @@ BEGIN
     END IF;
     
     -- Check if sufficient credits
-    IF current_credits < credits_cost THEN
+    IF current_credits < v_credits_cost THEN
         result := json_build_object(
             'success', false,
             'error', 'Crediti insufficienti',
             'remaining_credits', current_credits,
-            'required_credits', credits_cost
+            'required_credits', v_credits_cost
         );
         
         -- Log failed consumption attempt
@@ -83,7 +83,7 @@ BEGIN
     END IF;
     
     -- Consume credits
-    new_remaining := current_credits - credits_cost;
+    new_remaining := current_credits - v_credits_cost;
     
     UPDATE organization_credits 
     SET credits_remaining = new_remaining,
@@ -100,7 +100,7 @@ BEGIN
     ) VALUES (
         p_organization_id,
         p_action_type,
-        credits_cost,
+        v_credits_cost,
         new_remaining,
         true
     );
@@ -108,7 +108,7 @@ BEGIN
     result := json_build_object(
         'success', true,
         'remaining_credits', new_remaining,
-        'credits_consumed', credits_cost
+        'credits_consumed', v_credits_cost
     );
     
     RETURN result;

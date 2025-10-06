@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 FormMaster Debug - SEMPLIFICATO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #005a9e;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .warning { border-color: #ffc107; background: #fff3cd; }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #007acc; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 FormMaster Debug Tool - SEMPLIFICATO</h1>
+        
+        <h2>🎯 TEST 1: Verifica Connessione Database</h2>
+        <button class="btn" onclick="testDatabase()">Test Database Connection</button>
+        <div id="dbResult" class="result">Clicca il pulsante per testare la connessione al database...</div>
+        
+        <h2>🔧 TEST 2: Verifica Edge Function</h2>
+        <button class="btn" onclick="testEdgeFunction()">Test consume-credits Function</button>
+        <div id="edgeResult" class="result">Clicca il pulsante per testare l'Edge Function...</div>
+        
+        <h2>🚀 TEST 3: Verifica FormMaster</h2>
+        <button class="btn" onclick="testFormMaster()">Test FormMaster Complete</button>
+        <div id="formResult" class="result">Clicca il pulsante per testare FormMaster...</div>
+    </div>
+
+    <script>
+        // Configurazione Supabase
+        const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
+        const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzQzODY2NCwiZXhwIjoyMDczMDE0NjY0fQ.Z5i-lxQGKtKtVbATTd_9uB_Q3HhF5in-kvLW8Tym4z0';
+        
+        console.log('🚀 Debug tool caricato correttamente!');
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+        
+        async function testDatabase() {
+            console.log('🔍 Test database iniziato...');
+            showResult('dbResult', '🔍 Testing database connection...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/organizations?select=id,name,created_at&limit=5`, {
+                    headers: {
+                        'apikey': SERVICE_KEY,
+                        'Authorization': `Bearer ${SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const responseText = await response.text();
+                let result = `DATABASE TEST RESULT:\n`;
+                result += `Status: ${response.status}\n`;
+                result += `Status Text: ${response.statusText}\n`;
+                result += `Response: ${responseText.substring(0, 500)}...\n`;
+                
+                if (response.status === 200) {
+                    result += `\n✅ SUCCESS! Database connection working!`;
+                    showResult('dbResult', result, 'success');
+                } else {
+                    result += `\n❌ FAILED! Database connection issue.`;
+                    showResult('dbResult', result, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Database test error:', error);
+                showResult('dbResult', `❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testEdgeFunction() {
+            console.log('🔧 Test Edge Function iniziato...');
+            showResult('edgeResult', '🔧 Testing consume-credits Edge Function...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SERVICE_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        organization_id: 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e',
+                        credits_to_consume: 1,
+                        action_type: 'form_generation'
+                    })
+                });
+                
+                const responseText = await response.text();
+                let result = `EDGE FUNCTION TEST RESULT:\n`;
+                result += `Status: ${response.status}\n`;
+                result += `Status Text: ${response.statusText}\n`;
+                result += `Response: ${responseText}\n`;
+                
+                if (response.status === 200 || response.status === 201) {
+                    result += `\n✅ SUCCESS! Edge Function working!`;
+                    showResult('edgeResult', result, 'success');
+                } else {
+                    result += `\n❌ FAILED! Edge Function issue.`;
+                    showResult('edgeResult', result, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Edge Function test error:', error);
+                showResult('edgeResult', `❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFormMaster() {
+            console.log('🚀 Test FormMaster iniziato...');
+            showResult('formResult', '🚀 Testing FormMaster complete chain...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SERVICE_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Create a simple contact form with name, email, and message fields',
+                        organization_id: 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e'
+                    })
+                });
+                
+                const responseText = await response.text();
+                let result = `FORMMASTER TEST RESULT:\n`;
+                result += `Status: ${response.status}\n`;
+                result += `Status Text: ${response.statusText}\n`;
+                result += `Response: ${responseText}\n`;
+                
+                if (response.status === 200 || response.status === 201) {
+                    result += `\n✅ SUCCESS! FormMaster working perfectly!`;
+                    showResult('formResult', result, 'success');
+                } else {
+                    result += `\n❌ FAILED! This matches your reported error.`;
+                    showResult('formResult', result, 'error');
+                }
+                
+            } catch (error) {
+                console.error('FormMaster test error:', error);
+                showResult('formResult', `❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test di caricamento
+        console.log('✅ Tutte le funzioni caricate correttamente!');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOM caricato, tool pronto per l\'uso!');
+        });
+    </script>
+</body>
+</html>

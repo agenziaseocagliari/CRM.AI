@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase CDN Test</title>
+</head>
+<body>
+    <h1>Supabase CDN Test</h1>
+    <div id="result"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/dist/umd/supabase.min.js"></script>
+    <script>
+        function logResult(message) {
+            document.getElementById('result').innerHTML += message + '<br>';
+            console.log(message);
+        }
+        
+        logResult('Testing Supabase CDN loading...');
+        
+        setTimeout(() => {
+            logResult('Window object keys: ' + Object.keys(window).filter(k => k.toLowerCase().includes('supabase')));
+            logResult('window.supabase: ' + typeof window.supabase);
+            
+            if (window.supabase) {
+                logResult('window.supabase properties: ' + Object.keys(window.supabase));
+                if (window.supabase.createClient) {
+                    logResult('✅ window.supabase.createClient exists');
+                    try {
+                        const client = window.supabase.createClient('test', 'test');
+                        logResult('✅ Client creation successful: ' + typeof client);
+                    } catch (error) {
+                        logResult('❌ Client creation failed: ' + error.message);
+                    }
+                } else {
+                    logResult('❌ window.supabase.createClient not found');
+                }
+            } else {
+                logResult('❌ window.supabase not found');
+            }
+            
+            // Check for global createClient
+            if (typeof createClient !== 'undefined') {
+                logResult('✅ Global createClient found');
+            } else {
+                logResult('❌ Global createClient not found');
+            }
+        }, 500);
+    </script>
+</body>
+</html>

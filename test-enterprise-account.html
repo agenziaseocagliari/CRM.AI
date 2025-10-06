@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Enterprise Account Test - webproseoid@gmail.com</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #cccccc; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .section { background: #1e1e3f; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .title { color: #00ff00; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        .btn { background: #0078d4; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #106ebe; }
+        .result { background: #2d2d2d; border: 1px solid #555; border-radius: 4px; padding: 15px; margin: 10px 0; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 12px; max-height: 400px; overflow-y: auto; }
+        .success { border-left: 4px solid #28a745; background: #1e3a1e; }
+        .error { border-left: 4px solid #dc3545; background: #3a1e1e; }
+        .info { border-left: 4px solid #17a2b8; background: #1e2a3a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Enterprise Account Debug - webproseoid@gmail.com</h1>
+        
+        <div class="section">
+            <div class="title">🎯 STEP 1: Find Enterprise Account</div>
+            <button class="btn" onclick="findEnterpriseAccount()">Find webproseoid@gmail.com Account</button>
+            <div id="accountResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <div class="title">🔧 STEP 2: Test consume-credits Function</div>
+            <button class="btn" onclick="testConsumeCredits()">Test consume-credits Edge Function</button>
+            <div id="creditsResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <div class="title">🚀 STEP 3: Test FormMaster Chain</div>
+            <button class="btn" onclick="testFormMaster()">Test Complete FormMaster Chain</button>
+            <div id="formResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Mzg2NjQsImV4cCI6MjA3MzAxNDY2NH0.kFo4Cj6rrAY4SLcLLwXyTOLi7YhLMHMKSXpqS9RzCmQ';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzQzODY2NCwiZXhwIjoyMDczMDE0NjY0fQ.Z5i-lxQGKtKtVbATTd_9uB_Q3HhF5in-kvLW8Tym4z0';
+        
+        let enterpriseOrgId = null;
+
+        function displayResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = content;
+            element.className = `result ${type}`;
+        }
+
+        async function findEnterpriseAccount() {
+            displayResult('accountResult', '🔍 Searching for webproseoid@gmail.com account...', 'info');
+            
+            try {
+                // Search for user by email
+                const userResponse = await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.webproseoid@gmail.com&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const userData = await userResponse.text();
+                let resultText = `🔍 USER SEARCH RESULT:\nStatus: ${userResponse.status}\nResponse: ${userData}\n\n`;
+
+                // Search for organization by user email or name
+                const orgResponse = await fetch(`${SUPABASE_URL}/rest/v1/organizations?or=(owner_email.eq.webproseoid@gmail.com,name.ilike.*webproseo*)&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const orgData = await orgResponse.text();
+                resultText += `🏢 ORGANIZATION SEARCH RESULT:\nStatus: ${orgResponse.status}\nResponse: ${orgData}\n\n`;
+
+                // Try to find any organizations
+                const allOrgsResponse = await fetch(`${SUPABASE_URL}/rest/v1/organizations?select=*&limit=10`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const allOrgsData = await allOrgsResponse.text();
+                resultText += `📋 ALL ORGANIZATIONS (first 10):\nStatus: ${allOrgsResponse.status}\nResponse: ${allOrgsData}`;
+
+                // Try to parse and find the enterprise org
+                try {
+                    const orgs = JSON.parse(allOrgsData);
+                    if (Array.isArray(orgs) && orgs.length > 0) {
+                        // Look for enterprise account
+                        const enterpriseOrg = orgs.find(org => 
+                            org.owner_email === 'webproseoid@gmail.com' || 
+                            org.name?.toLowerCase().includes('webproseo') ||
+                            org.subscription_type === 'enterprise'
+                        );
+                        
+                        if (enterpriseOrg) {
+                            enterpriseOrgId = enterpriseOrg.id;
+                            resultText += `\n\n✅ FOUND ENTERPRISE ORG: ${enterpriseOrg.id}`;
+                        } else {
+                            // Take the first org for testing
+                            enterpriseOrgId = orgs[0].id;
+                            resultText += `\n\n⚠️ Using first available org for testing: ${orgs[0].id}`;
+                        }
+                    }
+                } catch (e) {
+                    resultText += `\n\n❌ Error parsing organizations: ${e.message}`;
+                }
+
+                displayResult('accountResult', resultText, 'success');
+                
+            } catch (error) {
+                displayResult('accountResult', `❌ ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function testConsumeCredits() {
+            if (!enterpriseOrgId) {
+                displayResult('creditsResult', '⚠️ Please find enterprise account first!', 'warning');
+                return;
+            }
+
+            displayResult('creditsResult', '🔧 Testing consume-credits Edge Function...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        organization_id: enterpriseOrgId,
+                        action_type: 'ai_form_generation'
+                    })
+                });
+                
+                const responseText = await response.text();
+                
+                let resultText = `🔧 CONSUME-CREDITS TEST RESULT:\n`;
+                resultText += `Status: ${response.status}\n`;
+                resultText += `Status Text: ${response.statusText}\n`;
+                resultText += `Response: ${responseText}\n\n`;
+                
+                if (response.status === 200 || response.status === 201) {
+                    resultText += `✅ SUCCESS! consume-credits is working!`;
+                    displayResult('creditsResult', resultText, 'success');
+                } else {
+                    resultText += `❌ FAILED! This is the root cause of FormMaster error.`;
+                    displayResult('creditsResult', resultText, 'error');
+                }
+                
+            } catch (error) {
+                displayResult('creditsResult', `❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFormMaster() {
+            if (!enterpriseOrgId) {
+                displayResult('formResult', '⚠️ Please find enterprise account first!', 'warning');
+                return;
+            }
+
+            displayResult('formResult', '🚀 Testing complete FormMaster chain...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Create a simple contact form with name, email, and message fields',
+                        organization_id: enterpriseOrgId
+                    })
+                });
+                
+                const responseText = await response.text();
+                
+                let resultText = `🚀 FORMMASTER COMPLETE TEST:\n`;
+                resultText += `Status: ${response.status}\n`;
+                resultText += `Status Text: ${response.statusText}\n`;
+                resultText += `Response: ${responseText}\n\n`;
+                
+                if (response.status === 200 || response.status === 201) {
+                    resultText += `✅ SUCCESS! FormMaster is working perfectly!`;
+                    displayResult('formResult', resultText, 'success');
+                } else {
+                    resultText += `❌ FAILED! This matches your reported error.`;
+                    displayResult('formResult', resultText, 'error');
+                }
+                
+            } catch (error) {
+                displayResult('formResult', `❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

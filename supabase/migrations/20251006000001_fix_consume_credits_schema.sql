@@ -115,32 +115,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create test organization with credits for testing (fixed: removed non-existent plan column)
-INSERT INTO organizations (
-    id,
-    name,
-    created_at,
-    updated_at
-) VALUES (
-    '00000000-0000-4000-8000-000000000001',
-    'Test Organization',
-    NOW(),
-    NOW()
-) ON CONFLICT (id) DO NOTHING;
-
--- Create credits entry for test organization
-INSERT INTO organization_credits (
-    organization_id, 
-    plan_name, 
-    total_credits, 
-    credits_remaining,
-    cycle_start_date,
-    cycle_end_date
-) VALUES (
-    '00000000-0000-4000-8000-000000000001',
-    'free',
-    100,
-    100,
-    NOW(),
-    NOW() + INTERVAL '30 days'
-) ON CONFLICT (organization_id) DO NOTHING;
+-- Note: Test organization creation removed due to trigger conflicts
+-- Organizations will be created through normal application flow
+-- The important fix is the consume_credits_rpc function above

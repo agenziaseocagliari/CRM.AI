@@ -13,6 +13,12 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   console.log(`[consume-credits] Edge Function invoked.`);
+  console.log(`[consume-credits] Request headers:`, {
+    hasAuthorization: !!req.headers.get("Authorization"),
+    hasApiKey: !!req.headers.get("apikey"),
+    contentType: req.headers.get("Content-Type"),
+    authPreview: req.headers.get("Authorization")?.substring(0, 30) || 'none'
+  });
 
   try {
     const payload = await req.json();
@@ -58,8 +64,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Errore nella funzione `consume-credits`:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Errore nella funzione `consume-credits`:", errorMessage);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

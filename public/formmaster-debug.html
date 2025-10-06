@@ -74,6 +74,7 @@
             <button class="btn" onclick="testEdgeFunctionDirect()">Test Consume-Credits</button>
             <button class="btn" onclick="testFormGeneration()">Test Form Generation</button>
             <button class="btn danger" onclick="testWithHardcodedToken()">🚨 Test with Known Token</button>
+            <button class="btn warning" onclick="testRealAppFlow()">🔍 Test Real App Flow</button>
             <div id="edgeResult" class="result">Clicca per testare Edge Functions...</div>
         </div>
 
@@ -425,6 +426,79 @@
             } catch (error) {
                 console.error('Hardcoded token test error:', error);
                 showResult('edgeResult', `❌ HARDCODED TOKEN TEST ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testRealAppFlow() {
+            console.log('🔍 Testing real app flow simulation...');
+            showResult('edgeResult', '🔍 Testing real app flow with current session...', 'warning');
+            
+            try {
+                // Simulate exactly what the main app does
+                // 1. Get session from current storage
+                const authData = localStorage.getItem('sb-qjtaqrlpronohgpfdxsi-auth-token');
+                if (!authData) {
+                    showResult('edgeResult', '❌ No auth session found. Please login first.', 'error');
+                    return;
+                }
+                
+                const session = JSON.parse(authData);
+                const organizationId = localStorage.getItem('organization_id');
+                
+                if (!organizationId) {
+                    showResult('edgeResult', '❌ No organization_id found. Please login first.', 'error');
+                    return;
+                }
+                
+                // 2. Make the exact same call as the main app
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Form di contatto con nome, email e telefono',
+                        organization_id: organizationId
+                    })
+                });
+                
+                let result = `REAL APP FLOW TEST:\n\n`;
+                result += `Request Details:\n`;
+                result += `- Organization ID: ${organizationId}\n`;
+                result += `- Token expires: ${session.expires_at || 'unknown'}\n`;
+                result += `- Token length: ${session.access_token?.length || 0}\n\n`;
+                
+                result += `Response:\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+                result += `Headers:\n`;
+                for (const [key, value] of response.headers.entries()) {
+                    result += `  ${key}: ${value}\n`;
+                }
+                
+                const responseText = await response.text();
+                result += `\nResponse Body: ${responseText}\n`;
+                
+                if (response.ok) {
+                    result += `\n✅ Real app flow successful!\n`;
+                    try {
+                        const data = JSON.parse(responseText);
+                        if (data.fields) {
+                            result += `Generated ${data.fields.length} fields\n`;
+                        }
+                    } catch (e) {
+                        result += `Warning: Could not parse response JSON\n`;
+                    }
+                } else {
+                    result += `\n❌ Real app flow failed - SAME ERROR AS PRODUCTION!\n`;
+                }
+                
+                showResult('edgeResult', result, response.ok ? 'success' : 'error');
+                
+            } catch (error) {
+                console.error('Real app flow test error:', error);
+                showResult('edgeResult', `❌ REAL APP FLOW ERROR: ${error.message}`, 'error');
             }
         }
         

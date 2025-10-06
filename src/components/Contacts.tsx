@@ -8,7 +8,7 @@ import { invokeSupabaseFunction } from '../lib/api';
 import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
 import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
-import { ModuleChat } from './ai/ModuleChat';
+import { UniversalAIChat } from './ai/UniversalAIChat';
 
 import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
 import { CreateEventModal } from './CreateEventModal';
@@ -532,21 +532,15 @@ export const Contacts: React.FC = () => {
                 />
             </Modal>
 
-            {/* AnalyticsOracle AI Chat for Contacts */}
-            <ModuleChat
-                moduleName="Contacts"
-                agentId="AnalyticsOracle"
-                agentName="AnalyticsOracle"
-                agentColor="from-teal-500 to-blue-500"
-                placeholder="Chiedi ad AnalyticsOracle di analizzare i tuoi contatti..."
-                welcomeMessage="Ciao! Sono AnalyticsOracle 📊 Analizzo i dati dei tuoi contatti per trovare pattern, segmentazioni intelligenti e opportunità nascoste. Cosa vuoi scoprire sui tuoi contatti?"
-                systemContext="Sei AnalyticsOracle, un esperto nell'analisi dei dati dei contatti e nella segmentazione intelligente. Aiuti gli utenti a identificare pattern comportamentali, creare segmenti di valore e ottimizzare le strategie di engagement basate sui dati."
-                onMessageSent={(message) => {
-                    console.log('User message to AnalyticsOracle (Contacts):', message);
-                }}
-                onAIResponse={(response) => {
-                    console.log('AnalyticsOracle response (Contacts):', response);
-                }}
+            {/* Universal AI Chat - Analytics Oracle */}
+            <UniversalAIChat
+              currentModule="Contacts"
+              organizationId="demo-org"
+              userId="demo-user"
+              onActionTriggered={(action, data) => {
+                console.log('Contacts AI Action:', action, data);
+                // Handle AI actions (contact analysis, segmentation, etc.)
+              }}
             />
         </>
     );

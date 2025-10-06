@@ -6,7 +6,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
 import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
-import { ModuleChat } from './ai/ModuleChat';
+import { UniversalAIChat } from './ai/UniversalAIChat';
 
 import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
@@ -343,21 +343,15 @@ export const Opportunities: React.FC = () => {
         </div>
       </Modal>
 
-      {/* LeadScorer AI Chat */}
-      <ModuleChat
-          moduleName="Opportunities"
-          agentId="LeadScorer"
-          agentName="LeadScorer"
-          agentColor="from-indigo-500 to-purple-500"
-          placeholder="Chiedi a LeadScorer di analizzare i tuoi lead..."
-          welcomeMessage="Ciao! Sono LeadScorer 🎯 Analizzo le tue opportunità e ti aiuto a identificare i lead più promettenti. Vuoi che analizzi le tue opportunità attuali?"
-          systemContext="Sei LeadScorer, un esperto nell'analisi delle opportunità di vendita e nel scoring dei lead. Aiuti gli utenti a prioritizzare le opportunità, migliorare i tassi di conversione e ottimizzare il processo di vendita."
-          onMessageSent={(message) => {
-              console.log('User message to LeadScorer:', message);
-          }}
-          onAIResponse={(response) => {
-              console.log('LeadScorer response:', response);
-          }}
+      {/* Universal AI Chat - Lead Scorer */}
+      <UniversalAIChat
+        currentModule="Opportunities"
+        organizationId="demo-org"
+        userId="demo-user"
+        onActionTriggered={(action, data) => {
+          console.log('Opportunities AI Action:', action, data);
+          // Handle AI actions (lead scoring, opportunity analysis, etc.)
+        }}
       />
     </>
   );

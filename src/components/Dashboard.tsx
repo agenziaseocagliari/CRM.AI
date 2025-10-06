@@ -6,6 +6,7 @@ import { Opportunity, PipelineStage } from '../types';
 import { SessionHealthIndicator } from './SessionHealthIndicator';
 import { Card } from './ui/Card';
 import { CheckCircleIcon, DollarSignIcon, TrendingUpIcon, UsersIcon } from './ui/icons';
+import { UniversalAIChat } from './ai/UniversalAIChat';
 
 
 
@@ -113,8 +114,16 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-
-
+      {/* Universal AI Chat - Dashboard Analytics */}
+      <UniversalAIChat
+        currentModule="Dashboard"
+        organizationId="demo-org"
+        userId="demo-user"
+        onActionTriggered={(action, data) => {
+          console.log('Dashboard AI Action:', action, data);
+          // Handle AI actions (analytics, reports, insights, etc.)
+        }}
+      />
 
     </div>
   );

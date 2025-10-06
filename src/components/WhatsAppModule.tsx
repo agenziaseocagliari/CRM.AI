@@ -6,6 +6,7 @@ import { MessageCircle, Send, Users, Zap, Clock, TrendingUp, Settings, Plus, Fil
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useWhatsAppButlerAI } from '../lib/ai/useAIOrchestrator';
+import { UniversalAIChat } from './ai/UniversalAIChat';
 
 interface WhatsAppTemplate {
   id: string;
@@ -507,6 +508,17 @@ const WhatsAppModule: React.FC = () => {
           <p className="text-gray-500">Configurazione API e webhook</p>
         </div>
       )}
+
+      {/* Universal AI Chat - WhatsApp Butler */}
+      <UniversalAIChat
+        currentModule="WhatsApp"
+        organizationId={contextData?.organization?.id || 'demo-org'}
+        userId="demo-user"
+        onActionTriggered={(action, data) => {
+          console.log('WhatsApp AI Action:', action, data);
+          // Handle AI actions (template creation, campaign setup, etc.)
+        }}
+      />
     </div>
   );
 };

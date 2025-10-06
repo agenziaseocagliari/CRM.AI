@@ -169,9 +169,25 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         if (orgId) {
             finalPayload.organization_id = orgId;
         } else if (isSuperAdmin) {
-            // Super admin can make API calls without organization_id or with "ALL"
-            diagnosticLogger.info(`[API Helper] Super Admin detected - organization_id validation skipped for '${functionName}'.`);
-            finalPayload.organization_id = 'ALL';
+            // Super admin: use first available organization instead of "ALL"
+            diagnosticLogger.info(`[API Helper] Super Admin detected - using first available organization for '${functionName}'.`);
+            try {
+                const { data: firstOrg } = await supabase
+                    .from('organizations')
+                    .select('id')
+                    .limit(1)
+                    .single();
+                
+                if (firstOrg) {
+                    finalPayload.organization_id = firstOrg.id;
+                    diagnosticLogger.info(`[API Helper] Super Admin using organization: ${firstOrg.id}`);
+                } else {
+                    throw new Error('Nessuna organizzazione disponibile per il super admin');
+                }
+            } catch (error) {
+                diagnosticLogger.error('[API Helper] Failed to get organization for super admin:', error);
+                throw new Error('Impossibile ottenere organizzazione per super admin');
+            }
         }
     }
 

@@ -33,9 +33,17 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Ensure Authorization header is properly passed
+    const authHeader = req.headers.get("Authorization");
+    console.log(`[${ACTION_TYPE}] Authorization header check:`, { 
+      hasAuth: !!authHeader, 
+      authLength: authHeader?.length || 0,
+      authPreview: authHeader?.substring(0, 20) || 'none'
+    });
+
     const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
       body: { organization_id, action_type: ACTION_TYPE },
-      headers: { Authorization: req.headers.get("Authorization") || "" }
+      headers: authHeader ? { Authorization: authHeader } : {}
     });
 
     console.log(`[${ACTION_TYPE}] Credit verification response:`, { creditData, creditError });

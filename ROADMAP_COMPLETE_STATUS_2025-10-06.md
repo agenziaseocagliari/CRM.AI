@@ -1,24 +1,35 @@
 # 🚀 CRM-AI ROADMAP & STATUS REPORT
-**Data:** 6 Ottobre 2025  
+**Data:** 6 Ottobre 2025 - **AGGIORNATO 18:50**  
 **Progetto:** Guardian AI CRM  
 **Supabase Project:** qjtaqrlpronohgpfdxsi  
 **Repository:** seo-cagliari/CRM-AI  
 
 ---
 
-## 📋 EXECUTIVE SUMMARY
+## 📋 EXECUTIVE SUMMARY - AGGIORNATO
 
-### 🎯 **PROBLEMA PRINCIPALE IDENTIFICATO**
-**Root Cause:** PostgreSQL Column Ambiguity Error nel sistema di crediti
-- **Errore:** `column reference "credits_cost" is ambiguous`
-- **Impatto:** Impossibilità di generare form AI (Edge Function failures)
-- **Causa:** Variabile locale `credits_cost` conflitto con colonna database `credits_cost`
+### 🔥 **PROBLEMA CRITICO IN CORSO**
+**Root Cause EVOLUTO:** Edge Function Authentication + Deploy Pipeline Failures
+- **Errore Primario:** `Edge Function returned a non-2xx status code` in generate-form-fields
+- **Errore Secondario:** GitHub Actions deployment failures con ESM bundling
+- **Impatto:** Form generation completamente non funzionante in produzione
+- **Causa ROOT:** Autenticazione tra Edge Functions + configurazione deployment
 
-### ✅ **SOLUZIONI IMPLEMENTATE**
-1. **Migrazione Unificata:** `20251231000001_unified_consume_credits_final.sql`
-2. **Fix TypeScript:** Eliminati tutti i tipi `any` 
-3. **Fix PostgreSQL Roles:** Compliance con regole `TO public`
-4. **Professional Debug Suite:** Tool diagnostico professionale
+### ⚠️ **DIFFICOLTÀ AFFRONTATE - SESSIONE CRITICA**
+1. **Problema Metodologico:** Approccio disorganizzato con modifiche casuali e temporanee
+2. **Edge Functions Chain Failure:** generate-form-fields → consume-credits authentication loop
+3. **GitHub Actions Deploy:** ESM bundling failures e dependency resolution issues
+4. **Testing Inconsistency:** Funzioni che funzionano direttamente ma falliscono via frontend
+
+### ✅ **SOLUZIONI IMPLEMENTATE - MULTI-FASE**
+1. **FASE INIZIALE:** Migrazione Unificata + TypeScript compliance
+2. **FASE CRITICA:** Edge Function Authentication Fix (COMPLETATO)
+3. **FASE DEPLOYMENT:** Systematic Level 3 approach (IN CORSO)
+4. **SOLUZIONI SPECIFICHE:**
+   - Database function: `consume_credits_rpc` → FUNZIONANTE ✅
+   - Authentication fix: USER_TOKEN → SERVICE_ROLE_KEY ✅  
+   - GitHub Actions: deno.json configuration ✅
+   - Workflow cleanup: Rollback modifiche temporanee ✅
 
 ---
 
@@ -30,15 +41,23 @@
 - [x] **Correzione URL Supabase:** Da `ixlvvblekozwrpwclzps` a `qjtaqrlpronohgpfdxsi` ✅
 - [x] **Creazione Debug Suite:** `professional-debug-suite.html`
 
-### ✅ **FASE 2: FIX TECNICI**
+### ✅ **FASE 2: FIX TECNICI - COMPLETATA**
 
 #### **A. Database & Migrazioni**
 - [x] **Migrazione Unificata:** `20251231000001_unified_consume_credits_final.sql`
-  - DROP CASCADE di tutte le versioni precedenti
-  - Variabili rinominate: `credits_cost` → `v_credits_cost` 
-  - Tabella corretta: `organization_credits` (non `organizations.credits`)
-  - Test integrato durante migrazione
-  - Permessi corretti: `TO public` invece di `TO authenticated`
+- [x] **PostgreSQL Function:** `SCRIPT_SQL_FINALE.sql` → DEPLOYATA ✅
+- [x] **Test Database:** `consume-credits` API → SUCCESS ✅
+- [x] **Organization Credits:** Sistema crediti funzionante (99 crediti rimanenti)
+
+#### **B. SESSIONE CRITICA - Edge Functions Authentication**
+- [x] **Problema Identificato:** `generate-form-fields` chiamata interna a `consume-credits` falliva
+- [x] **Root Cause:** `req.headers.get("Authorization")!` passava token malformato
+- [x] **SOLUZIONE IMPLEMENTATA:** 
+  ```typescript
+  // DA: { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+  // A:  createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  ```
+- [x] **Verifica:** Funzione `generate-form-fields` → SUCCESS con test diretti ✅
 
 #### **B. TypeScript Compliance**
 - [x] **jwtUtils.ts:** `any` → tipi appropriati
@@ -148,22 +167,60 @@ consume_credits_rpc(p_organization_id UUID, p_action_type TEXT) RETURNS JSON
 
 ---
 
-## 🏆 STATO FINALE
+#### **C. FASE DEPLOYMENT - GitHub Actions Issues**
+- [x] **Problema:** GitHub Actions deployment failure con ESM bundling
+- [x] **Errore:** `connection reset` da `esm.sh/@supabase/functions-js@2.74.0`
+- [x] **STRATEGIA LIVELLO 3 IMPLEMENTATA:**
+  - Rollback modifiche temporanee al workflow ✅
+  - Aggiunta configurazione `deno.json` per Edge Functions ✅  
+  - Pulizia file temporanei e debug ✅
+  - Commit sistematico senza modifiche casuali ✅
 
-### ✅ **DEPLOYMENT READY**
-- Tutti errori lint risolti
-- Tutti conflitti PostgreSQL risolti  
-- TypeScript compliance al 100%
-- Migrazione unificata applicata
-- Testing tools creati
-
-### 🎯 **RISULTATO ATTESO**
-Dopo il completamento del deployment:
-- ✅ Form generation funzionante
-- ✅ Edge Functions operative
-- ✅ Sistema crediti stabile
-- ✅ Errori PostgreSQL eliminati
+#### **D. DIFFICOLTÀ METODOLOGICHE RISOLTE**
+- ❌ **PROBLEMA:** Approccio disorganizzato con modifiche casuali
+- ✅ **SOLUZIONE:** Adottata Strategia Sistematica Livello 3
+- ❌ **PROBLEMA:** File temporanei che confondevano il sistema
+- ✅ **SOLUZIONE:** Repository cleanup completo
+- ❌ **PROBLEMA:** Modifiche workflow temporanee dimenticate
+- ✅ **SOLUZIONE:** Rollback completo + commit sistematico
 
 ---
 
-**🚀 READY FOR PRODUCTION!**
+## 🏆 STATO ATTUALE - 18:50
+
+### ✅ **BACKEND COMPLETAMENTE FUNZIONANTE**
+- **Database:** `consume_credits_rpc` function → OPERATIVA ✅
+- **Edge Functions:** Tutte testate direttamente → SUCCESS ✅
+- **API Integration:** `consume-credits` + `generate-form-fields` → CHAIN WORKING ✅
+
+### 🔄 **DEPLOYMENT IN CORSO**
+- **GitHub Actions:** Ultimo deploy con configurazione pulita
+- **Status:** In attesa completamento pipeline sistematico
+- **Monitoring:** Deploy status da verificare
+
+### 🎯 **RISULTATO ATTESO FINALE**
+- ✅ Form generation frontend funzionante (backend già OK)
+- ✅ Eliminazione errore "Edge Function returned a non-2xx status code" 
+- ✅ Pipeline deployment stabile
+- ✅ Metodologia sistematica applicata per future modifiche
+
+---
+
+## 📊 LESSON LEARNED - CRITICAL SESSION
+
+### ⚠️ **ERRORI DA NON RIPETERE**
+1. **Modifiche temporanee** che vengono dimenticate e creano confusione
+2. **Test casuali** senza strategia sistematica
+3. **File temporanei** lasciati nel repository
+4. **Assumere** che i problemi siano dove sembrano (autenticazione vs deployment)
+
+### ✅ **METODOLOGIA CORRETTA APPLICATA**
+1. **Root Cause Analysis** completa prima di agire
+2. **Rollback sistematico** delle modifiche temporanee  
+3. **Fix mirati** senza modifiche casuali
+4. **Verifica metodica** con test sistematici
+5. **Commit puliti** con descrizioni precise
+
+---
+
+**🚀 SISTEMICO E PROFESSIONALE - NO MORE RANDOM CHANGES!**

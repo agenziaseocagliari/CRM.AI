@@ -118,4 +118,5 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Note: Test organization creation removed due to trigger conflicts  
 -- Organizations will be created through normal application flow
 -- The important fix is the consume_credits_rpc function above
+-- Fixed ambiguous column reference credits_cost by renaming variable to v_credits_cost
 -- This should resolve the Edge Function 500 errors

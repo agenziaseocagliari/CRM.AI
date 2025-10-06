@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Consume Credits Function</title>
+</head>
+<body>
+    <h1>Test Consume Credits Function</h1>
+    <button onclick="testConsumeCredits()">Test Consume Credits</button>
+    <div id="result"></div>
+
+    <script>
+        async function testConsumeCredits() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // Test diretto della funzione consume-credits
+                const response = await fetch('https://nwxvgqgzigggdezwxzlm.supabase.co/functions/v1/consume-credits', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer YOUR_SESSION_TOKEN_HERE', // Sostituire con token reale
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53eHZncWd6aWdnZ2RlendkemxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU0NDQzNzksImV4cCI6MjA0MTAxMjM3OX0.7t5XCY4zUH4aBGc3Ry7_5YJLKTlv5wRnhI5P7E9Hug8'
+                    },
+                    body: JSON.stringify({
+                        organization_id: 'test-org-id',
+                        action_type: 'ai_form_generation'
+                    })
+                });
+
+                const data = await response.text();
+                resultDiv.innerHTML = `
+                    <h3>Response Status: ${response.status}</h3>
+                    <h3>Response Data:</h3>
+                    <pre>${data}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<h3>Error:</h3><pre>${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

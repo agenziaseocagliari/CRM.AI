@@ -19,6 +19,29 @@ export interface SubscriptionChangeRequest {
   promoCode?: string;
 }
 
+export interface UserState {
+  id: string;
+  email: string | undefined;
+  currentTier: string;
+  credits: number;
+  organization: unknown;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TierChanges {
+  newCredits: number;
+  creditsDelta: number;
+  featuresAdded: string[];
+  featuresRemoved: string[];
+  limitsChanged: Record<string, { before: number | string; after: number | string; }>;
+}
+
+export interface BillingResult {
+  nextBillingDate: string;
+  prorationAmount?: number;
+  invoiceId?: string;
+}
+
 export interface SuperAdminResponse {
   success: boolean;
   operation: string;
@@ -31,11 +54,7 @@ export interface SuperAdminResponse {
     features: { added: string[]; removed: string[]; };
     limits: Record<string, { before: number | string; after: number | string; }>;
   };
-  billingInfo?: {
-    nextBillingDate: string;
-    prorationAmount?: number;
-    invoiceId?: string;
-  };
+  billingInfo?: BillingResult;
   error?: string;
 }
 
@@ -54,8 +73,6 @@ export class SuperAdminAI {
    * Handles complete subscription lifecycle with zero manual intervention
    */
   async processSubscriptionChange(request: SubscriptionChangeRequest): Promise<SuperAdminResponse> {
-    const startTime = Date.now();
-    
     try {
       console.log(`🤖 SuperAdmin AI: Processing ${request.reason} for ${request.userEmail} to ${request.targetTier}`);
       
@@ -72,10 +89,10 @@ export class SuperAdminAI {
       const billingResult = await this.processBillingChanges(currentUser, request, tierChanges);
       
       // Step 4: Update database with new subscription
-      const dbResult = await this.updateUserSubscription(currentUser, request, tierChanges);
+      await this.updateUserSubscription(currentUser, request, tierChanges);
       
       // Step 5: Apply feature changes and limits
-      const featuresResult = await this.applyFeatureChanges(currentUser, request.targetTier);
+      await this.applyFeatureChanges(currentUser, request.targetTier);
       
       // Step 6: Send notifications and confirmations
       await this.sendNotifications(currentUser, request, tierChanges);
@@ -195,7 +212,7 @@ export class SuperAdminAI {
   /**
    * 💳 PROCESS BILLING CHANGES (Stripe Integration)
    */
-  private async processBillingChanges(user: any, request: SubscriptionChangeRequest, changes: any) {
+  private async processBillingChanges(user: UserState, request: SubscriptionChangeRequest, changes: TierChanges): Promise<BillingResult> {
     // This would integrate with Stripe for real billing
     // For now, simulate the process
     
@@ -211,7 +228,7 @@ export class SuperAdminAI {
   /**
    * 🗄️ UPDATE USER SUBSCRIPTION IN DATABASE
    */
-  private async updateUserSubscription(user: any, request: SubscriptionChangeRequest, changes: any) {
+  private async updateUserSubscription(user: UserState, request: SubscriptionChangeRequest, changes: TierChanges) {
     // Update auth user metadata
     const { error: authError } = await this.supabase.auth.admin.updateUserById(
       user.id,
@@ -246,7 +263,7 @@ export class SuperAdminAI {
   /**
    * ⚡ APPLY FEATURE CHANGES
    */
-  private async applyFeatureChanges(user: any, newTier: string) {
+  private async applyFeatureChanges(user: UserState, newTier: string) {
     // Apply feature flags and access controls based on new tier
     console.log(`⚡ Applying feature changes for ${user.email} to ${newTier} tier`);
     
@@ -268,7 +285,7 @@ export class SuperAdminAI {
   /**
    * 📧 SEND NOTIFICATIONS
    */
-  private async sendNotifications(user: any, request: SubscriptionChangeRequest, changes: any) {
+  private async sendNotifications(user: UserState, request: SubscriptionChangeRequest, changes: TierChanges) {
     console.log(`📧 Sending notifications to ${user.email} about ${request.reason}`);
     
     // This would integrate with email service
@@ -287,7 +304,7 @@ export class SuperAdminAI {
   /**
    * 📝 LOG AUDIT TRAIL
    */
-  private async logSubscriptionChange(user: any, request: SubscriptionChangeRequest, changes: any) {
+  private async logSubscriptionChange(user: UserState, request: SubscriptionChangeRequest, changes: TierChanges) {
     const auditLog = {
       user_id: user.id,
       action: `subscription_${request.reason}`,
@@ -345,7 +362,7 @@ export class SuperAdminAI {
   async upgradeUser(email: string, targetTier: string, promoCode?: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({
       userEmail: email,
-      targetTier: targetTier as any,
+      targetTier: targetTier as 'freelancer' | 'startup' | 'business' | 'enterprise',
       reason: 'upgrade',
       promoCode
     });
@@ -355,7 +372,7 @@ export class SuperAdminAI {
   async downgradeUser(email: string, targetTier: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({
       userEmail: email,
-      targetTier: targetTier as any,
+      targetTier: targetTier as 'freelancer' | 'startup' | 'business' | 'enterprise',
       reason: 'downgrade'
     });
   }
@@ -364,7 +381,7 @@ export class SuperAdminAI {
   async convertTrial(email: string, targetTier: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({
       userEmail: email,
-      targetTier: targetTier as any,
+      targetTier: targetTier as 'freelancer' | 'startup' | 'business' | 'enterprise',
       reason: 'trial_conversion'
     });
   }
@@ -373,7 +390,7 @@ export class SuperAdminAI {
   async adminOverride(email: string, targetTier: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({
       userEmail: email,
-      targetTier: targetTier as any,
+      targetTier: targetTier as 'freelancer' | 'startup' | 'business' | 'enterprise',
       reason: 'admin_override'
     });
   }

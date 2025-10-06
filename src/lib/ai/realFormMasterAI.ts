@@ -23,6 +23,26 @@ export interface FormField {
   };
 }
 
+export interface BusinessContext {
+  industry?: string;
+  goal?: string;
+  targetAudience?: string;
+  leadType?: string;
+}
+
+export interface GeminiFormResponse {
+  fields?: Array<{
+    name: string;
+    type: string;
+    label: string;
+    required?: boolean;
+    placeholder?: string;
+    options?: string[];
+    validation?: Record<string, unknown>;
+    conditional?: Record<string, unknown>;
+  }>;
+}
+
 export interface FormConfiguration {
   title: string;
   description: string;
@@ -53,7 +73,7 @@ export class RealFormMasterAI {
   }
 
   // Genera form intelligente basato su business context
-  async generateIntelligentForm(prompt: string, businessContext?: any): Promise<FormConfiguration> {
+  async generateIntelligentForm(prompt: string, businessContext?: BusinessContext): Promise<FormConfiguration> {
     try {
       // Usa la edge function esistente generate-form-fields
       const response = await invokeSupabaseFunction('generate-form-fields', {
@@ -62,7 +82,7 @@ export class RealFormMasterAI {
         organization_id: this.organizationId
       });
 
-      const formData = response as any;
+      const formData = response as GeminiFormResponse;
       
       // Trasforma la risposta in FormConfiguration
       return this.transformToFormConfiguration(formData, prompt);
@@ -72,21 +92,21 @@ export class RealFormMasterAI {
     }
   }
 
-  private transformToFormConfiguration(geminiResponse: any, originalPrompt: string): FormConfiguration {
+  private transformToFormConfiguration(geminiResponse: GeminiFormResponse, originalPrompt: string): FormConfiguration {
     const fields = geminiResponse?.fields || [];
     
     return {
       title: this.extractFormTitle(originalPrompt),
       description: 'Form generato automaticamente da AI',
-      fields: fields.map((field: any) => ({
+      fields: fields.map((field) => ({
         name: field.name || 'field',
-        type: field.type || 'text',
+        type: (field.type as FormField['type']) || 'text',
         label: field.label || field.name || 'Campo',
         required: field.required || false,
         placeholder: field.placeholder,
         options: field.options,
-        validation: field.validation,
-        conditional: field.conditional
+        validation: field.validation as FormField['validation'],
+        conditional: field.conditional as FormField['conditional']
       })),
       styling: {
         theme: 'modern',
@@ -130,7 +150,7 @@ Applica best practices per UX e conversion rate optimization.
         organization_id: this.organizationId
       });
 
-      return this.transformToFormConfiguration(response, 'Form Ottimizzato');
+      return this.transformToFormConfiguration(response as GeminiFormResponse, 'Form Ottimizzato');
     } catch (error) {
       console.error('Errore nell\'ottimizzazione del form:', error);
       return currentForm; // Ritorna il form originale in caso di errore

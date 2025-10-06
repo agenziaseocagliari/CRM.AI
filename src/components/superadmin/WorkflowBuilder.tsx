@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 import { invokeSupabaseFunction } from '../../lib/api';
@@ -139,13 +139,7 @@ const LogsModal: React.FC<{
     const [logs, setLogs] = useState<WorkflowExecutionLog[]>([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (workflow && isOpen) {
-            loadLogs();
-        }
-    }, [workflow, isOpen]);
-
-    const loadLogs = async () => {
+    const loadLogs = useCallback(async () => {
         if (!workflow) {return;}
         setLoading(true);
         try {
@@ -164,7 +158,13 @@ const LogsModal: React.FC<{
         } finally {
             setLoading(false);
         }
-    };
+    }, [workflow]);
+
+    useEffect(() => {
+        if (workflow && isOpen) {
+            loadLogs();
+        }
+    }, [workflow, isOpen, loadLogs]);
 
     if (!workflow) {return null;}
 

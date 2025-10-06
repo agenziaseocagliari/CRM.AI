@@ -103,7 +103,7 @@ CREATE POLICY org_audit_log ON security_audit_log
         organization_id IN (
             SELECT organization_id 
             FROM profiles 
-            WHERE user_id = auth.uid()
+            WHERE id = auth.uid()
         )
     );
 
@@ -114,7 +114,7 @@ CREATE POLICY org_ip_whitelist ON security_ip_whitelist
         organization_id IN (
             SELECT organization_id 
             FROM profiles 
-            WHERE user_id = auth.uid()
+            WHERE id = auth.uid()
         )
     );
 

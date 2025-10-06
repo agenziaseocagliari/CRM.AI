@@ -73,6 +73,7 @@
             <h2>🧪 STEP 3: Edge Function Direct Test</h2>
             <button class="btn" onclick="testEdgeFunctionDirect()">Test Consume-Credits</button>
             <button class="btn" onclick="testFormGeneration()">Test Form Generation</button>
+            <button class="btn danger" onclick="testWithHardcodedToken()">🚨 Test with Known Token</button>
             <div id="edgeResult" class="result">Clicca per testare Edge Functions...</div>
         </div>
 
@@ -379,6 +380,52 @@
             result += `WebSockets: ${typeof WebSocket !== 'undefined' ? '✅' : '❌'}\n`;
             
             showResult('networkResult', result, 'success');
+        }
+        
+        async function testWithHardcodedToken() {
+            console.log('🚨 Testing with hardcoded token...');
+            showResult('edgeResult', '🚨 Testing with known token and organization...', 'warning');
+            
+            try {
+                // Use known working values from previous tests
+                const authToken = 'eyJhbGciOiJIUzI1NiIsImtpZCI6ImdSaGxuOXVwVHJROEhVdnQiLCJ0eXAiOiJKV1QifQ.eyJhYWwiOiJhYWwiLCJhbXIiOlsicGFzc3dvcmQiXSwiYXVkIjoiYXV0aGVudGljYXRlZCIsImVtYWlsIjoid2ViY29tQGdtYWlsLmNvbSIsImVtYWlsX2NvbmZpcm1lZF9hdCI6IjIwMjUtMTAtMDNUMTU6MzI6NDAuNTAzWiIsImV4cCI6MTcyODI0NDMyOSwidWlkIjoiOGNhOGNmNjEtODExYS00OGRlLTgwNGMtZGZmNGI1ZGE0OGVhIiwiaWF0IjoxNzI4MjQwNzI5LCJpc3MiOiJodHRwczovL3FqdGFxcmxwcm9ub2hncGZkeHNpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJuYmYiOjE3MjgyNDA3MjksInBob25lIjoiIiwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJzZXNzaW9uX2lkIjoiNzNhNWRmMjEtNTBlZC00OTI0LTlhZTMtZjVmODc4MzY0MTkxIiwic3ViIjoiOGNhOGNmNjEtODExYS00OGRlLTgwNGMtZGZmNGI1ZGE0OGVhIiwidXNlcl9tZXRhZGF0YSI6e319.B-hF4k4nYPBNeE5lKJn8cJ3X3L4vfJ9S0b6pL2OXhYU';
+                const organizationId = 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e';
+                
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        organization_id: organizationId,
+                        prompt: 'Crea un form di test con nome e email'
+                    })
+                });
+                
+                let result = `HARDCODED TOKEN TEST:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+                result += `Headers:\n`;
+                for (const [key, value] of response.headers.entries()) {
+                    result += `  ${key}: ${value}\n`;
+                }
+                
+                const responseText = await response.text();
+                result += `\nResponse Body: ${responseText.substring(0, 500)}${responseText.length > 500 ? '...' : ''}\n`;
+                
+                if (response.ok) {
+                    result += `\n✅ Generate-form-fields successful!\n`;
+                } else {
+                    result += `\n❌ Generate-form-fields failed\n`;
+                }
+                
+                showResult('edgeResult', result, response.ok ? 'success' : 'error');
+                
+            } catch (error) {
+                console.error('Hardcoded token test error:', error);
+                showResult('edgeResult', `❌ HARDCODED TOKEN TEST ERROR: ${error.message}`, 'error');
+            }
         }
         
         // Auto-run environment check on load

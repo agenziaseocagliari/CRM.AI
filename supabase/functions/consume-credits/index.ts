@@ -22,9 +22,9 @@ serve(async (req) => {
     if (!organization_id) throw new Error("`organization_id` è obbligatorio.");
     if (!action_type) throw new Error("`action_type` è obbligatorio.");
 
-    const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!serviceRoleKey) {
-        throw new Error("La variabile d'ambiente SERVICE_ROLE_KEY non è impostata.");
+        throw new Error("La variabile d'ambiente SUPABASE_SERVICE_ROLE_KEY non è impostata.");
     }
     
     // Utilizza il client con service_role_key per chiamare la funzione RPC

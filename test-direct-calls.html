@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Direct Edge Function Calls</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test Direct Edge Function Calls</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Direct consume-credits call</h2>
+        <button onclick="testConsumeCredits()">Test Consume Credits</button>
+        <pre id="consume-result"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Direct generate-form-fields call</h2>
+        <button onclick="testGenerateFormFields()">Test Generate Form Fields</button>
+        <pre id="generate-result"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Test without organization_id</h2>
+        <button onclick="testWithoutOrgId()">Test Without Org ID</button>
+        <pre id="no-org-result"></pre>
+    </div>
+
+    <script>
+        // Replace these with your actual Supabase URL and anon key
+        const SUPABASE_URL = 'https://qovysmiqyvdcjqyuczog.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvdnlzbWlxeXZkY2pxeXVjem9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxODYyNzMsImV4cCI6MjA0OTc2MjI3M30.k0EGzT3xDMhL6NjhiAWKyM7bhz7t7Y3sM4Ap3FFLQZ8';
+
+        async function testConsumeCredits() {
+            const resultEl = document.getElementById('consume-result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        organization_id: '1',
+                        action_type: 'ai_form_generation',
+                        credits_required: 1
+                    })
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    resultEl.className = 'success';
+                    resultEl.textContent = 'SUCCESS: ' + data;
+                } else {
+                    resultEl.className = 'error';
+                    resultEl.textContent = `ERROR ${response.status}: ${data}`;
+                }
+            } catch (error) {
+                resultEl.className = 'error';
+                resultEl.textContent = 'NETWORK ERROR: ' + error.message;
+            }
+        }
+
+        async function testGenerateFormFields() {
+            const resultEl = document.getElementById('generate-result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Un form di contatto semplice con nome, email e messaggio',
+                        organization_id: '1'
+                    })
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    resultEl.className = 'success';
+                    resultEl.textContent = 'SUCCESS: ' + data;
+                } else {
+                    resultEl.className = 'error';
+                    resultEl.textContent = `ERROR ${response.status}: ${data}`;
+                }
+            } catch (error) {
+                resultEl.className = 'error';
+                resultEl.textContent = 'NETWORK ERROR: ' + error.message;
+            }
+        }
+
+        async function testWithoutOrgId() {
+            const resultEl = document.getElementById('no-org-result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Un form di contatto semplice con nome, email e messaggio'
+                        // NO organization_id
+                    })
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    resultEl.className = 'success';
+                    resultEl.textContent = 'SUCCESS: ' + data;
+                } else {
+                    resultEl.className = 'error';
+                    resultEl.textContent = `ERROR ${response.status}: ${data}`;
+                }
+            } catch (error) {
+                resultEl.className = 'error';
+                resultEl.textContent = 'NETWORK ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -9,11 +9,11 @@ import { supabase } from '../lib/supabaseClient';
 import { Form, FormField } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 
-import { SparklesIcon, PlusIcon, TrashIcon, CodeIcon, EyeIcon } from './ui/icons';
+import { CodeIcon, EyeIcon, PlusIcon, SparklesIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
-import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
+import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 
 // Error interface for proper typing
 interface ApiError {

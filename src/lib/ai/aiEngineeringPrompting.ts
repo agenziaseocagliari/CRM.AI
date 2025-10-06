@@ -4,13 +4,13 @@
 interface PromptEngineering {
   // Analisi dell'intento utente
   analyzeIntent(userPrompt: string, context: ModuleContext): PromptAnalysis;
-  
+
   // Routing intelligente dell'agente
   routeToAgent(analysis: PromptAnalysis): AgentRoute;
-  
+
   // Enhancement del prompt per l'agente specifico
   enhancePrompt(originalPrompt: string, agentType: string, context: ModuleContext): string;
-  
+
   // Integration con Knowledge Base
   enrichWithKnowledge(prompt: string, organizationId: string): Promise<EnrichedPrompt>;
 }
@@ -56,22 +56,22 @@ interface KnowledgeMatch {
 }
 
 export class AIEngineeringPrompting implements PromptEngineering {
-  
+
   analyzeIntent(userPrompt: string, context: ModuleContext): PromptAnalysis {
     const promptLower = userPrompt.toLowerCase();
-    
+
     // Intent Analysis con NLP patterns
     let intent: PromptAnalysis['intent'] = 'help';
     let confidence = 0.5;
     const entities: string[] = [];
     let suggestedAgent = 'form_master';
-    
+
     // Pattern Analysis
     const createPatterns = ['crea', 'genera', 'costruisci', 'fai', 'sviluppa', 'nuovo'];
     const analyzePatterns = ['analizza', 'studia', 'esamina', 'valuta', 'report'];
     const optimizePatterns = ['ottimizza', 'migliora', 'perfeziona', 'potenzia'];
     const automatePatterns = ['automatizza', 'workflow', 'trigger', 'sequenza'];
-    
+
     if (createPatterns.some(p => promptLower.includes(p))) {
       intent = 'create';
       confidence = 0.8;
@@ -85,7 +85,7 @@ export class AIEngineeringPrompting implements PromptEngineering {
       intent = 'automate';
       confidence = 0.7;
     }
-    
+
     // Entity Extraction
     const formEntities = ['form', 'modulo', 'campo', 'wordpress', 'kadence'];
     const emailEntities = ['email', 'newsletter', 'campagna', 'subject'];
@@ -93,7 +93,7 @@ export class AIEngineeringPrompting implements PromptEngineering {
     const leadEntities = ['lead', 'opportunità', 'scoring', 'qualifica'];
     const calendarEntities = ['calendario', 'appuntamento', 'booking', 'meeting'];
     const analyticsEntities = ['analisi', 'dati', 'report', 'insight', 'kpi'];
-    
+
     if (formEntities.some(e => promptLower.includes(e))) {
       entities.push('forms');
       suggestedAgent = 'form_master';
@@ -118,7 +118,7 @@ export class AIEngineeringPrompting implements PromptEngineering {
       entities.push('analytics');
       suggestedAgent = 'analytics_oracle';
     }
-    
+
     // Context-based routing se non ci sono entity specifiche
     if (entities.length === 0) {
       const moduleAgentMap: Record<string, string> = {
@@ -133,7 +133,7 @@ export class AIEngineeringPrompting implements PromptEngineering {
       suggestedAgent = moduleAgentMap[context.currentModule] || 'form_master';
       entities.push(context.currentModule.toLowerCase());
     }
-    
+
     return {
       intent,
       confidence,
@@ -143,7 +143,7 @@ export class AIEngineeringPrompting implements PromptEngineering {
       actionType: `${intent}_${entities[0] || 'generic'}`
     };
   }
-  
+
   routeToAgent(analysis: PromptAnalysis): AgentRoute {
     const agentPriorities: Record<string, number> = {
       'form_master': analysis.entities.includes('forms') ? 10 : 3,
@@ -153,15 +153,15 @@ export class AIEngineeringPrompting implements PromptEngineering {
       'calendar_wizard': analysis.entities.includes('calendar') ? 10 : 3,
       'analytics_oracle': analysis.entities.includes('analytics') ? 10 : 5
     };
-    
+
     const priority = agentPriorities[analysis.suggestedAgent] || 1;
-    
+
     const fallbackAgents = Object.entries(agentPriorities)
       .filter(([agent]) => agent !== analysis.suggestedAgent)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 2)
       .map(([agent]) => agent);
-    
+
     return {
       agentId: analysis.suggestedAgent,
       priority,
@@ -169,7 +169,7 @@ export class AIEngineeringPrompting implements PromptEngineering {
       estimatedProcessingTime: this.estimateProcessingTime(analysis)
     };
   }
-  
+
   enhancePrompt(originalPrompt: string, agentType: string, context: ModuleContext): string {
     const baseContext = `
 CONTESTO OPERATIVO:
@@ -180,7 +180,7 @@ CONTESTO OPERATIVO:
 
 RICHIESTA UTENTE: ${originalPrompt}
     `.trim();
-    
+
     const agentSpecificEnhancements: Record<string, string> = {
       'form_master': `
 ${baseContext}
@@ -254,30 +254,30 @@ ISTRUZIONI SPECIALIZZATE PER ANALYTICSORACLE:
 
 FORMATO RISPOSTA: Report analitico con metriche, trend, insights, e raccomandazioni strategiche.`
     };
-    
+
     return agentSpecificEnhancements[agentType] || baseContext;
   }
-  
+
   async enrichWithKnowledge(prompt: string, organizationId: string): Promise<EnrichedPrompt> {
     try {
       // Import Enhanced Knowledge Base System
       const { enhancedKnowledgeBaseSystem } = await import('./enhancedKnowledgeBaseSystem');
-      
+
       // Search for relevant knowledge
       const knowledgeMatches = await enhancedKnowledgeBaseSystem.searchKnowledge(prompt, organizationId);
-      
+
       // Enhance prompt with knowledge context
       let enhancedPrompt = prompt;
-      
+
       if (knowledgeMatches.length > 0) {
         const contextData = knowledgeMatches
           .slice(0, 3) // Top 3 matches
           .map((match: KnowledgeMatch) => `📚 **${match.title}**: ${match.content.substring(0, 200)}...`)
           .join('\n\n');
-        
+
         enhancedPrompt = `${prompt}\n\n--- KNOWLEDGE BASE CONTEXT ---\n${contextData}\n\nUtilizza questo contesto per fornire una risposta più precisa e personalizzata.`;
       }
-      
+
       return {
         originalPrompt: prompt,
         enhancedPrompt,
@@ -285,7 +285,7 @@ FORMATO RISPOSTA: Report analitico con metriche, trend, insights, e raccomandazi
         knowledgeBaseMatches: knowledgeMatches,
         suggestions: this.generateSuggestions(knowledgeMatches)
       };
-      
+
     } catch (error) {
       console.error('Knowledge enrichment failed:', error);
       return {
@@ -297,7 +297,7 @@ FORMATO RISPOSTA: Report analitico con metriche, trend, insights, e raccomandazi
       };
     }
   }
-  
+
   private determineRequiredContext(intent: PromptAnalysis['intent'], _entities: string[]): string[] {
     const contextMap: Record<string, string[]> = {
       'create': ['templates', 'user_preferences', 'recent_similar'],
@@ -307,18 +307,18 @@ FORMATO RISPOSTA: Report analitico con metriche, trend, insights, e raccomandazi
       'report': ['metrics', 'time_range', 'stakeholders'],
       'help': ['documentation', 'tutorials', 'examples']
     };
-    
+
     return contextMap[intent] || [];
   }
-  
+
   private estimateProcessingTime(analysis: PromptAnalysis): number {
     const baseTime = 2000; // 2 seconds base
     const complexityMultiplier = analysis.entities.length * 0.5;
     const confidenceMultiplier = analysis.confidence > 0.8 ? 1 : 1.5;
-    
+
     return baseTime * (1 + complexityMultiplier) * confidenceMultiplier;
   }
-  
+
   private generateSuggestions(knowledgeMatches: KnowledgeMatch[]): string[] {
     if (knowledgeMatches.length === 0) {
       return [
@@ -327,7 +327,7 @@ FORMATO RISPOSTA: Report analitico con metriche, trend, insights, e raccomandazi
         'Indica obiettivi specifici che vuoi raggiungere'
       ];
     }
-    
+
     return [
       'Ho trovato informazioni rilevanti nella Knowledge Base',
       'Considera anche questi aspetti correlati',

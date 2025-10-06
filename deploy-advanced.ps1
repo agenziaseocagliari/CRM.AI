@@ -56,11 +56,11 @@ function Deploy-EdgeFunctions {
     
     # Create function manifest
     $manifest = @{
-        function_name = "consume-credits"
-        runtime = "deno"
-        main_module = "index.ts"
+        function_name         = "consume-credits"
+        runtime               = "deno"
+        main_module           = "index.ts"
         environment_variables = @{
-            SUPABASE_URL = $env:SUPABASE_URL
+            SUPABASE_URL              = $env:SUPABASE_URL
             SUPABASE_SERVICE_ROLE_KEY = $env:SUPABASE_SERVICE_ROLE_KEY
         }
     } | ConvertTo-Json -Depth 3

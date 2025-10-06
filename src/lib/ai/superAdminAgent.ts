@@ -60,7 +60,7 @@ export interface SuperAdminResponse {
 
 export class SuperAdminAI {
   private supabase;
-  
+
   constructor() {
     this.supabase = createClient(
       process.env.VITE_SUPABASE_URL || '',
@@ -75,31 +75,31 @@ export class SuperAdminAI {
   async processSubscriptionChange(request: SubscriptionChangeRequest): Promise<SuperAdminResponse> {
     try {
       console.log(`🤖 SuperAdmin AI: Processing ${request.reason} for ${request.userEmail} to ${request.targetTier}`);
-      
+
       // Step 1: Validate user exists and get current state
       const currentUser = await this.getUserCurrentState(request.userEmail);
       if (!currentUser) {
         throw new Error(`User ${request.userEmail} not found`);
       }
-      
+
       // Step 2: Calculate tier changes and requirements  
       const tierChanges = this.calculateTierChanges(currentUser.currentTier, request.targetTier);
-      
+
       // Step 3: Handle billing changes (Stripe integration)
       const billingResult = await this.processBillingChanges(currentUser, request, tierChanges);
-      
+
       // Step 4: Update database with new subscription
       await this.updateUserSubscription(currentUser, request, tierChanges);
-      
+
       // Step 5: Apply feature changes and limits
       await this.applyFeatureChanges(currentUser, request.targetTier);
-      
+
       // Step 6: Send notifications and confirmations
       await this.sendNotifications(currentUser, request, tierChanges);
-      
+
       // Step 7: Log audit trail
       await this.logSubscriptionChange(currentUser, request, tierChanges);
-      
+
       return {
         success: true,
         operation: `${request.reason}_completed`,
@@ -120,10 +120,10 @@ export class SuperAdminAI {
         },
         billingInfo: billingResult
       };
-      
+
     } catch (error) {
       console.error('🚨 SuperAdmin AI Error:', error);
-      
+
       return {
         success: false,
         operation: `${request.reason}_failed`,
@@ -148,9 +148,9 @@ export class SuperAdminAI {
     // Get user from auth
     const { data: authUsers } = await this.supabase.auth.admin.listUsers();
     const user = authUsers.users?.find(u => u.email === email);
-    
+
     if (!user) return null;
-    
+
     // Get current subscription and organization
     const { data: orgSub } = await this.supabase
       .from('organization_subscriptions')
@@ -160,7 +160,7 @@ export class SuperAdminAI {
       `)
       .eq('organization_id', user.id)
       .single();
-    
+
     return {
       id: user.id,
       email: user.email,
@@ -181,10 +181,10 @@ export class SuperAdminAI {
       business: { credits: 2000, features: ['basic_crm', 'email_advanced', 'whatsapp_advanced', 'analytics'], limits: { contacts: 25000, campaigns: 100 } },
       enterprise: { credits: 10000, features: ['all_features', 'custom_integrations', 'priority_support'], limits: { contacts: -1, campaigns: -1 } }
     };
-    
+
     const fromConfig = tierConfig[fromTier as keyof typeof tierConfig];
     const toConfig = tierConfig[toTier as keyof typeof tierConfig];
-    
+
     return {
       newCredits: toConfig.credits,
       creditsDelta: toConfig.credits - fromConfig.credits,
@@ -196,7 +196,7 @@ export class SuperAdminAI {
 
   private compareLimits(fromLimits: Record<string, number>, toLimits: Record<string, number>) {
     const changes: Record<string, { before: number | string; after: number | string }> = {};
-    
+
     Object.keys(fromLimits).forEach(key => {
       if (fromLimits[key] !== toLimits[key]) {
         changes[key] = {
@@ -205,7 +205,7 @@ export class SuperAdminAI {
         };
       }
     });
-    
+
     return changes;
   }
 
@@ -215,9 +215,9 @@ export class SuperAdminAI {
   private async processBillingChanges(user: UserState, request: SubscriptionChangeRequest, changes: TierChanges): Promise<BillingResult> {
     // This would integrate with Stripe for real billing
     // For now, simulate the process
-    
+
     console.log(`💳 Processing billing for ${user.email}: ${changes.creditsDelta} credits`);
-    
+
     return {
       nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       prorationAmount: changes.creditsDelta > 0 ? changes.creditsDelta * 0.01 : 0,
@@ -242,9 +242,9 @@ export class SuperAdminAI {
         }
       }
     );
-    
+
     if (authError) throw authError;
-    
+
     // Update organization subscription
     const { error: orgError } = await this.supabase
       .from('organization_subscriptions')
@@ -254,9 +254,9 @@ export class SuperAdminAI {
         status: 'active',
         updated_at: new Date().toISOString()
       });
-    
+
     if (orgError) throw orgError;
-    
+
     return { success: true };
   }
 
@@ -266,7 +266,7 @@ export class SuperAdminAI {
   private async applyFeatureChanges(user: UserState, newTier: string) {
     // Apply feature flags and access controls based on new tier
     console.log(`⚡ Applying feature changes for ${user.email} to ${newTier} tier`);
-    
+
     // Update user profile with new features
     const { error } = await this.supabase
       .from('user_profiles')
@@ -276,9 +276,9 @@ export class SuperAdminAI {
         features_enabled: this.getFeaturesForTier(newTier),
         updated_at: new Date().toISOString()
       });
-    
+
     if (error) throw error;
-    
+
     return { success: true };
   }
 
@@ -287,7 +287,7 @@ export class SuperAdminAI {
    */
   private async sendNotifications(user: UserState, request: SubscriptionChangeRequest, changes: TierChanges) {
     console.log(`📧 Sending notifications to ${user.email} about ${request.reason}`);
-    
+
     // This would integrate with email service
     // For now, log the notification
     const notification = {
@@ -295,9 +295,9 @@ export class SuperAdminAI {
       subject: `Subscription ${request.reason} completed`,
       message: `Your subscription has been ${request.reason}d to ${request.targetTier}. New credits: ${changes.newCredits}`
     };
-    
+
     console.log('📧 Notification:', notification);
-    
+
     return { sent: true };
   }
 
@@ -317,16 +317,16 @@ export class SuperAdminAI {
         agent: 'super_admin_ai'
       }
     };
-    
+
     console.log('📝 Audit Log:', auditLog);
-    
+
     // Save to audit table
     const { error } = await this.supabase
       .from('audit_logs')
       .insert(auditLog);
-    
+
     if (error) console.warn('Audit log failed:', error);
-    
+
     return { logged: true };
   }
 
@@ -339,7 +339,7 @@ export class SuperAdminAI {
       .select('id')
       .eq('name', tierName)
       .single();
-    
+
     return data?.id || '';
   }
 
@@ -350,14 +350,14 @@ export class SuperAdminAI {
       business: ['basic_crm', 'email_advanced', 'whatsapp_advanced', 'analytics'],
       enterprise: ['all_features', 'custom_integrations', 'priority_support', 'white_label']
     };
-    
+
     return tierFeatures[tier as keyof typeof tierFeatures] || [];
   }
 
   /**
    * 🚀 PUBLIC API METHODS
    */
-  
+
   // Upgrade user to higher tier
   async upgradeUser(email: string, targetTier: string, promoCode?: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({
@@ -367,7 +367,7 @@ export class SuperAdminAI {
       promoCode
     });
   }
-  
+
   // Downgrade user to lower tier
   async downgradeUser(email: string, targetTier: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({
@@ -376,7 +376,7 @@ export class SuperAdminAI {
       reason: 'downgrade'
     });
   }
-  
+
   // Convert trial to paid
   async convertTrial(email: string, targetTier: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({
@@ -385,7 +385,7 @@ export class SuperAdminAI {
       reason: 'trial_conversion'
     });
   }
-  
+
   // Admin override for special cases
   async adminOverride(email: string, targetTier: string): Promise<SuperAdminResponse> {
     return this.processSubscriptionChange({

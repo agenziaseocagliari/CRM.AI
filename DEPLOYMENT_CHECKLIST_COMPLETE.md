@@ -1,7 +1,9 @@
 # ✅ DEPLOYMENT CHECKLIST - AZIONI IMMEDIATE RICHIESTE
+
 ## Guardian AI CRM - Advanced Security System Deployment
 
 ### 🎯 OBIETTIVO PRINCIPALE
+
 **Risolvere:** FormMaster "Errore di rete nella verifica dei crediti"
 **Implementare:** Sistema di sicurezza enterprise-grade
 **Risultato:** CRM completamente funzionale e sicuro
@@ -11,10 +13,12 @@
 ## 📋 TASK COMPLETION CHECKLIST
 
 ### ✅ TASK 1: Deploy Edge Function consume-credits
+
 **File di riferimento:** `TASK_1_DEPLOY_EDGE_FUNCTION.md`
 **Priorità:** ALTA - Risolve immediatamente l'errore FormMaster
 
 **Steps da completare:**
+
 - [ ] 1.1 Accedi a Supabase Dashboard → Edge Functions
 - [ ] 1.2 Crea nuova function chiamata esattamente `consume-credits`
 - [ ] 1.3 Copia tutto il contenuto da `deployment_temp/consume-credits/index.ts`
@@ -29,10 +33,12 @@
 ---
 
 ### ✅ TASK 2: Execute Database Security Migration
+
 **File di riferimento:** `TASK_2_DATABASE_MIGRATION.md`
 **Priorità:** ALTA - Crea la funzione consume_credits_rpc richiesta
 
 **Steps da completare:**
+
 - [ ] 2.1 Accedi a Supabase Studio → SQL Editor
 - [ ] 2.2 Apri file `supabase/migrations/20250124000001_advanced_security_system.sql`
 - [ ] 2.3 Copia TUTTO il contenuto del file (circa 400 righe)
@@ -40,7 +46,7 @@
 - [ ] 2.5 Clicca "Run" ed attendi completamento (2-3 minuti)
 - [ ] 2.6 Verifica con query di controllo:
   ```sql
-  SELECT routine_name FROM information_schema.routines 
+  SELECT routine_name FROM information_schema.routines
   WHERE routine_name = 'consume_credits_rpc';
   ```
 - [ ] 2.7 Test RPC function:
@@ -53,10 +59,12 @@
 ---
 
 ### ✅ TASK 3: Verify Deployment Success
+
 **File di riferimento:** `TASK_3_VERIFICATION_TESTING.md`
 **Priorità:** VERIFICA - Conferma che tutto funzioni
 
 **Steps da completare:**
+
 - [ ] 3.1 Esegui verification script: `node deployment_temp/verify.js`
 - [ ] 3.2 Apri CRM application nel browser
 - [ ] 3.3 Naviga al modulo FormMaster
@@ -72,12 +80,15 @@
 ## 🚀 SEQUENZA DI ESECUZIONE OTTIMALE
 
 ### Step 1: Database Migration (PRIMA)
+
 Esegui **TASK 2** per primo perché crea le funzioni database necessarie
 
 ### Step 2: Edge Function Deployment (SECONDA)
+
 Esegui **TASK 1** dopo aver creato le funzioni database
 
 ### Step 3: Verification (TERZA)
+
 Esegui **TASK 3** per confermare che tutto funzioni
 
 ---
@@ -85,12 +96,14 @@ Esegui **TASK 3** per confermare che tutto funzioni
 ## 🎯 RISULTATI ATTESI
 
 ### Immediati (dopo Task 1 + 2):
+
 - ✅ **FormMaster non mostrerà più "Errore di rete nella verifica dei crediti"**
 - ✅ **Tutte le funzionalità FormMaster funzioneranno normalmente**
 - ✅ **Edge Function consume-credits sarà operativa**
 - ✅ **Database RPC function consume_credits_rpc sarà creata**
 
 ### Advanced Security Features (bonus):
+
 - ✅ **IP whitelisting per organizzazione**
 - ✅ **Rate limiting (100 req/15min)**
 - ✅ **Geo-blocking configurabile**
@@ -103,14 +116,17 @@ Esegui **TASK 3** per confermare che tutto funzioni
 ## ⚠️ NOTE CRITICHE
 
 ### 🔴 IMPORTANTE - Ordine di Esecuzione:
+
 **PRIMA** il database migration, **POI** l'Edge Function deployment!
 L'Edge Function ha bisogno che la funzione `consume_credits_rpc` esista nel database.
 
 ### 🔴 IMPORTANTE - Environment Variables:
+
 Usa **SUPABASE_SERVICE_ROLE_KEY**, NON la anon key!
 La service role key è necessaria per modificare i dati.
 
 ### 🔴 IMPORTANTE - Function Name:
+
 Il nome della Edge Function deve essere esattamente `consume-credits` (con il trattino).
 
 ---
@@ -118,14 +134,16 @@ Il nome della Edge Function deve essere esattamente `consume-credits` (con il tr
 ## 📞 SUPPORTO
 
 ### 📁 File di Supporto Disponibili:
+
 - `TASK_1_DEPLOY_EDGE_FUNCTION.md` - Guida dettagliata Task 1
-- `TASK_2_DATABASE_MIGRATION.md` - Guida dettagliata Task 2  
+- `TASK_2_DATABASE_MIGRATION.md` - Guida dettagliata Task 2
 - `TASK_3_VERIFICATION_TESTING.md` - Guida dettagliata Task 3
 - `deployment_temp/verify.js` - Script di verifica automatico
 - `deployment_temp/consume-credits-manifest.json` - Informazioni Edge Function
 - `deployment_temp/database_validation.md` - Guida validazione database
 
 ### 🆘 In Caso di Problemi:
+
 1. **Controlla i log** in Supabase Dashboard
 2. **Verifica environment variables** nel file .env
 3. **Usa gli script di verifica** forniti
@@ -136,8 +154,9 @@ Il nome della Edge Function deve essere esattamente `consume-credits` (con il tr
 ## 🎉 SUCCESSO FINALE
 
 **Quando tutti i task sono completati avrai:**
+
 - 🚀 **CRM completamente funzionale senza errori**
-- 🛡️ **Sistema di sicurezza enterprise-grade**  
+- 🛡️ **Sistema di sicurezza enterprise-grade**
 - 📊 **Monitoring e audit logging completo**
 - ⚡ **Performance ottimizzate**
 - 🔒 **Protezione avanzata contro minacce**

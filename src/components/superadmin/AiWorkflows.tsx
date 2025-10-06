@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { invokeSupabaseFunction } from '../../lib/api';
-import { SparklesIcon, TrendingDownIcon, TemplateIcon } from '../ui/icons';
+import { SparklesIcon, TemplateIcon, TrendingDownIcon } from '../ui/icons';
 import { Modal } from '../ui/Modal';
 
 interface WorkflowExecution {

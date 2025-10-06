@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { supabase } from '../../lib/supabaseClient';
-import { AutomationAgent, AgentExecutionLog } from '../../types';
-import { 
-    CheckCircleIcon, 
-    ExclamationTriangleIcon, 
-    CogIcon,
+import { AgentExecutionLog, AutomationAgent } from '../../types';
+import {
+    BellAlertIcon,
     ChartBarIcon,
-    ShieldCheckIcon,
+    CheckCircleIcon,
+    CogIcon,
     CreditCardIcon,
-    UserGroupIcon,
-    BellAlertIcon
+    ExclamationTriangleIcon,
+    ShieldCheckIcon,
+    UserGroupIcon
 } from '../ui/icons';
 import { Modal } from '../ui/Modal';
 

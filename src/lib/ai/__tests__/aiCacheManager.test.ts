@@ -2,14 +2,14 @@
 // Test Suite for AI Cache Manager
 // Phase 5: Code Quality Enhancement - Cache System Testing
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { 
-  aiCache, 
-  getCachedAIResult, 
-  setCachedAIResult, 
+import {
+  aiCache,
+  getCachedAIResult,
   invalidateAICache,
-  type CacheEntry 
+  setCachedAIResult,
+  type CacheEntry
 } from '../aiCacheManager';
 
 // Mock successful Supabase operations for testing
@@ -50,10 +50,10 @@ describe('AI Cache Manager', () => {
     it('should store and retrieve exact matches from memory cache', async () => {
       // Store in cache
       await aiCache.set(mockInput, mockResult, mockActionType, mockOrgId);
-      
+
       // Retrieve from cache
       const cached = await aiCache.get(mockInput, mockActionType, mockOrgId);
-      
+
       expect(cached).toBeDefined();
       expect(cached?.result).toEqual(mockResult);
       expect(cached?.cacheType).toBe('exact');
@@ -61,7 +61,7 @@ describe('AI Cache Manager', () => {
 
     it('should return null for cache miss', async () => {
       const cached = await aiCache.get('non-existent-input', mockActionType, mockOrgId);
-      
+
       expect(cached).toBeNull();
     });
 
@@ -73,13 +73,13 @@ describe('AI Cache Manager', () => {
       });
 
       const cached = await aiCache.getExactMatch(mockInput, mockActionType, mockOrgId);
-      
+
       expect(cached).toBeNull();
     });
 
     it('should store in persistent cache on set', async () => {
       mockSupabaseUpsert.mockResolvedValueOnce({ data: null, error: null });
-      
+
       await aiCache.setExactMatch(
         mockInput,
         mockResult,
@@ -87,7 +87,7 @@ describe('AI Cache Manager', () => {
         mockOrgId,
         { model: 'gemini-2.5-flash', promptVersion: '2.0', responseTime: 150 }
       );
-      
+
       expect(mockSupabaseUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           result: mockResult,
@@ -105,7 +105,7 @@ describe('AI Cache Manager', () => {
         'ai_email_generation',
         mockOrgId
       );
-      
+
       expect(emailResult).toBeNull();
     });
 
@@ -120,31 +120,31 @@ describe('AI Cache Manager', () => {
       }];
 
       mockSupabaseSingle.mockResolvedValueOnce({ data: similarLeadData, error: null });
-      
+
       // Mock cosine similarity calculation to return high similarity
       vi.spyOn(aiCache as any, 'calculateCosineSimilarity').mockReturnValue(0.9);
-      
+
       const result = await aiCache.getSemanticMatch(
         mockInput,
         'ai_lead_scoring',
         mockOrgId,
         0.85
       );
-      
+
       expect(result).toBeDefined();
       expect((result as { score: number }).score).toBe(74); // 82 * 0.9 (adapted score)
     });
 
     it('should store semantic matches for lead scoring', async () => {
       mockSupabaseInsert.mockResolvedValueOnce({ data: null, error: null });
-      
+
       await aiCache.setSemanticMatch(
         mockInput,
         mockResult,
         'ai_lead_scoring',
         mockOrgId
       );
-      
+
       expect(mockSupabaseInsert).toHaveBeenCalledWith(
         expect.objectContaining({
           result: mockResult,
@@ -162,7 +162,7 @@ describe('AI Cache Manager', () => {
         'ai_lead_scoring',
         mockOrgId
       );
-      
+
       expect(nonContentResult).toBeNull();
     });
 
@@ -174,19 +174,19 @@ describe('AI Cache Manager', () => {
       }];
 
       mockSupabaseSingle.mockResolvedValueOnce({ data: mockTemplateData, error: null });
-      
+
       // Mock template matching
       vi.spyOn(aiCache as any, 'calculateTemplateMatch').mockReturnValue(0.8);
       vi.spyOn(aiCache as any, 'personalizeTemplate').mockReturnValue(
         'Hi John, interested in improving TechCorp sales?'
       );
-      
+
       const result = await aiCache.getTemplateMatch(
         JSON.stringify({ name: 'John', company: 'TechCorp' }),
         'ai_email_generation',
         mockOrgId
       );
-      
+
       expect(result).toBe('Hi John, interested in improving TechCorp sales?');
     });
   });
@@ -205,9 +205,9 @@ describe('AI Cache Manager', () => {
       });
 
       expect(aiCache['exactCache'].size).toBe(1);
-      
+
       await aiCache.invalidate('lead', mockOrgId);
-      
+
       expect(aiCache['exactCache'].size).toBe(0);
     });
   });
@@ -221,9 +221,9 @@ describe('AI Cache Manager', () => {
       ];
 
       mockSupabaseSingle.mockResolvedValueOnce({ data: mockStatsData, error: null });
-      
+
       const stats = await aiCache.getStats(mockOrgId);
-      
+
       expect(stats.totalHits).toBe(3);
       expect(stats.hitsByType.exact).toBe(2);
       expect(stats.hitsByType.semantic).toBe(1);
@@ -232,9 +232,9 @@ describe('AI Cache Manager', () => {
 
     it('should handle errors in stats collection gracefully', async () => {
       mockSupabaseSingle.mockRejectedValueOnce(new Error('Database error'));
-      
+
       const stats = await aiCache.getStats(mockOrgId);
-      
+
       expect(stats.totalHits).toBe(0);
       expect(stats.hitsByType).toEqual({});
       expect(stats.hitsByAction).toEqual({});
@@ -246,7 +246,7 @@ describe('AI Cache Manager', () => {
       const key1 = aiCache['createCacheKey']('input1', 'action1', 'org1');
       const key2 = aiCache['createCacheKey']('input1', 'action1', 'org1');
       const key3 = aiCache['createCacheKey']('input2', 'action1', 'org1');
-      
+
       expect(key1).toBe(key2);
       expect(key1).not.toBe(key3);
     });
@@ -255,10 +255,10 @@ describe('AI Cache Manager', () => {
       const vec1 = [1, 2, 3];
       const vec2 = [1, 2, 3];
       const vec3 = [3, 2, 1];
-      
+
       const similarity1 = aiCache['calculateCosineSimilarity'](vec1, vec2);
       const similarity2 = aiCache['calculateCosineSimilarity'](vec1, vec3);
-      
+
       expect(similarity1).toBeCloseTo(1.0, 2);
       expect(similarity2).toBeLessThan(1.0);
       expect(similarity2).toBeGreaterThan(0);
@@ -274,7 +274,7 @@ describe('AI Cache Manager', () => {
         organizationId: mockOrgId,
         inputHash: 'hash',
       };
-      
+
       const isExpired = aiCache['isExpired'](expiredEntry);
       expect(isExpired).toBe(true);
     });
@@ -284,7 +284,7 @@ describe('AI Cache Manager', () => {
     it('should provide convenient get function', async () => {
       await setCachedAIResult(mockInput, mockResult, mockActionType, mockOrgId);
       const cached = await getCachedAIResult(mockInput, mockActionType, mockOrgId);
-      
+
       expect(cached).toEqual(mockResult);
     });
 
@@ -294,7 +294,7 @@ describe('AI Cache Manager', () => {
         promptVersion: '2.0',
         responseTime: 200,
       });
-      
+
       const cached = await getCachedAIResult(mockInput, mockActionType, mockOrgId);
       expect(cached).toEqual(mockResult);
     });
@@ -302,7 +302,7 @@ describe('AI Cache Manager', () => {
     it('should provide convenient invalidation function', async () => {
       await setCachedAIResult(mockInput, mockResult, mockActionType, mockOrgId);
       await invalidateAICache('lead', mockOrgId);
-      
+
       const cached = await getCachedAIResult(mockInput, mockActionType, mockOrgId);
       expect(cached).toBeNull();
     });

@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { WorkflowDefinition } from '../../types';
-import { 
-    PlayIcon, 
+import {
+    CheckCircleIcon,
     ClockIcon,
-    CheckCircleIcon
+    PlayIcon
 } from '../ui/icons';
 
 // Custom icons

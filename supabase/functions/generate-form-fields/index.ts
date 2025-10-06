@@ -7,8 +7,8 @@ declare const Deno: {
 };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 const ACTION_TYPE = 'ai_form_generation';
@@ -23,10 +23,10 @@ serve(async (req) => {
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Il parametro 'prompt' è obbligatorio." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-     if (!organization_id) {
-       return new Response(JSON.stringify({ error: "Il parametro 'organization_id' è obbligatorio per la verifica dei crediti." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!organization_id) {
+      return new Response(JSON.stringify({ error: "Il parametro 'organization_id' è obbligatorio per la verifica dei crediti." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    
+
     // --- Integrazione Sistema a Crediti ---
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -34,24 +34,25 @@ serve(async (req) => {
     );
 
     const { data: creditData, error: creditError } = await supabaseClient.functions.invoke('consume-credits', {
-        body: { organization_id, action_type: ACTION_TYPE },
+      body: { organization_id, action_type: ACTION_TYPE },
+      headers: { Authorization: req.headers.get("Authorization") || "" }
     });
 
     console.log(`[${ACTION_TYPE}] Credit verification response:`, { creditData, creditError });
 
     if (creditError) {
-        console.error(`[${ACTION_TYPE}] Credit verification network error:`, creditError);
-        throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message || creditError}`);
+      console.error(`[${ACTION_TYPE}] Credit verification network error:`, creditError);
+      throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message || creditError}`);
     }
-    
+
     if (creditData && creditData.error) {
-        console.error(`[${ACTION_TYPE}] Credit verification business error:`, creditData.error);
-        throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
+      console.error(`[${ACTION_TYPE}] Credit verification business error:`, creditData.error);
+      throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
     }
-    
+
     if (!creditData || !creditData.success) {
-        console.error(`[${ACTION_TYPE}] Credit verification failed:`, creditData);
-        throw new Error(creditData?.error || "Crediti insufficienti per generare un form.");
+      console.error(`[${ACTION_TYPE}] Credit verification failed:`, creditData);
+      throw new Error(creditData?.error || "Crediti insufficienti per generare un form.");
     }
     console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
     // --- Fine Integrazione ---
@@ -64,48 +65,48 @@ serve(async (req) => {
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
     const schema = {
-        type: Type.OBJECT,
-        properties: {
-            fields: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        name: {
-                            type: Type.STRING,
-                            description: "Un nome per il campo, leggibile dalla macchina, in snake_case (es. 'nome_completo').",
-                        },
-                        label: {
-                            type: Type.STRING,
-                            description: "Un'etichetta per il campo, leggibile dall'utente (es. 'Nome Completo').",
-                        },
-                        type: {
-                            type: Type.STRING,
-                            description: "Il tipo di input HTML. Valori possibili: 'text', 'email', 'tel', 'textarea'.",
-                        },
-                        required: {
-                            type: Type.BOOLEAN,
-                            description: "Indica se il campo è obbligatorio.",
-                        },
-                    },
-                    required: ["name", "label", "type", "required"],
-                },
+      type: Type.OBJECT,
+      properties: {
+        fields: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              name: {
+                type: Type.STRING,
+                description: "Un nome per il campo, leggibile dalla macchina, in snake_case (es. 'nome_completo').",
+              },
+              label: {
+                type: Type.STRING,
+                description: "Un'etichetta per il campo, leggibile dall'utente (es. 'Nome Completo').",
+              },
+              type: {
+                type: Type.STRING,
+                description: "Il tipo di input HTML. Valori possibili: 'text', 'email', 'tel', 'textarea'.",
+              },
+              required: {
+                type: Type.BOOLEAN,
+                description: "Indica se il campo è obbligatorio.",
+              },
             },
+            required: ["name", "label", "type", "required"],
+          },
         },
-        required: ["fields"],
+      },
+      required: ["fields"],
     };
-    
+
     const fullPrompt = `Basandoti sulla seguente descrizione, genera una struttura JSON con i campi per un form web. Descrizione: "${prompt}"`;
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: fullPrompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: schema,
-        },
+      model: "gemini-2.5-flash",
+      contents: fullPrompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: schema,
+      },
     });
-    
+
     const generatedJson = JSON.parse(response.text);
 
     return new Response(JSON.stringify(generatedJson), {

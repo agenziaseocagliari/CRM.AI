@@ -1,8 +1,8 @@
 // Email Marketing Module - Guardian AI CRM Enterprise
 // Modulo avanzato per email marketing con AI Genius
 
-import React, { useState, useEffect } from 'react';
-import { Mail, Send, Users, BarChart3, TrendingUp, Settings, Plus, Target } from 'lucide-react';
+import { BarChart3, Mail, Plus, Send, Settings, Target, TrendingUp, Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useEmailGeniusAI } from '../lib/ai/useAIOrchestrator';

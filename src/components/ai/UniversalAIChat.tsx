@@ -1,8 +1,8 @@
 // Universal AI Chat - Guardian AI CRM
 // Chat centralizzata che instrada automaticamente alle AI specializzate
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Loader2, Bot, Sparkles } from 'lucide-react';
+import { Bot, Loader2, Send, Sparkles, User } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface ChatMessage {
   id: string;

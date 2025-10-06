@@ -88,7 +88,7 @@ export async function validateIP(request: RequestLike, organizationId?: string):
   shouldBlock?: boolean;
 }> {
   const clientIP = getClientIP(request);
-  
+
   if (!clientIP) {
     return { isValid: false, reason: 'IP_NOT_DETECTED', shouldBlock: true };
   }
@@ -96,9 +96,9 @@ export async function validateIP(request: RequestLike, organizationId?: string):
   // Check IP whitelist if enabled
   if (SECURITY_CONFIG.ipWhitelist.enabled && organizationId) {
     const { data: isWhitelisted } = await supabase
-      .rpc('check_ip_whitelist', { 
-        p_organization_id: organizationId, 
-        p_ip_address: clientIP 
+      .rpc('check_ip_whitelist', {
+        p_organization_id: organizationId,
+        p_ip_address: clientIP
       });
 
     if (!isWhitelisted && SECURITY_CONFIG.ipWhitelist.strictMode) {
@@ -135,7 +135,7 @@ export async function checkRateLimit(identifier: string): Promise<{
   resetTime: number;
 }> {
   const now = Date.now();
-  
+
   // Clean expired entries
   for (const [key, value] of rateLimitStore.entries()) {
     if (value.resetTime < now) {
@@ -144,7 +144,7 @@ export async function checkRateLimit(identifier: string): Promise<{
   }
 
   const current = rateLimitStore.get(identifier);
-  
+
   if (!current || current.resetTime < now) {
     // First request in window
     rateLimitStore.set(identifier, {
@@ -177,7 +177,7 @@ export async function checkRateLimit(identifier: string): Promise<{
 
 // 🔐 SECURITY LAYER 3: BRUTE FORCE PROTECTION
 export async function checkBruteForceProtection(
-  userId?: string, 
+  userId?: string,
   ipAddress?: string
 ): Promise<{
   isBlocked: boolean;
@@ -207,10 +207,10 @@ export async function checkBruteForceProtection(
       .single();
 
     if (lastFailedAttempt) {
-      const lockoutEndTime = new Date(lastFailedAttempt.attempted_at).getTime() + 
+      const lockoutEndTime = new Date(lastFailedAttempt.attempted_at).getTime() +
         (SECURITY_CONFIG.bruteForceProtection.lockoutMinutes * 60 * 1000);
       const remainingTime = Math.max(0, lockoutEndTime - Date.now());
-      
+
       return {
         isBlocked: true,
         reason: 'BRUTE_FORCE_PROTECTION',
@@ -230,7 +230,7 @@ export async function validateJWT(token: string): Promise<{
 }> {
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
-    
+
     if (error || !user) {
       return { isValid: false, error: error?.message || 'Invalid token' };
     }
@@ -259,19 +259,19 @@ export function getClientIP(request: RequestLike): string | null {
   const xForwardedFor = request.headers.get('x-forwarded-for');
   const xRealIP = request.headers.get('x-real-ip');
   const cfConnectingIP = request.headers.get('cf-connecting-ip');
-  
+
   if (xForwardedFor) {
     return xForwardedFor.split(',')[0].trim();
   }
-  
+
   if (xRealIP) {
     return xRealIP;
   }
-  
+
   if (cfConnectingIP) {
     return cfConnectingIP;
   }
-  
+
   // Fallback to connection remote address
   return request.ip || null;
 }
@@ -285,7 +285,7 @@ export async function getGeoLocation(ip: string): Promise<GeoLocation | null> {
     // Use a geo-location service (example with ipapi.co)
     const response = await fetch(`https://ipapi.co/${ip}/json/`);
     const data = await response.json();
-    
+
     return {
       country: data.country_code,
       region: data.region,
@@ -354,7 +354,7 @@ export async function recordFailedLogin(
 // 🔐 SECURITY HEADERS
 export function getSecurityHeaders(): Headers {
   const headers = new Headers();
-  
+
   // Content Security Policy
   const csp = [
     "default-src 'self'",
@@ -368,14 +368,14 @@ export function getSecurityHeaders(): Headers {
     "form-action 'self'",
     "frame-ancestors 'none'"
   ].join('; ');
-  
+
   headers.set('Content-Security-Policy', csp);
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('X-Frame-Options', 'DENY');
   headers.set('X-XSS-Protection', '1; mode=block');
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  
+
   return headers;
 }
 
@@ -392,7 +392,7 @@ export async function securityMiddleware(
 }> {
   const clientIP = getClientIP(request);
   const userAgent = getUserAgent(request);
-  
+
   try {
     // 1. IP Validation
     const ipValidation = await validateIP(request, organizationId);
@@ -411,7 +411,7 @@ export async function securityMiddleware(
       headers.set('X-RateLimit-Limit', SECURITY_CONFIG.rateLimiting.maxRequests.toString());
       headers.set('X-RateLimit-Remaining', '0');
       headers.set('X-RateLimit-Reset', rateLimitCheck.resetTime.toString());
-      
+
       return {
         allowed: false,
         error: 'Rate limit exceeded',
@@ -432,15 +432,15 @@ export async function securityMiddleware(
 
     // Add security headers
     const securityHeaders = getSecurityHeaders();
-    
+
     return {
       allowed: true,
       headers: securityHeaders
     };
-    
+
   } catch (error) {
     console.error('Security middleware error:', error);
-    
+
     // Log security error
     await logSecurityEvent(
       'MIDDLEWARE_ERROR',
@@ -454,7 +454,7 @@ export async function securityMiddleware(
       false,
       { error: error instanceof Error ? error.message : 'Unknown error' }
     );
-    
+
     return {
       allowed: false,
       error: 'Security validation failed',

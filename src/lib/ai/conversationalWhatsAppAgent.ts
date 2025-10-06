@@ -32,10 +32,10 @@ export class ConversationalWhatsAppAgent {
     try {
       // TODO: Integrare con AI per risposta intelligente
       const response = await this.generateAIResponse(message.message, context);
-      
+
       // TODO: Inviare risposta via WhatsApp API
       await this.sendWhatsAppMessage(message.from, response);
-      
+
       return response;
     } catch (error) {
       console.error('Errore nel processare messaggio WhatsApp:', error);

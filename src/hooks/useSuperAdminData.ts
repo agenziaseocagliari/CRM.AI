@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { invokeSupabaseFunction } from '../lib/api';
 
@@ -84,10 +84,10 @@ export const useSuperAdminData = () => {
             setOrganizations((orgsData as { customers?: AdminOrganization[] }).customers || []);
             setTransactions((transactionsData as { payments?: Transaction[] }).payments || []);
             setAuditLogs((logsData as { logs?: AuditLog[] }).logs || []);
-            
+
             // Generate notifications based on data
             const newNotifications: Notification[] = [];
-            
+
             // Check for churn risk
             const stats = (statsData as { stats?: AdminStat }).stats;
             if (stats?.churnRiskCount && stats.churnRiskCount > 0) {
@@ -98,7 +98,7 @@ export const useSuperAdminData = () => {
                     timestamp: new Date().toISOString(),
                 });
             }
-            
+
             // Check for new signups
             if (stats?.newSignupsThisWeek && stats.newSignupsThisWeek > 0) {
                 newNotifications.push({
@@ -108,7 +108,7 @@ export const useSuperAdminData = () => {
                     timestamp: new Date().toISOString(),
                 });
             }
-            
+
             setNotifications(newNotifications);
 
         } catch (error) {
@@ -118,7 +118,7 @@ export const useSuperAdminData = () => {
             setLoading(false);
         }
     }, []);
-    
+
     // Initial data load effect
     useEffect(() => {
         setLoading(true);

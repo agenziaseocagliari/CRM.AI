@@ -6,11 +6,11 @@ interface KnowledgeBase {
   documents: KnowledgeDocument[];
   categories: KnowledgeCategory[];
   tags: string[];
-  
+
   // Search & Retrieval
   search(query: string, organizationId: string): Promise<KnowledgeMatch[]>;
   getRecommendations(context: string, userId: string): Promise<KnowledgeDocument[]>;
-  
+
   // Learning & Adaptation
   recordInteraction(documentId: string, interaction: UserInteraction): Promise<void>;
   updateRelevanceScores(): Promise<void>;
@@ -27,12 +27,12 @@ interface KnowledgeDocument {
   createdAt: Date;
   updatedAt: Date;
   version: number;
-  
+
   // AI Enhancement
   aiSummary?: string;
   keyInsights: string[];
   relatedTopics: string[];
-  
+
   // Usage Analytics
   viewCount: number;
   usefulness: number; // 0-10 based on user feedback
@@ -228,7 +228,7 @@ class EnhancedKnowledgeBaseSystem implements KnowledgeBase {
         version: 1,
         aiSummary: 'Protocollo completo per gestione messaggi WhatsApp in arrivo con template e procedure',
         keyInsights: [
-          'Risposta HOT LEAD entro 5 minuti',  
+          'Risposta HOT LEAD entro 5 minuti',
           'Qualificazione rapida con 8 punti chiave',
           'Escalation automatica per lead >€10k'
         ],
@@ -530,7 +530,7 @@ class EnhancedKnowledgeBaseSystem implements KnowledgeBase {
       }
 
       // Key insights matching
-      const insightMatches = doc.keyInsights.filter(insight => 
+      const insightMatches = doc.keyInsights.filter(insight =>
         insight.toLowerCase().includes(queryLower)
       ).length;
       if (insightMatches > 0) {
@@ -541,11 +541,11 @@ class EnhancedKnowledgeBaseSystem implements KnowledgeBase {
       if (relevanceScore > 0) {
         // Create snippet
         const sentences = doc.content.split(/[.!?]+/);
-        const matchingSentence = sentences.find(sentence => 
+        const matchingSentence = sentences.find(sentence =>
           sentence.toLowerCase().includes(queryLower)
         );
-        
-        const snippet = matchingSentence 
+
+        const snippet = matchingSentence
           ? this.highlightText(matchingSentence.trim(), query)
           : doc.content.substring(0, 150) + '...';
 
@@ -652,7 +652,7 @@ class EnhancedKnowledgeBaseSystem implements KnowledgeBase {
   getTrendingTopics(): string[] {
     // Simple trending calculation based on recent usage
     const tagUsage: Record<string, number> = {};
-    
+
     this.documents
       .filter(doc => {
         const daysSinceLastUsed = (Date.now() - doc.lastUsed.getTime()) / (1000 * 60 * 60 * 24);
@@ -665,7 +665,7 @@ class EnhancedKnowledgeBaseSystem implements KnowledgeBase {
       });
 
     return Object.entries(tagUsage)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
       .map(([tag]) => tag);
   }
@@ -700,11 +700,11 @@ export class KnowledgeBaseManager {
 // Global Knowledge Base System
 export const enhancedKnowledgeBaseSystem = {
   manager: new KnowledgeBaseManager(),
-  
+
   // Legacy compatibility
-  getManager: (organizationId: string) => 
+  getManager: (organizationId: string) =>
     new KnowledgeBaseManager().getOrganizationKB(organizationId),
-    
+
   // Direct search method for backward compatibility
   searchKnowledge: async (query: string, organizationId: string): Promise<KnowledgeMatch[]> => {
     const manager = new KnowledgeBaseManager();

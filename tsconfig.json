@@ -2,10 +2,13 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
-
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -13,13 +16,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-
     /* Enhanced Type Safety - Gradually enabled */
     // "exactOptionalPropertyTypes": true, // TODO: Enable after fixing all errors
     // "noImplicitReturns": true, // TODO: Fix useEffect return types
@@ -27,19 +28,26 @@
     // "noUncheckedIndexedAccess": true, // TODO: Enable after index access fixes
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
-
     /* Path Aliases */
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "exclude": [
     "**/*.test.ts",
-    "**/*.test.tsx", 
+    "**/*.test.tsx",
     "**/__tests__/**",
     "**/*.spec.ts",
     "**/*.spec.tsx"
   ],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

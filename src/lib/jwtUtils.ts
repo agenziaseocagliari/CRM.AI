@@ -146,7 +146,7 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
  */
 export function formatJWTDiagnostics(diagnostics: JWTDiagnostics): string {
   let report = '==== JWT Diagnostics Report ====\n\n';
-  
+
   report += `Timestamp: ${new Date().toISOString()}\n`;
   report += `Valid JWT: ${diagnostics.isValid ? 'âœ… Yes' : 'âŒ No'}\n`;
   report += `Has user_role: ${diagnostics.hasUserRole ? 'âœ… Yes' : 'âŒ No'}\n\n`;
@@ -177,7 +177,7 @@ export function formatJWTDiagnostics(diagnostics: JWTDiagnostics): string {
   report += diagnostics.rawToken.substring(0, 50) + '...\n\n';
 
   report += '================================\n';
-  
+
   return report;
 }
 

@@ -2,7 +2,7 @@
 // Test Suite for Enhanced AI Service
 // Phase 5: Code Quality Enhancement - AI Component Testing
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { enhancedAIService } from '../enhancedAIService';
 import type { OrganizationAIContext } from '../promptTemplates';
@@ -81,7 +81,7 @@ describe('EnhancedAIService', () => {
       const backgroundResult = await enhancedAIService.scoreContactLead(
         mockLead,
         mockOrganizationId,
-        mockOrganizationContext,  
+        mockOrganizationContext,
         'background'
       );
 
@@ -180,7 +180,7 @@ describe('EnhancedAIService', () => {
         category: 'Hot',
         reasoning: 'Cached lead score',
       };
-      
+
       vi.doMock('../aiCacheManager', () => ({
         getCachedAIResult: vi.fn().mockResolvedValue(cachedResult),
         setCachedAIResult: vi.fn(),
@@ -229,7 +229,7 @@ describe('EnhancedAIService', () => {
       const rateLimitMock = vi.fn().mockRejectedValueOnce(
         new Error('Rate limit exceeded')
       );
-      
+
       vi.doMock('../rateLimiter', () => ({
         withRateLimit: rateLimitMock,
       }));

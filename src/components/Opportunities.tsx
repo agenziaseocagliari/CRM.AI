@@ -1,14 +1,14 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
-import { Opportunity, PipelineStage, OpportunitiesData } from '../types';
+import { OpportunitiesData, Opportunity, PipelineStage } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 
-import { PlusIcon, EditIcon, TrashIcon } from './ui/icons';
+import { EditIcon, PlusIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 
 

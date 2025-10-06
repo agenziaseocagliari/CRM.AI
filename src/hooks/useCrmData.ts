@@ -1,22 +1,22 @@
 // Gli import vanno sempre puliti e organizzati dopo ogni refactor o patch.
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { invokeSupabaseFunction } from '../lib/api';
-import { supabase } from '../lib/supabaseClient';
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
-import { 
-    Automation,
-    Contact,
-    CreditLedgerEntry,
-    CrmEvent,
-    Form,
-    OpportunitiesData,
-    Opportunity,
-    Organization,
-    OrganizationSettings,
-    OrganizationSubscription,
-    PipelineStage,
-    Profile
+import { supabase } from '../lib/supabaseClient';
+import {
+  Automation,
+  Contact,
+  CreditLedgerEntry,
+  CrmEvent,
+  Form,
+  OpportunitiesData,
+  Opportunity,
+  Organization,
+  OrganizationSettings,
+  OrganizationSubscription,
+  PipelineStage,
+  Profile
 } from '../types';
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
@@ -28,7 +28,7 @@ const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesD
     [PipelineStage.Lost]: [],
   };
 
-  if (!opportunities) {return emptyData;}
+  if (!opportunities) { return emptyData; }
 
   return opportunities.reduce((acc, op) => {
     if (acc[op.stage]) {
@@ -60,12 +60,12 @@ export const useCrmData = () => {
     try {
       // Step 1: Get JWT session and extract user
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if(sessionError) {
+      if (sessionError) {
         diagnosticLogger.error('[useCrmData] Session error:', sessionError);
         throw sessionError;
       }
       const user = session?.user;
-      
+
       if (!user) {
         diagnosticLogger.info('[useCrmData] No user session found, clearing state');
         setLoading(false);
@@ -91,7 +91,7 @@ export const useCrmData = () => {
         .select('organization_id')
         .eq('id', user.id)
         .single<Pick<Profile, 'organization_id'>>();
-      
+
       // Step 4: Enhanced error handling with diagnostic information
       if (profileError || !profileData) {
         diagnosticLogger.error('[useCrmData] Profile lookup failed:', {
@@ -104,7 +104,7 @@ export const useCrmData = () => {
           errorDetails: profileError?.details,
           hint: profileError?.hint
         });
-        
+
         // Provide detailed error message with actual values used
         const errorMsg = `Impossibile trovare il profilo dell'utente o l'organizzazione associata.\n\n` +
           `Debug Info:\n` +
@@ -113,10 +113,10 @@ export const useCrmData = () => {
           `- Errore DB: ${profileError?.message || 'Profilo non trovato'}\n` +
           `- Codice: ${profileError?.code || 'N/A'}\n\n` +
           `Azione suggerita: Contattare il supporto con questi dettagli o ricaricare la pagina.`;
-        
+
         throw new Error(errorMsg);
       }
-      
+
       // SUPER ADMIN FIX: Se organization_id è "ALL", usa la prima organizzazione disponibile
       let { organization_id } = profileData;
       if (organization_id === 'ALL') {
@@ -126,7 +126,7 @@ export const useCrmData = () => {
           .select('id')
           .limit(1)
           .single();
-        
+
         if (firstOrg) {
           organization_id = firstOrg.id;
           diagnosticLogger.info('[useCrmData] Using organization:', organization_id);
@@ -154,16 +154,16 @@ export const useCrmData = () => {
 
       diagnosticLogger.info('[useCrmData] Data fetch completed for organization:', organization_id);
 
-      if (orgResponse.error) {throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`);}
-      if (contactsResponse.error) {throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`);}
-      if (opportunitiesResponse.error) {throw new Error(`Errore nel caricamento delle opportunit� : ${opportunitiesResponse.error.message}`);}
-      if (formsResponse.error) {throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`);}
-      if (automationsResponse.error) {throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`);}
-      if (settingsResponse.error) {throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`);}
-      if (subscriptionResponse.error) {throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`);}
-      if (ledgerResponse.error) {throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`);}
-      if (googleCredsResponse.error) {throw new Error(`Errore nel caricamento delle credenziali Google: ${googleCredsResponse.error.message}`);}
-      
+      if (orgResponse.error) { throw new Error(`Errore nel caricamento dell'organizzazione: ${orgResponse.error.message}`); }
+      if (contactsResponse.error) { throw new Error(`Errore nel caricamento dei contatti: ${contactsResponse.error.message}`); }
+      if (opportunitiesResponse.error) { throw new Error(`Errore nel caricamento delle opportunit� : ${opportunitiesResponse.error.message}`); }
+      if (formsResponse.error) { throw new Error(`Errore nel caricamento dei form: ${formsResponse.error.message}`); }
+      if (automationsResponse.error) { throw new Error(`Errore nel caricamento delle automazioni: ${automationsResponse.error.message}`); }
+      if (settingsResponse.error) { throw new Error(`Errore nel caricamento delle impostazioni: ${settingsResponse.error.message}`); }
+      if (subscriptionResponse.error) { throw new Error(`Errore nel caricamento della sottoscrizione: ${subscriptionResponse.error.message}`); }
+      if (ledgerResponse.error) { throw new Error(`Errore nel caricamento dello storico crediti: ${ledgerResponse.error.message}`); }
+      if (googleCredsResponse.error) { throw new Error(`Errore nel caricamento delle credenziali Google: ${googleCredsResponse.error.message}`); }
+
       if (orgResponse.data) {
         setOrganization(orgResponse.data);
         localStorage.setItem('organization_id', orgResponse.data.id);
@@ -196,11 +196,11 @@ export const useCrmData = () => {
 
   useEffect(() => {
     fetchData();
-    
+
     const { data: authListener } = supabase.auth.onAuthStateChange((event, _session) => {
-        if(event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-            fetchData();
-        }
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        fetchData();
+      }
     });
 
     return () => authListener?.subscription.unsubscribe();

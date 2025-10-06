@@ -1,11 +1,11 @@
 // AI Agents Panel Component - Guardian AI CRM Enterprise
 // Panel intelligente che fornisce accesso agli AI Agents in base al contesto
 
-import React, { useState } from 'react';
-import { Bot, Sparkles, Zap, Brain, Target, Calendar } from 'lucide-react';
-import { useAIOrchestrator } from '../lib/ai/useAIOrchestrator';
-import { AI_AGENTS } from '../lib/ai/aiOrchestrator';
+import { Bot, Brain, Calendar, Sparkles, Target, Zap } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { AI_AGENTS } from '../lib/ai/aiOrchestrator';
+import { useAIOrchestrator } from '../lib/ai/useAIOrchestrator';
 
 interface AIAgentsPanelProps {
   context: 'dashboard' | 'opportunities' | 'contacts' | 'forms' | 'automations' | 'calendar';

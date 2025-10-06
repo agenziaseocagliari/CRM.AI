@@ -34,7 +34,7 @@ function createDiagnosticReport(
     report += `Function: ${functionName}\n`;
     report += `Timestamp: ${new Date().toISOString()}\n`;
     report += `User Message: ${userMessage}\n\n`;
-    
+
     if (errorObject) {
         report += `--- JAVASCRIPT ERROR ---\n`;
         report += `Name: ${errorObject.name}\n`;
@@ -45,7 +45,7 @@ function createDiagnosticReport(
     report += `--- BACKEND RESPONSE ---\n`;
     report += `Type: ${typeof rawErrorPayload}\n`;
     report += `Raw Payload:\n${typeof rawErrorPayload === 'string' ? rawErrorPayload : JSON.stringify(rawErrorPayload, null, 2)}\n`;
-    
+
     report += `\n=======================================\n`;
     return report;
 }
@@ -57,7 +57,7 @@ function createDiagnosticReport(
  * @param diagnosticReport The full diagnostic report to be copied.
  * @param options Optional configuration for the toast behavior.
  */
-function showErrorToast(message: string, diagnosticReport: string, options?: { 
+function showErrorToast(message: string, diagnosticReport: string, options?: {
     requiresLogout?: boolean;
     isJwtError?: boolean;
 }) {
@@ -65,18 +65,18 @@ function showErrorToast(message: string, diagnosticReport: string, options?: {
     const needsReconnect = /token|google|autenticazione|connetti|credential/i.test(diagnosticReport.toLowerCase());
     const requiresLogout = options?.requiresLogout || false;
     const isJwtError = options?.isJwtError || false;
-    
+
     toast.error(
         (t) => (
             React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'start', gap: '12px', maxWidth: '500px' } },
                 React.createElement('div', { className: 'w-full' },
                     // Split message by newlines and create separate paragraphs
-                    ...message.split('\n').filter(line => line.trim()).map((line, idx) => 
-                        React.createElement('p', { 
+                    ...message.split('\n').filter(line => line.trim()).map((line, idx) =>
+                        React.createElement('p', {
                             key: idx,
-                            className: line.trim().startsWith('⚠️') || line.trim().startsWith('NOTA:') 
-                                ? 'font-bold text-yellow-700 mb-2' 
-                                : line.match(/^\d+\./) 
+                            className: line.trim().startsWith('⚠️') || line.trim().startsWith('NOTA:')
+                                ? 'font-bold text-yellow-700 mb-2'
+                                : line.match(/^\d+\./)
                                     ? 'text-sm ml-4 mb-1'
                                     : 'text-sm mb-2'
                         }, line.trim())
@@ -136,7 +136,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
 
     // 2. Prepare payload with organization_id.
     const finalPayload: Record<string, unknown> = { ...payload };
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     const isDebugMode = urlParams.get('debug_mode') === 'true';
     const debugOrgId = urlParams.get('debug_org_id');
@@ -177,7 +177,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
                     .select('id')
                     .limit(1)
                     .single();
-                
+
                 if (firstOrg) {
                     finalPayload.organization_id = firstOrg.id;
                     diagnosticLogger.info(`[API Helper] Super Admin using organization: ${firstOrg.id}`);
@@ -193,14 +193,14 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
 
     const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
     const supabaseAnonKey = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) {throw new Error("Supabase URL or Anon Key not configured.");}
-    
+    if (!supabaseUrl || !supabaseAnonKey) { throw new Error("Supabase URL or Anon Key not configured."); }
+
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`,
         'apikey': supabaseAnonKey
     };
-    
+
     try {
         const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
             method: 'POST',
@@ -212,57 +212,57 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             const errorText = await response.text();
             let errorJson: unknown = null;
             try { errorJson = JSON.parse(errorText); } catch { /* ignore */ }
-            
+
             diagnosticLogger.error(`[API Helper] Error from '${functionName}' (${response.status}). Full response:`, errorJson || errorText);
 
             // Check for JWT custom claim error specifically
-            const errorMessage = (errorJson && typeof errorJson === 'object' && 'error' in errorJson && typeof errorJson.error === 'string') 
-                ? errorJson.error 
+            const errorMessage = (errorJson && typeof errorJson === 'object' && 'error' in errorJson && typeof errorJson.error === 'string')
+                ? errorJson.error
                 : errorText || '';
-            const isJwtClaimError = (response.status === 403 || response.status === 401) && 
-                                   /user_role not found|JWT custom claim|custom claim.*not found|logout and login again|Please logout and login|role was recently changed/i.test(errorMessage);
-            
+            const isJwtClaimError = (response.status === 403 || response.status === 401) &&
+                /user_role not found|JWT custom claim|custom claim.*not found|logout and login again|Please logout and login|role was recently changed/i.test(errorMessage);
+
             if (isJwtClaimError) {
                 diagnosticLogger.error(`[API Helper] JWT Custom Claim Error detected on '${functionName}'. Token is outdated or missing custom claims.`);
                 diagnosticLogger.error(`[API Helper] IMPORTANT: Session refresh will NOT fix this issue. User must perform a FULL LOGOUT and LOGIN.`);
-                
+
                 diagnosticLogger.critical('api', `JWT Custom Claim Error on ${functionName}`, {
                     endpoint: functionName,
                     statusCode: response.status,
                     errorMessage: errorMessage,
                     userId: session?.user?.id,
                 });
-                
+
                 const userMessage = '⚠️ Il tuo ruolo utente è stato modificato. Per continuare, devi:\n\n1. Cliccare sul pulsante "Logout" qui sotto\n2. Effettuare nuovamente il login\n\nNOTA: Semplicemente ricaricare la pagina o riaprire il browser NON risolverà il problema.';
                 const diagnosticReport = createDiagnosticReport(
-                    userMessage, 
-                    functionName, 
+                    userMessage,
+                    functionName,
                     errorJson || errorText
                 );
-                
+
                 // Show error with logout button and clear instructions
-                showErrorToast(userMessage, diagnosticReport, { 
+                showErrorToast(userMessage, diagnosticReport, {
                     requiresLogout: true,
-                    isJwtError: true 
+                    isJwtError: true
                 });
-                
+
                 // Automatically clear auth state to force fresh login
                 localStorage.removeItem('organization_id');
-                
-                throw { 
-                    error: userMessage, 
+
+                throw {
+                    error: userMessage,
                     isJwtError: true,
                     requiresRelogin: true,
-                    diagnostics: errorJson 
+                    diagnostics: errorJson
                 };
             }
 
             const isAuthError = response.status === 401 || response.status === 403 || (errorText && /organization_id|jwt|token/i.test(errorText));
-            
+
             if (isAuthError && !isRetry) {
                 diagnosticLogger.warn(`[API Helper] Auth error on '${functionName}'. Attempting session refresh and one retry...`);
                 const { error: refreshError } = await supabase.auth.refreshSession();
-                
+
                 if (refreshError) {
                     diagnosticLogger.error(`[API Helper] Session refresh failed:`, refreshError);
                     const userMessage = 'Sessione scaduta. Per favore, effettua nuovamente il login.';
@@ -271,28 +271,28 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
                     localStorage.removeItem('organization_id');
                     throw { error: userMessage, requiresRelogin: true };
                 }
-                
+
                 return invokeSupabaseFunction(functionName, payload, true);
             }
-            
-            const userMessage = (errorJson && typeof errorJson === 'object' && 'error' in errorJson && typeof errorJson.error === 'string') 
-                ? errorJson.error 
+
+            const userMessage = (errorJson && typeof errorJson === 'object' && 'error' in errorJson && typeof errorJson.error === 'string')
+                ? errorJson.error
                 : `Errore del server (${response.status})`;
             const diagnosticReport = createDiagnosticReport(userMessage, functionName, errorJson || errorText);
-            
+
             diagnosticLogger.error('api', `API error on ${functionName}`, {
                 endpoint: functionName,
                 statusCode: response.status,
                 errorMessage: userMessage,
             });
-            
+
             showErrorToast(userMessage, diagnosticReport);
             // FIX: Throw the entire JSON object instead of just the message. This preserves
             // the rich diagnostic information from the backend, allowing the calling
             // component to display a more detailed and useful error message in the UI.
             throw errorJson || { error: userMessage, diagnostics: { details: errorText } };
         }
-        
+
         const data = await response.json();
         diagnosticLogger.info(`[API Helper] OK response from '${functionName}'.`);
         console.dir(data);
@@ -313,31 +313,31 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
         // 1. True network errors from `fetch` (e.g., DNS, CORS, no connection). These are typically TypeErrors.
         // 2. JSON parsing errors if the success response from the server is malformed.
         // 3. Application-level errors that were already processed and re-thrown from the `if (!response.ok)` block.
-        
+
         // Our goal is to only generate a *new* generic diagnostic report and toast for case #1 and #2.
         // Case #3 errors already have a specific, useful message from the backend and have been toasted.
-        
+
         // Check if this is a re-thrown error from our handling (has custom structure)
         if (error && typeof error === 'object' && ('isJwtError' in error || 'requiresRelogin' in error || 'error' in error)) {
             // This is an already-processed application error, just re-throw
             diagnosticLogger.info(`[API Helper] Re-throwing processed error from '${functionName}'`);
             throw error;
         }
-        
+
         // If we reach here, it's a true network/fetch error
         if (error instanceof Error) {
             diagnosticLogger.error(`[API Helper] Network or Fetch Error calling '${functionName}':`, error);
-            
+
             // Try to determine if this is a true network error vs. a CORS/backend issue
-            const isNetworkError = error.name === 'TypeError' && 
-                                  (error.message.includes('Failed to fetch') || 
-                                   error.message.includes('NetworkError') ||
-                                   error.message.includes('Network request failed'));
-            
-            const userMessage = isNetworkError 
+            const isNetworkError = error.name === 'TypeError' &&
+                (error.message.includes('Failed to fetch') ||
+                    error.message.includes('NetworkError') ||
+                    error.message.includes('Network request failed'));
+
+            const userMessage = isNetworkError
                 ? 'Errore di rete. Controlla la connessione e riprova.'
                 : 'Errore di comunicazione con il server. Riprova più tardi.';
-                
+
             const diagnosticReport = createDiagnosticReport(
                 userMessage,
                 functionName,
@@ -346,7 +346,7 @@ export async function invokeSupabaseFunction(functionName: string, payload: obje
             );
             showErrorToast(userMessage, diagnosticReport);
         }
-        
+
         // In all cases, we re-throw the error so the calling component's own try/catch block
         // can handle it and update the UI state accordingly (e.g., show an error message in the component).
         throw error;

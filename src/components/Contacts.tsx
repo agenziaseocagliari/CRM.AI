@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react';
+﻿import React, { useCallback, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { toast } from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
@@ -10,10 +10,13 @@ import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
+import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
 import { CreateEventModal } from './CreateEventModal';
 import { CalendarIcon, EditIcon, PlusIcon, SparklesIcon, TrashIcon, WhatsAppIcon } from './ui/icons';
 import { LeadScoreBadge } from './ui/LeadScoreBadge';
+import { Modal } from './ui/Modal';
 
 // Error interface for proper typing
 interface ApiError {
@@ -21,9 +24,6 @@ interface ApiError {
     status?: number;
     code?: string;
 }
-import { Modal } from './ui/Modal';
-import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
-import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
 // FIX: Corrected import path for CreateEventModal.
 // FIX: Corrected import path for ContactEventsList.
 

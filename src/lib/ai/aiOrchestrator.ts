@@ -1,8 +1,8 @@
 // AI Agents Orchestrator - Guardian AI CRM Enterprise Architecture
 // This file defines the AI Agent system that transforms Guardian AI into an enterprise platform
 
-import { isDevelopmentEnterpriseUser, getEffectiveUserTier } from '../enterpriseOverride';
 import { invokeSupabaseFunction } from '../api';
+import { getEffectiveUserTier, isDevelopmentEnterpriseUser } from '../enterpriseOverride';
 
 export interface AIAgent {
   id: string;
@@ -157,7 +157,7 @@ export const AI_AGENTS: AIAgent[] = [
     icon: '📋',
     status: 'active'
   },
-  
+
   {
     id: 'email_genius',
     name: 'EmailGenius AI',
@@ -176,7 +176,7 @@ export const AI_AGENTS: AIAgent[] = [
     icon: '📧',
     status: 'active'
   },
-  
+
   {
     id: 'whatsapp_butler',
     name: 'WhatsAppButler AI',
@@ -195,7 +195,7 @@ export const AI_AGENTS: AIAgent[] = [
     icon: '💬',
     status: 'beta'
   },
-  
+
   {
     id: 'calendar_wizard',
     name: 'CalendarWizard AI',
@@ -214,7 +214,7 @@ export const AI_AGENTS: AIAgent[] = [
     icon: '🗓️',
     status: 'coming_soon'
   },
-  
+
   {
     id: 'analytics_oracle',
     name: 'AnalyticsOracle AI',
@@ -233,7 +233,7 @@ export const AI_AGENTS: AIAgent[] = [
     icon: '🔮',
     status: 'coming_soon'
   },
-  
+
   {
     id: 'lead_scorer',
     name: 'LeadScorer AI',
@@ -257,16 +257,16 @@ export const AI_AGENTS: AIAgent[] = [
 // 🎛️ AI ORCHESTRATOR SYSTEM
 export class AIOrchestrator {
   private agents: Map<string, AIAgent> = new Map();
-  
+
   constructor() {
     AI_AGENTS.forEach(agent => {
       this.agents.set(agent.id, agent);
     });
   }
-  
+
   async processRequest(request: AIAgentRequest): Promise<AIAgentResponse> {
     const agent = this.agents.get(request.agentId);
-    
+
     if (!agent) {
       return {
         success: false,
@@ -277,7 +277,7 @@ export class AIOrchestrator {
         error: 'Agent not found'
       };
     }
-    
+
     // Route to appropriate processing function
     switch (agent.id) {
       case 'form_master':
@@ -303,11 +303,11 @@ export class AIOrchestrator {
         };
     }
   }
-  
+
   private async processFormMaster(request: AIAgentRequest, agent: AIAgent): Promise<AIAgentResponse> {
     // FormMaster AI processing logic - REAL GEMINI INTEGRATION
     const startTime = Date.now();
-    
+
     try {
       // Call the existing generate-form-fields edge function with Gemini
       const data = await invokeSupabaseFunction('generate-form-fields', {
@@ -315,7 +315,7 @@ export class AIOrchestrator {
         organization_id: request.organizationId,
         context: request.context
       }) as FormGenerationResponse;
-      
+
       return {
         success: true,
         data: {
@@ -347,11 +347,11 @@ export class AIOrchestrator {
       };
     }
   }
-  
+
   private async processEmailGenius(request: AIAgentRequest, agent: AIAgent): Promise<AIAgentResponse> {
     // EmailGenius AI processing logic - REAL GEMINI INTEGRATION
     const startTime = Date.now();
-    
+
     try {
       // Call the existing generate-email-content edge function with Gemini
       const data = await invokeSupabaseFunction('generate-email-content', {
@@ -359,7 +359,7 @@ export class AIOrchestrator {
         contact: request.context?.contact || {},
         organization_id: request.organizationId
       }) as EmailGenerationResponse;
-      
+
       return {
         success: true,
         data: {
@@ -395,11 +395,11 @@ export class AIOrchestrator {
       };
     }
   }
-  
+
   private async processWhatsAppButler(request: AIAgentRequest, agent: AIAgent): Promise<AIAgentResponse> {
     // WhatsAppButler AI processing logic - REAL GEMINI INTEGRATION
     const startTime = Date.now();
-    
+
     try {
       // Call the existing generate-whatsapp-message edge function with Gemini
       const data = await invokeSupabaseFunction('generate-whatsapp-message', {
@@ -407,7 +407,7 @@ export class AIOrchestrator {
         contact: request.context?.contact || {},
         organization_id: request.organizationId
       }) as WhatsAppGenerationResponse;
-      
+
       return {
         success: true,
         data: {
@@ -444,11 +444,11 @@ export class AIOrchestrator {
       };
     }
   }
-  
+
   private async processCalendarWizard(request: AIAgentRequest, agent: AIAgent): Promise<AIAgentResponse> {
     // CalendarWizard AI processing logic - REAL GEMINI INTEGRATION
     const startTime = Date.now();
-    
+
     try {
       // Call the new generate-calendar-optimization edge function with Gemini
       const data = await invokeSupabaseFunction('generate-calendar-optimization', {
@@ -456,7 +456,7 @@ export class AIOrchestrator {
         calendar_data: request.context || {},
         organization_id: request.organizationId
       }) as CalendarOptimizationResponse;
-      
+
       return {
         success: true,
         data: {
@@ -487,11 +487,11 @@ export class AIOrchestrator {
       };
     }
   }
-  
+
   private async processAnalyticsOracle(request: AIAgentRequest, agent: AIAgent): Promise<AIAgentResponse> {
     // AnalyticsOracle AI processing logic - REAL GEMINI INTEGRATION
     const startTime = Date.now();
-    
+
     try {
       // Call the new generate-analytics-insights edge function with Gemini
       const data = await invokeSupabaseFunction('generate-analytics-insights', {
@@ -499,7 +499,7 @@ export class AIOrchestrator {
         data_context: request.context || {},
         organization_id: request.organizationId
       }) as AnalyticsInsightsResponse;
-      
+
       return {
         success: true,
         data: {
@@ -530,11 +530,11 @@ export class AIOrchestrator {
       };
     }
   }
-  
+
   private async processLeadScorer(request: AIAgentRequest, agent: AIAgent): Promise<AIAgentResponse> {
     // LeadScorer AI processing logic - REAL GEMINI INTEGRATION
     const startTime = Date.now();
-    
+
     try {
       // Call the existing score-contact-lead edge function with Gemini
       const data = await invokeSupabaseFunction('score-contact-lead', {
@@ -542,7 +542,7 @@ export class AIOrchestrator {
         organization_id: request.organizationId,
         scoring_criteria: request.prompt || 'Score this lead based on quality and conversion potential'
       }) as LeadScoringResponse;
-      
+
       return {
         success: true,
         data: {
@@ -571,41 +571,41 @@ export class AIOrchestrator {
       };
     }
   }
-  
+
   getAvailableAgents(_pricingTier: string, userEmail?: string): AIAgent[] {
     // 🚀 ENTERPRISE OVERRIDE: Force all agents for enterprise development user
     if (isDevelopmentEnterpriseUser(userEmail)) {
       return AI_AGENTS; // All agents including coming_soon for enterprise test user
     }
-    
+
     // 🚀 NEW STRATEGY: All agents available from base tier
     // Monetization through credits/quota system instead of tier restrictions
     return AI_AGENTS.filter(agent => agent.status === 'active' || agent.status === 'beta');
   }
-  
+
   private tierHasAccess(_userTier: string, _agentTier: string): boolean {
     // All tiers now have access to all agents - quota-based monetization
     return true;
   }
-  
+
   getAgentQuotaLimits(pricingTier: string, agentId: string, userEmail?: string): { daily: number; monthly: number } {
     // 🚀 ENTERPRISE OVERRIDE: Unlimited quotas for enterprise development user
     if (isDevelopmentEnterpriseUser(userEmail)) {
       return { daily: 1000, monthly: 30000 };
     }
-    
+
     const effectiveTier = getEffectiveUserTier(userEmail, pricingTier);
-    
+
     const quotaMultipliers = {
       'freelancer': 1,
       'startup': 3,
       'business': 10,
       'enterprise': 50
     };
-    
+
     const baseQuota = AI_AGENTS.find(a => a.id === agentId)?.quotaLimits || { daily: 10, monthly: 100 };
     const multiplier = quotaMultipliers[effectiveTier as keyof typeof quotaMultipliers] || 1;
-    
+
     return {
       daily: baseQuota.daily * multiplier,
       monthly: baseQuota.monthly * multiplier

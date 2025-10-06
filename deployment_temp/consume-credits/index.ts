@@ -24,36 +24,36 @@ serve(async (req) => {
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!serviceRoleKey) {
-        throw new Error("La variabile d'ambiente SUPABASE_SERVICE_ROLE_KEY non è impostata.");
+      throw new Error("La variabile d'ambiente SUPABASE_SERVICE_ROLE_KEY non è impostata.");
     }
-    
+
     // Utilizza il client con service_role_key per chiamare la funzione RPC
     // Questo è necessario perché la funzione RPC modifica dati e deve avere i permessi per farlo.
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     if (!supabaseUrl) {
-        return new Response(
-            JSON.stringify({ error: 'Missing SUPABASE_URL' }),
-            { status: 500, headers: corsHeaders }
-        );
+      return new Response(
+        JSON.stringify({ error: 'Missing SUPABASE_URL' }),
+        { status: 500, headers: corsHeaders }
+      );
     }
-    
+
     const supabaseAdmin = createClient(
-        supabaseUrl,
-        serviceRoleKey
+      supabaseUrl,
+      serviceRoleKey
     );
-    
+
     console.log(`[consume-credits] Invocazione della funzione RPC 'consume_credits_rpc' per org: ${organization_id}, azione: ${action_type}`);
 
     const { data, error } = await supabaseAdmin.rpc('consume_credits_rpc', {
-        p_organization_id: organization_id,
-        p_action_type: action_type
+      p_organization_id: organization_id,
+      p_action_type: action_type
     });
-    
+
     console.log(`[consume-credits] RPC 'consume_credits_rpc' result:`, { data, error });
 
     if (error) {
-        console.error("Errore durante l'esecuzione della funzione RPC:", error);
-        throw new Error(`Errore database: ${error.message}`);
+      console.error("Errore durante l'esecuzione della funzione RPC:", error);
+      throw new Error(`Errore database: ${error.message}`);
     }
 
     // La funzione RPC ora restituisce un JSON con { success, error?, remaining_credits }

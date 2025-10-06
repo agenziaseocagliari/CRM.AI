@@ -70,7 +70,7 @@ class AICache {
     organizationId: string
   ): Promise<unknown | null> {
     const cacheKey = this.createCacheKey(input, actionType, organizationId);
-    
+
     // Check in-memory cache first
     const memoryResult = this.exactCache.get(cacheKey);
     if (memoryResult && !this.isExpired(memoryResult)) {
@@ -100,7 +100,7 @@ class AICache {
           metadata: data.metadata
         };
         this.exactCache.set(cacheKey, cacheEntry);
-        
+
         await this.trackCacheHit('exact', actionType, organizationId);
         return data.result;
       }
@@ -172,7 +172,7 @@ class AICache {
     try {
       // Generate embedding for input (simplified - in production use actual embedding model)
       const inputEmbedding = await this.generateSimpleEmbedding(input);
-      
+
       // Find similar entries in database
       const { data, error } = await this.supabase
         .from('ai_cache_semantic')
@@ -180,7 +180,7 @@ class AICache {
         .eq('action_type', actionType)
         .eq('organization_id', organizationId);
 
-      if (error || !data?.length) {return null;}
+      if (error || !data?.length) { return null; }
 
       // Calculate similarity scores
       let bestMatch: SemanticCacheEntry | null = null;
@@ -209,7 +209,7 @@ class AICache {
           .eq('id', bestMatch.id);
 
         await this.trackCacheHit('semantic', actionType, organizationId);
-        
+
         // Adapt result for current input
         return this.adaptSemanticResult(bestMatch.result, input, bestSimilarity);
       }
@@ -227,7 +227,7 @@ class AICache {
     actionType: string,
     organizationId: string
   ): Promise<void> {
-    if (actionType !== 'ai_lead_scoring') {return;}
+    if (actionType !== 'ai_lead_scoring') { return; }
 
     try {
       const inputHash = await this.hashInput(input);
@@ -266,7 +266,7 @@ class AICache {
     try {
       // Extract key template variables from input
       const templateVars = this.extractTemplateVariables(input);
-      
+
       const { data, error } = await this.supabase
         .from('ai_cache_templates')
         .select('*')
@@ -275,15 +275,15 @@ class AICache {
         .order('usage_count', { ascending: false })
         .limit(10);
 
-      if (error || !data?.length) {return null;}
+      if (error || !data?.length) { return null; }
 
       // Find best matching template
       for (const template of data) {
         const matchScore = this.calculateTemplateMatch(templateVars, template.variables);
-        
+
         if (matchScore > 0.7) { // 70% match threshold
           await this.trackCacheHit('template', actionType, organizationId);
-          
+
           // Personalize template with current variables
           return this.personalizeTemplate(template.content, templateVars);
         }
@@ -334,7 +334,7 @@ class AICache {
     actionType: string,
     organizationId: string
   ): Promise<{ result: unknown; cacheType: 'exact' | 'semantic' | 'template' } | null> {
-    
+
     // 1. Try exact match first
     const exactResult = await this.getExactMatch(input, actionType, organizationId);
     if (exactResult) {
@@ -381,21 +381,21 @@ class AICache {
     try {
       const conditions = pattern.split('_');
       let query = this.supabase.from('ai_cache_exact').delete();
-      
+
       if (organizationId) {
         query = query.eq('organization_id', organizationId);
       }
-      
+
       if (conditions.includes('lead')) {
         query = query.eq('action_type', 'ai_lead_scoring');
       }
-      
+
       await query;
 
       // Clear in-memory cache
       for (const [key, entry] of this.exactCache.entries()) {
         if ((!organizationId || entry.organizationId === organizationId) &&
-            key.includes(pattern)) {
+          key.includes(pattern)) {
           this.exactCache.delete(key);
         }
       }
@@ -434,13 +434,13 @@ class AICache {
     // Simplified embedding generation - use actual embedding model in production
     const words = text.toLowerCase().split(/\s+/);
     const embedding: number[] = new Array(50).fill(0);
-    
+
     words.forEach((word) => {
       const hash = this.simpleHash(word);
       const index = hash % 50;
       embedding[index] = (embedding[index] || 0) + 1;
     });
-    
+
     return embedding;
   }
 
@@ -448,13 +448,13 @@ class AICache {
     let dotProduct = 0;
     let normA = 0;
     let normB = 0;
-    
+
     for (let i = 0; i < Math.min(a.length, b.length); i++) {
       dotProduct += a[i] * b[i];
       normA += a[i] * a[i];
       normB += b[i] * b[i];
     }
-    
+
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
@@ -465,12 +465,12 @@ class AICache {
   ): unknown {
     // Type guard for result with score
     if (
-      originalResult && 
+      originalResult &&
       typeof originalResult === 'object' &&
       'score' in originalResult &&
       typeof (originalResult as Record<string, unknown>).score === 'number'
     ) {
-      const result = originalResult as { score: number; reasoning?: string; [key: string]: unknown };
+      const result = originalResult as { score: number; reasoning?: string;[key: string]: unknown };
       // Adjust score based on similarity
       const adjustedScore = Math.round(result.score * similarity);
       return {
@@ -480,7 +480,7 @@ class AICache {
         confidence: similarity
       };
     }
-    
+
     return originalResult;
   }
 
@@ -505,9 +505,9 @@ class AICache {
     const keys1 = Object.keys(vars1);
     const keys2 = Object.keys(vars2);
     const commonKeys = keys1.filter(k => keys2.includes(k));
-    
-    if (commonKeys.length === 0) {return 0;}
-    
+
+    if (commonKeys.length === 0) { return 0; }
+
     const matches = commonKeys.filter(k => vars1[k] === vars2[k]).length;
     return matches / Math.max(keys1.length, keys2.length);
   }
@@ -517,13 +517,13 @@ class AICache {
     variables: Record<string, unknown>
   ): string {
     let personalized = template;
-    
+
     Object.entries(variables).forEach(([key, value]) => {
       const placeholder = `{{${key}}}`;
       const stringValue = typeof value === 'string' ? value : String(value);
       personalized = personalized.replace(new RegExp(placeholder, 'g'), stringValue);
     });
-    
+
     return personalized;
   }
 
@@ -561,13 +561,13 @@ class AICache {
         .gte('hit_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
       if (error || !data) {
-return {
-        totalHits: 0,
-        hitsByType: {},
-        hitsByAction: {},
-        averageResponseTime: 0
-      };
-}
+        return {
+          totalHits: 0,
+          hitsByType: {},
+          hitsByAction: {},
+          averageResponseTime: 0
+        };
+      }
 
       const hitsByType: Record<string, number> = {};
       const hitsByAction: Record<string, number> = {};
@@ -602,7 +602,7 @@ export const aiCache = new AICache();
 // Convenience functions
 export async function getCachedAIResult(
   input: string,
-  actionType: string, 
+  actionType: string,
   organizationId: string
 ): Promise<unknown | null> {
   const cached = await aiCache.get(input, actionType, organizationId);

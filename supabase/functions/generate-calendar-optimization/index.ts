@@ -7,8 +7,8 @@ declare const Deno: {
 };
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { GenerateContentResponse, GoogleGenAI } from "https://esm.sh/@google/genai@1.19.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-import { GoogleGenAI, GenerateContentResponse } from "https://esm.sh/@google/genai@1.19.0";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 const ACTION_TYPE = 'ai_calendar_optimization';
@@ -33,13 +33,13 @@ serve(async (req) => {
 
     // --- Integrazione Sistema Crediti ---
     const creditResponse = await supabaseAdmin.functions.invoke('consume-credits', {
-      body: { 
-        organization_id, 
+      body: {
+        organization_id,
         action_type: ACTION_TYPE,
         credits_required: 1 // Calendar optimization costa 1 credito
       }
     });
-    
+
     const { data: creditData, error: creditError } = creditResponse;
     if (creditError) throw new Error(`Errore di rete nella verifica dei crediti: ${creditError.message}`);
     if (creditData.error) throw new Error(`Errore nella verifica dei crediti: ${creditData.error}`);
@@ -114,13 +114,13 @@ serve(async (req) => {
     `;
 
     const response: GenerateContentResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: fullPrompt,
+      model: "gemini-2.5-flash",
+      contents: fullPrompt,
     });
-    
+
     const generatedText = response.text.trim();
     if (!generatedText) {
-        throw new Error("L'API di Gemini ha restituito un risultato vuoto.");
+      throw new Error("L'API di Gemini ha restituito un risultato vuoto.");
     }
 
     // Try to parse as JSON, fallback to structured text response

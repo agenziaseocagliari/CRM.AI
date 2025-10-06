@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Loader2, MessageCircle } from 'lucide-react';
+import { Loader2, MessageCircle, Send, User } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface ChatMessage {
   id: string;

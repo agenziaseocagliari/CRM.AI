@@ -1,16 +1,16 @@
 // src/components/CalendarView.tsx
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import { useOutletContext, Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
 import { CrmEvent } from '../types';
 
+import { UniversalAIChat } from './ai/UniversalAIChat';
 import { ConnectCalendarPrompt } from './ConnectCalendarPrompt';
 import { DayEventsModal } from './DayEventsModal';
 import { InfoIcon, PlusIcon } from './ui/icons';
-import { UniversalAIChat } from './ai/UniversalAIChat';
 
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';

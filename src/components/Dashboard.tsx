@@ -1,12 +1,12 @@
 ﻿import React from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { BarChart, Bar, CartesianGrid, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useCrmData } from '../hooks/useCrmData';
 import { Opportunity, PipelineStage } from '../types';
+import { UniversalAIChat } from './ai/UniversalAIChat';
 import { SessionHealthIndicator } from './SessionHealthIndicator';
 import { Card } from './ui/Card';
 import { CheckCircleIcon, DollarSignIcon, TrendingUpIcon, UsersIcon } from './ui/icons';
-import { UniversalAIChat } from './ai/UniversalAIChat';
 
 
 

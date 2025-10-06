@@ -83,7 +83,7 @@ export class RealFormMasterAI {
       });
 
       const formData = response as GeminiFormResponse;
-      
+
       // Trasforma la risposta in FormConfiguration
       return this.transformToFormConfiguration(formData, prompt);
     } catch (error) {
@@ -94,7 +94,7 @@ export class RealFormMasterAI {
 
   private transformToFormConfiguration(geminiResponse: GeminiFormResponse, originalPrompt: string): FormConfiguration {
     const fields = geminiResponse?.fields || [];
-    
+
     return {
       title: this.extractFormTitle(originalPrompt),
       description: 'Form generato automaticamente da AI',
@@ -166,11 +166,11 @@ Applica best practices per UX e conversion rate optimization.
   private generateKadenceShortcode(config: FormConfiguration): string {
     const fields = config.fields.map(field => {
       let shortcode = `[kadence_form_field type="${field.type}" label="${field.label}" name="${field.name}"`;
-      
+
       if (field.required) shortcode += ' required="true"';
       if (field.placeholder) shortcode += ` placeholder="${field.placeholder}"`;
       if (field.options) shortcode += ` options="${field.options.join(',')}"`;
-      
+
       shortcode += ']';
       return shortcode;
     }).join('\n');

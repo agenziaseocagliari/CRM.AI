@@ -1,8 +1,8 @@
 // WhatsApp Business Module - Guardian AI CRM Enterprise
 // Modulo avanzato per automazione WhatsApp con AI Butler
 
-import React, { useState, useEffect } from 'react';
-import { MessageCircle, Send, Users, Zap, Clock, TrendingUp, Settings, Plus } from 'lucide-react';
+import { Clock, MessageCircle, Plus, Send, Settings, TrendingUp, Users, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { useWhatsAppButlerAI } from '../lib/ai/useAIOrchestrator';

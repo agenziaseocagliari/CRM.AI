@@ -10,7 +10,7 @@
  */
 
 import { Session } from '@supabase/supabase-js';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
 import { supabase } from '../lib/supabaseClient';
@@ -96,17 +96,17 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
    */
   const logEvent = useCallback((event: SessionDiagnosticEvent) => {
     diagnosticLogger.info('ðŸ” [JWT Diagnostics] Event logged:', event);
-    
+
     setSessionHistory(prev => {
       const newHistory = [event, ...prev].slice(0, MAX_HISTORY_LENGTH);
-      
+
       // Store in localStorage for persistence across sessions
       try {
         localStorage.setItem('jwt_diagnostic_history', JSON.stringify(newHistory.slice(0, 10)));
       } catch (e) {
         diagnosticLogger.error('Failed to persist diagnostic history:', e);
       }
-      
+
       return newHistory;
     });
   }, []);
@@ -121,7 +121,7 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
       errorDetails?: string
     ): SessionDiagnosticEvent => {
       let diagnostics: JWTDiagnostics | null = null;
-      
+
       if (session?.access_token) {
         diagnostics = diagnoseJWT(session.access_token);
       }
@@ -147,7 +147,7 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
    */
   const performHealthCheck = useCallback(async (): Promise<SessionHealthStatus> => {
     diagnosticLogger.info('ðŸ¥ [JWT Diagnostics] Performing health check...');
-    
+
     const issues: string[] = [];
     let hasValidSession = false;
     let hasUserRoleClaim = false;
@@ -164,7 +164,7 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
         issues.push('No active session');
       } else {
         hasValidSession = true;
-        
+
         const diagnostics = diagnoseJWT(session.access_token);
         setCurrentDiagnostics(diagnostics);
 
@@ -214,9 +214,9 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
       };
 
       setHealthStatus(status);
-      
+
       diagnosticLogger.info('ðŸ¥ [JWT Diagnostics] Health check complete:', status);
-      
+
       return status;
     } catch (error: unknown) {
       const errorStatus: SessionHealthStatus = {
@@ -229,7 +229,7 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
       };
 
       setHealthStatus(errorStatus);
-      
+
       return errorStatus;
     }
   }, [createDiagnosticEvent, logEvent]);
@@ -260,14 +260,14 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
     report += `Has user_role Claim: ${healthStatus.hasUserRoleClaim ? 'âœ…' : 'âŒ'}\n`;
     report += `Claims Match Storage: ${healthStatus.claimsMatchStorage ? 'âœ…' : 'âŒ'}\n`;
     report += `Last Checked: ${healthStatus.lastChecked}\n`;
-    
+
     if (healthStatus.issues.length > 0) {
       report += '\nIssues:\n';
       healthStatus.issues.forEach(issue => {
         report += `  - ${issue}\n`;
       });
     }
-    
+
     report += '\n--- CURRENT DIAGNOSTICS ---\n';
     if (currentDiagnostics) {
       report += `Valid JWT: ${currentDiagnostics.isValid ? 'âœ…' : 'âŒ'}\n`;
@@ -285,14 +285,14 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
     report += '\n--- SESSION HISTORY (Most Recent First) ---\n';
     sessionHistory.slice(0, 10).forEach((event, idx) => {
       report += `\n[${idx + 1}] ${event.event.toUpperCase()} - ${event.timestamp}\n`;
-      if (event.userRole) {report += `  User Role: ${event.userRole}\n`;}
-      if (event.organizationId) {report += `  Organization ID: ${event.organizationId}\n`;}
-      if (event.errorDetails) {report += `  Error: ${event.errorDetails}\n`;}
+      if (event.userRole) { report += `  User Role: ${event.userRole}\n`; }
+      if (event.organizationId) { report += `  Organization ID: ${event.organizationId}\n`; }
+      if (event.errorDetails) { report += `  Error: ${event.errorDetails}\n`; }
       report += `  localStorage org_id: ${event.localStorageState.organizationId || 'N/A'}\n`;
     });
 
     report += '\n========================================\n';
-    
+
     return report;
   }, [currentDiagnostics, sessionHistory, healthStatus]);
 
@@ -300,7 +300,7 @@ export function useJWTDiagnostics(): UseJWTDiagnosticsReturn {
    * Monitor auth state changes
    */
   useEffect(() => {
-    if (isMonitoringRef.current) {return;}
+    if (isMonitoringRef.current) { return; }
     isMonitoringRef.current = true;
 
     diagnosticLogger.info('ðŸ” [JWT Diagnostics] Starting session monitoring...');

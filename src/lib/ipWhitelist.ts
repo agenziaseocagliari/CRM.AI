@@ -89,7 +89,7 @@ export async function checkIPWhitelist(
       p_ip_address: ipAddress,
     });
 
-    if (error) {throw error;}
+    if (error) { throw error; }
     return data || false;
   } catch (error) {
     diagnosticLogger.error('Error checking IP whitelist:', error);
@@ -111,7 +111,7 @@ export async function checkGeoRestriction(
       p_country_code: countryCode,
     });
 
-    if (error) {throw error;}
+    if (error) { throw error; }
     return data || { allowed: true, reason: 'No geo-restrictions configured' };
   } catch (error) {
     diagnosticLogger.error('Error checking geo-restriction:', error);
@@ -202,7 +202,7 @@ export async function logIPAccess(
       p_user_agent: options.userAgent || null,
     });
 
-    if (error) {throw error;}
+    if (error) { throw error; }
 
     // Also log to audit system if blocked
     if (options.isBlocked) {
@@ -263,7 +263,7 @@ export async function addIPWhitelist(
       .select()
       .single();
 
-    if (error) {throw error;}
+    if (error) { throw error; }
 
     // Log audit event
     await logAuditEvent({
@@ -301,7 +301,7 @@ export async function removeIPWhitelist(
       .eq('id', ipWhitelistId)
       .eq('organization_id', organizationId);
 
-    if (error) {throw error;}
+    if (error) { throw error; }
 
     // Log audit event
     await logAuditEvent({
@@ -341,7 +341,7 @@ export async function listIPWhitelist(
 
     const { data, error } = await query;
 
-    if (error) {throw error;}
+    if (error) { throw error; }
     return data ? data.map(mapIPWhitelistFromDB) : [];
   } catch (error) {
     diagnosticLogger.error('Error listing IP whitelist:', error);
@@ -375,7 +375,7 @@ export async function addGeoRestriction(
       .select()
       .single();
 
-    if (error) {throw error;}
+    if (error) { throw error; }
 
     // Log audit event
     await logAuditEvent({
@@ -413,7 +413,7 @@ export async function removeGeoRestriction(
       .eq('id', geoRestrictionId)
       .eq('organization_id', organizationId);
 
-    if (error) {throw error;}
+    if (error) { throw error; }
 
     // Log audit event
     await logAuditEvent({
@@ -453,7 +453,7 @@ export async function listGeoRestrictions(
 
     const { data, error } = await query;
 
-    if (error) {throw error;}
+    if (error) { throw error; }
     return data ? data.map(mapGeoRestrictionFromDB) : [];
   } catch (error) {
     diagnosticLogger.error('Error listing geo-restrictions:', error);
@@ -474,7 +474,7 @@ export async function getIPAccessStats(
       p_days: days,
     });
 
-    if (error) {throw error;}
+    if (error) { throw error; }
 
     return {
       totalRequests: data?.total_requests || 0,
@@ -527,7 +527,7 @@ export async function getIPAccessLogs(
 
     const { data, error } = await query;
 
-    if (error) {throw error;}
+    if (error) { throw error; }
     return data ? data.map(mapIPAccessLogFromDB) : [];
   } catch (error) {
     diagnosticLogger.error('Error getting IP access logs:', error);

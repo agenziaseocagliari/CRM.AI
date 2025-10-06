@@ -1,6 +1,10 @@
 -- Fix: Re-deploy correct consume_credits_rpc function that uses organization_credits table
 -- This ensures the function uses the correct schema (organization_credits, not organizations.credits)
 
+-- Drop the existing function first to avoid parameter conflicts
+DROP FUNCTION IF EXISTS consume_credits_rpc(UUID, TEXT);
+DROP FUNCTION IF EXISTS consume_credits_rpc(UUID, TEXT, INTEGER);
+
 CREATE OR REPLACE FUNCTION consume_credits_rpc(
     p_organization_id UUID,
     p_action_type TEXT

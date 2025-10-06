@@ -220,6 +220,9 @@
                     return;
                 }
                 
+                // Get organization_id from localStorage
+                const organizationId = localStorage.getItem('organization_id');
+                
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
                     method: 'POST',
                     headers: {
@@ -228,6 +231,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        organization_id: organizationId,
                         action_type: 'ai_form_generation',
                         credits_required: 1
                     })
@@ -283,6 +287,9 @@
                     return;
                 }
                 
+                // Get organization_id from localStorage
+                const organizationId = localStorage.getItem('organization_id');
+                
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-form-fields`, {
                     method: 'POST',
                     headers: {
@@ -291,6 +298,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        organization_id: organizationId,
                         formName: 'Test Form',
                         description: 'Simple test form for diagnostics',
                         targetAudience: 'developers'

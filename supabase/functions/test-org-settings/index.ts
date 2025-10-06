@@ -44,22 +44,22 @@ serve(async (req) => {
     if (settingsError) {
       throw settingsError;
     }
-    
+
     // For comprehensive testing, also fetch subscription data.
     const { data: subscription, error: subError } = await supabaseAdmin
       .from('organization_subscriptions')
       .select('*')
       .eq('organization_id', organization_id)
       .maybeSingle();
-      
+
     if (subError) {
-        throw subError;
+      throw subError;
     }
 
     const responsePayload = {
-        message: `Impostazioni per l'organizzazione ${organization_id}`,
-        settings: settings || 'Nessuna impostazione trovata.',
-        subscription: subscription || 'Nessuna sottoscrizione trovata.'
+      message: `Impostazioni per l'organizzazione ${organization_id}`,
+      settings: settings || 'Nessuna impostazione trovata.',
+      subscription: subscription || 'Nessuna sottoscrizione trovata.'
     };
 
     return new Response(JSON.stringify(responsePayload), {

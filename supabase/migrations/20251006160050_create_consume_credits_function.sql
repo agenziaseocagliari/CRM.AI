@@ -82,5 +82,3 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION consume_credits_rpc(UUID, TEXT) TO public;
-GRANT EXECUTE ON FUNCTION consume_credits_rpc(UUID, TEXT) TO anon;
-GRANT EXECUTE ON FUNCTION consume_credits_rpc(UUID, TEXT) TO authenticated;

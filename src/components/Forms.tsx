@@ -13,6 +13,7 @@ import { Modal } from './ui/Modal';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
+import { generateKadenceForm, generateKadenceBlockPattern } from '../lib/wordpress/WordPressKadenceGenerator';
 
 // Error interface for proper typing
 interface ApiError {
@@ -47,9 +48,10 @@ interface FormCardProps {
     onDelete: (form: Form) => void;
     onPreview: (form: Form) => void;
     onGetCode: (form: Form) => void;
+    onWordPress: (form: Form) => void;
 }
 
-const FormCard: React.FC<FormCardProps> = ({ form, onDelete, onPreview, onGetCode }) => (
+const FormCard: React.FC<FormCardProps> = ({ form, onDelete, onPreview, onGetCode, onWordPress }) => (
     <div className="bg-white p-4 rounded-lg shadow border flex flex-col justify-between">
         <div>
             <h3 className="font-bold text-lg text-text-primary truncate">{form.name}</h3>
@@ -58,6 +60,9 @@ const FormCard: React.FC<FormCardProps> = ({ form, onDelete, onPreview, onGetCod
         <div className="flex items-center justify-end space-x-2 mt-4 pt-4 border-t">
             <button onClick={() => onPreview(form)} title="Anteprima" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
                 <EyeIcon className="w-5 h-5" />
+            </button>
+            <button onClick={() => onWordPress(form)} title="WordPress Embed" className="p-2 text-blue-500 hover:bg-blue-50 rounded-md">
+                <span className="w-5 h-5 text-xs font-bold">WP</span>
             </button>
             <button onClick={() => onGetCode(form)} title="Ottieni Codice" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
                 <CodeIcon className="w-5 h-5" />

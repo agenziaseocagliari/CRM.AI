@@ -401,11 +401,26 @@ export const Forms: React.FC = () => {
         {/* Universal AI Chat - FormMaster */}
         <UniversalAIChat
           currentModule="Forms"
-          organizationId="demo-org"
+          organizationId={organization?.id || "demo-org"}
           userId="demo-user"
           onActionTriggered={(action, data) => {
-            console.log('Forms AI Action:', action, data);
-            // Handle AI actions (form creation, optimization, etc.)
+            console.log('🎯 Forms AI Action triggered:', action, data);
+            
+            // 📝 FORMMASTER ACTION HANDLER
+            if (action === 'form_generated' && data && typeof data === 'object') {
+              const formData = data as { formFields?: Array<{ name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea'; required: boolean }> };
+              if (formData.formFields && Array.isArray(formData.formFields) && formData.formFields.length > 0) {
+                console.log('🎉 Setting generated fields from AI Chat:', formData.formFields);
+                // Type cast to FormField[] to match the expected interface
+                const typedFields = formData.formFields.map(field => ({
+                  ...field,
+                  type: field.type as 'text' | 'email' | 'tel' | 'textarea'
+                }));
+                setGeneratedFields(typedFields);
+                setCreateModalOpen(true); // Open the form creation modal
+                toast.success(`${formData.formFields.length} campi generati con successo!`);
+              }
+            }
           }}
         />
     </>

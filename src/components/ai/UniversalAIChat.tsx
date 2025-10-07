@@ -331,6 +331,12 @@ async function analyzeUserIntent(userPrompt: string, currentModule: string): Pro
     recommendedAgent = moduleAgentMap[currentModule] || 'form_master';
   }
 
+  // Determine suggested action
+  let suggestedAction: string | undefined;
+  if (recommendedAgent === 'form_master' && currentModule === 'Forms') {
+    suggestedAction = 'form_generated'; // This will trigger the form fields to be passed to Forms.tsx
+  }
+
   return {
     recommendedAgent,
     enhancedPrompt: `MODULO ATTIVO: ${currentModule}\n\nRICHIESTA UTENTE: ${userPrompt}\n\nFornisci una risposta dettagliata e actionable per il modulo ${currentModule}.`,
@@ -338,7 +344,8 @@ async function analyzeUserIntent(userPrompt: string, currentModule: string): Pro
       currentModule,
       userIntent: promptLower,
       timestamp: new Date().toISOString()
-    }
+    },
+    suggestedAction
   };
 }
 
@@ -357,6 +364,23 @@ function formatUniversalResponse(response: unknown, analysis: { recommendedAgent
 
   // Simple universal response formatter
   const responseObj = response as Record<string, unknown>;
+  
+  // 🎯 FORMMASTER SPECIFIC FORMATTING
+  if (analysis.recommendedAgent === 'form_master' && responseObj?.data) {
+    const formData = responseObj.data as { formFields?: Array<{ name: string; label: string; type: string; required: boolean }> };
+    if (formData.formFields && Array.isArray(formData.formFields) && formData.formFields.length > 0) {
+      let formDescription = `${agentName} ha generato il tuo form con successo! 🎉\n\n📝 **Campi del form generati:**\n\n`;
+      
+      formData.formFields.forEach((field, index) => {
+        const requiredText = field.required ? '(obbligatorio)' : '(opzionale)';
+        const fieldIcon = field.type === 'email' ? '📧' : field.type === 'tel' ? '📱' : field.type === 'textarea' ? '📄' : '✏️';
+        formDescription += `${index + 1}. ${fieldIcon} ${field.label} ${requiredText}\n`;
+      });
+      
+      formDescription += `\n✨ **Form pronto per l'uso!** I campi sono ora visibili nell'interfaccia sottostante.`;
+      return formDescription;
+    }
+  }
   
   if (responseObj?.result) {
     return `${agentName} risponde:\n\n${responseObj.result}`;

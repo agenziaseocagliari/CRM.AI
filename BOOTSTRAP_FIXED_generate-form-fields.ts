@@ -7,7 +7,21 @@ declare const Deno: {
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
-import { corsHeaders, handleCors } from "../_shared/cors.ts";
+
+// CORS headers inline (invece di import separato)
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-n8n-api-key",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Max-Age": "86400"
+};
+
+function handleCors(req: Request): Response | null {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+  return null;
+}
 
 const ACTION_TYPE = 'ai_form_generation';
 
@@ -25,13 +39,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Il parametro 'organization_id' è obbligatorio per la verifica dei crediti." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // --- Integrazione Sistema a Crediti ---
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Ensure Authorization header is properly passed
     const authHeader = req.headers.get("Authorization");
     console.log(`[${ACTION_TYPE}] Authorization header check:`, { 
       hasAuth: !!authHeader, 
@@ -77,7 +89,6 @@ serve(async (req) => {
       throw new Error(creditData?.error || "Crediti insufficienti per generare un form.");
     }
     console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
-    // --- Fine Integrazione ---
 
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) {

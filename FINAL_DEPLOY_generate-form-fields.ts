@@ -25,13 +25,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Il parametro 'organization_id' è obbligatorio per la verifica dei crediti." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // --- Integrazione Sistema a Crediti ---
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Ensure Authorization header is properly passed
     const authHeader = req.headers.get("Authorization");
     console.log(`[${ACTION_TYPE}] Authorization header check:`, { 
       hasAuth: !!authHeader, 
@@ -77,7 +75,6 @@ serve(async (req) => {
       throw new Error(creditData?.error || "Crediti insufficienti per generare un form.");
     }
     console.log(`[${ACTION_TYPE}] Crediti verificati. Rimanenti: ${creditData.remaining_credits}`);
-    // --- Fine Integrazione ---
 
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) {

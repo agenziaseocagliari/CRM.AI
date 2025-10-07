@@ -206,17 +206,40 @@ export const Forms: React.FC = () => {
             
             const data = await response.json();
             
+            // 🔍 EXTENDED DEBUG LOGGING
+            console.log('🔍 FORMMASTER DEBUG - Raw Response Data:', data);
+            console.log('🔍 FORMMASTER DEBUG - Data Type:', typeof data);
+            console.log('🔍 FORMMASTER DEBUG - Has fields property:', 'fields' in data);
+            console.log('🔍 FORMMASTER DEBUG - Fields value:', data.fields);
+            console.log('🔍 FORMMASTER DEBUG - Fields is Array:', Array.isArray(data.fields));
+            console.log('🔍 FORMMASTER DEBUG - Fields length:', data.fields?.length);
+            
             // Type guard for API response
             if (!data || typeof data !== 'object' || !('fields' in data) || !Array.isArray((data as Record<string, unknown>).fields)) {
+                console.error('🔍 FORMMASTER DEBUG - Type guard failed:', {
+                    hasData: !!data,
+                    isObject: typeof data === 'object',
+                    hasFieldsProperty: 'fields' in data,
+                    fieldsIsArray: Array.isArray((data as Record<string, unknown>).fields)
+                });
                 throw new Error('Risposta API non valida');
             }
             
             const fields = (data as { fields: FormField[] }).fields;
+            console.log('🔍 FORMMASTER DEBUG - Extracted fields:', fields);
+            
             if (!fields || !Array.isArray(fields) || fields.length === 0) {
+                console.error('🔍 FORMMASTER DEBUG - Fields validation failed:', {
+                    hasFields: !!fields,
+                    isArray: Array.isArray(fields),
+                    length: fields?.length
+                });
                 throw new Error("L'AI ha restituito una struttura non valida o vuota.");
             }
             
+            console.log('🔍 FORMMASTER DEBUG - Setting generated fields:', fields);
             setGeneratedFields(fields);
+            console.log('🔍 FORMMASTER DEBUG - Generated fields set successfully!');
             toast.success('Campi generati con successo!', { id: toastId });
 
         } catch (err: unknown) {

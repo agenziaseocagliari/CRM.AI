@@ -82,7 +82,10 @@ function maskString(str: string, config: SecurityMaskingConfig): string {
       // For email pattern, partially mask
       if (groups.length === 2) { // Email pattern
         const [user, domain] = groups;
-        return `${user.slice(0, 2)}***@${domain}`;
+        if (typeof user === 'string' && typeof domain === 'string') {
+          return `${user.slice(0, 2)}***@${domain}`;
+        }
+        return '[MASKED_EMAIL]';
       }
       
       // For other patterns, mask based on config
@@ -90,7 +93,7 @@ function maskString(str: string, config: SecurityMaskingConfig): string {
         return '[REDACTED]';
       }
       
-      if (config.preserveLength) {
+      if (config.preserveLength && typeof match === 'string') {
         const visibleChars = Math.min(4, Math.floor(match.length * 0.2));
         const maskedChars = '*'.repeat(Math.max(0, match.length - visibleChars * 2));
         return match.slice(0, visibleChars) + maskedChars + match.slice(-visibleChars);
@@ -126,9 +129,11 @@ function maskObject(obj: Record<string, unknown> | unknown[], config: SecurityMa
         if (config.completeRedaction) {
           masked[key] = '[REDACTED]';
         } else {
-          masked[key] = typeof value === 'string' && value.length > 0 
-            ? `${value.slice(0, 3)}***${value.slice(-2)}`
-            : '[MASKED]';
+          if (typeof value === 'string' && value.length > 5) {
+            masked[key] = `${value.slice(0, 3)}***${value.slice(-2)}`;
+          } else {
+            masked[key] = '[MASKED]';
+          }
         }
       } else {
         // Recursively mask nested objects

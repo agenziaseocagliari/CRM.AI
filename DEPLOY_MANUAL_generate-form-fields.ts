@@ -1,3 +1,27 @@
+/**
+ * ENGINEERING FELLOW - MANUAL DEPLOYMENT
+ * =====================================
+ * 
+ * generate-form-fields Edge Function - CORRECTED VERSION
+ * 
+ * CRITICAL FIXES APPLIED:
+ * - ❌ REMOVED: supabaseClient.functions.invoke (broken method)
+ * - ✅ ADDED: Direct fetch() to consume-credits function  
+ * - ✅ ADDED: Proper error handling and authorization forwarding
+ * 
+ * DEPLOYMENT INSTRUCTIONS:
+ * 1. Copy the ENTIRE code below (from line after this comment to EOF)
+ * 2. Go to: https://supabase.com/dashboard/project/qjtaqrlpronohgpfdxsi/functions
+ * 3. Click on "generate-form-fields" function
+ * 4. Click "Edit" or "Update Function"  
+ * 5. Replace ALL existing code with the code below
+ * 6. Click "Deploy" to save changes
+ * 
+ * Expected Result: FormMaster will work without 500 errors
+ */
+
+// File: supabase/functions/generate-form-fields/index.ts
+
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
@@ -39,6 +63,8 @@ serve(async (req) => {
       authPreview: authHeader?.substring(0, 20) || 'none'
     });
 
+    // CORRECTED: Use direct fetch instead of supabaseClient.functions.invoke
+    // to bypass the same issues we had in AI Orchestrator
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     

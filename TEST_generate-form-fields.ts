@@ -134,60 +134,80 @@ function generateIntelligentFormFields(prompt: string): Array<{
     required: true
   });
 
-  // Pattern detection intelligente
+  // Pattern detection intelligente con priorità e deduplicazione
   const fieldPatterns = [
     {
       patterns: ['telefono', 'contatto', 'chiamata', 'cell', 'phone', 'mobile'],
-      field: { name: "telefono", label: "Telefono", type: "tel" as const, required: false }
+      field: { name: "telefono", label: "Telefono", type: "tel" as const, required: false },
+      priority: 3
     },
     {
       patterns: ['azienda', 'società', 'ditta', 'company', 'business', 'impresa', 'web agency', 'agenzia'],
-      field: { name: "azienda", label: "Azienda", type: "text" as const, required: false }
-    },
-    {
-      patterns: ['messaggio', 'richiesta', 'descrizione', 'dettagli', 'note', 'informazioni'],
-      field: { name: "messaggio", label: "Messaggio", type: "textarea" as const, required: false }
-    },
-    {
-      patterns: ['servizi', 'servizio', 'interesse', 'prodotti', 'offerta'],
-      field: { name: "servizi_interesse", label: "Servizi di Interesse", type: "textarea" as const, required: false }
+      field: { name: "azienda", label: "Azienda", type: "text" as const, required: false },
+      priority: 2
     },
     {
       patterns: ['budget', 'preventivo', 'costo', 'prezzo', 'investimento'],
-      field: { name: "budget", label: "Budget Indicativo", type: "text" as const, required: false }
+      field: { name: "budget", label: "Budget Indicativo", type: "text" as const, required: false },
+      priority: 2
     },
     {
       patterns: ['evento', 'workshop', 'corso', 'seminario', 'formazione'],
-      field: { name: "tipo_evento", label: "Tipo di Evento", type: "text" as const, required: false }
+      field: { name: "tipo_evento", label: "Tipo di Evento", type: "text" as const, required: false },
+      priority: 2
+    },
+    // GRUPPO MESSAGGIO: Solo uno di questi viene aggiunto per evitare duplicazioni
+    {
+      patterns: ['servizi', 'servizio', 'interesse', 'prodotti', 'offerta', 'realizzazione', 'sviluppo'],
+      field: { name: "servizi_interesse", label: "Servizi di Interesse", type: "textarea" as const, required: false },
+      priority: 4,
+      group: 'message'
+    },
+    {
+      patterns: ['messaggio', 'richiesta', 'descrizione', 'dettagli', 'note', 'informazioni', 'aiuto'],
+      field: { name: "messaggio", label: "Come possiamo aiutarti?", type: "textarea" as const, required: false },
+      priority: 3,
+      group: 'message'
     }
   ];
 
-  // Apply intelligent matching
-  fieldPatterns.forEach(({ patterns, field }) => {
-    const found = patterns.some(pattern => lowerPrompt.includes(pattern));
-    if (found) {
-      console.log(`✅ Found pattern match: ${patterns.join('|')} -> ${field.name}`);
-      if (!fields.some(f => f.name === field.name)) {
-        fields.push(field);
+  // Apply intelligent matching con deduplicazione per gruppo
+  const usedGroups = new Set<string>();
+  
+  fieldPatterns
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0)) // Ordina per priorità
+    .forEach(({ patterns, field, group }) => {
+      const found = patterns.some(pattern => lowerPrompt.includes(pattern));
+      if (found) {
+        // Se il campo appartiene a un gruppo, controlla se il gruppo è già stato usato
+        if (group && usedGroups.has(group)) {
+          console.log(`⚠️ Skipping ${field.name} (group '${group}' already used)`);
+          return;
+        }
+        
+        console.log(`✅ Found pattern match: ${patterns.join('|')} -> ${field.name} (priority: ${patterns.length})`);
+        if (!fields.some(f => f.name === field.name)) {
+          fields.push(field);
+          if (group) usedGroups.add(group);
+        }
       }
-    }
-  });
+    });
 
-  // Context-specific optimizations
-  if (lowerPrompt.includes('contatto') || lowerPrompt.includes('contact')) {
-    if (!fields.some(f => f.name === 'messaggio')) {
-      console.log(`✅ Adding contact message field`);
-      fields.push({
-        name: "messaggio",
-        label: "Come possiamo aiutarti?",
-        type: "textarea",
-        required: false
-      });
-    }
+  // Context-specific optimizations (solo se non abbiamo già un campo messaggio)
+  const hasMessageField = fields.some(f => f.type === 'textarea');
+  
+  if ((lowerPrompt.includes('contatto') || lowerPrompt.includes('contact')) && !hasMessageField) {
+    console.log(`✅ Adding contact message field`);
+    fields.push({
+      name: "messaggio",
+      label: "Come possiamo aiutarti?",
+      type: "textarea",
+      required: false
+    });
   }
 
-  // Ensure good UX: minimum 3 fields, maximum 7
-  if (fields.length < 3) {
+  // Ensure good UX: minimum 3 fields, maximum 6 (ma non duplicare textarea)
+  if (fields.length < 3 && !hasMessageField) {
     console.log(`✅ Adding default message field for good UX`);
     fields.push({
       name: "note",
@@ -197,7 +217,7 @@ function generateIntelligentFormFields(prompt: string): Array<{
     });
   }
 
-  const finalFields = fields.slice(0, 7);
+  const finalFields = fields.slice(0, 6); // Massimo 6 campi per evitare confusione
   console.log(`🎯 Final fields generated: ${finalFields.length} fields`);
   
   return finalFields;

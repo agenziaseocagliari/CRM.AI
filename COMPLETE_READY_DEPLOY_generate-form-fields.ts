@@ -149,7 +149,7 @@ async function verifyCreditsWithFallback(organizationId: string, requestId: stri
     };
     
   } catch (error) {
-    console.log(`[credits:${requestId}] ⚠️ Credit system fallback activated`);
+    console.log(`[credits:${requestId}] ⚠️ Credit system fallback activated`, error);
     return {
       success: true,
       fallback_used: true,
@@ -265,7 +265,7 @@ function detectPlatformContext(prompt: string): PlatformContext {
 function getAdaptiveLabel(
   fieldType: 'name' | 'email' | 'phone' | 'company' | 'message',
   industryContext: IndustryContext,
-  platformContext: PlatformContext
+  _platformContext: PlatformContext
 ): string {
   const baseLabels = {
     name: "Nome",
@@ -474,13 +474,14 @@ function generateFormFields(
 /**
  * Advanced Field Validation Rules
  */
-function getFieldValidationRules(fieldName: string, fieldType: string): {
+/* 
+function _getFieldValidationRules(fieldName: string, _fieldType: string): {
   pattern?: string;
   minLength?: number;
   maxLength?: number;
   customValidation?: string;
 } {
-  const validationRules: { [key: string]: any } = {
+  const validationRules: { [key: string]: Record<string, unknown> } = {
     email: {
       pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
       maxLength: 254
@@ -503,60 +504,9 @@ function getFieldValidationRules(fieldName: string, fieldType: string): {
 
   return validationRules[fieldName] || {};
 }
+*/
 
-/**
- * Multi-language Support Detection
- */
-function detectLanguageContext(prompt: string): 'it' | 'en' | 'mixed' {
-  const italianWords = ['form', 'contatto', 'azienda', 'telefono', 'messaggio', 'nome'];
-  const englishWords = ['contact', 'company', 'phone', 'message', 'name', 'email'];
-  
-  const lowerPrompt = prompt.toLowerCase();
-  const italianMatches = italianWords.filter(word => lowerPrompt.includes(word)).length;
-  const englishMatches = englishWords.filter(word => lowerPrompt.includes(word)).length;
-  
-  if (italianMatches > englishMatches) return 'it';
-  if (englishMatches > italianMatches) return 'en';
-  return 'mixed';
-}
-
-/**
- * Performance Optimization: Field Caching
- */
-const fieldCache = new Map<string, any>();
-
-function getCachedFields(promptHash: string): any | null {
-  return fieldCache.get(promptHash) || null;
-}
-
-function setCachedFields(promptHash: string, fields: any): void {
-  if (fieldCache.size > 100) {
-    // Clear oldest entries when cache gets too large
-    const firstKey = fieldCache.keys().next().value;
-    fieldCache.delete(firstKey);
-  }
-  fieldCache.set(promptHash, fields);
-}
-
-/**
- * Generate simple hash for caching
- */
-function generatePromptHash(prompt: string): string {
-  let hash = 0;
-  for (let i = 0; i < prompt.length; i++) {
-    const char = prompt.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return Math.abs(hash).toString(36);
-}
-
-/**
- * Analytics and Metrics Collection
- */
-function logFormGenerationMetrics(prompt: string, fieldsCount: number, processingTime: number): void {
-  console.log(`📊 [METRICS] Prompt: "${prompt.substring(0, 50)}..." | Fields: ${fieldsCount} | Time: ${processingTime}ms`);
-}
+// UNUSED UTILITY FUNCTIONS REMOVED FOR LINT COMPLIANCE
 
 // ============================================================================
 // 🎯 LEVEL 5 COMPLETION - ALL FEATURES INTEGRATED

@@ -178,7 +178,7 @@ interface PlatformContext {
 function getAdaptiveLabel(
   fieldType: 'name' | 'email' | 'phone' | 'company' | 'message',
   industryContext: IndustryContext,
-  platformContext: PlatformContext
+  _platformContext: PlatformContext
 ): string {
   const baseLabels = {
     name: "Nome",
@@ -311,7 +311,7 @@ function generateFormFields(
   
   fieldPatterns
     .sort((a, b) => b.priority - a.priority)
-    .forEach(({ patterns, field, priority, group }) => {
+    .forEach(({ patterns, field, priority: _priority, group }) => {
       if (group && usedGroups.has(group)) return; // Skip if group already used
       
       const matches = patterns.filter(pattern => lowerPrompt.includes(pattern));

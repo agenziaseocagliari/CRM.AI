@@ -6,7 +6,7 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import { createClient as _createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 // CORS headers inline (invece di import separato)
 const corsHeaders = {
@@ -39,10 +39,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Il parametro 'organization_id' è obbligatorio per la verifica dei crediti." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+      throw new Error("Missing required environment variables");
+    }
 
     const authHeader = req.headers.get("Authorization");
     console.log(`[${ACTION_TYPE}] Authorization header check:`, { 
@@ -50,9 +53,6 @@ serve(async (req) => {
       authLength: authHeader?.length || 0,
       authPreview: authHeader?.substring(0, 20) || 'none'
     });
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     
     console.log(`[${ACTION_TYPE}] Making direct fetch to consume-credits function`);
     

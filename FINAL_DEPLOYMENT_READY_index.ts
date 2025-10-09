@@ -31,7 +31,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, organization_id } = await req.json()
+    const { prompt, organization_id: _organization_id } = await req.json()
     
     if (!prompt) {
       return new Response(

@@ -16,7 +16,7 @@ interface SupabaseError {
 interface DeploymentResponse {
   success: boolean;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 /**

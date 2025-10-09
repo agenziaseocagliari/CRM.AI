@@ -19,7 +19,7 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { prompt, organization_id } = await req.json();
+    const { prompt, organization_id: _organization_id } = await req.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt required" }), { 
@@ -30,7 +30,7 @@ serve(async (req) => {
 
     // Smart form generation basato sul prompt
     const lowerPrompt = prompt.toLowerCase();
-    let smartFields = [];
+    const smartFields = [];
 
     // Campi base sempre presenti
     smartFields.push({

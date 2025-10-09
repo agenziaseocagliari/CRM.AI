@@ -26,10 +26,17 @@ serve(async (req) => {
     }
 
     // --- Integrazione Sistema a Crediti ---
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(JSON.stringify({ error: "Missing Supabase configuration" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    
+    // Supabase client removed as unused
 
     // Ensure Authorization header is properly passed
     const authHeader = req.headers.get("Authorization");
@@ -39,8 +46,14 @@ serve(async (req) => {
       authPreview: authHeader?.substring(0, 20) || 'none'
     });
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const fetchAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (!fetchAnonKey) {
+      return new Response(JSON.stringify({ error: "Missing Supabase anon key" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
     
     console.log(`[${ACTION_TYPE}] Making direct fetch to consume-credits function`);
     
@@ -48,7 +61,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
+        'apikey': fetchAnonKey,
         ...(authHeader ? { 'Authorization': authHeader } : {})
       },
       body: JSON.stringify({ organization_id, action_type: ACTION_TYPE })

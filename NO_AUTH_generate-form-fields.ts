@@ -61,6 +61,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error("Error in generate-form-fields:", error);
     return new Response(JSON.stringify({ 
       error: "Internal error",
       fields: [

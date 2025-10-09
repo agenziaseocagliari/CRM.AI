@@ -194,10 +194,10 @@ serve(async (req) => {
         const geminiResult = JSON.parse(aiResponse.text);
         if (geminiResult.fields && Array.isArray(geminiResult.fields) && geminiResult.fields.length > 0) {
           // Validate and sanitize Gemini response
-          formFields = geminiResult.fields.map((field: any) => ({
+          formFields = geminiResult.fields.map((field: Record<string, unknown>) => ({
             name: String(field.name || 'field').toLowerCase().replace(/[^a-z0-9_]/g, '_'),
             label: String(field.label || 'Campo'),
-            type: ['text', 'email', 'tel', 'textarea'].includes(field.type) ? field.type : 'text',
+            type: ['text', 'email', 'tel', 'textarea'].includes(String(field.type)) ? String(field.type) : 'text',
             required: Boolean(field.required)
           }));
           generationMethod = 'gemini_ai';

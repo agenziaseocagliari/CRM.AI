@@ -79,8 +79,8 @@ async function handleRequest(req: Request): Promise<Response> {
     console.log(`[ai_form_generation:${requestId}] ✅ JWT token present, proceeding with credit verification`);
 
     // 3. GET ENVIRONMENT VARIABLES (usando self invece di Deno)
-    const supabaseUrl = (self as any).SUPABASE_URL;
-    const supabaseAnonKey = (self as any).SUPABASE_ANON_KEY;
+    const supabaseUrl = (self as unknown as Record<string, string>).SUPABASE_URL;
+    const supabaseAnonKey = (self as unknown as Record<string, string>).SUPABASE_ANON_KEY;
     
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error(`[ai_form_generation:${requestId}] ❌ Missing Supabase environment variables`);

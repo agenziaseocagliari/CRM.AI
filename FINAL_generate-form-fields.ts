@@ -19,7 +19,7 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { prompt, organization_id: _organization_id } = await req.json();
+    const { prompt } = await req.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt required" }), { 

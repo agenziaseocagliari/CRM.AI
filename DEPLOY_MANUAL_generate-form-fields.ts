@@ -30,7 +30,7 @@ declare const Deno: {
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@1.19.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+// import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4"; // Unused import
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 const ACTION_TYPE = 'ai_form_generation';
@@ -60,7 +60,7 @@ serve(async (req) => {
       });
     }
     
-    const _supabaseClient = createClient(supabaseUrl, supabaseKey);
+    // Supabase client removed as unused
 
     // Ensure Authorization header is properly passed
     const authHeader = req.headers.get("Authorization");

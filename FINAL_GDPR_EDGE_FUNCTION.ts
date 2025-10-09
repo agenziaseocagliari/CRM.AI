@@ -148,7 +148,7 @@ async function verifyCreditsWithFallback(organizationId: string, requestId: stri
     };
     
   } catch (error) {
-    console.log(`[credits:${requestId}] ⚠️ Credit system fallback activated`);
+    console.log(`[credits:${requestId}] ⚠️ Credit system fallback activated`, error);
     return {
       success: true,
       fallback_used: true,
@@ -264,7 +264,7 @@ function detectPlatformContext(prompt: string): PlatformContext {
 function getAdaptiveLabel(
   fieldType: 'name' | 'email' | 'phone' | 'company' | 'message',
   industryContext: IndustryContext,
-  platformContext: PlatformContext
+  _platformContext: PlatformContext
 ): string {
   const baseLabels = {
     name: "Nome",

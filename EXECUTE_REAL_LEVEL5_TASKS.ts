@@ -184,7 +184,7 @@ async function testFormMasterComplete() {
   
   try {
     // Test database connection
-    const { data: _testData, error: testError } = await supabase
+    const { error: testError } = await supabase
       .from('forms')
       .select('*')
       .limit(1)

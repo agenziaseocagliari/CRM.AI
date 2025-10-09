@@ -296,6 +296,21 @@ interface PlatformContext {
 }
 
 /**
+ * 🛡️ GDPR Compliance Detection - NUOVO LIVELLO 5
+ */
+function detectGDPRRequirement(prompt: string): boolean {
+  const gdprKeywords = [
+    'gdpr', 'privacy', 'consenso', 'consent', 'trattamento dati', 
+    'data processing', 'privacy policy', 'informativa privacy',
+    'dati personali', 'personal data', 'protezione dati',
+    'data protection', 'cookie', 'cookies', 'marketing',
+    'newsletter', 'mailing list', 'commercial', 'commerciale'
+  ];
+  
+  return gdprKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
+}
+
+/**
  * Adaptive Label Generation based on context
  */
 function getAdaptiveLabel(fieldType: string, industryContext: IndustryContext, _platformContext?: PlatformContext): string {
@@ -350,11 +365,11 @@ function generateIntelligentFormFields(
 ): Array<{
   name: string;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'textarea';
+  type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox';
   required: boolean;
 }> {
   const lowerPrompt = prompt.toLowerCase();
-  const fields: Array<{name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea'; required: boolean;}> = [];
+  const fields: Array<{name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox'; required: boolean;}> = [];
 
   console.log(`🧠 Level 5 Analysis: "${lowerPrompt}"`);
 
@@ -382,6 +397,10 @@ function generateIntelligentFormFields(
     type: "email",
     required: true
   });
+
+  // 🛡️ GDPR COMPLIANCE DETECTION - AGGIUNTO PER FIX LIVELLO 5
+  const needsGDPRCompliance = detectGDPRRequirement(lowerPrompt);
+  console.log(`🛡️ GDPR Required: ${needsGDPRCompliance}`);
 
   // Pattern detection intelligente con priorità e deduplicazione
   const fieldPatterns = [
@@ -453,6 +472,29 @@ function generateIntelligentFormFields(
       type: "textarea",
       required: false
     });
+  }
+
+  // 🛡️ GDPR COMPLIANCE FIELDS - IMPLEMENTAZIONE LIVELLO 5
+  if (needsGDPRCompliance) {
+    console.log(`🛡️ Adding GDPR compliance fields`);
+    
+    // Privacy Consent - sempre required per GDPR
+    fields.push({
+      name: "privacy_consent",
+      label: "Accetto l'informativa sulla privacy e il trattamento dei miei dati personali",
+      type: "checkbox",
+      required: true
+    });
+    
+    // Marketing Consent - opzionale
+    if (lowerPrompt.includes('newsletter') || lowerPrompt.includes('marketing') || lowerPrompt.includes('commercial')) {
+      fields.push({
+        name: "marketing_consent",
+        label: "Accetto di ricevere comunicazioni commerciali e newsletter",
+        type: "checkbox",
+        required: false
+      });
+    }
   }
 
   // Ensure good UX: minimum 3 fields, maximum 6 (ma non duplicare textarea)

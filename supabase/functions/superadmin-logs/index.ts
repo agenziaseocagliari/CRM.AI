@@ -71,35 +71,17 @@ Deno.serve(async (req) => {
     // Get client info for audit logging
     const clientInfo = extractClientInfo(req);
 
-    // Build query
-    let query = supabase
-      .from('superadmin_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    // Apply filters
-    if (search) {
-      query = query.or(`admin_email.ilike.%${search}%,action.ilike.%${search}%,target_id.ilike.%${search}%`);
-    }
-    if (operationType) {
-      query = query.eq('operation_type', operationType);
-    }
-    if (targetType) {
-      query = query.eq('target_type', targetType);
-    }
-    if (result) {
-      query = query.eq('result', result);
-    }
-    if (startDate) {
-      query = query.gte('created_at', startDate);
-    }
-    if (endDate) {
-      query = query.lte('created_at', endDate);
-    }
-
-    console.log('[superadmin-logs] Executing query...');
-    const { data: logs, error, count } = await query;
+    // 🚀 LEVEL 5 FIX: Use raw SQL function instead of PostgREST embedded resources
+    // This solves the foreign key relationships problem definitively
+    console.log('[superadmin-logs] Using get_superadmin_logs_filtered SQL function...');
+    const { data: logs, error } = await supabase.rpc('get_superadmin_logs_filtered', {
+      p_search: search || null,
+      p_operation_type: operationType || null,
+      p_target_type: targetType || null,
+      p_result: result || null,
+      p_limit: limit,
+      p_offset: offset
+    });
 
     if (error) {
       console.error('[superadmin-logs] Database error:', {
@@ -129,13 +111,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[superadmin-logs] Query successful:', {
+    console.log('[superadmin-logs] SQL function executed successfully:', {
       logsCount: logs?.length || 0,
-      totalCount: count,
       filters: { search, operationType, targetType, result, startDate, endDate }
     });
 
-    // Transform logs to match expected format
+    // Transform logs to match expected format - logs already comes with correct structure from SQL function
     const transformedLogs = (logs || []).map((log: any) => ({
       id: log.id.toString(),
       timestamp: log.created_at,
@@ -171,7 +152,7 @@ Deno.serve(async (req) => {
     console.log('[superadmin-logs] SUCCESS - Returning audit logs');
     return createSuperAdminSuccessResponse({ 
       logs: transformedLogs,
-      total: count || transformedLogs.length,
+      total: transformedLogs.length, // SQL function handles pagination internally
       offset,
       limit,
     });

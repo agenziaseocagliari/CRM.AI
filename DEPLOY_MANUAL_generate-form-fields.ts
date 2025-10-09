@@ -50,10 +50,17 @@ serve(async (req) => {
     }
 
     // --- Integrazione Sistema a Crediti ---
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(JSON.stringify({ error: "Missing Supabase configuration" }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
+    
+    const _supabaseClient = createClient(supabaseUrl, supabaseKey);
 
     // Ensure Authorization header is properly passed
     const authHeader = req.headers.get("Authorization");
@@ -65,16 +72,23 @@ serve(async (req) => {
 
     // CORRECTED: Use direct fetch instead of supabaseClient.functions.invoke
     // to bypass the same issues we had in AI Orchestrator
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const fetchSupabaseUrl = Deno.env.get("SUPABASE_URL");
+    const fetchSupabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (!fetchSupabaseUrl || !fetchSupabaseAnonKey) {
+      return new Response(JSON.stringify({ error: "Missing fetch Supabase configuration" }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
     
     console.log(`[${ACTION_TYPE}] Making direct fetch to consume-credits function`);
     
-    const creditResponse = await fetch(`${supabaseUrl}/functions/v1/consume-credits`, {
+    const creditResponse = await fetch(`${fetchSupabaseUrl}/functions/v1/consume-credits`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
+        'apikey': fetchSupabaseAnonKey,
         ...(authHeader ? { 'Authorization': authHeader } : {})
       },
       body: JSON.stringify({ organization_id, action_type: ACTION_TYPE })

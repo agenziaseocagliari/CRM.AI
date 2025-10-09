@@ -96,11 +96,11 @@ BEGIN
 END;
 $$;
 
--- Grant necessary permissions
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT SELECT, INSERT ON public.forms TO authenticated;
-GRANT SELECT, INSERT ON public.form_submissions TO anon, authenticated; 
-GRANT EXECUTE ON FUNCTION public.create_submission TO anon, authenticated;
+-- Grant necessary permissions (updated to use public instead of specific roles)
+GRANT USAGE ON SCHEMA public TO public;
+GRANT SELECT, INSERT ON public.forms TO public;
+GRANT SELECT, INSERT ON public.form_submissions TO public; 
+GRANT EXECUTE ON FUNCTION public.create_submission TO public;
 
 COMMENT ON TABLE public.forms IS 'Stores form definitions created by FormMaster AI';
 COMMENT ON TABLE public.form_submissions IS 'Stores submissions from public forms';

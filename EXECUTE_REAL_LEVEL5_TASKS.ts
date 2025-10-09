@@ -5,7 +5,8 @@
 const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co'
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyODQ2OTU3NiwiZXhwIjoyMDQ0MDQ1NTc2fQ.5Zo3z3qLm8LN4Z1AqWRnfzd8DJqzXpJpDnF0nT-ydOQ'
 
-// Types for better error handling
+// Types for better error handling - COMMENTED OUT AS UNUSED
+/*
 interface SupabaseError {
   message: string;
   details?: string;
@@ -18,6 +19,7 @@ interface DeploymentResponse {
   message: string;
   details?: Record<string, unknown>;
 }
+*/
 
 /**
  * 🚀 EXECUTE DATABASE SETUP DIRECTLY
@@ -182,7 +184,7 @@ async function testFormMasterComplete() {
   
   try {
     // Test database connection
-    const { data: testData, error: testError } = await supabase
+    const { data: _testData, error: testError } = await supabase
       .from('forms')
       .select('*')
       .limit(1)

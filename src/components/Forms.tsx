@@ -429,22 +429,53 @@ export const Forms: React.FC = () => {
         setIsLoading(true);
 
         try {
-            console.log('💾 FORM SAVE - Dati inviati al DB:', {
-                styling: formStyle,
-                privacy_policy_url: privacyPolicyUrl,
-                has_custom_primary: formStyle.primary_color !== '#6366f1',
-                has_privacy_url: !!privacyPolicyUrl
+            // 🔍 DEBUG: Log stato PRIMA del save
+            console.log('💾 SAVE - Current State Variables:', {
+                formStyle_full: JSON.stringify(formStyle, null, 2),
+                privacyPolicyUrl_value: privacyPolicyUrl,
+                privacyPolicyUrl_type: typeof privacyPolicyUrl,
+                privacyPolicyUrl_length: privacyPolicyUrl?.length || 0,
+                primary_color: formStyle?.primary_color,
+                is_default_color: formStyle?.primary_color === '#6366f1'
             });
             
-            const { error: insertError } = await supabase.from('forms').insert({
+            const dataToInsert = {
                 name: sanitizedName,
                 title: sanitizedTitle,
                 fields: generatedFields,
                 styling: formStyle,
                 privacy_policy_url: privacyPolicyUrl || null,
                 organization_id: organization.id
+            };
+            
+            console.log('💾 SAVE - Object Being Inserted:', JSON.stringify(dataToInsert, null, 2));
+            
+            const { data: insertedData, error: insertError } = await supabase
+                .from('forms')
+                .insert(dataToInsert)
+                .select(); // ✅ SELECT per vedere cosa è stato salvato
+            
+            console.log('💾 SAVE - Supabase Response:', {
+                success: !insertError,
+                error: insertError,
+                insertedData: insertedData
             });
-            if (insertError) { throw insertError; }
+            
+            if (insertError) { 
+                console.error('❌ SAVE - Insert Error:', insertError);
+                throw insertError; 
+            }
+            
+            if (insertedData && insertedData.length > 0) {
+                console.log('✅ SAVE - Form Salvato nel DB:', {
+                    id: insertedData[0].id,
+                    name: insertedData[0].name,
+                    has_styling: !!insertedData[0].styling,
+                    styling_primary: insertedData[0].styling?.primary_color,
+                    has_privacy_url: !!insertedData[0].privacy_policy_url,
+                    privacy_url_value: insertedData[0].privacy_policy_url
+                });
+            }
             
             refetchData();
             
@@ -719,7 +750,7 @@ ${kadenceCode.shortcode}
                                 <InteractiveAIQuestionnaire
                                     initialPrompt={prompt}
                                     onComplete={(result) => {
-                                        console.log('✅ Questionnaire Complete - Result:', result);
+                                        console.log('✅ Questionnaire Complete - Result:', JSON.stringify(result, null, 2));
 
                                         // ✅ Imposta prompt
                                         setPrompt(result.prompt);
@@ -732,7 +763,7 @@ ${kadenceCode.shortcode}
 
                                         // ✅ Imposta colori custom se presenti
                                         if (result.colors) {
-                                            setFormStyle({
+                                            const newStyle = {
                                                 primary_color: result.colors.primary,
                                                 secondary_color: '#f3f4f6',
                                                 background_color: result.colors.background,
@@ -745,8 +776,9 @@ ${kadenceCode.shortcode}
                                                     text_color: '#ffffff',
                                                     border_radius: '6px'
                                                 }
-                                            });
-                                            console.log('🎨 Colors Set:', result.colors);
+                                            };
+                                            setFormStyle(newStyle);
+                                            console.log('🎨 Colors Set - New Style Object:', JSON.stringify(newStyle, null, 2));
                                         }
 
                                         // ✅ Salva metadata se presente
@@ -759,6 +791,15 @@ ${kadenceCode.shortcode}
                                         }
 
                                         setShowQuestionnaire(false);
+
+                                        // ✅ Log DOPO setState per verificare persistenza
+                                        setTimeout(() => {
+                                            console.log('🔍 State Check AFTER setState (50ms):', {
+                                                hasPrivacyUrl: !!result.privacyUrl,
+                                                hasColors: !!result.colors,
+                                                privacyUrlLength: result.privacyUrl?.length || 0
+                                            });
+                                        }, 50);
 
                                         // ✅ FIX: Passa prompt come parametro per evitare race condition
                                         setTimeout(() => handleGenerateForm(result.prompt), 100);

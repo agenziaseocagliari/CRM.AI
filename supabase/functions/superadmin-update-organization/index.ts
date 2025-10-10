@@ -69,8 +69,15 @@ Deno.serve(async (req) => {
     console.log('[superadmin-update-organization] Fetching current organization data...');
     const { data: currentOrg } = await supabase
       .from('organizations')
-      .select('*, organization_credits(*)')
+      .select('*')
       .eq('id', organizationId)
+      .single();
+    
+    // Fetch credits separately
+    const { data: currentCredits } = await supabase
+      .from('organization_credits')
+      .select('*')
+      .eq('organization_id', organizationId)
       .single();
 
     console.log('[superadmin-update-organization] Current organization:', {

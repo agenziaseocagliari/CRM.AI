@@ -87,20 +87,10 @@ Deno.serve(async (req) => {
 
     console.log('[superadmin-manage-payments] Fetching payment transactions...');
 
-    // Fetch payment transactions from credit consumption logs
+    // Fetch payment transactions from credit consumption logs (without nested join)
     const { data: creditLogs, error: logsError } = await supabase
       .from('credit_consumption_logs')
-      .select(`
-        id,
-        organization_id,
-        action_type,
-        credits_consumed,
-        created_at,
-        success,
-        organizations:organization_id (
-          name
-        )
-      `)
+      .select('id, organization_id, action_type, credits_consumed, created_at, success')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -134,22 +124,24 @@ Deno.serve(async (req) => {
 
     console.log('[superadmin-manage-payments] Fetching organization credits...');
 
-    // Also fetch organization credits for revenue calculation
+    // Fetch organization credits (without nested join)
     const { data: orgCredits, error: creditsError } = await supabase
       .from('organization_credits')
-      .select(`
-        organization_id,
-        plan_name,
-        total_credits,
-        cycle_start_date,
-        organizations:organization_id (
-          name
-        )
-      `);
+      .select('organization_id, plan_name, total_credits, cycle_start_date');
 
     if (creditsError) {
       console.warn('[superadmin-manage-payments] Error fetching org credits:', creditsError.message);
     }
+    
+    // Fetch organization names separately
+    const orgIds = orgCredits?.map(o => o.organization_id) || [];
+    const { data: orgsData } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .in('id', orgIds);
+    
+    // Create organization lookup map
+    const orgsMap = new Map(orgsData?.map(o => [o.id, o.name]) || []);
 
     // Transform data to match expected payment format
     const payments = (orgCredits || []).map((org: any, index: number) => {
@@ -163,7 +155,7 @@ Deno.serve(async (req) => {
       
       return {
         id: `payment-${org.organization_id}-${index}`,
-        organizationName: org.organizations?.name || 'Unknown',
+        organizationName: orgsMap.get(org.organization_id) || 'Unknown',
         organizationId: org.organization_id,
         amount,
         date: org.cycle_start_date || new Date().toISOString(),

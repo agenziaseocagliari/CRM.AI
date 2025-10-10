@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FormField, FormStyle } from '../../types';
 import { PlusIcon, TrashIcon } from '../ui/icons';
 // import { PencilIcon } from '../ui/icons'; // TODO: Re-enable when edit functionality is added
@@ -42,35 +42,46 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
     ];
 
     // Aggiorna lo stile quando cambiano i colori
-    useEffect(() => {
-        console.log('🎨 PostAIEditor - Color Update:', { primaryColor, backgroundColor, textColor });
+    // ✅ RIMOSSO useEffect - Chiamiamo onStyleChange solo quando user modifica colori
+    // Questo evita loop infiniti e garantisce che i cambiamenti siano intenzionali
 
-        onStyleChange({
-            primary_color: primaryColor,
+    const buildStyleObject = (primary: string, background: string, text: string): FormStyle => {
+        return {
+            primary_color: primary,
             secondary_color: '#f3f4f6',
-            background_color: backgroundColor,
-            text_color: textColor,
-            border_color: primaryColor,
+            background_color: background,
+            text_color: text,
+            border_color: primary,
             border_radius: '8px',
             font_family: 'Inter, system-ui, sans-serif',
             button_style: {
-                background_color: primaryColor,
+                background_color: primary,
                 text_color: '#ffffff',
                 border_radius: '6px'
             }
-        });
-    }, [primaryColor, backgroundColor, textColor, onStyleChange]);
+        };
+    };
 
     const handleColorChange = (type: 'primary' | 'background' | 'text', color: string) => {
         console.log('🎨 COLOR CHANGE:', { type, color, timestamp: new Date().toISOString() });
 
+        let newPrimary = primaryColor;
+        let newBackground = backgroundColor;
+        let newText = textColor;
+
         if (type === 'primary') {
+            newPrimary = color;
             setPrimaryColor(color);
         } else if (type === 'background') {
+            newBackground = color;
             setBackgroundColor(color);
         } else if (type === 'text') {
+            newText = color;
             setTextColor(color);
         }
+
+        // ✅ Chiama onStyleChange IMMEDIATAMENTE con i nuovi valori
+        onStyleChange(buildStyleObject(newPrimary, newBackground, newText));
     };
 
     const applyPreset = (preset: typeof colorPresets[0]) => {
@@ -78,6 +89,9 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
         setPrimaryColor(preset.primary);
         setBackgroundColor(preset.background);
         setTextColor(preset.text);
+        
+        // ✅ Applica preset immediatamente
+        onStyleChange(buildStyleObject(preset.primary, preset.background, preset.text));
     };
 
     const updateField = (index: number, updates: Partial<FormField>) => {

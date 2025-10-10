@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
@@ -15,7 +15,7 @@ import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 import { generateKadenceForm } from '../lib/wordpress/WordPressKadenceGenerator';
 import { PostAIEditor } from './forms/PostAIEditor';
-import { InteractiveAIQuestionnaire } from './InteractiveAIQuestionnaire';
+import { InteractiveAIQuestionnaire, QuestionnaireResult } from './InteractiveAIQuestionnaire';
 
 // Error interface for proper typing
 interface ApiError {
@@ -226,11 +226,28 @@ export const Forms: React.FC = () => {
         setFormToModify(null);
     };
 
-    const handleGenerateForm = async () => {
-        if (!prompt) { toast.error("Per favore, inserisci una descrizione per il tuo form."); return; }
+    // ✅ CALLBACK MEMOIZZATE per evitare re-render loop in PostAIEditor
+    const handleStyleChange = useCallback((newStyle: FormStyle) => {
+        console.log('🎨 Forms.tsx - Style Update:', newStyle);
+        setFormStyle(newStyle);
+    }, []);
+
+    const handlePrivacyPolicyChange = useCallback((url: string) => {
+        console.log('🔒 Forms.tsx - Privacy URL Update:', url);
+        setPrivacyPolicyUrl(url);
+    }, []);
+
+    // ✅ MODIFICATO: Accetta prompt custom come parametro per fix questionario
+    const handleGenerateForm = async (customPrompt?: string) => {
+        const promptToUse = customPrompt || prompt;
+        
+        if (!promptToUse.trim()) { 
+            toast.error("Per favore, inserisci una descrizione per il tuo form."); 
+            return; 
+        }
 
         // Sanitize and validate prompt input
-        const sanitizedPrompt = InputValidator.sanitizeString(prompt);
+        const sanitizedPrompt = InputValidator.sanitizeString(promptToUse);
         if (sanitizedPrompt.length < 5) {
             toast.error("La descrizione deve essere più dettagliata (almeno 5 caratteri).");
             return;
@@ -238,7 +255,8 @@ export const Forms: React.FC = () => {
 
         SecureLogger.info('forms', 'Form generation initiated', {
             promptLength: sanitizedPrompt.length,
-            organizationId: organization?.id
+            organizationId: organization?.id,
+            isCustomPrompt: !!customPrompt
         });
 
         setIsLoading(true); setGeneratedFields(null);
@@ -248,7 +266,8 @@ export const Forms: React.FC = () => {
             console.log('🔍 Debugging form generation request:', {
                 organization_id: organization?.id,
                 organization,
-                prompt_length: sanitizedPrompt.length
+                prompt_length: sanitizedPrompt.length,
+                custom_prompt: !!customPrompt
             });
 
             if (!organization?.id) {
@@ -518,6 +537,8 @@ export const Forms: React.FC = () => {
     // 🎯 Funzione per export Kadence Blocks nativo
     const handleKadenceExport = (form: Form) => {
         try {
+            console.log('📦 Kadence Export - Privacy URL:', form.privacy_policy_url);
+            
             // Cast fields to Kadence FormField type (compatible subset)
             const kadenceCode = generateKadenceForm(form.fields as unknown as Array<{
                 name: string;
@@ -533,7 +554,7 @@ export const Forms: React.FC = () => {
                     text: form.styling?.text_color || '#1f2937',
                     border: form.styling?.primary_color || '#6366f1'
                 }
-            });
+            }, form.privacy_policy_url || undefined); // ✅ PASSA PRIVACY URL
 
             // Crea un file HTML completo con tutte le parti
             const completeHTML = `<!DOCTYPE html>
@@ -637,11 +658,50 @@ ${kadenceCode.shortcode}
                             {showQuestionnaire ? (
                                 <InteractiveAIQuestionnaire
                                     initialPrompt={prompt}
-                                    onComplete={(enhancedPrompt) => {
-                                        setPrompt(enhancedPrompt);
+                                    onComplete={(result) => {
+                                        console.log('✅ Questionnaire Complete - Result:', result);
+                                        
+                                        // ✅ Imposta prompt
+                                        setPrompt(result.prompt);
+                                        
+                                        // ✅ Imposta privacy URL se presente
+                                        if (result.privacyUrl) {
+                                            setPrivacyPolicyUrl(result.privacyUrl);
+                                            console.log('🔒 Privacy URL Set:', result.privacyUrl);
+                                        }
+                                        
+                                        // ✅ Imposta colori custom se presenti
+                                        if (result.colors) {
+                                            setFormStyle({
+                                                primary_color: result.colors.primary,
+                                                secondary_color: '#f3f4f6',
+                                                background_color: result.colors.background,
+                                                text_color: result.colors.text,
+                                                border_color: result.colors.primary,
+                                                border_radius: '8px',
+                                                font_family: 'Inter, system-ui, sans-serif',
+                                                button_style: {
+                                                    background_color: result.colors.primary,
+                                                    text_color: '#ffffff',
+                                                    border_radius: '6px'
+                                                }
+                                            });
+                                            console.log('🎨 Colors Set:', result.colors);
+                                        }
+                                        
+                                        // ✅ Salva metadata se presente
+                                        if (result.metadata) {
+                                            setFormMeta({
+                                                gdpr_enabled: result.metadata.gdpr_required,
+                                                // Altri campi metadata se necessario
+                                            });
+                                            console.log('📊 Metadata Set:', result.metadata);
+                                        }
+                                        
                                         setShowQuestionnaire(false);
-                                        // Auto-genera dopo questionario
-                                        setTimeout(() => handleGenerateForm(), 500);
+                                        
+                                        // ✅ FIX: Passa prompt come parametro per evitare race condition
+                                        setTimeout(() => handleGenerateForm(result.prompt), 100);
                                     }}
                                 />
                             ) : (
@@ -681,7 +741,7 @@ ${kadenceCode.shortcode}
                                         <label htmlFor="form-prompt" className="block text-sm font-medium text-gray-700">Descrivi il tuo form</label>
                                         <textarea id="form-prompt" rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Es: Un form di contatto con nome, email, telefono e un'area per il messaggio." className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
                                     </div>
-                                    <div className="flex justify-end"> <button onClick={handleGenerateForm} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 disabled:bg-gray-400"> {isLoading ? 'Generazione...' : <><SparklesIcon className="w-5 h-5" /><span>Genera Campi</span></>} </button> </div>
+                                    <div className="flex justify-end"> <button onClick={() => handleGenerateForm()} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 disabled:bg-gray-400"> {isLoading ? 'Generazione...' : <><SparklesIcon className="w-5 h-5" /><span>Genera Campi</span></>} </button> </div>
                                 </>
                             )}
                         </>
@@ -724,9 +784,9 @@ ${kadenceCode.shortcode}
                                 fields={generatedFields}
                                 onFieldsChange={setGeneratedFields}
                                 style={formStyle}
-                                onStyleChange={setFormStyle}
+                                onStyleChange={handleStyleChange}
                                 privacyPolicyUrl={privacyPolicyUrl}
-                                onPrivacyPolicyChange={setPrivacyPolicyUrl}
+                                onPrivacyPolicyChange={handlePrivacyPolicyChange}
                             />
 
                             {/* Nome e Titolo Form */}

@@ -40,11 +40,13 @@ export class WordPressKadenceGenerator {
   private options: WordPressEmbedOptions;
   private formId: string;
   private organizationId: string;
+  private privacyUrl?: string; // ✅ NUOVO: Privacy Policy URL
 
-  constructor(formFields: FormField[], options: Partial<WordPressEmbedOptions> = {}) {
+  constructor(formFields: FormField[], options: Partial<WordPressEmbedOptions> = {}, privacyUrl?: string) {
     this.formFields = formFields;
     this.formId = `form-${Date.now()}`;
     this.organizationId = 'wordpress-integration';
+    this.privacyUrl = privacyUrl; // ✅ Store privacy URL
     
     // Default Kadence-optimized settings
     this.options = {
@@ -96,6 +98,16 @@ export class WordPressKadenceGenerator {
   private generateHTML(): string {
     const fieldsHTML = this.formFields.map(field => this.generateFieldHTML(field)).join('\n');
 
+    // ✅ NUOVO: Privacy checkbox se URL presente
+    const privacyHTML = this.privacyUrl ? `
+      <div class="formmaster-field-group formmaster-privacy">
+        <label class="formmaster-checkbox-label">
+          <input type="checkbox" name="privacy_consent" required class="formmaster-checkbox">
+          <span>Accetto la <a href="${this.privacyUrl}" target="_blank" rel="noopener noreferrer" class="formmaster-privacy-link">Privacy Policy</a> e acconsento al trattamento dei miei dati personali. *</span>
+        </label>
+      </div>
+    ` : '';
+
     return `<!-- FormMaster - WordPress Kadence Integration -->
 <div class="formmaster-kadence-wrapper" id="${this.formId}-wrapper">
   <form class="formmaster-form kadence-form" id="${this.formId}" method="POST" action="#" data-kadence-form>
@@ -107,6 +119,8 @@ export class WordPressKadenceGenerator {
     <div class="formmaster-fields">
 ${fieldsHTML}
     </div>
+    
+${privacyHTML}
     
     <div class="formmaster-actions">
       <button type="submit" class="formmaster-submit kadence-button">
@@ -576,12 +590,12 @@ ${this.generateHTML()}
 /**
  * Factory Functions for Easy Usage
  */
-export function generateKadenceForm(fields: FormField[], options?: Partial<WordPressEmbedOptions>) {
-  const generator = new WordPressKadenceGenerator(fields, options);
+export function generateKadenceForm(fields: FormField[], options?: Partial<WordPressEmbedOptions>, privacyUrl?: string) {
+  const generator = new WordPressKadenceGenerator(fields, options, privacyUrl);
   return generator.generateCompleteEmbedCode();
 }
 
-export function generateKadenceBlockPattern(fields: FormField[], options?: Partial<WordPressEmbedOptions>) {
-  const generator = new WordPressKadenceGenerator(fields, options);
+export function generateKadenceBlockPattern(fields: FormField[], options?: Partial<WordPressEmbedOptions>, privacyUrl?: string) {
+  const generator = new WordPressKadenceGenerator(fields, options, privacyUrl);
   return generator.generateKadenceBlockPattern();
 }

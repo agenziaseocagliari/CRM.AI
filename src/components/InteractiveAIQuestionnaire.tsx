@@ -18,8 +18,23 @@ const CheckIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// ✅ NUOVO: Interfaccia risultato strutturato
+export interface QuestionnaireResult {
+  prompt: string;
+  privacyUrl?: string;
+  colors?: {
+    primary: string;
+    background: string;
+    text: string;
+  };
+  metadata?: {
+    gdpr_required: boolean;
+    marketing_consent: boolean;
+  };
+}
+
 interface InteractiveAIQuestionnaire {
-  onComplete: (enhancedPrompt: string) => void;
+  onComplete: (result: QuestionnaireResult) => void;
   initialPrompt: string;
 }
 
@@ -119,8 +134,27 @@ Ottimizza per la conversione e l'usabilità.
 Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
         `.trim();
 
-    console.log('🎯 Generated Enhanced Prompt:', enhanced);
-    onComplete(enhanced);
+    console.log('🎯 Questionnaire - Enhanced Prompt Generated:', enhanced);
+    console.log('🎨 Questionnaire - Colors:', data.branding_colors);
+    console.log('🔒 Questionnaire - Privacy URL:', data.privacy_policy_url);
+
+    // ✅ NUOVO: Restituisci oggetto strutturato invece di solo stringa
+    const result: QuestionnaireResult = {
+      prompt: enhanced,
+      privacyUrl: data.privacy_policy_url || undefined,
+      colors: {
+        primary: data.branding_colors.primary,
+        background: data.branding_colors.secondary,
+        text: '#1f2937'
+      },
+      metadata: {
+        gdpr_required: data.gdpr_required,
+        marketing_consent: data.marketing_consent
+      }
+    };
+    
+    console.log('🎁 Questionnaire - Complete Result:', result);
+    onComplete(result);
   };
 
   const commonFieldOptions = [

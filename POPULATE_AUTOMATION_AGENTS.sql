@@ -28,7 +28,7 @@ ORDER BY created_at;
 SELECT 
     id,
     email,
-    role,
+    user_role,
     organization_id
 FROM profiles
 WHERE email = 'agenziaseocagliari@gmail.com';

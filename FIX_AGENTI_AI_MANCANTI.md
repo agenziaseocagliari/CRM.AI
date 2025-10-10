@@ -2,16 +2,63 @@
 
 **Problema**: Il modulo "Agenti di Automazione" mostra "0 / 0 agenti attivi" invece dei 5 agenti AI predefiniti.
 
-**Root Cause Possibili**:
-1. ❌ Migration `20250102000000_create_agents_and_integrations.sql` non applicata
-2. ❌ INSERT degli agenti fallito durante la migration
-3. ❌ RLS policy blocca la visualizzazione (improbabile - le policy sono corrette)
+**Root Cause IDENTIFICATA**: 
+1. ❌ RLS Policies usano `profiles.role` ma la colonna è `profiles.user_role` → **BLOCCO TOTALE**
+2. ❌ Agenti potrebbero non essere stati inseriti durante migration
+
+**Soluzione**: Fix RLS policies + Popola agenti
 
 ---
 
-## 🔍 DIAGNOSI
+## 🚨 PROBLEMA CRITICO - RLS POLICIES SBAGLIATE
 
-### Step 1: Verifica Tabella e Dati
+Le RLS policies nella migration usano:
+```sql
+WHERE profiles.role = 'super_admin'  -- ❌ SBAGLIATO - colonna non esiste
+```
+
+Dovrebbero usare:
+```sql
+WHERE profiles.user_role = 'super_admin'  -- ✅ CORRETTO
+```
+
+**Impatto**: NESSUNO può vedere gli agenti, nemmeno il super_admin!
+
+---
+
+## ✅ SOLUZIONE COMPLETA (2 STEP)
+
+### STEP 1: Fix RLS Policies (OBBLIGATORIO)
+
+1. Vai su **Supabase Studio** → **SQL Editor**
+2. Apri il file `FIX_RLS_POLICIES_AGENTS.sql`
+3. **ESEGUI TUTTO** lo script
+4. Verifica che l'output finale mostri le policy aggiornate
+
+**Questo script corregge le policy per**:
+- ✅ `automation_agents` (4 policies)
+- ✅ `agent_execution_logs` (2 policies)
+- ✅ `api_integrations` (4 policies)
+- ✅ `integration_usage_logs` (2 policies)
+- ✅ `workflow_definitions` (2 policies)
+- ✅ `workflow_execution_logs` (1 policy)
+
+### STEP 2: Popola Agenti (se necessario)
+
+Dopo aver fixato le RLS policies, verifica se gli agenti esistono:
+
+```sql
+SELECT COUNT(*) as total_agents FROM automation_agents;
+```
+
+**Se `total_agents = 0`**:
+
+1. Apri `POPULATE_AUTOMATION_AGENTS.sql` (già corretto con `user_role`)
+2. Vai allo **Step 5**
+3. Rimuovi il commento `/*  */`
+4. Esegui l'INSERT
+
+**INSERT da eseguire**:
 
 Vai su **Supabase Studio** → **SQL Editor** e esegui:
 

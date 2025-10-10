@@ -5,7 +5,7 @@ import { useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
-import { Form, FormField } from '../types';
+import { Form, FormField, FormStyle } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 
 import { CodeIcon, EyeIcon, PlusIcon, SparklesIcon, TrashIcon } from './ui/icons';
@@ -14,6 +14,7 @@ import { Modal } from './ui/Modal';
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 import { generateKadenceForm, generateKadenceBlockPattern } from '../lib/wordpress/WordPressKadenceGenerator';
+import { PostAIEditor } from './forms/PostAIEditor';
 
 // Error interface for proper typing
 interface ApiError {
@@ -113,12 +114,47 @@ export const Forms: React.FC = () => {
     const [generatedFields, setGeneratedFields] = useState<FormField[] | null>(null);
     const [publicUrl, setPublicUrl] = useState('');
     
+    // 🎨 Stati per personalizzazione colori (PostAIEditor)
+    const [formStyle, setFormStyle] = useState<FormStyle>({
+        primary_color: '#6366f1',
+        secondary_color: '#f3f4f6',
+        background_color: '#ffffff',
+        text_color: '#1f2937',
+        border_color: '#6366f1',
+        border_radius: '8px',
+        font_family: 'Inter, system-ui, sans-serif',
+        button_style: {
+            background_color: '#6366f1',
+            text_color: '#ffffff',
+            border_radius: '6px'
+        }
+    });
+    const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState('');
+    
     // Stati di caricamento ed errore
     const [isLoading, setIsLoading] = useState(false);
 
     const handleOpenCreateModal = () => {
-        setPrompt(''); setFormName(''); setFormTitle('');
-        setGeneratedFields(null); setIsLoading(false);
+        setPrompt(''); 
+        setFormName(''); 
+        setFormTitle('');
+        setGeneratedFields(null); 
+        setIsLoading(false);
+        setPrivacyPolicyUrl('');
+        setFormStyle({
+            primary_color: '#6366f1',
+            secondary_color: '#f3f4f6',
+            background_color: '#ffffff',
+            text_color: '#1f2937',
+            border_color: '#6366f1',
+            border_radius: '8px',
+            font_family: 'Inter, system-ui, sans-serif',
+            button_style: {
+                background_color: '#6366f1',
+                text_color: '#ffffff',
+                border_radius: '6px'
+            }
+        });
         setCreateModalOpen(true);
     };
 
@@ -291,11 +327,19 @@ export const Forms: React.FC = () => {
             return;
         }
         
+        console.log('🎨 FORM SAVE - Styling Data:', {
+            formStyle,
+            privacyPolicyUrl,
+            timestamp: new Date().toISOString()
+        });
+        
         SecureLogger.info('forms', 'Form save operation initiated', {
             nameLength: sanitizedName.length,
             titleLength: sanitizedTitle.length,
             fieldsCount: generatedFields.length,
-            organizationId: organization.id
+            organizationId: organization.id,
+            hasCustomColors: formStyle.primary_color !== '#6366f1',
+            hasPrivacyUrl: !!privacyPolicyUrl
         });
         
         setIsLoading(true);
@@ -304,13 +348,15 @@ export const Forms: React.FC = () => {
             const { error: insertError } = await supabase.from('forms').insert({ 
                 name: sanitizedName, 
                 title: sanitizedTitle, 
-                fields: generatedFields, 
+                fields: generatedFields,
+                styling: formStyle,
+                privacy_policy_url: privacyPolicyUrl || null,
                 organization_id: organization.id 
             });
             if (insertError) {throw insertError;}
             refetchData(); 
             handleCloseModals();
-            toast.success('Form salvato con successo!');
+            toast.success('Form salvato con successo con personalizzazione colori!');
         } catch (err: unknown) {
             const error = err as ApiError;
             toast.error(`Errore durante il salvaggio: ${error.message}`);
@@ -378,21 +424,45 @@ export const Forms: React.FC = () => {
                     </>
                 ) : (
                     <>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Anteprima Form</label>
-                            <div className="mt-2 p-4 border rounded-md space-y-3 bg-gray-50"> {generatedFields.map((field, index) => (<div key={index}> <label className="text-sm font-medium text-gray-900">{field.label}{field.required ? ' *' : ''}</label> {renderFieldPreview(field, index)} </div>))} </div>
+                        {/* 🎨 PostAIEditor - Personalizzazione Completa */}
+                        <PostAIEditor
+                            fields={generatedFields}
+                            onFieldsChange={setGeneratedFields}
+                            style={formStyle}
+                            onStyleChange={setFormStyle}
+                            privacyPolicyUrl={privacyPolicyUrl}
+                            onPrivacyPolicyChange={setPrivacyPolicyUrl}
+                        />
+                        
+                        {/* Nome e Titolo Form */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label htmlFor="form-name" className="block text-sm font-medium text-gray-700">Nome del Form (interno)</label>
+                                <input type="text" id="form-name" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Es: Form Contatti Sito Web" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
+                            </div>
+                            <div>
+                                <label htmlFor="form-title" className="block text-sm font-medium text-gray-700">Titolo del Form (pubblico)</label>
+                                <input type="text" id="form-title" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Es: Contattaci" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
+                            </div>
                         </div>
-                        <div>
-                            <label htmlFor="form-name" className="block text-sm font-medium text-gray-700">Nome del Form (interno)</label>
-                            <input type="text" id="form-name" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Es: Form Contatti Sito Web" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
-                        </div>
-                        <div>
-                            <label htmlFor="form-title" className="block text-sm font-medium text-gray-700">Titolo del Form (pubblico)</label>
-                            <input type="text" id="form-title" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Es: Contattaci" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
-                        </div>
+                        
                         <div className="flex justify-between items-center pt-4 border-t mt-4">
-                            <button onClick={() => setGeneratedFields(null)} className="text-sm text-gray-600 hover:text-primary">Indietro</button>
-                            <button onClick={handleSaveForm} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">{isLoading ? 'Salvataggio...' : 'Salva Form'}</button>
+                            <button onClick={() => setGeneratedFields(null)} className="text-sm text-gray-600 hover:text-primary">← Indietro</button>
+                            <button onClick={handleSaveForm} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 flex items-center space-x-2">
+                                {isLoading ? (
+                                    <>
+                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span>Salvataggio...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>💾 Salva Form con Colori</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </>
                 )}

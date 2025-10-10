@@ -49,8 +49,28 @@ export type OpportunitiesData = Record<PipelineStage, Opportunity[]>;
 export interface FormField {
     name: string;
     label: string;
-    type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox';
+    type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox' | 'select' | 'radio' | 'number' | 'date' | 'url';
     required: boolean;
+    description?: string;
+    placeholder?: string;
+    options?: string[];
+}
+
+export interface ButtonStyle {
+    background_color: string;
+    text_color: string;
+    border_radius: string;
+}
+
+export interface FormStyle {
+    primary_color: string;
+    secondary_color: string;
+    background_color: string;
+    text_color: string;
+    border_color: string;
+    border_radius: string;
+    font_family: string;
+    button_style: ButtonStyle;
 }
 
 export interface Form {
@@ -59,6 +79,8 @@ export interface Form {
     name: string;
     title: string;
     fields: FormField[];
+    styling?: FormStyle;
+    privacy_policy_url?: string;
     created_at: string;
 }
 

@@ -178,14 +178,34 @@ export const PublicForm: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
+        <div 
+            className="min-h-screen flex flex-col justify-center items-center p-4"
+            style={{ 
+                backgroundColor: form?.styling?.background_color || '#f9fafb',
+                fontFamily: form?.styling?.font_family || 'Inter, system-ui, sans-serif'
+            }}
+        >
              <div className="w-full max-w-lg">
                 <div className="text-center mb-6">
-                    <GuardianIcon className="w-12 h-12 text-primary mx-auto mb-2" />
-                    <h1 className="text-3xl font-bold text-text-primary">{form?.title}</h1>
+                    <GuardianIcon 
+                        className="w-12 h-12 mx-auto mb-2" 
+                        style={{ color: form?.styling?.primary_color || '#6366f1' }}
+                    />
+                    <h1 
+                        className="text-3xl font-bold"
+                        style={{ color: form?.styling?.text_color || '#1f2937' }}
+                    >
+                        {form?.title}
+                    </h1>
                 </div>
 
-                <div className="bg-white p-8 rounded-lg shadow-md">
+                <div 
+                    className="p-8 rounded-lg shadow-md"
+                    style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: form?.styling?.border_radius || '8px'
+                    }}
+                >
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {form?.fields.map(field => (
                             <DynamicFormField key={field.name} field={field} />
@@ -195,7 +215,12 @@ export const PublicForm: React.FC = () => {
                              <button 
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full bg-primary text-white px-4 py-3 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 font-semibold"
+                                className="w-full px-4 py-3 font-semibold transition-colors"
+                                style={{
+                                    backgroundColor: form?.styling?.button_style?.background_color || form?.styling?.primary_color || '#6366f1',
+                                    color: form?.styling?.button_style?.text_color || '#ffffff',
+                                    borderRadius: form?.styling?.button_style?.border_radius || '6px'
+                                }}
                             >
                                 {isSubmitting ? 'Invio in corso...' : 'Invia'}
                             </button>
@@ -203,8 +228,15 @@ export const PublicForm: React.FC = () => {
                         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                     </form>
                 </div>
-                 <p className="mt-8 text-sm text-gray-500 text-center">
-                    Powered by <a href="#" onClick={(e) => {e.preventDefault(); window.location.href='/'}} className="font-bold text-primary hover:underline">Guardian AI CRM</a>
+                 <p className="mt-8 text-sm text-center" style={{ color: '#6b7280' }}>
+                    Powered by <a 
+                        href="#" 
+                        onClick={(e) => {e.preventDefault(); window.location.href='/'}} 
+                        className="font-bold hover:underline"
+                        style={{ color: form?.styling?.primary_color || '#6366f1' }}
+                    >
+                        Guardian AI CRM
+                    </a>
                 </p>
             </div>
         </div>

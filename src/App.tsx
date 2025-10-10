@@ -42,6 +42,17 @@ import InsuranceAgencyLanding from './pages/verticals/InsuranceAgencyLanding';
 import MarketingAgencyLanding from './pages/verticals/MarketingAgencyLanding';
 
 // Super Admin Imports
+import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
+import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
+import { Customers } from './components/superadmin/Customers';
+import { Payments } from './components/superadmin/Payments';
+import { TeamManagement } from './components/superadmin/TeamManagement';
+import { AuditLogs } from './components/superadmin/AuditLogs';
+import { SystemHealthDashboard } from './components/superadmin/SystemHealthDashboard';
+import { WorkflowBuilder } from './components/superadmin/WorkflowBuilder';
+import { AutomationAgents } from './components/superadmin/AutomationAgents';
+import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
+import { QuotaManagement } from './components/superadmin/QuotaManagement';
 
 // Debug Panel
 import { useAuth } from './contexts/AuthContext';
@@ -286,8 +297,27 @@ const App: React.FC = () => {
           <Route path="settings" element={<Settings />} />
         </Route>
 
-        {/* Super Admin Routes - Temporarily Disabled */}
-        <Route path="/super-admin/*" element={<div className="p-8 text-center">Super Admin sezione temporaneamente non disponibile</div>} />
+        {/* Super Admin Routes - RIATTIVATE */}
+        <Route
+          path="/super-admin/*"
+          element={
+            session && userRole === 'super_admin'
+              ? <SuperAdminLayout />
+              : <Navigate to="/login" replace />
+          }
+        >
+          <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="team" element={<TeamManagement />} />
+          <Route path="audit" element={<AuditLogs />} />
+          <Route path="system-health" element={<SystemHealthDashboard />} />
+          <Route path="workflows" element={<WorkflowBuilder />} />
+          <Route path="agents" element={<AutomationAgents />} />
+          <Route path="integrations" element={<APIIntegrationsManager />} />
+          <Route path="quotas" element={<QuotaManagement />} />
+        </Route>
 
         <Route path="*" element={
           <Navigate to={

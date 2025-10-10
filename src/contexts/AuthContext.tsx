@@ -41,34 +41,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const diagnostics = diagnoseJWT(session.access_token);
     const claims = diagnostics.claims;
 
-    // FIX: Read user_role from user_metadata if not in top-level claims
-    const userRole = claims?.user_role || claims?.user_metadata?.user_role || claims?.app_metadata?.user_role;
-    const organizationId = claims?.organization_id || claims?.user_metadata?.organization_id;
-    const isSuperAdmin = claims?.is_super_admin || claims?.user_metadata?.is_super_admin || userRole === 'super_admin';
-
     // Log diagnostics
     diagnosticLogger.info('jwt', 'JWT parsed from session', {
-      hasUserRole: !!userRole,
-      userRole: userRole,
-      organizationId: organizationId,
+      hasUserRole: diagnostics.hasUserRole,
+      userRole: claims?.user_role,
+      organizationId: claims?.organization_id,
       tokenAge: diagnostics.tokenAge,
       timeUntilExpiry: diagnostics.timeUntilExpiry,
     });
 
     if (claims) {
-      diagnosticLogger.info('🔐 [AuthContext] JWT Claims parsed:', {
-        user_role: userRole || 'NOT FOUND',
+      diagnosticLogger.info('ðŸ”‘ [AuthContext] JWT Claims parsed:', {
+        user_role: claims.user_role || 'NOT FOUND',
         email: claims.email,
         sub: claims.sub,
-        organization_id: organizationId,
-        hasUserRole: !!userRole,
-        source: claims.user_role ? 'top-level' : claims.user_metadata?.user_role ? 'user_metadata' : 'app_metadata',
+        organization_id: claims.organization_id,
+        hasUserRole: !!claims.user_role,
       });
 
-      // CRITICAL: Force logout if user_role is missing from ALL sources
-      if (!userRole) {
-        diagnosticLogger.error('❌ [AuthContext] CRITICAL: user_role claim is MISSING from JWT!');
-        diagnosticLogger.error('❌ [AuthContext] This session is INVALID. Forcing logout...');
+      // CRITICAL: Force logout if user_role is missing
+      if (!claims.user_role) {
+        diagnosticLogger.error('âŒ [AuthContext] CRITICAL: user_role claim is MISSING from JWT!');
+        diagnosticLogger.error('âŒ [AuthContext] This session is INVALID. Forcing logout...');
         
         diagnosticLogger.critical('jwt', 'Missing user_role claim - forcing logout', {
           userId: claims.sub,
@@ -86,24 +80,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // FIX: Set organization_id to "ALL" for super_admin users
-      if (userRole === 'super_admin') {
-        diagnosticLogger.info('🔍 [AuthContext] Super Admin detected - setting organization_id to "ALL"');
+      if (claims.user_role === 'super_admin') {
+        diagnosticLogger.info('ðŸ” [AuthContext] Super Admin detected - setting organization_id to "ALL"');
         diagnosticLogger.info('session', 'Super Admin detected - setting organization_id to ALL', {
           userId: claims.sub,
-          userRole: userRole,
+          userRole: claims.user_role,
         });
         localStorage.setItem('organization_id', 'ALL');
       }
 
-      // Merge extracted values into claims for consistency
-      const enrichedClaims = {
-        ...claims,
-        user_role: userRole,
-        organization_id: organizationId,
-        is_super_admin: isSuperAdmin,
-      };
-
-      setJwtClaims(enrichedClaims);
+      setJwtClaims(claims);
     } else {
       diagnosticLogger.error('âŒ [AuthContext] Failed to parse JWT claims');
       diagnosticLogger.error('jwt', 'Failed to parse JWT claims', {

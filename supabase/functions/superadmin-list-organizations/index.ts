@@ -66,20 +66,7 @@ Deno.serve(async (req) => {
         id,
         name,
         created_at,
-        updated_at,
-        organization_credits (
-          plan_name,
-          total_credits,
-          credits_remaining,
-          cycle_start_date,
-          cycle_end_date
-        ),
-        profiles (
-          id,
-          email,
-          full_name,
-          role
-        )
+        updated_at
       `)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -124,10 +111,36 @@ Deno.serve(async (req) => {
       organizationsCount: organizations?.length || 0
     });
 
+    // Fetch additional data separately to avoid schema cache issues
+    const orgIds = organizations?.map(o => o.id) || [];
+    
+    // Fetch credits for all organizations
+    const { data: creditsData } = await supabase
+      .from('organization_credits')
+      .select('*')
+      .in('organization_id', orgIds);
+    
+    // Fetch profiles for all organizations  
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('organization_id', orgIds);
+
+    // Create lookup maps
+    const creditsMap = new Map(creditsData?.map(c => [c.organization_id, c]) || []);
+    const profilesMap = new Map<string, any[]>();
+    profilesData?.forEach(p => {
+      if (!profilesMap.has(p.organization_id)) {
+        profilesMap.set(p.organization_id, []);
+      }
+      profilesMap.get(p.organization_id)!.push(p);
+    });
+
     // Transform data to match expected format
     const customers = (organizations || []).map((org: any) => {
-      const credits = org.organization_credits?.[0] || {};
-      const adminProfile = org.profiles?.find((p: any) => p.role === 'admin') || org.profiles?.[0];
+      const credits = creditsMap.get(org.id) || {};
+      const profiles = profilesMap.get(org.id) || [];
+      const adminProfile = profiles.find((p: any) => p.role === 'admin') || profiles[0];
       
       // Determine status based on credits
       let orgStatus: 'active' | 'trial' | 'suspended' = 'active';
@@ -151,7 +164,7 @@ Deno.serve(async (req) => {
         paymentStatus,
         plan: credits.plan_name === 'enterprise' ? 'Enterprise' : 
               credits.plan_name === 'pro' ? 'Pro' : 'Free',
-        memberCount: org.profiles?.length || 0,
+        memberCount: profiles.length || 0,
         createdAt: org.created_at,
         creditsRemaining: credits.credits_remaining || 0,
         totalCredits: credits.total_credits || 0,

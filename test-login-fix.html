@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Login Fix</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <h1>Test Login con Fallback user_metadata</h1>
+    <div id="result"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Mzg2NjQsImV4cCI6MjA3MzAxNDY2NH0.4bCc8vk1qtxLs90xsYaGOs-envRmASVGL9fYtESgY6k';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>⏳ Testing login...</p>';
+
+            try {
+                // Test super_admin account
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: 'agenziaseocagliari@gmail.com',
+                    password: 'WebProSEO@1980#'
+                });
+
+                if (error) {
+                    resultDiv.innerHTML = `<p style="color:red">❌ Login error: ${error.message}</p>`;
+                    return;
+                }
+
+                // Get session JWT
+                const session = data.session;
+                if (!session) {
+                    resultDiv.innerHTML = '<p style="color:red">❌ No session returned</p>';
+                    return;
+                }
+
+                // Decode JWT to check claims
+                const tokenParts = session.access_token.split('.');
+                const payload = JSON.parse(atob(tokenParts[1]));
+
+                let html = '<h2>✅ LOGIN SUCCESSFUL!</h2>';
+                html += '<h3>JWT Claims:</h3><pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+
+                // Check if user_metadata exists
+                if (payload.user_metadata) {
+                    html += '<h3>✅ user_metadata Found:</h3>';
+                    html += '<ul>';
+                    html += '<li>user_role: ' + (payload.user_metadata.user_role || 'MISSING') + '</li>';
+                    html += '<li>is_super_admin: ' + (payload.user_metadata.is_super_admin || 'MISSING') + '</li>';
+                    html += '<li>organization_id: ' + (payload.user_metadata.organization_id || 'MISSING') + '</li>';
+                    html += '</ul>';
+                }
+
+                // Check top-level claims
+                html += '<h3>Top-level Claims Check:</h3>';
+                html += '<ul>';
+                html += '<li>user_role (top-level): ' + (payload.user_role || '❌ MISSING (expected)') + '</li>';
+                html += '<li>is_super_admin (top-level): ' + (payload.is_super_admin || '❌ MISSING (expected)') + '</li>';
+                html += '<li>organization_id (top-level): ' + (payload.organization_id || '❌ MISSING (expected)') + '</li>';
+                html += '</ul>';
+
+                html += '<h3>✅ Frontend Fallback Logic Will Extract From user_metadata</h3>';
+                html += '<p>The AuthContext.tsx now reads:</p>';
+                html += '<pre>const userRole = claims.user_role || claims.user_metadata?.user_role;</pre>';
+                html += '<p>This allows login to succeed even when top-level claims are missing.</p>';
+
+                resultDiv.innerHTML = html;
+
+            } catch (err) {
+                resultDiv.innerHTML = `<p style="color:red">❌ Exception: ${err.message}</p>`;
+            }
+        }
+
+        // Auto-run test on page load
+        testLogin();
+    </script>
+</body>
+
+</html>

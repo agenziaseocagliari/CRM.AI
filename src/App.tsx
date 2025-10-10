@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
-import toast from 'react-hot-toast';
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import toast, { Toaster } from 'react-hot-toast';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 
 // Lazy components for performance optimization - temporarily disabled
@@ -21,17 +20,17 @@ import { PublicPricingPage } from './components/PublicPricingPage';
 import { GoogleAuthCallback } from './components/Settings';
 
 // CRM Components - Riattivati
-import { Dashboard } from './components/Dashboard';
-import { Opportunities } from './components/Opportunities';
-import { Contacts } from './components/Contacts';
-import { Forms } from './components/Forms';
 import { Automations } from './components/Automations';
 import { CalendarView } from './components/CalendarView';
+import { Contacts } from './components/Contacts';
+import { Dashboard } from './components/Dashboard';
+import EmailMarketingModule from './components/EmailMarketingModule';
+import { Forms } from './components/Forms';
+import { Opportunities } from './components/Opportunities';
 import { Settings } from './components/Settings';
 import { TestComponent } from './components/TestComponent';
-import WhatsAppModule from './components/WhatsAppModule';
-import EmailMarketingModule from './components/EmailMarketingModule';
 import { UniversalCreditDashboard } from './components/universal/UniversalCreditDashboard';
+import WhatsAppModule from './components/WhatsAppModule';
 // Super Admin lazy components - temporarily disabled
 // Components moved to .bak files
 // import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
@@ -42,17 +41,17 @@ import InsuranceAgencyLanding from './pages/verticals/InsuranceAgencyLanding';
 import MarketingAgencyLanding from './pages/verticals/MarketingAgencyLanding';
 
 // Super Admin Imports
-import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
-import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
+import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
+import { AuditLogs } from './components/superadmin/AuditLogs';
+import { AutomationAgents } from './components/superadmin/AutomationAgents';
 import { Customers } from './components/superadmin/Customers';
 import { Payments } from './components/superadmin/Payments';
-import { TeamManagement } from './components/superadmin/TeamManagement';
-import { AuditLogs } from './components/superadmin/AuditLogs';
-import { SystemHealthDashboard } from './components/superadmin/SystemHealthDashboard';
-import { WorkflowBuilder } from './components/superadmin/WorkflowBuilder';
-import { AutomationAgents } from './components/superadmin/AutomationAgents';
-import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
 import { QuotaManagement } from './components/superadmin/QuotaManagement';
+import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
+import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
+import { SystemHealthDashboard } from './components/superadmin/SystemHealthDashboard';
+import { TeamManagement } from './components/superadmin/TeamManagement';
+import { WorkflowBuilder } from './components/superadmin/WorkflowBuilder';
 
 // Debug Panel
 import { useAuth } from './contexts/AuthContext';
@@ -63,8 +62,8 @@ import { supabase } from './lib/supabaseClient';
 import { diagnosticLogger } from './lib/mockDiagnosticLogger';
 
 // Performance optimization imports
-import { register as registerSW, checkForUpdates } from './lib/serviceWorkerRegistration';
 import { performanceMonitor } from './lib/performanceMonitoring';
+import { checkForUpdates, register as registerSW } from './lib/serviceWorkerRegistration';
 
 const App: React.FC = () => {
   const { session, userRole, loading, jwtClaims } = useAuth();
@@ -98,7 +97,7 @@ const App: React.FC = () => {
               }}
               className="w-full mt-2 bg-red-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-700"
             >
-               Logout e Torna al Login
+              Logout e Torna al Login
             </button>
           </div>
         ),
@@ -109,7 +108,7 @@ const App: React.FC = () => {
 
   // Prevent page reload with invalid session - warn user
   useEffect(() => {
-    if (!session || !userRole) {return;}
+    if (!session || !userRole) { return; }
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // If user_role is missing, warn before reload
@@ -191,7 +190,7 @@ const App: React.FC = () => {
 
   // Role-based route guard: prevent cross-role access
   useEffect(() => {
-    if (loading || !session) {return;}
+    if (loading || !session) { return; }
 
     const isSuperAdminRoute = location.pathname.startsWith('/super-admin');
     const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/whatsapp', '/email-marketing', '/settings'].some(
@@ -220,15 +219,15 @@ const App: React.FC = () => {
 
 
   if (crmData.error?.includes('VITE_SUPABASE')) {
-      return (
-          <div className="flex h-screen items-center justify-center bg-red-50 p-4">
-              <div className="rounded-md bg-white p-8 text-center shadow-lg">
-                  <h1 className="text-2xl font-bold text-red-600">Errore di Configurazione</h1>
-                  <p className="mt-4 text-gray-700">{crmData.error}</p>
-                  <p className="mt-2 text-sm text-gray-500">Assicurati di aver configurato correttamente le variabili d&apos;ambiente nel tuo file `.env` o nelle impostazioni del tuo servizio di hosting.</p>
-              </div>
-          </div>
-      );
+    return (
+      <div className="flex h-screen items-center justify-center bg-red-50 p-4">
+        <div className="rounded-md bg-white p-8 text-center shadow-lg">
+          <h1 className="text-2xl font-bold text-red-600">Errore di Configurazione</h1>
+          <p className="mt-4 text-gray-700">{crmData.error}</p>
+          <p className="mt-2 text-sm text-gray-500">Assicurati di aver configurato correttamente le variabili d&apos;ambiente nel tuo file `.env` o nelle impostazioni del tuo servizio di hosting.</p>
+        </div>
+      </div>
+    );
   }
 
   // FIX: Removed `crmData.loading` check to prevent the entire component tree
@@ -265,7 +264,7 @@ const App: React.FC = () => {
 
         <Route path="/form/:formId" element={<PublicForm />} />
         <Route path="/pricing" element={<PublicPricingPage />} />
-        
+
         {/* Vertical Landing Pages */}
         <Route path="/verticals/insurance-agency" element={<InsuranceAgencyLanding />} />
         <Route path="/verticals/marketing-agency" element={<MarketingAgencyLanding />} />
@@ -286,11 +285,11 @@ const App: React.FC = () => {
 
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />
-          
+
           {/* Enterprise AI Modules */}
           <Route path="whatsapp" element={<WhatsAppModule />} />
           <Route path="email-marketing" element={<EmailMarketingModule />} />
-          
+
           <Route path="test" element={<TestComponent />} />
           <Route path="universal-credits" element={<UniversalCreditDashboard />} />
           <Route path="store" element={<ExtraCreditsStore />} />

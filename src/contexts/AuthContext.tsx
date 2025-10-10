@@ -1,8 +1,8 @@
 ﻿import { Session } from '@supabase/supabase-js';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { diagnoseJWT, JWTClaims } from '../lib/jwtUtils';
+import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { supabase } from '../lib/supabaseClient';
 
 interface AuthContextType {
@@ -51,45 +51,59 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
 
     if (claims) {
-      diagnosticLogger.info('ðŸ”‘ [AuthContext] JWT Claims parsed:', {
-        user_role: claims.user_role || 'NOT FOUND',
+      // Extract user_role from user_metadata if not in top-level (fallback for when hook doesn't work)
+      const userRole = claims.user_role || (claims.user_metadata as any)?.user_role;
+      const organizationId = claims.organization_id || (claims.user_metadata as any)?.organization_id;
+      const isSuperAdmin = claims.is_super_admin || (claims.user_metadata as any)?.is_super_admin || userRole === 'super_admin';
+
+      diagnosticLogger.info('🔐 [AuthContext] JWT Claims parsed:', {
+        user_role: userRole || 'NOT FOUND',
         email: claims.email,
         sub: claims.sub,
-        organization_id: claims.organization_id,
-        hasUserRole: !!claims.user_role,
+        organization_id: organizationId,
+        hasUserRole: !!userRole,
+        source: claims.user_role ? 'top-level' : (claims.user_metadata as any)?.user_role ? 'user_metadata' : 'missing',
       });
 
-      // CRITICAL: Force logout if user_role is missing
-      if (!claims.user_role) {
-        diagnosticLogger.error('âŒ [AuthContext] CRITICAL: user_role claim is MISSING from JWT!');
-        diagnosticLogger.error('âŒ [AuthContext] This session is INVALID. Forcing logout...');
-        
-        diagnosticLogger.critical('jwt', 'Missing user_role claim - forcing logout', {
+      // CRITICAL: Force logout if user_role is missing from BOTH sources
+      if (!userRole) {
+        diagnosticLogger.error('❌ [AuthContext] CRITICAL: user_role claim is MISSING from JWT!');
+        diagnosticLogger.error('❌ [AuthContext] This session is INVALID. Forcing logout...');
+
+        diagnosticLogger.critical('jwt', 'Missing user_role claim in both top-level and user_metadata', {
           userId: claims.sub,
           email: claims.email,
         }, diagnostics);
-        
+
         // Force immediate logout
         localStorage.clear();
         sessionStorage.clear();
         await supabase.auth.signOut();
-        
+
         // Don't set claims - they're invalid
         setJwtClaims(null);
         return;
       }
 
       // FIX: Set organization_id to "ALL" for super_admin users
-      if (claims.user_role === 'super_admin') {
-        diagnosticLogger.info('ðŸ” [AuthContext] Super Admin detected - setting organization_id to "ALL"');
+      if (userRole === 'super_admin') {
+        diagnosticLogger.info('ðŸ" [AuthContext] Super Admin detected - setting organization_id to "ALL"');
         diagnosticLogger.info('session', 'Super Admin detected - setting organization_id to ALL', {
           userId: claims.sub,
-          userRole: claims.user_role,
+          userRole: userRole,
         });
         localStorage.setItem('organization_id', 'ALL');
       }
 
-      setJwtClaims(claims);
+      // Enrich claims with fallback values from user_metadata
+      const enrichedClaims = {
+        ...claims,
+        user_role: userRole,
+        organization_id: organizationId,
+        is_super_admin: isSuperAdmin
+      };
+
+      setJwtClaims(enrichedClaims);
     } else {
       diagnosticLogger.error('âŒ [AuthContext] Failed to parse JWT claims');
       diagnosticLogger.error('jwt', 'Failed to parse JWT claims', {
@@ -118,9 +132,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       diagnosticLogger.info('auth', `Auth state changed: ${event}`, {
         userId: session?.user?.id,
       });
-      
+
       setSession(session);
-      
+
       if (event === 'SIGNED_IN') {
         diagnosticLogger.info('âœ… [AuthContext] User signed in');
         diagnosticLogger.info('auth', 'User signed in', {
@@ -168,19 +182,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       diagnosticLogger.error('âŒ [AuthContext] CRITICAL: User is logged in but user_role is NULL!');
       diagnosticLogger.error('âŒ [AuthContext] This means JWT does not contain user_role claim.');
       diagnosticLogger.error('âŒ [AuthContext] Forcing logout to prevent invalid session usage.');
-      
+
       diagnosticLogger.critical('session', 'User logged in but user_role is NULL - forcing logout', {
         userId: session.user?.id,
         email: session.user?.email,
       });
-      
+
       // Force logout immediately
       const forceLogout = async () => {
         localStorage.clear();
         sessionStorage.clear();
         await supabase.auth.signOut();
       };
-      
+
       forceLogout();
     }
   }, [session, userRole, loading]);

@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.css": "tailwindcss"
+		},
+		"emmet.includeLanguages": {
+			"typescript": "html",
+			"typescriptreact": "html"
+		},
+		"terminal.integrated.defaultProfile.windows": "PowerShell",
+		"debug.console.fontSize": 14,
+		"debug.internalConsoleOptions": "openOnSessionStart"
+	}
+}

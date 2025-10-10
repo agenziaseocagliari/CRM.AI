@@ -6,7 +6,7 @@ declare const Deno: {
 };
 
 // Import required modules
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
 
 // Create Supabase client with service role key
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -24,7 +24,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
  */
 export async function getUserIdFromJWT(req: Request): Promise<string> {
   console.log('[getUserIdFromJWT] START - Extracting user from JWT')
-  
+
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
     console.error('[getUserIdFromJWT] ERROR: Authorization header missing')
@@ -37,7 +37,7 @@ export async function getUserIdFromJWT(req: Request): Promise<string> {
   // Usa il client con anon key per verificare il JWT (RLS-aware)
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
-  
+
   const { data: { user }, error } = await supabaseClient.auth.getUser(token)
 
   if (error || !user) {
@@ -73,7 +73,7 @@ export async function getUserIdFromJWT(req: Request): Promise<string> {
  */
 export async function getUserFromJWT(req: Request): Promise<any> {
   console.log('[getUserFromJWT] START - Extracting full user object from JWT')
-  
+
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
     console.error('[getUserFromJWT] ERROR: Authorization header missing')
@@ -90,7 +90,7 @@ export async function getUserFromJWT(req: Request): Promise<any> {
       const payload = parts[1]
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
       const jsonPayload = JSON.parse(atob(base64))
-      
+
       console.log('[getUserFromJWT] JWT Payload Diagnostics:', {
         hasUserRole: 'user_role' in jsonPayload,
         hasOrganizationId: 'organization_id' in jsonPayload,
@@ -101,7 +101,7 @@ export async function getUserFromJWT(req: Request): Promise<any> {
         tokenAge: jsonPayload.iat ? Math.floor((Date.now() / 1000) - jsonPayload.iat) : 'UNKNOWN',
         isExpired: jsonPayload.exp ? (jsonPayload.exp < Date.now() / 1000) : 'UNKNOWN'
       })
-      
+
       // Warning if custom claims are missing
       if (!jsonPayload.user_role) {
         console.warn('[getUserFromJWT] ⚠️  WARNING: user_role custom claim is MISSING from JWT')
@@ -116,7 +116,7 @@ export async function getUserFromJWT(req: Request): Promise<any> {
   // Usa il client con anon key per verificare il JWT (RLS-aware)
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
-  
+
   const { data: { user }, error } = await supabaseClient.auth.getUser(token)
 
   if (error || !user) {
@@ -128,24 +128,41 @@ export async function getUserFromJWT(req: Request): Promise<any> {
     throw new Error(`Invalid or expired JWT token: ${error?.message || 'User not found'}`)
   }
 
+  // FALLBACK: Extract custom claims from user_metadata if not in top-level
+  // Supabase includes user_metadata in JWT but doesn't auto-promote to top-level
+  const userRole = (user as any).user_role || (user as any).user_metadata?.user_role;
+  const organizationId = (user as any).organization_id || (user as any).user_metadata?.organization_id;
+  const isSuperAdmin = (user as any).is_super_admin || (user as any).user_metadata?.is_super_admin || userRole === 'super_admin';
+
   console.log('[getUserFromJWT] SUCCESS - User verified from JWT:', {
     userId: user.id,
     email: user.email,
-    userRole: (user as any).user_role,
-    organizationId: (user as any).organization_id,
+    userRole: userRole,
+    organizationId: organizationId,
+    isSuperAdmin: isSuperAdmin,
     hasUserRoleClaim: !!(user as any).user_role,
+    hasUserRoleInMetadata: !!(user as any).user_metadata?.user_role,
     hasOrganizationIdClaim: !!(user as any).organization_id,
+    usedFallback: !(user as any).user_role && !!(user as any).user_metadata?.user_role,
     timestamp: new Date().toISOString()
   })
-  
+
   // Additional diagnostic warning
-  if (!(user as any).user_role) {
-    console.error('[getUserFromJWT] 🚨 CRITICAL: User object does NOT contain user_role claim')
+  if (!(user as any).user_role && !(user as any).user_metadata?.user_role) {
+    console.error('[getUserFromJWT] 🚨 CRITICAL: User object does NOT contain user_role in top-level OR user_metadata')
     console.error('[getUserFromJWT] 🔧 ACTION REQUIRED: Verify custom_access_token_hook is configured')
     console.error('[getUserFromJWT] 📖 See: JWT_CUSTOM_CLAIMS_IMPLEMENTATION.md for setup instructions')
   }
 
-  return user
+  // Enrich user object with extracted claims (ensures consistent access)
+  const enrichedUser = {
+    ...user,
+    user_role: userRole,
+    organization_id: organizationId,
+    is_super_admin: isSuperAdmin
+  };
+
+  return enrichedUser
 }
 
 /**
@@ -161,27 +178,27 @@ export async function getOrganizationId(userId: string): Promise<string> {
   console.log(`[getOrganizationId] START - Fetching organization for user: ${userId}`)
   console.log(`[getOrganizationId] Using service role for query (bypasses RLS)`)
   console.log(`[getOrganizationId] Timestamp: ${new Date().toISOString()}`)
-  
+
   // Query usando service role (bypassa RLS)
   const { data, error } = await supabase
     .from('profiles')
     .select('organization_id')
     .eq('id', userId)
-  
+
   console.log('[getOrganizationId] Query executed:', {
     query: `SELECT organization_id FROM profiles WHERE id = '${userId}'`,
     resultCount: data?.length || 0,
     hasError: !!error,
     timestamp: new Date().toISOString()
   })
-  
+
   console.log('[getOrganizationId] Profile query result:', {
     data: data,
     error: error,
     dataType: typeof data,
     dataLength: Array.isArray(data) ? data.length : 'not an array'
   })
-  
+
   if (error) {
     console.error(`[getOrganizationId] DATABASE ERROR:`, {
       message: error.message,
@@ -192,7 +209,7 @@ export async function getOrganizationId(userId: string): Promise<string> {
     })
     throw new Error(`Could not retrieve user profile: ${error.message} (user_id: ${userId})`)
   }
-  
+
   if (!data || data.length === 0) {
     console.error('[getOrganizationId] NO PROFILE FOUND:', {
       userId: userId,
@@ -201,9 +218,9 @@ export async function getOrganizationId(userId: string): Promise<string> {
     })
     throw new Error(`User profile not found (user_id: ${userId}). Il profilo potrebbe non essere stato creato correttamente durante la registrazione.`)
   }
-  
+
   const profile = data[0]
-  
+
   if (!profile.organization_id) {
     console.error('[getOrganizationId] PROFILE INCOMPLETE:', {
       userId: userId,
@@ -212,13 +229,13 @@ export async function getOrganizationId(userId: string): Promise<string> {
     })
     throw new Error(`User profile is incomplete or not associated with an organization (user_id: ${userId}).`)
   }
-  
+
   console.log(`[getOrganizationId] SUCCESS - Organization found:`, {
     userId: userId,
     organizationId: profile.organization_id,
     timestamp: new Date().toISOString()
   })
-  
+
   return profile.organization_id
 }
 

@@ -5,10 +5,10 @@ import { useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
-import { Form, FormField, FormStyle } from '../types';
+import { Form, FormField, FormStyle, FormMetadata, FormCreationMode } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 
-import { CodeIcon, EyeIcon, PlusIcon, SparklesIcon, TrashIcon } from './ui/icons';
+import { CodeIcon, EyeIcon, PencilIcon, PlusIcon, SparklesIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
@@ -69,30 +69,112 @@ interface FormCardProps {
     onPreview: (form: Form) => void;
     onGetCode: (form: Form) => void;
     onWordPress: (form: Form) => void;
+    onEdit: (form: Form) => void; // 🆕 EDIT FUNCTIONALITY
 }
 
-const FormCard: React.FC<FormCardProps> = ({ form, onDelete, onPreview, onGetCode, onWordPress }) => (
-    <div className="bg-white p-4 rounded-lg shadow border flex flex-col justify-between">
-        <div>
-            <h3 className="font-bold text-lg text-text-primary truncate">{form.name}</h3>
-            <p className="text-sm text-text-secondary">Creato il: {new Date(form.created_at).toLocaleDateString('it-IT')}</p>
+const FormCard: React.FC<FormCardProps> = ({ form, onDelete, onPreview, onGetCode, onWordPress, onEdit }) => {
+    // Rileva colori personalizzati
+    const hasCustomPrimary = form.styling?.primary_color && 
+        form.styling.primary_color !== '#2563eb' && 
+        form.styling.primary_color !== '#6366f1';
+    const hasCustomBackground = form.styling?.background_color && 
+        form.styling.background_color !== '#ffffff';
+    const hasCustomColors = hasCustomPrimary || hasCustomBackground;
+    
+    return (
+        <div className="bg-white p-4 rounded-lg shadow border flex flex-col">
+            {/* Header con badges */}
+            <div className="flex items-center justify-between mb-2">
+                <h3 className="font-bold text-lg text-text-primary truncate flex-1">
+                    {form.name}
+                </h3>
+                
+                {/* Badges container */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Industry Badge */}
+                    {form.metadata?.industry && form.metadata.industry !== 'general' && (
+                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-medium">
+                            {form.metadata.industry.replace('_', ' ')}
+                        </span>
+                    )}
+                    
+                    {/* GDPR Badge */}
+                    {form.metadata?.gdpr_enabled && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-medium flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            GDPR
+                        </span>
+                    )}
+                    
+                    {/* Color Indicators */}
+                    {hasCustomColors && (
+                        <div className="flex items-center gap-1">
+                            <div 
+                                className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                                style={{ backgroundColor: form.styling?.primary_color }}
+                                title={`Primary: ${form.styling?.primary_color}`}
+                            />
+                            {hasCustomBackground && (
+                                <div 
+                                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                                    style={{ backgroundColor: form.styling?.background_color }}
+                                    title={`Background: ${form.styling?.background_color}`}
+                                />
+                            )}
+                            <span className="text-xs text-green-600 font-medium">🎨</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+            
+            {/* Confidence Score */}
+            {form.metadata?.confidence && form.metadata.confidence > 0.5 && (
+                <div className="mb-2">
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                        <span>AI Accuracy</span>
+                        <span className="font-medium">{Math.round(form.metadata.confidence * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div 
+                            className="bg-purple-500 h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${form.metadata.confidence * 100}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+            
+            {/* Date */}
+            <p className="text-sm text-text-secondary mb-3">
+                Creato il: {new Date(form.created_at).toLocaleDateString('it-IT')}
+            </p>
+            
+            {/* Actions */}
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t mt-auto">
+                <button
+                    onClick={() => onEdit(form)}
+                    title="Modifica"
+                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                >
+                    <PencilIcon className="w-5 h-5" />
+                </button>
+                <button onClick={() => onPreview(form)} title="Anteprima" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition-colors">
+                    <EyeIcon className="w-5 h-5" />
+                </button>
+                <button onClick={() => onWordPress(form)} title="WordPress Embed" className="p-2 text-blue-500 hover:bg-blue-50 rounded-md transition-colors">
+                    <span className="w-5 h-5 text-xs font-bold">WP</span>
+                </button>
+                <button onClick={() => onGetCode(form)} title="Ottieni Codice" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition-colors">
+                    <CodeIcon className="w-5 h-5" />
+                </button>
+                <button onClick={() => onDelete(form)} title="Elimina" className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors">
+                    <TrashIcon className="w-5 h-5" />
+                </button>
+            </div>
         </div>
-        <div className="flex items-center justify-end space-x-2 mt-4 pt-4 border-t">
-            <button onClick={() => onPreview(form)} title="Anteprima" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
-                <EyeIcon className="w-5 h-5" />
-            </button>
-            <button onClick={() => onWordPress(form)} title="WordPress Embed" className="p-2 text-blue-500 hover:bg-blue-50 rounded-md">
-                <span className="w-5 h-5 text-xs font-bold">WP</span>
-            </button>
-            <button onClick={() => onGetCode(form)} title="Ottieni Codice" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
-                <CodeIcon className="w-5 h-5" />
-            </button>
-            <button onClick={() => onDelete(form)} title="Elimina" className="p-2 text-red-500 hover:bg-red-50 rounded-md">
-                <TrashIcon className="w-5 h-5" />
-            </button>
-        </div>
-    </div>
-);
+    );
+};
 
 
 export const Forms: React.FC = () => {
@@ -115,46 +197,38 @@ export const Forms: React.FC = () => {
     const [publicUrl, setPublicUrl] = useState('');
     
     // 🎨 Stati per personalizzazione colori (PostAIEditor)
-    const [formStyle, setFormStyle] = useState<FormStyle>({
-        primary_color: '#6366f1',
-        secondary_color: '#f3f4f6',
-        background_color: '#ffffff',
-        text_color: '#1f2937',
-        border_color: '#6366f1',
-        border_radius: '8px',
-        font_family: 'Inter, system-ui, sans-serif',
-        button_style: {
-            background_color: '#6366f1',
-            text_color: '#ffffff',
-            border_radius: '6px'
-        }
-    });
+    // ✅ FIX CRITICO: undefined = nessuna personalizzazione (non salva default nel DB)
+    const [formStyle, setFormStyle] = useState<FormStyle | undefined>(undefined);
     const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState('');
+    
+    // 🎯 Stati per modalità creazione
+    const [creationMode, setCreationMode] = useState<FormCreationMode>(null);
+    const [manualFields, setManualFields] = useState<FormField[]>([]);
+    
+    // 🎯 Stati per editing
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [formToEdit, setFormToEdit] = useState<Form | null>(null);
+    
+    // 🎯 Stati per metadata AI
+    const [formMetadata, setFormMetadata] = useState<FormMetadata | null>(null);
     
     // Stati di caricamento ed errore
     const [isLoading, setIsLoading] = useState(false);
 
     const handleOpenCreateModal = () => {
+        // Reset tutti gli stati
         setPrompt(''); 
         setFormName(''); 
         setFormTitle('');
         setGeneratedFields(null); 
         setIsLoading(false);
         setPrivacyPolicyUrl('');
-        setFormStyle({
-            primary_color: '#6366f1',
-            secondary_color: '#f3f4f6',
-            background_color: '#ffffff',
-            text_color: '#1f2937',
-            border_color: '#6366f1',
-            border_radius: '8px',
-            font_family: 'Inter, system-ui, sans-serif',
-            button_style: {
-                background_color: '#6366f1',
-                text_color: '#ffffff',
-                border_radius: '6px'
-            }
-        });
+        setFormStyle(undefined); // ✅ FIX: undefined invece di oggetto default
+        setCreationMode(null);
+        setManualFields([]);
+        setIsEditMode(false);
+        setFormToEdit(null);
+        setFormMetadata(null);
         setCreateModalOpen(true);
     };
 
@@ -165,6 +239,41 @@ export const Forms: React.FC = () => {
         const url = `${window.location.origin}/form/${form.id}`;
         setPublicUrl(url);
         setGetCodeModalOpen(true);
+    };
+
+    // 🆕 EDIT FORM FUNCTIONALITY
+    const handleEditForm = (form: Form) => {
+        console.log('📝 Loading form for editing:', form.id);
+        
+        // Carica dati esistenti
+        setFormToEdit(form);
+        setFormName(form.name);
+        setFormTitle(form.title);
+        setGeneratedFields([...form.fields]); // Deep copy
+        
+        // Carica styling se esiste
+        if (form.styling) {
+            console.log('🎨 Loading existing styling:', form.styling);
+            setFormStyle({...form.styling}); // Deep copy
+        } else {
+            setFormStyle(undefined);
+        }
+        
+        // Carica privacy policy
+        if (form.privacy_policy_url) {
+            setPrivacyPolicyUrl(form.privacy_policy_url);
+        }
+        
+        // Carica metadata
+        if (form.metadata) {
+            console.log('📊 Loading metadata:', form.metadata);
+            setFormMetadata({...form.metadata}); // Deep copy
+        }
+        
+        // Set edit mode
+        setIsEditMode(true);
+        setCreationMode('ai-quick'); // Default mode per editing
+        setCreateModalOpen(true);
     };
 
     const handleCloseModals = () => {
@@ -300,6 +409,16 @@ export const Forms: React.FC = () => {
             console.log('🔍 FORMMASTER DEBUG - Setting generated fields:', fields);
             setGeneratedFields(fields);
             console.log('🔍 FORMMASTER DEBUG - Generated fields set successfully!');
+            
+            // 🆕 SALVA METADATA AI
+            if (data.meta) {
+                console.log('📊 AI Metadata received:', data.meta);
+                setFormMetadata(data.meta);
+            } else {
+                console.log('⚠️ No metadata returned from AI');
+                setFormMetadata(null);
+            }
+            
             toast.success('Campi generati con successo!', { id: toastId });
 
         } catch (err: unknown) {
@@ -330,6 +449,9 @@ export const Forms: React.FC = () => {
         console.log('🎨 FORM SAVE - Styling Data:', {
             formStyle,
             privacyPolicyUrl,
+            formMetadata,
+            isEditMode,
+            formToEdit: formToEdit?.id,
             timestamp: new Date().toISOString()
         });
         
@@ -338,25 +460,50 @@ export const Forms: React.FC = () => {
             titleLength: sanitizedTitle.length,
             fieldsCount: generatedFields.length,
             organizationId: organization.id,
-            hasCustomColors: formStyle.primary_color !== '#6366f1',
-            hasPrivacyUrl: !!privacyPolicyUrl
+            hasCustomColors: formStyle?.primary_color !== undefined && formStyle.primary_color !== '#6366f1',
+            hasPrivacyUrl: !!privacyPolicyUrl,
+            hasMetadata: !!formMetadata,
+            isUpdate: isEditMode
         });
         
         setIsLoading(true);
 
         try {
-            const { error: insertError } = await supabase.from('forms').insert({ 
+            const formData = {
                 name: sanitizedName, 
                 title: sanitizedTitle, 
                 fields: generatedFields,
-                styling: formStyle,
+                styling: formStyle || null,
                 privacy_policy_url: privacyPolicyUrl || null,
-                organization_id: organization.id 
-            });
-            if (insertError) {throw insertError;}
+                metadata: formMetadata || null
+            };
+            
+            if (isEditMode && formToEdit) {
+                // 🆕 UPDATE EXISTING FORM
+                console.log('📝 Updating form:', formToEdit.id);
+                const { error: updateError } = await supabase
+                    .from('forms')
+                    .update(formData)
+                    .eq('id', formToEdit.id);
+                    
+                if (updateError) throw updateError;
+                toast.success('Form aggiornato con successo!');
+            } else {
+                // INSERT NEW FORM
+                console.log('➕ Creating new form');
+                const { error: insertError } = await supabase
+                    .from('forms')
+                    .insert({ 
+                        ...formData,
+                        organization_id: organization.id 
+                    });
+                    
+                if (insertError) throw insertError;
+                toast.success('Form salvato con successo!');
+            }
+            
             refetchData(); 
             handleCloseModals();
-            toast.success('Form salvato con successo con personalizzazione colori!');
         } catch (err: unknown) {
             const error = err as ApiError;
             toast.error(`Errore durante il salvaggio: ${error.message}`);
@@ -399,7 +546,7 @@ export const Forms: React.FC = () => {
                 </div>
             );
         }
-        return ( <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {forms.map(form => <FormCard key={form.id} form={form} onDelete={handleOpenDeleteModal} onPreview={handleOpenPreviewModal} onGetCode={handleOpenGetCodeModal} onWordPress={() => console.log('WordPress integration for form:', form.name)} />)} </div> );
+        return ( <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {forms.map(form => <FormCard key={form.id} form={form} onDelete={handleOpenDeleteModal} onPreview={handleOpenPreviewModal} onGetCode={handleOpenGetCodeModal} onEdit={handleEditForm} onWordPress={() => console.log('WordPress integration for form:', form.name)} />)} </div> );
     };
 
     return (

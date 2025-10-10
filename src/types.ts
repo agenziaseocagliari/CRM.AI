@@ -73,6 +73,21 @@ export interface FormStyle {
     button_style: ButtonStyle;
 }
 
+// 🆕 AI Metadata from Edge Function
+export interface FormMetadata {
+    industry?: 'web_agency' | 'wordpress' | 'ecommerce' | 'real_estate' | 'healthcare' | 'general';
+    confidence?: number; // 0-1 range
+    platform?: 'wordpress' | 'react' | 'html';
+    theme?: string;
+    gdpr_enabled?: boolean;
+    generated_at?: string;
+    generation_method?: string;
+    characteristics?: string[];
+}
+
+// 🆕 Form Creation Modes
+export type FormCreationMode = 'ai-quick' | 'ai-chat' | 'manual' | null;
+
 export interface Form {
     id: string;
     organization_id: string;
@@ -81,6 +96,7 @@ export interface Form {
     fields: FormField[];
     styling?: FormStyle;
     privacy_policy_url?: string;
+    metadata?: FormMetadata; // 🆕 AI metadata
     created_at: string;
 }
 

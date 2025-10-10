@@ -12,14 +12,14 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center"
+      className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 z-50 transform transition-all"
+        className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 z-50 transform transition-all my-8 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-200 flex-shrink-0">
           <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
           <button 
             onClick={onClose} 
@@ -31,7 +31,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             <span className="sr-only">Close modal</span>
           </button>
         </div>
-        <div className="mt-4">
+        <div className="mt-4 overflow-y-auto flex-1">
           {children}
         </div>
       </div>

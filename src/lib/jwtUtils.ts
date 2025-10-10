@@ -112,14 +112,14 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
 
   // Check for user_role claim (top-level OR user_metadata)
   const userRole = claims.user_role || (claims.user_metadata as any)?.user_role;
-  
+
   if (!userRole) {
     diagnostics.errors.push('CRITICAL: user_role claim is missing from BOTH top-level and user_metadata');
     diagnostics.warnings.push('This token was generated before custom_access_token_hook was configured');
     diagnostics.warnings.push('User must re-login to get a new token with user_role claim');
   } else {
     diagnostics.hasUserRole = true;
-    
+
     // Log where user_role was found
     if (claims.user_role) {
       // Found in top-level (hook working)

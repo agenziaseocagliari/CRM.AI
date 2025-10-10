@@ -7,13 +7,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
-import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
-  validateSuperAdmin,
-  logSuperAdminAction,
-  extractClientInfo,
   createSuperAdminErrorResponse,
   createSuperAdminSuccessResponse,
+  extractClientInfo,
+  logSuperAdminAction,
+  validateSuperAdmin,
 } from '../_shared/superadmin.ts';
 
 Deno.serve(async (req) => {
@@ -30,7 +29,7 @@ Deno.serve(async (req) => {
     if (!validation.isValid) {
       console.error('[superadmin-update-organization] Validation failed:', validation.error);
       return createSuperAdminErrorResponse(
-        validation.error || 'Unauthorized', 
+        validation.error || 'Unauthorized',
         403,
         { function: 'superadmin-update-organization' }
       );
@@ -72,7 +71,7 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('id', organizationId)
       .single();
-    
+
     // Fetch credits separately
     const { data: currentCredits } = await supabase
       .from('organization_credits')
@@ -89,7 +88,7 @@ Deno.serve(async (req) => {
     if (updates && typeof updates === 'object') {
       const allowedOrgFields = ['name'];
       const orgUpdateData: Record<string, any> = {};
-      
+
       for (const field of allowedOrgFields) {
         if (updates[field] !== undefined) {
           orgUpdateData[field] = updates[field];
@@ -112,7 +111,7 @@ Deno.serve(async (req) => {
             details: error.details,
             hint: error.hint
           });
-          
+
           await logSuperAdminAction(
             {
               action: 'Update Organization',
@@ -128,7 +127,7 @@ Deno.serve(async (req) => {
             validation.email!
           );
           return createSuperAdminErrorResponse(
-            'Failed to update organization: ' + error.message, 
+            'Failed to update organization: ' + error.message,
             500,
             { function: 'superadmin-update-organization', dbError: error.code, organizationId }
           );
@@ -142,7 +141,7 @@ Deno.serve(async (req) => {
     // Update credits if provided
     if (updates?.credits !== undefined || updates?.plan_name !== undefined) {
       const creditsUpdate: Record<string, any> = {};
-      
+
       if (updates.credits !== undefined) {
         creditsUpdate.credits_remaining = updates.credits;
         creditsUpdate.total_credits = updates.credits;
@@ -166,7 +165,7 @@ Deno.serve(async (req) => {
           details: creditsError.details,
           hint: creditsError.hint
         });
-        
+
         await logSuperAdminAction(
           {
             action: 'Update Organization Credits',
@@ -182,7 +181,7 @@ Deno.serve(async (req) => {
           validation.email!
         );
         return createSuperAdminErrorResponse(
-          'Failed to update organization credits: ' + creditsError.message, 
+          'Failed to update organization credits: ' + creditsError.message,
           500,
           { function: 'superadmin-update-organization', dbError: creditsError.code, organizationId }
         );
@@ -232,7 +231,7 @@ Deno.serve(async (req) => {
       name: error.name
     });
     return createSuperAdminErrorResponse(
-      'Internal server error: ' + error.message, 
+      'Internal server error: ' + error.message,
       500,
       { function: 'superadmin-update-organization', error: error.message }
     );

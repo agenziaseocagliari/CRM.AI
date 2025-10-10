@@ -13,7 +13,7 @@ import { Modal } from './ui/Modal';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
-import { generateKadenceForm, generateKadenceBlockPattern } from '../lib/wordpress/WordPressKadenceGenerator';
+import { generateKadenceForm } from '../lib/wordpress/WordPressKadenceGenerator';
 import { PostAIEditor } from './forms/PostAIEditor';
 import { InteractiveAIQuestionnaire } from './InteractiveAIQuestionnaire';
 
@@ -27,16 +27,16 @@ interface ApiError {
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità  pubblica
 const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
     const commonClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
-    
+
     // FIX: Privacy checkbox alignment - checkbox a sinistra, label a destra
     if (field.type === 'checkbox') {
         return (
             <div className="flex items-start gap-3">
-                <input 
-                    id={field.name} 
-                    name={field.name} 
-                    type="checkbox" 
-                    required={field.required} 
+                <input
+                    id={field.name}
+                    name={field.name}
+                    type="checkbox"
+                    required={field.required}
                     className="mt-1 h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
                 />
                 <label htmlFor={field.name} className="text-sm text-gray-700 flex-1">
@@ -45,7 +45,7 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
             </div>
         );
     }
-    
+
     const label = <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">{field.label}{field.required ? ' *' : ''}</label>;
 
     if (field.type === 'textarea') {
@@ -88,15 +88,15 @@ const FormCard: React.FC<FormCardProps> = ({ form, onEdit, onDelete, onPreview, 
                     {hasCustomColors && (
                         <div className="flex items-center space-x-1 ml-2">
                             {hasCustomPrimary && (
-                                <div 
-                                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                                <div
+                                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                                     style={{ backgroundColor: form.styling?.primary_color }}
                                     title={`Colore primario: ${form.styling?.primary_color}`}
                                 />
                             )}
                             {hasCustomBackground && (
-                                <div 
-                                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                                <div
+                                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                                     style={{ backgroundColor: form.styling?.background_color }}
                                     title={`Sfondo: ${form.styling?.background_color}`}
                                 />
@@ -148,7 +148,7 @@ export const Forms: React.FC = () => {
     const [isPreviewModalOpen, setPreviewModalOpen] = useState(false);
     const [isGetCodeModalOpen, setGetCodeModalOpen] = useState(false);
     const [showQuestionnaire, setShowQuestionnaire] = useState(false);
-    
+
     // Stati per i dati
     const [formToModify, setFormToModify] = useState<Form | null>(null);
     const [prompt, setPrompt] = useState('');
@@ -156,8 +156,15 @@ export const Forms: React.FC = () => {
     const [formTitle, setFormTitle] = useState('');
     const [generatedFields, setGeneratedFields] = useState<FormField[] | null>(null);
     const [publicUrl, setPublicUrl] = useState('');
-    const [formMeta, setFormMeta] = useState<any>(null); // 🆕 Metadata AI (industry, confidence, GDPR)
-    
+    const [formMeta, setFormMeta] = useState<{
+        industry?: string;
+        confidence?: number;
+        platform?: string;
+        gdpr_enabled?: boolean;
+        timestamp?: string;
+        generation_method?: string;
+    } | null>(null); // 🆕 Metadata AI (industry, confidence, GDPR)
+
     // 🎨 Stati per personalizzazione colori (PostAIEditor)
     const [formStyle, setFormStyle] = useState<FormStyle>({
         primary_color: '#6366f1',
@@ -174,15 +181,15 @@ export const Forms: React.FC = () => {
         }
     });
     const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState('');
-    
+
     // Stati di caricamento ed errore
     const [isLoading, setIsLoading] = useState(false);
 
     const handleOpenCreateModal = () => {
-        setPrompt(''); 
-        setFormName(''); 
+        setPrompt('');
+        setFormName('');
         setFormTitle('');
-        setGeneratedFields(null); 
+        setGeneratedFields(null);
         setIsLoading(false);
         setPrivacyPolicyUrl('');
         setFormMeta(null); // 🆕 Reset metadata AI
@@ -218,22 +225,22 @@ export const Forms: React.FC = () => {
         setPreviewModalOpen(false); setGetCodeModalOpen(false);
         setFormToModify(null);
     };
-    
+
     const handleGenerateForm = async () => {
         if (!prompt) { toast.error("Per favore, inserisci una descrizione per il tuo form."); return; }
-        
+
         // Sanitize and validate prompt input
         const sanitizedPrompt = InputValidator.sanitizeString(prompt);
         if (sanitizedPrompt.length < 5) {
             toast.error("La descrizione deve essere più dettagliata (almeno 5 caratteri).");
             return;
         }
-        
+
         SecureLogger.info('forms', 'Form generation initiated', {
             promptLength: sanitizedPrompt.length,
             organizationId: organization?.id
         });
-        
+
         setIsLoading(true); setGeneratedFields(null);
 
         const toastId = toast.loading('Generazione campi in corso...');
@@ -243,21 +250,21 @@ export const Forms: React.FC = () => {
                 organization,
                 prompt_length: sanitizedPrompt.length
             });
-            
+
             if (!organization?.id) {
                 throw new Error('Organization ID non disponibile. Ricarica la pagina e riprova.');
             }
-            
+
             // TEMPORARY FIX: Use direct fetch instead of invokeSupabaseFunction
             // to bypass retry logic and session refresh issues
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.access_token) {
                 throw new Error('Sessione non trovata. Ricarica la pagina.');
             }
-            
+
             const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
             const supabaseAnonKey = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
-            
+
             // DETAILED LOGGING FOR DEBUGGING
             console.log('🔍 FORMMASTER DEBUG - Request Details:', {
                 url: `${supabaseUrl}/functions/v1/generate-form-fields`,
@@ -268,14 +275,14 @@ export const Forms: React.FC = () => {
                 expires_at: session.expires_at,
                 timestamp: new Date().toISOString()
             });
-            
+
             const requestBody = {
                 prompt: sanitizedPrompt,
                 organization_id: organization.id
             };
-            
+
             console.log('🔍 FORMMASTER DEBUG - Request Body:', requestBody);
-            
+
             const response = await fetch(`${supabaseUrl}/functions/v1/generate-form-fields`, {
                 method: 'POST',
                 headers: {
@@ -285,10 +292,10 @@ export const Forms: React.FC = () => {
                 },
                 body: JSON.stringify(requestBody)
             });
-            
+
             console.log('🔍 FORMMASTER DEBUG - Response Status:', response.status);
             console.log('🔍 FORMMASTER DEBUG - Response Headers:', [...response.headers.entries()]);
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('🔍 FORMMASTER DEBUG - Error Response:', {
@@ -297,7 +304,7 @@ export const Forms: React.FC = () => {
                     errorText: errorText,
                     timestamp: new Date().toISOString()
                 });
-                
+
                 let errorMessage = `Server error (${response.status})`;
                 try {
                     const errorData = JSON.parse(errorText);
@@ -309,9 +316,9 @@ export const Forms: React.FC = () => {
                 }
                 throw new Error(errorMessage);
             }
-            
+
             const data = await response.json();
-            
+
             // 🔍 EXTENDED DEBUG LOGGING
             console.log('🔍 FORMMASTER DEBUG - Raw Response Data:', data);
             console.log('🔍 FORMMASTER DEBUG - Data Type:', typeof data);
@@ -319,7 +326,7 @@ export const Forms: React.FC = () => {
             console.log('🔍 FORMMASTER DEBUG - Fields value:', data.fields);
             console.log('🔍 FORMMASTER DEBUG - Fields is Array:', Array.isArray(data.fields));
             console.log('🔍 FORMMASTER DEBUG - Fields length:', data.fields?.length);
-            
+
             // Type guard for API response
             if (!data || typeof data !== 'object' || !('fields' in data) || !Array.isArray((data as Record<string, unknown>).fields)) {
                 console.error('🔍 FORMMASTER DEBUG - Type guard failed:', {
@@ -330,10 +337,10 @@ export const Forms: React.FC = () => {
                 });
                 throw new Error('Risposta API non valida');
             }
-            
+
             const fields = (data as { fields: FormField[] }).fields;
             console.log('🔍 FORMMASTER DEBUG - Extracted fields:', fields);
-            
+
             if (!fields || !Array.isArray(fields) || fields.length === 0) {
                 console.error('🔍 FORMMASTER DEBUG - Fields validation failed:', {
                     hasFields: !!fields,
@@ -342,10 +349,10 @@ export const Forms: React.FC = () => {
                 });
                 throw new Error("L'AI ha restituito una struttura non valida o vuota.");
             }
-            
+
             console.log('🔍 FORMMASTER DEBUG - Setting generated fields:', fields);
             setGeneratedFields(fields);
-            
+
             // 🆕 SAVE METADATA AI (Industry Detection, GDPR, Confidence)
             if (data.meta) {
                 console.log('🧠 AI METADATA - Received:', data.meta);
@@ -353,7 +360,7 @@ export const Forms: React.FC = () => {
             } else {
                 setFormMeta(null);
             }
-            
+
             console.log('🔍 FORMMASTER DEBUG - Generated fields set successfully!');
             toast.success('Campi generati con successo!', { id: toastId });
 
@@ -368,26 +375,26 @@ export const Forms: React.FC = () => {
     };
 
     const handleSaveForm = async () => {
-        if (!formName || !formTitle || !generatedFields || !organization) { 
-            toast.error("Nome, titolo e campi generati sono necessari per salvare."); 
-            return; 
+        if (!formName || !formTitle || !generatedFields || !organization) {
+            toast.error("Nome, titolo e campi generati sono necessari per salvare.");
+            return;
         }
-        
+
         // Sanitize form inputs
         const sanitizedName = InputValidator.sanitizeString(formName);
         const sanitizedTitle = InputValidator.sanitizeString(formTitle);
-        
+
         if (sanitizedName.length < 2 || sanitizedTitle.length < 2) {
             toast.error("Nome e titolo devono avere almeno 2 caratteri validi.");
             return;
         }
-        
+
         console.log('🎨 FORM SAVE - Styling Data:', {
             formStyle,
             privacyPolicyUrl,
             timestamp: new Date().toISOString()
         });
-        
+
         SecureLogger.info('forms', 'Form save operation initiated', {
             nameLength: sanitizedName.length,
             titleLength: sanitizedTitle.length,
@@ -396,20 +403,20 @@ export const Forms: React.FC = () => {
             hasCustomColors: formStyle.primary_color !== '#6366f1',
             hasPrivacyUrl: !!privacyPolicyUrl
         });
-        
+
         setIsLoading(true);
 
         try {
-            const { error: insertError } = await supabase.from('forms').insert({ 
-                name: sanitizedName, 
-                title: sanitizedTitle, 
+            const { error: insertError } = await supabase.from('forms').insert({
+                name: sanitizedName,
+                title: sanitizedTitle,
                 fields: generatedFields,
                 styling: formStyle,
                 privacy_policy_url: privacyPolicyUrl || null,
-                organization_id: organization.id 
+                organization_id: organization.id
             });
-            if (insertError) {throw insertError;}
-            refetchData(); 
+            if (insertError) { throw insertError; }
+            refetchData();
             handleCloseModals();
             toast.success('Form salvato con successo con personalizzazione colori!');
         } catch (err: unknown) {
@@ -419,21 +426,21 @@ export const Forms: React.FC = () => {
             setIsLoading(false);
         }
     };
-    
+
     const handleDeleteForm = async () => {
-        if (!formToModify) {return;}
+        if (!formToModify) { return; }
         setIsLoading(true);
         try {
             const { error } = await supabase.from('forms').delete().eq('id', formToModify.id);
-            if(error) {throw error;}
-            refetchData(); 
+            if (error) { throw error; }
+            refetchData();
             handleCloseModals();
             toast.success('Form eliminato!');
         } catch (err: unknown) {
             const error = err as ApiError;
             toast.error(`Errore: ${error.message}`);
-        } finally { 
-            setIsLoading(false); 
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -442,7 +449,7 @@ export const Forms: React.FC = () => {
         setFormName(form.name);
         setFormTitle(form.title || '');
         setGeneratedFields(form.fields);
-        
+
         // Carica lo stile esistente o usa quello di default
         if (form.styling) {
             setFormStyle(form.styling);
@@ -462,10 +469,10 @@ export const Forms: React.FC = () => {
                 }
             });
         }
-        
+
         // Carica privacy policy URL se esiste
         setPrivacyPolicyUrl(form.privacy_policy_url || '');
-        
+
         // Imposta il form in modalità modifica
         setFormToModify(form);
         setCreateModalOpen(true);
@@ -475,7 +482,7 @@ export const Forms: React.FC = () => {
     const generateWordPressEmbedCode = (form: Form): string => {
         const baseUrl = window.location.origin;
         const formUrl = `${baseUrl}/form/${form.id}`;
-        
+
         return `<!-- Guardian AI CRM - Form: ${form.title || form.name} -->
 <div id="guardian-ai-form-${form.id}" class="guardian-ai-form-wrapper">
   <iframe 
@@ -511,7 +518,14 @@ export const Forms: React.FC = () => {
     // 🎯 Funzione per export Kadence Blocks nativo
     const handleKadenceExport = (form: Form) => {
         try {
-            const kadenceCode = generateKadenceForm(form.fields as any, {
+            // Cast fields to Kadence FormField type (compatible subset)
+            const kadenceCode = generateKadenceForm(form.fields as unknown as Array<{
+                name: string;
+                label: string;
+                type: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'number';
+                required: boolean;
+                options?: string[];
+            }>, {
                 colors: {
                     primary: form.styling?.primary_color || '#6366f1',
                     secondary: form.styling?.secondary_color || '#f3f4f6',
@@ -520,7 +534,7 @@ export const Forms: React.FC = () => {
                     border: form.styling?.primary_color || '#6366f1'
                 }
             });
-            
+
             // Crea un file HTML completo con tutte le parti
             const completeHTML = `<!DOCTYPE html>
 <html lang="it">
@@ -547,7 +561,7 @@ ${kadenceCode.shortcode}
 -->
 </body>
 </html>`;
-            
+
             // Download come file HTML
             const blob = new Blob([completeHTML], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
@@ -558,7 +572,7 @@ ${kadenceCode.shortcode}
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
+
             toast.success('📦 Form Kadence scaricato! Importalo in WordPress', {
                 duration: 4000,
                 icon: '✅'
@@ -583,222 +597,222 @@ ${kadenceCode.shortcode}
                     <div className="mx-auto bg-indigo-100 rounded-full w-16 h-16 flex items-center justify-center"> <SparklesIcon className="w-8 h-8 text-primary" /> </div>
                     <h2 className="mt-4 text-2xl font-semibold text-text-primary"> Crea il tuo primo Form con l&apos;AI </h2>
                     <p className="mt-2 text-text-secondary max-w-2xl mx-auto"> Inizia a raccogliere lead in pochi secondi. Descrivi i campi di cui hai bisogno e lascia che l&apos;AI faccia il resto. </p>
-                    <div className="mt-6"> <button onClick={handleOpenCreateModal} className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-indigo-700 text-lg font-semibold flex items-center space-x-2 mx-auto"> <PlusIcon className="w-5 h-5"/> <span>Inizia a Costruire</span> </button> </div>
+                    <div className="mt-6"> <button onClick={handleOpenCreateModal} className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-indigo-700 text-lg font-semibold flex items-center space-x-2 mx-auto"> <PlusIcon className="w-5 h-5" /> <span>Inizia a Costruire</span> </button> </div>
                 </div>
             );
         }
-        return ( 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> 
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {forms.map(form => (
-                    <FormCard 
-                        key={form.id} 
-                        form={form} 
+                    <FormCard
+                        key={form.id}
+                        form={form}
                         onEdit={handleEditForm}
-                        onDelete={handleOpenDeleteModal} 
-                        onPreview={handleOpenPreviewModal} 
-                        onGetCode={handleOpenGetCodeModal} 
+                        onDelete={handleOpenDeleteModal}
+                        onPreview={handleOpenPreviewModal}
+                        onGetCode={handleOpenGetCodeModal}
                         onWordPress={handleWordPressEmbed}
                         onKadence={handleKadenceExport}
                     />
-                ))} 
-            </div> 
+                ))}
+            </div>
         );
     };
 
     return (
-    <>
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-text-primary">I Tuoi Form</h1>
-                {forms.length > 0 && ( <button onClick={handleOpenCreateModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2"> <PlusIcon className="w-5 h-5" /> <span>Crea Nuovo Form</span> </button> )}
+        <>
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-3xl font-bold text-text-primary">I Tuoi Form</h1>
+                    {forms.length > 0 && (<button onClick={handleOpenCreateModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2"> <PlusIcon className="w-5 h-5" /> <span>Crea Nuovo Form</span> </button>)}
+                </div>
+                {renderContent()}
             </div>
-            {renderContent()}
-        </div>
 
-        <Modal isOpen={isCreateModalOpen} onClose={handleCloseModals} title="Crea Nuovo Form con AI">
-            <div className="space-y-4">
-                {!generatedFields ? (
-                    <>
-                        {/* 🎯 QUESTIONARIO INTERATTIVO */}
-                        {showQuestionnaire ? (
-                            <InteractiveAIQuestionnaire
-                                initialPrompt={prompt}
-                                onComplete={(enhancedPrompt) => {
-                                    setPrompt(enhancedPrompt);
-                                    setShowQuestionnaire(false);
-                                    // Auto-genera dopo questionario
-                                    setTimeout(() => handleGenerateForm(), 500);
-                                }}
-                            />
-                        ) : (
-                            <>
-                                {/* Pulsante per aprire questionario */}
-                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
+            <Modal isOpen={isCreateModalOpen} onClose={handleCloseModals} title="Crea Nuovo Form con AI">
+                <div className="space-y-4">
+                    {!generatedFields ? (
+                        <>
+                            {/* 🎯 QUESTIONARIO INTERATTIVO */}
+                            {showQuestionnaire ? (
+                                <InteractiveAIQuestionnaire
+                                    initialPrompt={prompt}
+                                    onComplete={(enhancedPrompt) => {
+                                        setPrompt(enhancedPrompt);
+                                        setShowQuestionnaire(false);
+                                        // Auto-genera dopo questionario
+                                        setTimeout(() => handleGenerateForm(), 500);
+                                    }}
+                                />
+                            ) : (
+                                <>
+                                    {/* Pulsante per aprire questionario */}
+                                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-indigo-900 flex items-center">
+                                                    <SparklesIcon className="w-4 h-4 mr-2" />
+                                                    Crea form perfetto con l&apos;assistente guidato
+                                                </p>
+                                                <p className="text-xs text-indigo-700 mt-1">
+                                                    Rispondi a poche domande e l&apos;AI genererà il form ideale per te
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowQuestionnaire(true)}
+                                                className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium flex items-center space-x-2"
+                                            >
+                                                <SparklesIcon className="w-4 h-4" />
+                                                <span>Inizia Guidato</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="relative">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-gray-300"></div>
+                                        </div>
+                                        <div className="relative flex justify-center text-sm">
+                                            <span className="px-2 bg-white text-gray-500">oppure descrivi manualmente</span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="form-prompt" className="block text-sm font-medium text-gray-700">Descrivi il tuo form</label>
+                                        <textarea id="form-prompt" rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Es: Un form di contatto con nome, email, telefono e un'area per il messaggio." className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
+                                    </div>
+                                    <div className="flex justify-end"> <button onClick={handleGenerateForm} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 disabled:bg-gray-400"> {isLoading ? 'Generazione...' : <><SparklesIcon className="w-5 h-5" /><span>Genera Campi</span></>} </button> </div>
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {/* 🧠 AI METADATA VISUALIZATION (Industry Detection) */}
+                            {formMeta && (
+                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-indigo-900 flex items-center">
-                                                <SparklesIcon className="w-4 h-4 mr-2" />
-                                                Crea form perfetto con l'assistente guidato
-                                            </p>
-                                            <p className="text-xs text-indigo-700 mt-1">
-                                                Rispondi a poche domande e l'AI genererà il form ideale per te
-                                            </p>
+                                            <span className="text-sm font-medium text-blue-900">
+                                                📊 Settore rilevato: <strong className="capitalize">{formMeta.industry?.replace('_', ' ')}</strong>
+                                            </span>
+                                            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                                <div
+                                                    className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                                                    style={{ width: `${(formMeta.confidence || 0) * 100}%` }}
+                                                />
+                                            </div>
                                         </div>
-                                        <button
-                                            onClick={() => setShowQuestionnaire(true)}
-                                            className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium flex items-center space-x-2"
-                                        >
-                                            <SparklesIcon className="w-4 h-4" />
-                                            <span>Inizia Guidato</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-gray-300"></div>
-                                    </div>
-                                    <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-white text-gray-500">oppure descrivi manualmente</span>
-                                    </div>
-                                </div>
-                        
-                                <div>
-                                    <label htmlFor="form-prompt" className="block text-sm font-medium text-gray-700">Descrivi il tuo form</label>
-                                    <textarea id="form-prompt" rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Es: Un form di contatto con nome, email, telefono e un'area per il messaggio." className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
-                                </div>
-                                <div className="flex justify-end"> <button onClick={handleGenerateForm} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 disabled:bg-gray-400"> {isLoading ? 'Generazione...' : <><SparklesIcon className="w-5 h-5" /><span>Genera Campi</span></>} </button> </div>
-                            </>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        {/* 🧠 AI METADATA VISUALIZATION (Industry Detection) */}
-                        {formMeta && (
-                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <span className="text-sm font-medium text-blue-900">
-                                            📊 Settore rilevato: <strong className="capitalize">{formMeta.industry?.replace('_', ' ')}</strong>
+                                        <span className="text-xs text-blue-700 ml-4">
+                                            {Math.round((formMeta.confidence || 0) * 100)}% accurato
                                         </span>
-                                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                            <div 
-                                                className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                                                style={{ width: `${(formMeta.confidence || 0) * 100}%` }}
-                                            />
+                                    </div>
+
+                                    {/* GDPR Badge */}
+                                    {formMeta.gdpr_enabled && (
+                                        <div className="mt-2 inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            GDPR Compliant
                                         </div>
-                                    </div>
-                                    <span className="text-xs text-blue-700 ml-4">
-                                        {Math.round((formMeta.confidence || 0) * 100)}% accurato
-                                    </span>
+                                    )}
                                 </div>
-                                
-                                {/* GDPR Badge */}
-                                {formMeta.gdpr_enabled && (
-                                    <div className="mt-2 inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
-                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        GDPR Compliant
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    
-                        {/* 🎨 PostAIEditor - Personalizzazione Completa */}
-                        <PostAIEditor
-                            fields={generatedFields}
-                            onFieldsChange={setGeneratedFields}
-                            style={formStyle}
-                            onStyleChange={setFormStyle}
-                            privacyPolicyUrl={privacyPolicyUrl}
-                            onPrivacyPolicyChange={setPrivacyPolicyUrl}
-                        />
-                        
-                        {/* Nome e Titolo Form */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <label htmlFor="form-name" className="block text-sm font-medium text-gray-700">Nome del Form (interno)</label>
-                                <input type="text" id="form-name" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Es: Form Contatti Sito Web" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
-                            </div>
-                            <div>
-                                <label htmlFor="form-title" className="block text-sm font-medium text-gray-700">Titolo del Form (pubblico)</label>
-                                <input type="text" id="form-title" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Es: Contattaci" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
-                            </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center pt-4 border-t mt-4">
-                            <button onClick={() => setGeneratedFields(null)} className="text-sm text-gray-600 hover:text-primary">← Indietro</button>
-                            <button onClick={handleSaveForm} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 flex items-center space-x-2">
-                                {isLoading ? (
-                                    <>
-                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        <span>Salvataggio...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>💾 Salva Form con Colori</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </>
-                )}
-            </div>
-        </Modal>
-        
-        <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
-            <p>Sei sicuro di voler eliminare il form <strong>{formToModify?.name}</strong>? Questa azione è irreversibile.</p>
-            <div className="flex justify-end pt-4 border-t mt-4">
-                <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
-                <button onClick={handleDeleteForm} disabled={isLoading} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isLoading ? 'Eliminazione...' : 'Elimina'}</button>
-            </div>
-        </Modal>
+                            )}
 
-        <Modal isOpen={isPreviewModalOpen} onClose={handleCloseModals} title={`Anteprima: ${formToModify?.title}`}>
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                {formToModify?.fields.map(field => <DynamicFormField key={field.name} field={field} />)}
-                <div className="flex justify-end pt-4"> <button type="submit" className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Invia (Anteprima)</button> </div>
-            </form>
-        </Modal>
+                            {/* 🎨 PostAIEditor - Personalizzazione Completa */}
+                            <PostAIEditor
+                                fields={generatedFields}
+                                onFieldsChange={setGeneratedFields}
+                                style={formStyle}
+                                onStyleChange={setFormStyle}
+                                privacyPolicyUrl={privacyPolicyUrl}
+                                onPrivacyPolicyChange={setPrivacyPolicyUrl}
+                            />
 
-        <Modal isOpen={isGetCodeModalOpen} onClose={handleCloseModals} title="Ottieni Link Pubblico">
-            <p className="text-sm text-gray-600">Condividi questo link per permettere a chiunque di compilare il tuo form.</p>
-            <div className="mt-2 flex">
-                <input type="text" readOnly value={publicUrl} className="flex-grow bg-gray-100 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none"/>
-                <button onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Link copiato!'); }} className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-indigo-700">Copia</button>
-            </div>
-        </Modal>
+                            {/* Nome e Titolo Form */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <label htmlFor="form-name" className="block text-sm font-medium text-gray-700">Nome del Form (interno)</label>
+                                    <input type="text" id="form-name" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Es: Form Contatti Sito Web" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
+                                </div>
+                                <div>
+                                    <label htmlFor="form-title" className="block text-sm font-medium text-gray-700">Titolo del Form (pubblico)</label>
+                                    <input type="text" id="form-title" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Es: Contattaci" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
+                                </div>
+                            </div>
 
-        {/* Universal AI Chat - FormMaster */}
-        <UniversalAIChat
-          currentModule="Forms"
-          organizationId={organization?.id || "demo-org"}
-          userId="demo-user"
-          onActionTriggered={(action, data) => {
-            console.log('🎯 Forms AI Action triggered:', action, data);
-            
-            // 📝 FORMMASTER ACTION HANDLER
-            if (action === 'form_generated' && data && typeof data === 'object') {
-              const formData = data as { formFields?: Array<{ name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea'; required: boolean }> };
-              if (formData.formFields && Array.isArray(formData.formFields) && formData.formFields.length > 0) {
-                console.log('🎉 Setting generated fields from AI Chat:', formData.formFields);
-                // Type cast to FormField[] to match the expected interface
-                const typedFields = formData.formFields.map(field => ({
-                  ...field,
-                  type: field.type as 'text' | 'email' | 'tel' | 'textarea'
-                }));
-                setGeneratedFields(typedFields);
-                setCreateModalOpen(true); // Open the form creation modal
-                toast.success(`${formData.formFields.length} campi generati con successo!`);
-              }
-            }
-          }}
-        />
-    </>
+                            <div className="flex justify-between items-center pt-4 border-t mt-4">
+                                <button onClick={() => setGeneratedFields(null)} className="text-sm text-gray-600 hover:text-primary">← Indietro</button>
+                                <button onClick={handleSaveForm} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 flex items-center space-x-2">
+                                    {isLoading ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Salvataggio...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>💾 Salva Form con Colori</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </Modal>
+
+            <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Conferma Eliminazione">
+                <p>Sei sicuro di voler eliminare il form <strong>{formToModify?.name}</strong>? Questa azione è irreversibile.</p>
+                <div className="flex justify-end pt-4 border-t mt-4">
+                    <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">Annulla</button>
+                    <button onClick={handleDeleteForm} disabled={isLoading} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400">{isLoading ? 'Eliminazione...' : 'Elimina'}</button>
+                </div>
+            </Modal>
+
+            <Modal isOpen={isPreviewModalOpen} onClose={handleCloseModals} title={`Anteprima: ${formToModify?.title}`}>
+                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                    {formToModify?.fields.map(field => <DynamicFormField key={field.name} field={field} />)}
+                    <div className="flex justify-end pt-4"> <button type="submit" className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Invia (Anteprima)</button> </div>
+                </form>
+            </Modal>
+
+            <Modal isOpen={isGetCodeModalOpen} onClose={handleCloseModals} title="Ottieni Link Pubblico">
+                <p className="text-sm text-gray-600">Condividi questo link per permettere a chiunque di compilare il tuo form.</p>
+                <div className="mt-2 flex">
+                    <input type="text" readOnly value={publicUrl} className="flex-grow bg-gray-100 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none" />
+                    <button onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success('Link copiato!'); }} className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-indigo-700">Copia</button>
+                </div>
+            </Modal>
+
+            {/* Universal AI Chat - FormMaster */}
+            <UniversalAIChat
+                currentModule="Forms"
+                organizationId={organization?.id || "demo-org"}
+                userId="demo-user"
+                onActionTriggered={(action, data) => {
+                    console.log('🎯 Forms AI Action triggered:', action, data);
+
+                    // 📝 FORMMASTER ACTION HANDLER
+                    if (action === 'form_generated' && data && typeof data === 'object') {
+                        const formData = data as { formFields?: Array<{ name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea'; required: boolean }> };
+                        if (formData.formFields && Array.isArray(formData.formFields) && formData.formFields.length > 0) {
+                            console.log('🎉 Setting generated fields from AI Chat:', formData.formFields);
+                            // Type cast to FormField[] to match the expected interface
+                            const typedFields = formData.formFields.map(field => ({
+                                ...field,
+                                type: field.type as 'text' | 'email' | 'tel' | 'textarea'
+                            }));
+                            setGeneratedFields(typedFields);
+                            setCreateModalOpen(true); // Open the form creation modal
+                            toast.success(`${formData.formFields.length} campi generati con successo!`);
+                        }
+                    }
+                }}
+            />
+        </>
     );
 };
 

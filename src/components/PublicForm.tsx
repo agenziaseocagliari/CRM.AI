@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 // FIX: Import useParams to get formId directly from the URL.
 // FIX: Corrected the import for useParams from 'react-router-dom' to resolve module export errors.
 import { useParams } from 'react-router-dom';
@@ -6,8 +6,8 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Form, FormField, FormStyle } from '../types';
 
+import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 import { GuardianIcon } from './ui/icons';
-import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
 
 // Error interface for proper typing
 interface ApiError {
@@ -30,22 +30,22 @@ const DynamicFormField: React.FC<{ field: FormField; formStyle?: FormStyle }> = 
         color: formStyle.text_color || '#374151',
         borderRadius: `${formStyle.border_radius || 6}px`
     } : {};
-    
+
     const commonClasses = "mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 sm:text-sm";
-    
+
     // FIX: Privacy checkbox alignment - checkbox a sinistra, label a destra
     if (field.type === 'checkbox') {
         return (
             <div className="flex items-start gap-3">
-                <input 
-                    id={field.name} 
-                    name={field.name} 
-                    type="checkbox" 
-                    required={field.required} 
+                <input
+                    id={field.name}
+                    name={field.name}
+                    type="checkbox"
+                    required={field.required}
                     className="mt-1 h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
                 />
-                <label 
-                    htmlFor={field.name} 
+                <label
+                    htmlFor={field.name}
                     className="text-sm flex-1"
                     style={{ color: formStyle?.text_color || '#374151' }}
                 >
@@ -54,18 +54,18 @@ const DynamicFormField: React.FC<{ field: FormField; formStyle?: FormStyle }> = 
             </div>
         );
     }
-    
+
     const label = <label htmlFor={field.name} className="block text-sm font-medium" style={{ color: formStyle?.text_color || '#374151' }}>{field.label}{field.required ? ' *' : ''}</label>;
 
     if (field.type === 'textarea') {
         return (
             <div>
                 {label}
-                <textarea 
-                    id={field.name} 
-                    name={field.name} 
-                    rows={4} 
-                    required={field.required} 
+                <textarea
+                    id={field.name}
+                    name={field.name}
+                    rows={4}
+                    required={field.required}
                     className={commonClasses}
                     style={fieldStyle}
                 />
@@ -75,11 +75,11 @@ const DynamicFormField: React.FC<{ field: FormField; formStyle?: FormStyle }> = 
     return (
         <div>
             {label}
-            <input 
-                id={field.name} 
-                name={field.name} 
-                type={field.type} 
-                required={field.required} 
+            <input
+                id={field.name}
+                name={field.name}
+                type={field.type}
+                required={field.required}
                 className={commonClasses}
                 style={fieldStyle}
             />
@@ -110,9 +110,9 @@ export const PublicForm: React.FC = () => {
                     .select('*')
                     .eq('id', formId)
                     .single();
-                
-                if (fetchError) {throw fetchError;}
-                if (!data) {throw new Error("Form non trovato.");}
+
+                if (fetchError) { throw fetchError; }
+                if (!data) { throw new Error("Form non trovato."); }
 
                 setForm(data);
             } catch (err: unknown) {
@@ -130,15 +130,15 @@ export const PublicForm: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
-        
+
         const formData = new FormData(e.currentTarget);
         const formValues: { [key: string]: FormDataEntryValue } = {};
-        
+
         // Input validation and sanitization
         formData.forEach((value, key) => {
             const sanitizedKey = InputValidator.sanitizeString(key);
             const sanitizedValue = InputValidator.sanitizeString(value.toString());
-            
+
             // Validate specific field types
             if (sanitizedKey.toLowerCase().includes('email')) {
                 if (!InputValidator.isValidEmail(sanitizedValue)) {
@@ -150,7 +150,7 @@ export const PublicForm: React.FC = () => {
                     throw new Error('Formato telefono non valido');
                 }
             }
-            
+
             formValues[sanitizedKey] = sanitizedValue;
         });
 
@@ -161,13 +161,13 @@ export const PublicForm: React.FC = () => {
                 timestamp: new Date().toISOString(),
                 source: 'PublicForm'
             });
-            
+
             const { error: rpcError } = await supabase.rpc('create_submission', {
                 p_form_id: formId,
                 p_form_data: formValues
             });
 
-            if (rpcError) {throw rpcError;}
+            if (rpcError) { throw rpcError; }
 
             setSubmitSuccess(true);
             SecureLogger.info('public-form', 'Form submission successful', {
@@ -192,7 +192,7 @@ export const PublicForm: React.FC = () => {
 
     if (submitSuccess) {
         return (
-             <div className="min-h-screen bg-background flex flex-col justify-center items-center text-center p-4">
+            <div className="min-h-screen bg-background flex flex-col justify-center items-center text-center p-4">
                 <GuardianIcon className="w-16 h-16 text-green-500 mb-4" />
                 <h1 className="text-3xl font-bold text-text-primary">{form?.title}</h1>
                 <p className="mt-4 text-xl text-text-secondary">Grazie per aver inviato le tue informazioni!</p>
@@ -204,20 +204,20 @@ export const PublicForm: React.FC = () => {
     }
 
     return (
-        <div 
+        <div
             className="min-h-screen flex flex-col justify-center items-center p-4"
-            style={{ 
+            style={{
                 backgroundColor: form?.styling?.background_color || '#f9fafb',
                 fontFamily: form?.styling?.font_family || 'Inter, system-ui, sans-serif'
             }}
         >
-             <div className="w-full max-w-lg">
+            <div className="w-full max-w-lg">
                 <div className="text-center mb-6">
-                    <GuardianIcon 
-                        className="w-12 h-12 mx-auto mb-2" 
+                    <GuardianIcon
+                        className="w-12 h-12 mx-auto mb-2"
                         style={{ color: form?.styling?.primary_color || '#6366f1' }}
                     />
-                    <h1 
+                    <h1
                         className="text-3xl font-bold"
                         style={{ color: form?.styling?.text_color || '#1f2937' }}
                     >
@@ -225,7 +225,7 @@ export const PublicForm: React.FC = () => {
                     </h1>
                 </div>
 
-                <div 
+                <div
                     className="p-8 rounded-lg shadow-md"
                     style={{
                         backgroundColor: form?.styling?.background_color || '#ffffff',
@@ -240,9 +240,9 @@ export const PublicForm: React.FC = () => {
                         {/* 🔗 Privacy Policy Link */}
                         {form?.privacy_policy_url && (
                             <div className="text-center text-sm" style={{ color: '#6b7280' }}>
-                                <a 
-                                    href={form.privacy_policy_url} 
-                                    target="_blank" 
+                                <a
+                                    href={form.privacy_policy_url}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="hover:underline font-medium"
                                     style={{ color: form?.styling?.primary_color || '#6366f1' }}
@@ -253,7 +253,7 @@ export const PublicForm: React.FC = () => {
                         )}
 
                         <div className="pt-2">
-                             <button 
+                            <button
                                 type="submit"
                                 disabled={isSubmitting}
                                 className="w-full px-4 py-3 font-semibold transition-colors"
@@ -264,7 +264,7 @@ export const PublicForm: React.FC = () => {
                                 }}
                                 onMouseEnter={(e) => {
                                     if (!isSubmitting && form?.styling?.primary_color) {
-                                        (e.target as HTMLButtonElement).style.backgroundColor = 
+                                        (e.target as HTMLButtonElement).style.backgroundColor =
                                             `color-mix(in srgb, ${form.styling.primary_color} 85%, black)`;
                                     }
                                 }}
@@ -280,10 +280,10 @@ export const PublicForm: React.FC = () => {
                         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                     </form>
                 </div>
-                 <p className="mt-8 text-sm text-center" style={{ color: '#6b7280' }}>
-                    Powered by <a 
-                        href="#" 
-                        onClick={(e) => {e.preventDefault(); window.location.href='/'}} 
+                <p className="mt-8 text-sm text-center" style={{ color: '#6b7280' }}>
+                    Powered by <a
+                        href="#"
+                        onClick={(e) => { e.preventDefault(); window.location.href = '/' }}
                         className="font-bold hover:underline"
                         style={{ color: form?.styling?.primary_color || '#6366f1' }}
                     >

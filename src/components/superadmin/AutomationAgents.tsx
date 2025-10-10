@@ -81,14 +81,12 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onToggle, onConfigure, onV
                         <button
                             onClick={() => onToggle(agent)}
                             disabled={isLoading}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                agent.is_active ? 'bg-primary' : 'bg-gray-300'
-                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${agent.is_active ? 'bg-primary' : 'bg-gray-300'
+                                } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                             <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                    agent.is_active ? 'translate-x-6' : 'translate-x-1'
-                                }`}
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${agent.is_active ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
                             />
                         </button>
                         <span className="ml-2 text-sm font-medium">
@@ -162,7 +160,7 @@ const ConfigurationModal: React.FC<ConfigModalProps> = ({ agent, isOpen, onClose
         onSave(config);
     };
 
-    if (!agent) {return null;}
+    if (!agent) { return null; }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Configura ${agent.name}`}>
@@ -213,16 +211,16 @@ const ConfigurationModal: React.FC<ConfigModalProps> = ({ agent, isOpen, onClose
     );
 };
 
-const LogsModal: React.FC<{ 
-    agent: AutomationAgent | null; 
-    isOpen: boolean; 
+const LogsModal: React.FC<{
+    agent: AutomationAgent | null;
+    isOpen: boolean;
     onClose: () => void;
 }> = ({ agent, isOpen, onClose }) => {
     const [logs, setLogs] = useState<AgentExecutionLog[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadLogs = useCallback(async () => {
-        if (!agent) {return;}
+        if (!agent) { return; }
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -232,7 +230,7 @@ const LogsModal: React.FC<{
                 .order('created_at', { ascending: false })
                 .limit(20);
 
-            if (error) {throw error;}
+            if (error) { throw error; }
             setLogs(data || []);
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
@@ -248,7 +246,7 @@ const LogsModal: React.FC<{
         }
     }, [agent, isOpen, loadLogs]);
 
-    if (!agent) {return null;}
+    if (!agent) { return null; }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Log Esecuzioni - ${agent.name}`}>
@@ -267,12 +265,11 @@ const LogsModal: React.FC<{
                         {logs.map((log) => (
                             <div key={log.id} className="bg-gray-50 dark:bg-dark-sidebar p-3 rounded-lg border">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                        log.status === 'success' ? 'bg-green-100 text-green-800' :
-                                        log.status === 'error' ? 'bg-red-100 text-red-800' :
-                                        log.status === 'running' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-yellow-100 text-yellow-800'
-                                    }`}>
+                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${log.status === 'success' ? 'bg-green-100 text-green-800' :
+                                            log.status === 'error' ? 'bg-red-100 text-red-800' :
+                                                log.status === 'running' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                        }`}>
                                         {log.status.toUpperCase()}
                                     </span>
                                     <span className="text-xs text-text-secondary">
@@ -329,13 +326,13 @@ export const AutomationAgents: React.FC = () => {
                 console.error('❌ [AutomationAgents] Supabase error:', error);
                 throw error;
             }
-            
+
             console.log('✅ [AutomationAgents] Loaded agents:', data?.length || 0);
             setAgents(data || []);
         } catch (error: unknown) {
             console.error('❌ [AutomationAgents] Full error:', error);
-            const errorMessage = error instanceof Error 
-                ? error.message 
+            const errorMessage = error instanceof Error
+                ? error.message
                 : typeof error === 'object' && error !== null
                     ? JSON.stringify(error)
                     : 'Errore sconosciuto';
@@ -353,7 +350,7 @@ export const AutomationAgents: React.FC = () => {
                 .update({ is_active: !agent.is_active })
                 .eq('id', agent.id);
 
-            if (error) {throw error;}
+            if (error) { throw error; }
 
             toast.success(`Agente ${agent.is_active ? 'disattivato' : 'attivato'} con successo`);
             loadAgents();
@@ -376,7 +373,7 @@ export const AutomationAgents: React.FC = () => {
     };
 
     const handleSaveConfiguration = async (config: Record<string, unknown>) => {
-        if (!selectedAgent) {return;}
+        if (!selectedAgent) { return; }
 
         setActionLoading(true);
         try {
@@ -385,7 +382,7 @@ export const AutomationAgents: React.FC = () => {
                 .update({ configuration: config })
                 .eq('id', selectedAgent.id);
 
-            if (error) {throw error;}
+            if (error) { throw error; }
 
             toast.success('Configurazione salvata con successo');
             setConfigModalOpen(false);

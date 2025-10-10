@@ -7,13 +7,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { corsHeaders } from '../_shared/cors.ts';
-import { getUserIdFromJWT } from '../_shared/supabase.ts';
 import {
-  validateSuperAdmin,
-  logSuperAdminAction,
-  extractClientInfo,
   createSuperAdminErrorResponse,
   createSuperAdminSuccessResponse,
+  extractClientInfo,
+  logSuperAdminAction,
+  validateSuperAdmin,
 } from '../_shared/superadmin.ts';
 
 Deno.serve(async (req) => {
@@ -30,7 +29,7 @@ Deno.serve(async (req) => {
     if (!validation.isValid) {
       console.error('[superadmin-list-organizations] Validation failed:', validation.error);
       return createSuperAdminErrorResponse(
-        validation.error || 'Unauthorized', 
+        validation.error || 'Unauthorized',
         403,
         { function: 'superadmin-list-organizations' }
       );
@@ -86,7 +85,7 @@ Deno.serve(async (req) => {
         details: error.details,
         hint: error.hint
       });
-      
+
       await logSuperAdminAction(
         {
           action: 'List Organizations',
@@ -101,7 +100,7 @@ Deno.serve(async (req) => {
         validation.email!
       );
       return createSuperAdminErrorResponse(
-        'Failed to fetch organizations: ' + error.message, 
+        'Failed to fetch organizations: ' + error.message,
         500,
         { function: 'superadmin-list-organizations', dbError: error.code }
       );
@@ -113,13 +112,13 @@ Deno.serve(async (req) => {
 
     // Fetch additional data separately to avoid schema cache issues
     const orgIds = organizations?.map(o => o.id) || [];
-    
+
     // Fetch credits for all organizations
     const { data: creditsData } = await supabase
       .from('organization_credits')
       .select('*')
       .in('organization_id', orgIds);
-    
+
     // Fetch profiles for all organizations  
     const { data: profilesData } = await supabase
       .from('profiles')
@@ -141,7 +140,7 @@ Deno.serve(async (req) => {
       const credits = creditsMap.get(org.id) || {};
       const profiles = profilesMap.get(org.id) || [];
       const adminProfile = profiles.find((p: any) => p.role === 'admin') || profiles[0];
-      
+
       // Determine status based on credits
       let orgStatus: 'active' | 'trial' | 'suspended' = 'active';
       if (credits.credits_remaining === 0) {
@@ -162,8 +161,8 @@ Deno.serve(async (req) => {
         adminEmail: adminProfile?.email || 'N/A',
         status: orgStatus,
         paymentStatus,
-        plan: credits.plan_name === 'enterprise' ? 'Enterprise' : 
-              credits.plan_name === 'pro' ? 'Pro' : 'Free',
+        plan: credits.plan_name === 'enterprise' ? 'Enterprise' :
+          credits.plan_name === 'pro' ? 'Pro' : 'Free',
         memberCount: profiles.length || 0,
         createdAt: org.created_at,
         creditsRemaining: credits.credits_remaining || 0,
@@ -177,7 +176,7 @@ Deno.serve(async (req) => {
       filteredCustomers = customers.filter((c: any) => c.status === status);
     }
     if (plan) {
-      filteredCustomers = filteredCustomers.filter((c: any) => 
+      filteredCustomers = filteredCustomers.filter((c: any) =>
         c.plan.toLowerCase() === plan.toLowerCase()
       );
     }
@@ -211,7 +210,7 @@ Deno.serve(async (req) => {
       name: error.name
     });
     return createSuperAdminErrorResponse(
-      'Internal server error: ' + error.message, 
+      'Internal server error: ' + error.message,
       500,
       { function: 'superadmin-list-organizations', error: error.message }
     );

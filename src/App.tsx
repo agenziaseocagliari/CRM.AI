@@ -41,8 +41,8 @@ import InsuranceAgencyLanding from './pages/verticals/InsuranceAgencyLanding';
 import MarketingAgencyLanding from './pages/verticals/MarketingAgencyLanding';
 
 // Super Admin Imports
-import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
 import { AiWorkflows } from './components/superadmin/AiWorkflows';
+import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
 import { AuditLogs } from './components/superadmin/AuditLogs';
 import { AutomationAgents } from './components/superadmin/AutomationAgents';
 import { Customers } from './components/superadmin/Customers';

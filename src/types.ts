@@ -1,47 +1,47 @@
 // File: src/types.ts
 
 export interface Organization {
-  id: string;
-  name: string;
-  created_at: string;
+    id: string;
+    name: string;
+    created_at: string;
 }
 
 export interface Profile {
-  id: string;
-  organization_id: string;
-  // other profile fields...
+    id: string;
+    organization_id: string;
+    // other profile fields...
 }
 
 export interface Contact {
-  id: number;
-  organization_id: string;
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  created_at: string;
-  lead_score: number | null;
-  lead_category: 'Hot' | 'Warm' | 'Cold' | null;
-  lead_score_reasoning: string | null;
+    id: number;
+    organization_id: string;
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    created_at: string;
+    lead_score: number | null;
+    lead_category: 'Hot' | 'Warm' | 'Cold' | null;
+    lead_score_reasoning: string | null;
 }
 
 export enum PipelineStage {
-  NewLead = 'New Lead',
-  Contacted = 'Contacted',
-  ProposalSent = 'Proposal Sent',
-  Won = 'Won',
-  Lost = 'Lost',
+    NewLead = 'New Lead',
+    Contacted = 'Contacted',
+    ProposalSent = 'Proposal Sent',
+    Won = 'Won',
+    Lost = 'Lost',
 }
 
 export interface Opportunity {
-  id: string;
-  organization_id: string;
-  contact_name: string;
-  value: number;
-  stage: PipelineStage;
-  assigned_to: string;
-  close_date: string;
-  created_at: string;
+    id: string;
+    organization_id: string;
+    contact_name: string;
+    value: number;
+    stage: PipelineStage;
+    assigned_to: string;
+    close_date: string;
+    created_at: string;
 }
 
 export type OpportunitiesData = Record<PipelineStage, Opportunity[]>;
@@ -110,12 +110,12 @@ export interface Automation {
 
 // Interfaccia per la tabella `google_credentials`
 export interface GoogleCredential {
-  organization_id: string;
-  user_id: string; // L'utente che ha autorizzato la connessione
-  access_token: string;
-  refresh_token: string;
-  expiry_date: number; // Unix timestamp in secondi
-  scope: string;
+    organization_id: string;
+    user_id: string; // L'utente che ha autorizzato la connessione
+    access_token: string;
+    refresh_token: string;
+    expiry_date: number; // Unix timestamp in secondi
+    scope: string;
 }
 
 

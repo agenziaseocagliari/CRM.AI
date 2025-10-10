@@ -52,9 +52,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (claims) {
       // Extract user_role from user_metadata if not in top-level (fallback for when hook doesn't work)
-      const userRole = claims.user_role || (claims.user_metadata as any)?.user_role;
-      const organizationId = claims.organization_id || (claims.user_metadata as any)?.organization_id;
-      const isSuperAdmin = claims.is_super_admin || (claims.user_metadata as any)?.is_super_admin || userRole === 'super_admin';
+      const userMetadata = claims.user_metadata as Record<string, unknown> | undefined;
+      const userRole = claims.user_role || userMetadata?.user_role as string | undefined;
+      const organizationId = claims.organization_id || userMetadata?.organization_id as string | undefined;
+      const isSuperAdmin = claims.is_super_admin || userMetadata?.is_super_admin || userRole === 'super_admin';
 
       diagnosticLogger.info('🔐 [AuthContext] JWT Claims parsed:', {
         user_role: userRole || 'NOT FOUND',
@@ -62,7 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         sub: claims.sub,
         organization_id: organizationId,
         hasUserRole: !!userRole,
-        source: claims.user_role ? 'top-level' : (claims.user_metadata as any)?.user_role ? 'user_metadata' : 'missing',
+        source: claims.user_role ? 'top-level' : userMetadata?.user_role ? 'user_metadata' : 'missing',
       });
 
       // CRITICAL: Force logout if user_role is missing from BOTH sources

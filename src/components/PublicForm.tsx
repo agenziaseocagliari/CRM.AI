@@ -99,24 +99,50 @@ export const PublicForm: React.FC = () => {
 
     useEffect(() => {
         const fetchForm = async () => {
+            console.log('🔍 PublicForm - Starting fetch for formId:', formId);
             setLoading(true);
+            setError(null);
+            
             try {
                 if (!formId) {
-                    throw new Error("Form non trovato.");
+                    throw new Error("Form ID mancante nell'URL");
                 }
 
+                console.log('🔍 PublicForm - Querying Supabase for form:', formId);
                 const { data, error: fetchError } = await supabase
                     .from('forms')
                     .select('*')
                     .eq('id', formId)
                     .single();
 
-                if (fetchError) { throw fetchError; }
-                if (!data) { throw new Error("Form non trovato."); }
+                console.log('🔍 PublicForm - Supabase Response:', { 
+                    hasData: !!data, 
+                    error: fetchError,
+                    dataKeys: data ? Object.keys(data) : []
+                });
 
+                if (fetchError) { 
+                    console.error('❌ PublicForm - Supabase Error:', fetchError);
+                    throw new Error(`Database error: ${fetchError.message} (Code: ${fetchError.code})`);
+                }
+                
+                if (!data) { 
+                    console.error('❌ PublicForm - No data returned');
+                    throw new Error("Form non trovato nel database");
+                }
+
+                console.log('✅ PublicForm - Form loaded successfully:', {
+                    id: data.id,
+                    name: data.name,
+                    fieldsCount: data.fields?.length || 0,
+                    hasStyling: !!data.styling,
+                    hasPrivacyUrl: !!data.privacy_policy_url
+                });
+                
                 setForm(data);
             } catch (err: unknown) {
                 const error = err as ApiError;
+                console.error('❌ PublicForm - Fetch Error:', error);
                 setError(`Impossibile caricare il form: ${error.message}`);
             } finally {
                 setLoading(false);
@@ -182,12 +208,62 @@ export const PublicForm: React.FC = () => {
         }
     };
 
+    console.log('🎨 PublicForm - Render State:', { 
+        loading, 
+        hasError: !!error, 
+        hasForm: !!form,
+        submitSuccess,
+        formId 
+    });
+
     if (loading) {
-        return <div className="min-h-screen bg-background flex items-center justify-center">Caricamento form...</div>;
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Caricamento form...</p>
+                    <p className="text-xs text-gray-400 mt-2">ID: {formId}</p>
+                </div>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="min-h-screen bg-background flex items-center justify-center text-red-500">{error}</div>;
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+                    <div className="text-center">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                            <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Errore Caricamento Form</h3>
+                        <p className="text-sm text-red-600 mb-4">{error}</p>
+                        <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded font-mono break-all">
+                            Form ID: {formId}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-4">
+                            Se il problema persiste, contatta il supporto.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!form) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Form Non Trovato</h3>
+                    <p className="text-sm text-gray-600 mb-4">Il form richiesto non esiste o non è più disponibile.</p>
+                    <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded font-mono break-all">
+                        Form ID: {formId}
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (submitSuccess) {
@@ -239,12 +315,12 @@ export const PublicForm: React.FC = () => {
 
                         {/* � Privacy Policy Checkbox (OBBLIGATORIO se URL presente) */}
                         {form?.privacy_policy_url && (
-                            <div className="mt-6 border-t border-gray-200 pt-6">
-                                <label className="flex items-start cursor-pointer group">
+                            <div className="mt-10 border-t-2 border-gray-200 pt-8">
+                                <label className="flex items-start cursor-pointer group hover:bg-gray-50 p-4 rounded-lg transition-colors">
                                     <input
                                         type="checkbox"
                                         required
-                                        className="mt-1 mr-3 h-4 w-4 rounded border-gray-300 focus:ring-2"
+                                        className="mt-1 mr-4 h-5 w-5 rounded border-gray-300 focus:ring-2"
                                         style={{
                                             accentColor: form?.styling?.primary_color || '#6366f1'
                                         }}

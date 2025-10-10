@@ -240,8 +240,8 @@ export const Forms: React.FC = () => {
         setPrivacyPolicyUrl(url);
     }, []);
 
-    // ✅ MODIFICATO: Accetta prompt custom come parametro per fix questionario
-    const handleGenerateForm = async (customPrompt?: string) => {
+    // ✅ LEVEL 6 FIX: Accetta prompt custom E required_fields per fix questionario
+    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[]) => {
         const promptToUse = customPrompt || prompt;
 
         if (!promptToUse.trim()) {
@@ -259,7 +259,8 @@ export const Forms: React.FC = () => {
         SecureLogger.info('forms', 'Form generation initiated', {
             promptLength: sanitizedPrompt.length,
             organizationId: organization?.id,
-            isCustomPrompt: !!customPrompt
+            isCustomPrompt: !!customPrompt,
+            requiredFieldsCount: requiredFields?.length || 0
         });
 
         setIsLoading(true); setGeneratedFields(null);
@@ -270,7 +271,8 @@ export const Forms: React.FC = () => {
                 organization_id: organization?.id,
                 organization,
                 prompt_length: sanitizedPrompt.length,
-                custom_prompt: !!customPrompt
+                custom_prompt: !!customPrompt,
+                required_fields: requiredFields
             });
 
             if (!organization?.id) {
@@ -300,7 +302,8 @@ export const Forms: React.FC = () => {
 
             const requestBody = {
                 prompt: sanitizedPrompt,
-                organization_id: organization.id
+                organization_id: organization.id,
+                required_fields: requiredFields || []  // ✅ CRITICAL FIX: Passa campi selezionati
             };
 
             console.log('🔍 FORMMASTER DEBUG - Request Body:', requestBody);
@@ -375,10 +378,35 @@ export const Forms: React.FC = () => {
             console.log('🔍 FORMMASTER DEBUG - Setting generated fields:', fields);
             setGeneratedFields(fields);
 
-            // 🆕 SAVE METADATA AI (Industry Detection, GDPR, Confidence)
+            // 🆕 LEVEL 6 FIX: Applica colori e privacy dal meta
             if (data.meta) {
                 console.log('🧠 AI METADATA - Received:', data.meta);
                 setFormMeta(data.meta);
+                
+                // ✅ CRITICAL FIX: Se Edge Function ha estratto colori, applicali
+                if (data.meta.colors) {
+                    console.log('🎨 Applying colors from Edge Function:', data.meta.colors);
+                    setFormStyle({
+                        primary_color: data.meta.colors.primary_color || '#6366f1',
+                        secondary_color: '#f3f4f6',
+                        background_color: data.meta.colors.background_color || '#ffffff',
+                        text_color: data.meta.colors.text_color || '#1f2937',
+                        border_color: data.meta.colors.primary_color || '#6366f1',
+                        border_radius: '8px',
+                        font_family: 'Inter, system-ui, sans-serif',
+                        button_style: {
+                            background_color: data.meta.colors.primary_color || '#6366f1',
+                            text_color: '#ffffff',
+                            border_radius: '6px'
+                        }
+                    });
+                }
+                
+                // ✅ CRITICAL FIX: Se Edge Function ha estratto privacy URL, applicalo
+                if (data.meta.privacy_policy_url) {
+                    console.log('🔒 Applying privacy URL from Edge Function:', data.meta.privacy_policy_url);
+                    setPrivacyPolicyUrl(data.meta.privacy_policy_url);
+                }
             } else {
                 setFormMeta(null);
             }
@@ -787,8 +815,8 @@ ${kadenceCode.shortcode}
                                             setFormMeta({ gdpr_enabled: true });
                                         }
 
-                                        // Genera form
-                                        handleGenerateForm(result.prompt);
+                                        // ✅ CRITICAL FIX: Passa required_fields all'Edge Function
+                                        handleGenerateForm(result.prompt, result.required_fields);
                                     }}
                                 />
                             ) : (

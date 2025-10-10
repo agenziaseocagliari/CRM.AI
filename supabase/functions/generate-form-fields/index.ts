@@ -97,7 +97,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { prompt, organization_id } = requestData;
+    const { prompt, organization_id, required_fields } = requestData;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       console.error(`[ai_form_generation:${requestId}] ❌ Invalid prompt`);
@@ -106,6 +106,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       });
     }
+    
+    // ✅ CRITICAL FIX: Validate required_fields parameter
+    console.log(`[ai_form_generation:${requestId}] 📋 Required fields from questionnaire:`, required_fields);
+    const userSelectedFields = Array.isArray(required_fields) ? required_fields : [];
 
     // 2. JWT AUTHENTICATION (mantenuto per sicurezza)
     const authHeader = req.headers.get("Authorization");
@@ -144,6 +148,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // 3. GENERATE FORM FIELDS (QUESTO È IL CORE!)
     console.log(`[ai_form_generation:${requestId}] 🤖 Generating form fields with intelligent analysis`);
     console.log(`[ai_form_generation:${requestId}] 📝 Prompt: "${prompt}"`);
+    console.log(`[ai_form_generation:${requestId}] 🎯 User selected fields: ${userSelectedFields.join(', ')}`);
+    
+    // ✅ LEVEL 6 FIX: Estrai colori e privacy URL dal prompt
+    const extractedColors = extractColorsFromPrompt(prompt);
+    const extractedPrivacyUrl = extractPrivacyUrlFromPrompt(prompt);
+    
+    console.log(`[ai_form_generation:${requestId}] 🎨 Extracted colors:`, extractedColors);
+    console.log(`[ai_form_generation:${requestId}] 🔒 Extracted privacy URL:`, extractedPrivacyUrl);
     
     // LEVEL 5 AI CONTEXT ANALYSIS
     const industryContext = detectIndustryContext(prompt);
@@ -156,16 +168,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
       theme: platformContext.theme
     });
     
-    const formFields = generateIntelligentFormFields(prompt, industryContext, platformContext);
+    // ✅ CRITICAL FIX: Passa required_fields per filtrare
+    const formFields = generateIntelligentFormFields(
+      prompt, 
+      industryContext, 
+      platformContext,
+      userSelectedFields
+    );
     
     // 4. PREPARE RESPONSE
     const response = {
       fields: formFields,
       meta: {
         ai_generated: true,
-        generation_method: 'intelligent_analysis_test_v5',
+        generation_method: 'intelligent_analysis_v6_questionnaire_fix',
         prompt_analyzed: prompt,
         timestamp: new Date().toISOString(),
+        // ✅ LEVEL 6: Return extracted colors and privacy
+        colors: extractedColors,
+        privacy_policy_url: extractedPrivacyUrl,
+        industry: industryContext.industry,
+        confidence: industryContext.confidence,
+        platform: platformContext.platform,
+        gdpr_enabled: detectGDPRRequirement(prompt),
         warning: 'TEST VERSION - Credit verification bypassed'
       }
     };
@@ -190,6 +215,50 @@ Deno.serve(async (req: Request): Promise<Response> => {
   });
 }
 });
+
+// ============================================================================
+// 🧠 LEVEL 6 COLOR & PRIVACY EXTRACTION - QUESTIONNAIRE FIX
+// ============================================================================
+
+/**
+ * Extract colors from prompt text
+ * Format: "Colore primario: #6366f1" and "Colore sfondo: #f3f4f6"
+ */
+function extractColorsFromPrompt(prompt: string): {
+  primary_color?: string;
+  background_color?: string;
+  text_color?: string;
+} | undefined {
+  const colors: { primary_color?: string; background_color?: string; text_color?: string } = {};
+  
+  // Regex pattern per colori esadecimali
+  const primaryMatch = prompt.match(/Colore primario:\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})/i);
+  const backgroundMatch = prompt.match(/Colore sfondo:\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})/i);
+  
+  if (primaryMatch) {
+    colors.primary_color = primaryMatch[1];
+  }
+  
+  if (backgroundMatch) {
+    colors.background_color = backgroundMatch[1];
+  }
+  
+  // Default text color for contrast
+  if (colors.primary_color || colors.background_color) {
+    colors.text_color = '#1f2937';
+  }
+  
+  return Object.keys(colors).length > 0 ? colors : undefined;
+}
+
+/**
+ * Extract privacy policy URL from prompt
+ * Format: "URL Privacy Policy: https://example.com/privacy"
+ */
+function extractPrivacyUrlFromPrompt(prompt: string): string | undefined {
+  const urlMatch = prompt.match(/URL Privacy Policy:\s*(https?:\/\/[^\s]+)/i);
+  return urlMatch ? urlMatch[1].trim() : undefined;
+}
 
 // ============================================================================
 // 🧠 LEVEL 5 AI ANALYSIS FUNCTIONS - ENGINEERING FELLOW SUPREME
@@ -353,15 +422,16 @@ function getAdaptiveLabel(fieldType: string, industryContext: IndustryContext, _
 }
 
 /**
- * 🧠 LEVEL 5 ADVANCED INTELLIGENT FORM FIELD GENERATION
- * ======================================================
+ * 🧠 LEVEL 6 ADVANCED INTELLIGENT FORM FIELD GENERATION WITH USER SELECTION FILTER
+ * =================================================================================
  * Multi-layer AI analysis with industry recognition and context awareness
- * Engineering Fellow Supreme - Adaptive Prompt Processing
+ * ✅ CRITICAL FIX: Rispetta required_fields dal questionario invece di auto-generare
  */
 function generateIntelligentFormFields(
   prompt: string, 
   industryContext?: IndustryContext, 
-  platformContext?: PlatformContext
+  platformContext?: PlatformContext,
+  requiredFields?: string[]
 ): Array<{
   name: string;
   label: string;
@@ -371,7 +441,8 @@ function generateIntelligentFormFields(
   const lowerPrompt = prompt.toLowerCase();
   const fields: Array<{name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox'; required: boolean;}> = [];
 
-  console.log(`🧠 Level 5 Analysis: "${lowerPrompt}"`);
+  console.log(`🧠 Level 6 Analysis: "${lowerPrompt}"`);
+  console.log(`🎯 User required fields: ${requiredFields?.join(', ') || 'NONE - using AI detection'}`);
 
   // Use provided context or detect if not provided
   const detectedIndustryContext = industryContext || detectIndustryContext(lowerPrompt);
@@ -379,6 +450,65 @@ function generateIntelligentFormFields(
   
   console.log(`🏢 Industry: ${detectedIndustryContext.industry} (confidence: ${detectedIndustryContext.confidence})`);
   console.log(`💻 Platform: ${detectedPlatformContext.platform} (theme: ${detectedPlatformContext.theme || 'none'})`);
+
+  // ✅ CRITICAL FIX: Se utente ha selezionato campi specifici, USA SOLO QUELLI
+  if (requiredFields && requiredFields.length > 0) {
+    console.log(`✅ Using ONLY user-selected fields (${requiredFields.length} fields)`);
+    
+    // Mappa campi selezionati a form fields con type e label corretti
+    requiredFields.forEach(fieldLabel => {
+      const normalizedLabel = fieldLabel.toLowerCase();
+      
+      // Email detection
+      if (normalizedLabel.includes('email') || normalizedLabel === 'e-mail') {
+        fields.push({
+          name: "email",
+          label: fieldLabel,
+          type: "email",
+          required: true
+        });
+        return;
+      }
+      
+      // Phone detection
+      if (normalizedLabel.includes('telefono') || normalizedLabel.includes('phone') || normalizedLabel.includes('cellulare')) {
+        fields.push({
+          name: "telefono",
+          label: fieldLabel,
+          type: "tel",
+          required: false
+        });
+        return;
+      }
+      
+      // Textarea detection (messaggio, descrizione, note lunghe)
+      if (normalizedLabel.includes('messaggio') || normalizedLabel.includes('descrizione') || 
+          normalizedLabel.includes('note') || normalizedLabel.includes('dettagli') ||
+          normalizedLabel.includes('richiesta') || normalizedLabel.includes('servizi')) {
+        fields.push({
+          name: normalizedLabel.replace(/\s+/g, '_').toLowerCase(),
+          label: fieldLabel,
+          type: "textarea",
+          required: false
+        });
+        return;
+      }
+      
+      // Default text field
+      fields.push({
+        name: normalizedLabel.replace(/\s+/g, '_').toLowerCase(),
+        label: fieldLabel,
+        type: "text",
+        required: fieldLabel.toLowerCase().includes('nome')
+      });
+    });
+    
+    console.log(`🎯 Generated ${fields.length} fields from user selection`);
+    return fields;
+  }
+
+  // ⚠️ FALLBACK: Se nessuna selezione utente, usa vecchia logica AI (backward compatibility)
+  console.log(`⚠️ No user selection - falling back to AI pattern detection`);
 
   // Core fields with adaptive labels
   const nameLabel = getAdaptiveLabel('name', detectedIndustryContext, detectedPlatformContext);

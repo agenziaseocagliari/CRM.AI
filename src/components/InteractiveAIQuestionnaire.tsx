@@ -18,10 +18,11 @@ const CheckIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// ✅ NUOVO: Interfaccia risultato strutturato
+// ✅ LEVEL 6 FIX: Interfaccia risultato strutturato con required_fields
 export interface QuestionnaireResult {
   prompt: string;
   privacyUrl?: string;
+  required_fields?: string[];  // ✅ CRITICAL FIX: Lista campi selezionati dall'utente
   colors?: {
     primary: string;
     background: string;
@@ -137,11 +138,13 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
     console.log('🎯 Questionnaire - Enhanced Prompt Generated:', enhanced);
     console.log('🎨 Questionnaire - Colors:', data.branding_colors);
     console.log('🔒 Questionnaire - Privacy URL:', data.privacy_policy_url);
+    console.log('📋 Questionnaire - Required Fields:', data.required_fields);
 
-    // ✅ NUOVO: Restituisci oggetto strutturato invece di solo stringa
+    // ✅ LEVEL 6 FIX: Restituisci oggetto strutturato con required_fields
     const result: QuestionnaireResult = {
       prompt: enhanced,
       privacyUrl: data.privacy_policy_url || undefined,
+      required_fields: data.required_fields,  // ✅ CRITICAL FIX
       colors: {
         primary: data.branding_colors.primary,
         background: data.branding_colors.secondary,

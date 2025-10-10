@@ -325,10 +325,20 @@ export const AutomationAgents: React.FC = () => {
                 .select('*')
                 .order('created_at', { ascending: true });
 
-            if (error) {throw error;}
+            if (error) {
+                console.error('❌ [AutomationAgents] Supabase error:', error);
+                throw error;
+            }
+            
+            console.log('✅ [AutomationAgents] Loaded agents:', data?.length || 0);
             setAgents(data || []);
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            console.error('❌ [AutomationAgents] Full error:', error);
+            const errorMessage = error instanceof Error 
+                ? error.message 
+                : typeof error === 'object' && error !== null
+                    ? JSON.stringify(error)
+                    : 'Errore sconosciuto';
             toast.error(`Errore nel caricamento agenti: ${errorMessage}`);
         } finally {
             setLoading(false);

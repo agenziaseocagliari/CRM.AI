@@ -181,13 +181,14 @@ FROM profiles;
 -- 6. VERIFICA JWT DELL'UTENTE ENTERPRISE
 -- =====================================================
 
--- Questo mostra cosa dovrebbe esserci nel JWT dell'utente enterprise
+-- Questo mostra i metadata dell'utente enterprise (dove sono user_role e organization_id)
 SELECT 
     id,
     email,
-    user_role,
-    organization_id,
-    raw_user_meta_data
+    raw_user_meta_data,
+    raw_user_meta_data->>'user_role' as user_role_from_metadata,
+    raw_user_meta_data->>'organization_id' as org_id_from_metadata,
+    created_at
 FROM auth.users
 WHERE email = 'webproseoid@gmail.com';
 

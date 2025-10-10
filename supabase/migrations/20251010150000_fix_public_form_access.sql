@@ -14,6 +14,11 @@
 -- La manteniamo per utenti autenticati
 
 -- ✅ CRITICAL FIX: Aggiungi nuova policy per accesso pubblico (anonymous)
+-- NOTA: PostgreSQL non supporta IF NOT EXISTS su CREATE POLICY
+-- Soluzione: DROP IF EXISTS prima di CREATE
+
+DROP POLICY IF EXISTS "Public forms can be viewed by anyone" ON public.forms;
+
 CREATE POLICY "Public forms can be viewed by anyone" ON public.forms
     FOR SELECT
     USING (true);  -- Permette a chiunque (incluso anon role) di leggere tutti i form

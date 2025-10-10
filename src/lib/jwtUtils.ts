@@ -110,8 +110,15 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
     diagnostics.timeUntilExpiry = claims.exp - now;
   }
 
+  // ✅ FIX: Proper typing for user_metadata
+  interface UserMetadata {
+    user_role?: string;
+    organization_id?: string;
+    [key: string]: unknown;
+  }
+
   // Check for user_role claim (top-level OR user_metadata)
-  const userRole = claims.user_role || (claims.user_metadata as any)?.user_role;
+  const userRole = claims.user_role || (claims.user_metadata as UserMetadata)?.user_role;
 
   if (!userRole) {
     diagnostics.errors.push('CRITICAL: user_role claim is missing from BOTH top-level and user_metadata');
@@ -123,7 +130,7 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
     // Log where user_role was found
     if (claims.user_role) {
       // Found in top-level (hook working)
-    } else if ((claims.user_metadata as any)?.user_role) {
+    } else if ((claims.user_metadata as UserMetadata)?.user_role) {
       // Found in user_metadata (fallback working)
       diagnostics.warnings.push('user_role found in user_metadata (fallback mode - hook not working)');
     }
@@ -142,7 +149,7 @@ export function diagnoseJWT(token: string): JWTDiagnostics {
   }
 
   // Check for organization_id if user_role is not super_admin
-  const organizationId = claims.organization_id || (claims.user_metadata as any)?.organization_id;
+  const organizationId = claims.organization_id || (claims.user_metadata as UserMetadata)?.organization_id;
   if (userRole && userRole !== 'super_admin' && !organizationId) {
     diagnostics.warnings.push('organization_id claim is missing (may be expected for super_admin)');
   }

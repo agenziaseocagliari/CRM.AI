@@ -13,7 +13,7 @@ import { Modal } from './ui/Modal';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
-import { generateKadenceForm, generateKadenceBlockPattern } from '../lib/wordpress/WordPressKadenceGenerator';
+// import { generateKadenceForm, generateKadenceBlockPattern } from '../lib/wordpress/WordPressKadenceGenerator'; // TODO: Re-enable when needed
 import { PostAIEditor } from './forms/PostAIEditor';
 
 // Error interface for proper typing
@@ -382,11 +382,11 @@ export const Forms: React.FC = () => {
         }
     };
 
-    const renderFieldPreview = (field: FormField, index: number) => {
-        const commonClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm bg-gray-50";
-        if (field.type === 'textarea') { return <textarea key={index} rows={3} className={commonClasses} disabled />; }
-        return <input key={index} type={field.type} className={commonClasses} disabled />;
-    };
+    // const renderFieldPreview = (field: FormField, index: number) => {
+    //     const commonClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm bg-gray-50";
+    //     if (field.type === 'textarea') { return <textarea key={index} rows={3} className={commonClasses} disabled />; }
+    //     return <input key={index} type={field.type} className={commonClasses} disabled />;
+    // };
 
     const renderContent = () => {
         if (forms.length === 0) {

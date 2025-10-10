@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FormField, FormStyle } from '../../types';
-import { PencilIcon, PlusIcon, TrashIcon } from '../ui/icons';
+import { PlusIcon, TrashIcon } from '../ui/icons';
+// import { PencilIcon } from '../ui/icons'; // TODO: Re-enable when edit functionality is added
 
 // Icona Swatch personalizzata (sostituisce SwatchIcon)
 const SwatchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

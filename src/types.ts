@@ -49,7 +49,7 @@ export type OpportunitiesData = Record<PipelineStage, Opportunity[]>;
 export interface FormField {
     name: string;
     label: string;
-    type: 'text' | 'email' | 'tel' | 'textarea';
+    type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox';
     required: boolean;
 }
 

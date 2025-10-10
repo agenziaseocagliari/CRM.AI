@@ -211,6 +211,21 @@ export const PublicForm: React.FC = () => {
                             <DynamicFormField key={field.name} field={field} />
                         ))}
 
+                        {/* 🔗 Privacy Policy Link */}
+                        {form?.privacy_policy_url && (
+                            <div className="text-center text-sm" style={{ color: '#6b7280' }}>
+                                <a 
+                                    href={form.privacy_policy_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="hover:underline font-medium"
+                                    style={{ color: form?.styling?.primary_color || '#6366f1' }}
+                                >
+                                    📄 Leggi la nostra Privacy Policy
+                                </a>
+                            </div>
+                        )}
+
                         <div className="pt-2">
                              <button 
                                 type="submit"

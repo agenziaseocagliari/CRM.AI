@@ -750,20 +750,20 @@ ${kadenceCode.shortcode}
                                 <InteractiveAIQuestionnaire
                                     initialPrompt={prompt}
                                     onComplete={(result) => {
-                                        console.log('✅ Questionnaire Complete - Result:', JSON.stringify(result, null, 2));
+                                        console.log('✅ Questionnaire - Received:', { 
+                                            hasColors: !!result.colors, 
+                                            hasPrivacy: !!result.privacyUrl,
+                                            colors: result.colors,
+                                            privacy: result.privacyUrl
+                                        });
 
-                                        // ✅ Imposta prompt
+                                        // Imposta TUTTO subito, nessun setTimeout
                                         setPrompt(result.prompt);
+                                        setShowQuestionnaire(false);
 
-                                        // ✅ Imposta privacy URL se presente
-                                        if (result.privacyUrl) {
-                                            setPrivacyPolicyUrl(result.privacyUrl);
-                                            console.log('🔒 Privacy URL Set:', result.privacyUrl);
-                                        }
-
-                                        // ✅ Imposta colori custom se presenti
+                                        // Salva colori e privacy IMMEDIATAMENTE
                                         if (result.colors) {
-                                            const newStyle = {
+                                            setFormStyle({
                                                 primary_color: result.colors.primary,
                                                 secondary_color: '#f3f4f6',
                                                 background_color: result.colors.background,
@@ -776,33 +776,19 @@ ${kadenceCode.shortcode}
                                                     text_color: '#ffffff',
                                                     border_radius: '6px'
                                                 }
-                                            };
-                                            setFormStyle(newStyle);
-                                            console.log('🎨 Colors Set - New Style Object:', JSON.stringify(newStyle, null, 2));
+                                            });
                                         }
 
-                                        // ✅ Salva metadata se presente
-                                        if (result.metadata) {
-                                            setFormMeta({
-                                                gdpr_enabled: result.metadata.gdpr_required,
-                                                // Altri campi metadata se necessario
-                                            });
-                                            console.log('📊 Metadata Set:', result.metadata);
+                                        if (result.privacyUrl) {
+                                            setPrivacyPolicyUrl(result.privacyUrl);
                                         }
 
-                                        setShowQuestionnaire(false);
+                                        if (result.metadata?.gdpr_required) {
+                                            setFormMeta({ gdpr_enabled: true });
+                                        }
 
-                                        // ✅ Log DOPO setState per verificare persistenza
-                                        setTimeout(() => {
-                                            console.log('🔍 State Check AFTER setState (50ms):', {
-                                                hasPrivacyUrl: !!result.privacyUrl,
-                                                hasColors: !!result.colors,
-                                                privacyUrlLength: result.privacyUrl?.length || 0
-                                            });
-                                        }, 50);
-
-                                        // ✅ FIX: Passa prompt come parametro per evitare race condition
-                                        setTimeout(() => handleGenerateForm(result.prompt), 100);
+                                        // Genera form
+                                        handleGenerateForm(result.prompt);
                                     }}
                                 />
                             ) : (

@@ -42,6 +42,7 @@ import MarketingAgencyLanding from './pages/verticals/MarketingAgencyLanding';
 
 // Super Admin Imports
 import { APIIntegrationsManager } from './components/superadmin/APIIntegrationsManager';
+import { AiWorkflows } from './components/superadmin/AiWorkflows';
 import { AuditLogs } from './components/superadmin/AuditLogs';
 import { AutomationAgents } from './components/superadmin/AutomationAgents';
 import { Customers } from './components/superadmin/Customers';
@@ -313,6 +314,7 @@ const App: React.FC = () => {
           <Route path="audit" element={<AuditLogs />} />
           <Route path="system-health" element={<SystemHealthDashboard />} />
           <Route path="workflows" element={<WorkflowBuilder />} />
+          <Route path="workflows-legacy" element={<AiWorkflows />} />
           <Route path="agents" element={<AutomationAgents />} />
           <Route path="integrations" element={<APIIntegrationsManager />} />
           <Route path="quotas" element={<QuotaManagement />} />

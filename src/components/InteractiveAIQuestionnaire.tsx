@@ -152,7 +152,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
         marketing_consent: data.marketing_consent
       }
     };
-    
+
     console.log('🎁 Questionnaire - Complete Result:', result);
     onComplete(result);
   };
@@ -204,11 +204,10 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
           <button
             key={type}
             onClick={() => updateData({ business_type: type })}
-            className={`p-3 rounded-lg border text-left transition-all ${
-              data.business_type === type
+            className={`p-3 rounded-lg border text-left transition-all ${data.business_type === type
                 ? 'border-primary bg-primary/5 text-primary'
                 : 'border-gray-200 hover:border-gray-300'
-            }`}
+              }`}
           >
             {type}
           </button>
@@ -262,11 +261,10 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
           <button
             key={purpose}
             onClick={() => updateData({ form_purpose: purpose })}
-            className={`p-3 rounded-lg border text-left transition-all ${
-              data.form_purpose === purpose
+            className={`p-3 rounded-lg border text-left transition-all ${data.form_purpose === purpose
                 ? 'border-primary bg-primary/5 text-primary'
                 : 'border-gray-200 hover:border-gray-300'
-            }`}
+              }`}
           >
             {purpose}
           </button>
@@ -289,11 +287,10 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
           <button
             key={field}
             onClick={() => handleFieldToggle(field)}
-            className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${
-              data.required_fields.includes(field)
+            className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${data.required_fields.includes(field)
                 ? 'border-primary bg-primary/5 text-primary'
                 : 'border-gray-200 hover:border-gray-300'
-            }`}
+              }`}
           >
             <span>{field}</span>
             {data.required_fields.includes(field) && (

@@ -241,22 +241,22 @@ export const PublicForm: React.FC = () => {
                         {form?.privacy_policy_url && (
                             <div className="mt-6 border-t border-gray-200 pt-6">
                                 <label className="flex items-start cursor-pointer group">
-                                    <input 
-                                        type="checkbox" 
-                                        required 
+                                    <input
+                                        type="checkbox"
+                                        required
                                         className="mt-1 mr-3 h-4 w-4 rounded border-gray-300 focus:ring-2"
-                                        style={{ 
+                                        style={{
                                             accentColor: form?.styling?.primary_color || '#6366f1'
                                         }}
                                     />
-                                    <span 
+                                    <span
                                         className="text-sm leading-relaxed"
                                         style={{ color: form?.styling?.text_color || '#374151' }}
                                     >
                                         Accetto la{' '}
-                                        <a 
-                                            href={form.privacy_policy_url} 
-                                            target="_blank" 
+                                        <a
+                                            href={form.privacy_policy_url}
+                                            target="_blank"
                                             rel="noopener noreferrer"
                                             className="font-semibold hover:underline transition-colors"
                                             style={{ color: form?.styling?.primary_color || '#6366f1' }}

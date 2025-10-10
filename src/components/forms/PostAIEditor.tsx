@@ -89,7 +89,7 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
         setPrimaryColor(preset.primary);
         setBackgroundColor(preset.background);
         setTextColor(preset.text);
-        
+
         // ✅ Applica preset immediatamente
         onStyleChange(buildStyleObject(preset.primary, preset.background, preset.text));
     };

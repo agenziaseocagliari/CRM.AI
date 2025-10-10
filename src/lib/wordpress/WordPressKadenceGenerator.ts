@@ -47,7 +47,7 @@ export class WordPressKadenceGenerator {
     this.formId = `form-${Date.now()}`;
     this.organizationId = 'wordpress-integration';
     this.privacyUrl = privacyUrl; // ✅ Store privacy URL
-    
+
     // Default Kadence-optimized settings
     this.options = {
       theme: 'kadence',
@@ -169,7 +169,7 @@ ${privacyHTML}
         break;
 
       case 'select': {
-        const options = field.options?.map(option => 
+        const options = field.options?.map(option =>
           `<option value="${option}">${option}</option>`
         ).join('\n        ') || '';
         inputHTML = `<select 
@@ -209,13 +209,13 @@ ${privacyHTML}
    */
   private generateCSS(): string {
     const { colors, spacing, buttonStyle } = this.options;
-    
+
     const spacingMap = {
       compact: { field: '0.75rem', padding: '0.5rem' },
       normal: { field: '1rem', padding: '0.75rem' },
       spacious: { field: '1.5rem', padding: '1rem' }
     };
-    
+
     const currentSpacing = spacingMap[spacing];
 
     return `/* FormMaster - Kadence Theme Integration CSS */
@@ -306,9 +306,9 @@ ${privacyHTML}
 }
 
 .formmaster-submit {
-  background: ${buttonStyle === 'gradient' 
-    ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` 
-    : colors.primary};
+  background: ${buttonStyle === 'gradient'
+        ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
+        : colors.primary};
   color: white;
   border: ${buttonStyle === 'outlined' ? `2px solid ${colors.primary}` : 'none'};
   background: ${buttonStyle === 'outlined' ? 'transparent' : colors.primary};

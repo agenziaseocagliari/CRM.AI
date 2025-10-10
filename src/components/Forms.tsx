@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react';
+﻿import React, { useCallback, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
@@ -15,7 +15,7 @@ import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 import { generateKadenceForm } from '../lib/wordpress/WordPressKadenceGenerator';
 import { PostAIEditor } from './forms/PostAIEditor';
-import { InteractiveAIQuestionnaire, QuestionnaireResult } from './InteractiveAIQuestionnaire';
+import { InteractiveAIQuestionnaire } from './InteractiveAIQuestionnaire';
 
 // Error interface for proper typing
 interface ApiError {
@@ -191,23 +191,10 @@ export const Forms: React.FC = () => {
         setFormTitle('');
         setGeneratedFields(null);
         setIsLoading(false);
-        setPrivacyPolicyUrl('');
         setFormMeta(null); // 🆕 Reset metadata AI
         setShowQuestionnaire(false); // 🆕 Reset questionario
-        setFormStyle({
-            primary_color: '#6366f1',
-            secondary_color: '#f3f4f6',
-            background_color: '#ffffff',
-            text_color: '#1f2937',
-            border_color: '#6366f1',
-            border_radius: '8px',
-            font_family: 'Inter, system-ui, sans-serif',
-            button_style: {
-                background_color: '#6366f1',
-                text_color: '#ffffff',
-                border_radius: '6px'
-            }
-        });
+        // ✅ FIX QUESTIONARIO: NON resettare formStyle e privacyPolicyUrl qui
+        // Questi vengono impostati dal questionario e devono persistere fino al salvataggio
         setCreateModalOpen(true);
     };
 
@@ -224,6 +211,22 @@ export const Forms: React.FC = () => {
         setCreateModalOpen(false); setDeleteModalOpen(false);
         setPreviewModalOpen(false); setGetCodeModalOpen(false);
         setFormToModify(null);
+        // ✅ FIX QUESTIONARIO: Reset formStyle e privacyPolicyUrl alla chiusura modal
+        setFormStyle({
+            primary_color: '#6366f1',
+            secondary_color: '#f3f4f6',
+            background_color: '#ffffff',
+            text_color: '#1f2937',
+            border_color: '#6366f1',
+            border_radius: '8px',
+            font_family: 'Inter, system-ui, sans-serif',
+            button_style: {
+                background_color: '#6366f1',
+                text_color: '#ffffff',
+                border_radius: '6px'
+            }
+        });
+        setPrivacyPolicyUrl('');
     };
 
     // ✅ CALLBACK MEMOIZZATE per evitare re-render loop in PostAIEditor
@@ -240,10 +243,10 @@ export const Forms: React.FC = () => {
     // ✅ MODIFICATO: Accetta prompt custom come parametro per fix questionario
     const handleGenerateForm = async (customPrompt?: string) => {
         const promptToUse = customPrompt || prompt;
-        
-        if (!promptToUse.trim()) { 
-            toast.error("Per favore, inserisci una descrizione per il tuo form."); 
-            return; 
+
+        if (!promptToUse.trim()) {
+            toast.error("Per favore, inserisci una descrizione per il tuo form.");
+            return;
         }
 
         // Sanitize and validate prompt input
@@ -426,6 +429,13 @@ export const Forms: React.FC = () => {
         setIsLoading(true);
 
         try {
+            console.log('💾 FORM SAVE - Dati inviati al DB:', {
+                styling: formStyle,
+                privacy_policy_url: privacyPolicyUrl,
+                has_custom_primary: formStyle.primary_color !== '#6366f1',
+                has_privacy_url: !!privacyPolicyUrl
+            });
+            
             const { error: insertError } = await supabase.from('forms').insert({
                 name: sanitizedName,
                 title: sanitizedTitle,
@@ -435,7 +445,26 @@ export const Forms: React.FC = () => {
                 organization_id: organization.id
             });
             if (insertError) { throw insertError; }
+            
             refetchData();
+            
+            // ✅ FIX QUESTIONARIO: Reset formStyle e privacyPolicyUrl DOPO salvataggio riuscito
+            setFormStyle({
+                primary_color: '#6366f1',
+                secondary_color: '#f3f4f6',
+                background_color: '#ffffff',
+                text_color: '#1f2937',
+                border_color: '#6366f1',
+                border_radius: '8px',
+                font_family: 'Inter, system-ui, sans-serif',
+                button_style: {
+                    background_color: '#6366f1',
+                    text_color: '#ffffff',
+                    border_radius: '6px'
+                }
+            });
+            setPrivacyPolicyUrl('');
+            
             handleCloseModals();
             toast.success('Form salvato con successo con personalizzazione colori!');
         } catch (err: unknown) {
@@ -537,10 +566,41 @@ export const Forms: React.FC = () => {
     // 🎯 Funzione per export Kadence Blocks nativo
     const handleKadenceExport = (form: Form) => {
         try {
+            console.log('📦 Kadence Export - Original fields:', form.fields.length);
             console.log('📦 Kadence Export - Privacy URL:', form.privacy_policy_url);
             
+            // ✅ FIX KADENCE DUPLICAZIONE: Filtra campi privacy generati dall'AI
+            // L'AI genera un checkbox privacy quando GDPR è richiesto, ma noi aggiungiamo
+            // il nostro checkbox privacy personalizzato con link. Rimuoviamo i duplicati.
+            const fieldsWithoutPrivacy = form.fields.filter(field => {
+                const labelLower = field.label.toLowerCase();
+                const nameLower = field.name.toLowerCase();
+                
+                // Escludi campi che contengono parole chiave privacy
+                const isPrivacyField = 
+                    labelLower.includes('privacy') ||
+                    labelLower.includes('gdpr') ||
+                    labelLower.includes('consenso') ||
+                    labelLower.includes('accetto') ||
+                    labelLower.includes('informativa') ||
+                    labelLower.includes('trattamento') ||
+                    nameLower.includes('privacy') ||
+                    nameLower.includes('gdpr') ||
+                    nameLower === 'privacy_consent' ||
+                    nameLower === 'gdpr_consent';
+                
+                if (isPrivacyField) {
+                    console.log('📦 Kadence Export - Rimosso campo privacy AI:', field.label);
+                }
+                
+                return !isPrivacyField;
+            });
+            
+            console.log('📦 Kadence Export - Filtered fields:', fieldsWithoutPrivacy.length);
+            console.log('📦 Kadence Export - Removed fields:', form.fields.length - fieldsWithoutPrivacy.length);
+
             // Cast fields to Kadence FormField type (compatible subset)
-            const kadenceCode = generateKadenceForm(form.fields as unknown as Array<{
+            const kadenceCode = generateKadenceForm(fieldsWithoutPrivacy as unknown as Array<{
                 name: string;
                 label: string;
                 type: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'number';
@@ -660,16 +720,16 @@ ${kadenceCode.shortcode}
                                     initialPrompt={prompt}
                                     onComplete={(result) => {
                                         console.log('✅ Questionnaire Complete - Result:', result);
-                                        
+
                                         // ✅ Imposta prompt
                                         setPrompt(result.prompt);
-                                        
+
                                         // ✅ Imposta privacy URL se presente
                                         if (result.privacyUrl) {
                                             setPrivacyPolicyUrl(result.privacyUrl);
                                             console.log('🔒 Privacy URL Set:', result.privacyUrl);
                                         }
-                                        
+
                                         // ✅ Imposta colori custom se presenti
                                         if (result.colors) {
                                             setFormStyle({
@@ -688,7 +748,7 @@ ${kadenceCode.shortcode}
                                             });
                                             console.log('🎨 Colors Set:', result.colors);
                                         }
-                                        
+
                                         // ✅ Salva metadata se presente
                                         if (result.metadata) {
                                             setFormMeta({
@@ -697,9 +757,9 @@ ${kadenceCode.shortcode}
                                             });
                                             console.log('📊 Metadata Set:', result.metadata);
                                         }
-                                        
+
                                         setShowQuestionnaire(false);
-                                        
+
                                         // ✅ FIX: Passa prompt come parametro per evitare race condition
                                         setTimeout(() => handleGenerateForm(result.prompt), 100);
                                     }}

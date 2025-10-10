@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { supabase } from '../lib/supabaseClient';
-import { Form, FormField } from '../types';
+import { Form, FormField, FormStyle } from '../types';
 
 import { GuardianIcon } from './ui/icons';
 import { SecureLogger, InputValidator } from '../lib/security/securityUtils';
@@ -22,8 +22,16 @@ interface ApiError {
 // }
 
 // Componente riutilizzabile per renderizzare campi di form dinamici
-const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
-    const commonClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
+const DynamicFormField: React.FC<{ field: FormField; formStyle?: FormStyle }> = ({ field, formStyle }) => {
+    // ✅ LEVEL 6: Genera stile dinamico da formStyle
+    const fieldStyle = formStyle ? {
+        borderColor: formStyle.primary_color || '#d1d5db',
+        backgroundColor: '#ffffff',
+        color: formStyle.text_color || '#374151',
+        borderRadius: `${formStyle.border_radius || 6}px`
+    } : {};
+    
+    const commonClasses = "mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 sm:text-sm";
     
     // FIX: Privacy checkbox alignment - checkbox a sinistra, label a destra
     if (field.type === 'checkbox') {
@@ -36,27 +44,45 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
                     required={field.required} 
                     className="mt-1 h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
                 />
-                <label htmlFor={field.name} className="text-sm text-gray-700 flex-1">
+                <label 
+                    htmlFor={field.name} 
+                    className="text-sm flex-1"
+                    style={{ color: formStyle?.text_color || '#374151' }}
+                >
                     {field.label}{field.required ? ' *' : ''}
                 </label>
             </div>
         );
     }
     
-    const label = <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">{field.label}{field.required ? ' *' : ''}</label>;
+    const label = <label htmlFor={field.name} className="block text-sm font-medium" style={{ color: formStyle?.text_color || '#374151' }}>{field.label}{field.required ? ' *' : ''}</label>;
 
     if (field.type === 'textarea') {
         return (
             <div>
                 {label}
-                <textarea id={field.name} name={field.name} rows={4} required={field.required} className={commonClasses} />
+                <textarea 
+                    id={field.name} 
+                    name={field.name} 
+                    rows={4} 
+                    required={field.required} 
+                    className={commonClasses}
+                    style={fieldStyle}
+                />
             </div>
         );
     }
     return (
         <div>
             {label}
-            <input id={field.name} name={field.name} type={field.type} required={field.required} className={commonClasses} />
+            <input 
+                id={field.name} 
+                name={field.name} 
+                type={field.type} 
+                required={field.required} 
+                className={commonClasses}
+                style={fieldStyle}
+            />
         </div>
     );
 };
@@ -202,13 +228,13 @@ export const PublicForm: React.FC = () => {
                 <div 
                     className="p-8 rounded-lg shadow-md"
                     style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: form?.styling?.border_radius || '8px'
+                        backgroundColor: form?.styling?.background_color || '#ffffff',
+                        borderRadius: `${form?.styling?.border_radius || 8}px`
                     }}
                 >
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {form?.fields.map(field => (
-                            <DynamicFormField key={field.name} field={field} />
+                            <DynamicFormField key={field.name} field={field} formStyle={form?.styling} />
                         ))}
 
                         {/* 🔗 Privacy Policy Link */}
@@ -232,9 +258,20 @@ export const PublicForm: React.FC = () => {
                                 disabled={isSubmitting}
                                 className="w-full px-4 py-3 font-semibold transition-colors"
                                 style={{
-                                    backgroundColor: form?.styling?.button_style?.background_color || form?.styling?.primary_color || '#6366f1',
-                                    color: form?.styling?.button_style?.text_color || '#ffffff',
-                                    borderRadius: form?.styling?.button_style?.border_radius || '6px'
+                                    backgroundColor: form?.styling?.primary_color || '#6366f1',
+                                    color: '#ffffff',
+                                    borderRadius: `${form?.styling?.border_radius || 8}px`
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!isSubmitting && form?.styling?.primary_color) {
+                                        (e.target as HTMLButtonElement).style.backgroundColor = 
+                                            `color-mix(in srgb, ${form.styling.primary_color} 85%, black)`;
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (form?.styling?.primary_color) {
+                                        (e.target as HTMLButtonElement).style.backgroundColor = form.styling.primary_color;
+                                    }
                                 }}
                             >
                                 {isSubmitting ? 'Invio in corso...' : 'Invia'}

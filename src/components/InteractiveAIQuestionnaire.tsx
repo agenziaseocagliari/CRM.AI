@@ -49,6 +49,7 @@ interface QuestionnaireData {
   branding_colors: {
     primary: string;
     secondary: string;
+    text: string;  // ✅ Aggiunto per auto-sync text color
   };
   gdpr_required: boolean;
   marketing_consent: boolean;
@@ -68,6 +69,7 @@ export const InteractiveAIQuestionnaire: React.FC<
     branding_colors: {
       primary: '#6366f1',
       secondary: '#f3f4f6',
+      text: '#6366f1',  // ✅ Inizializzato uguale al primary per auto-sync
     },
     gdpr_required: true,
     marketing_consent: false,
@@ -85,12 +87,16 @@ export const InteractiveAIQuestionnaire: React.FC<
   }, []);
 
   // Handlers ottimizzati per i color picker
-  const handlePrimaryColorChange = useCallback((value: string) => {
+  const handlePrimaryColorChange = (value: string) => {
     setData(prev => ({
       ...prev,
-      branding_colors: { ...prev.branding_colors, primary: value },
+      branding_colors: {
+        ...prev.branding_colors,
+        primary: value,
+        text: value // Auto-sync text color with primary color
+      }
     }));
-  }, []);
+  };
 
   const handleSecondaryColorChange = useCallback((value: string) => {
     setData(prev => ({
@@ -108,8 +114,8 @@ export const InteractiveAIQuestionnaire: React.FC<
 
   const generateEnhancedPrompt = () => {
     // 🆕 Usa business_type_other se "Altro" è selezionato
-    const businessType = data.business_type === 'Altro' && data.business_type_other 
-      ? data.business_type_other 
+    const businessType = data.business_type === 'Altro' && data.business_type_other
+      ? data.business_type_other
       : data.business_type;
 
     // Genera un prompt base intelligente basato sui dati del questionario
@@ -155,7 +161,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
       colors: {
         primary: data.branding_colors.primary,
         background: data.branding_colors.secondary,
-        text: '#1f2937'
+        text: data.branding_colors.text  // ✅ FIX: Usa il text color sincronizzato!
       },
       metadata: {
         gdpr_required: data.gdpr_required,
@@ -215,8 +221,8 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
             key={type}
             onClick={() => updateData({ business_type: type })}
             className={`p-3 rounded-lg border text-left transition-all ${data.business_type === type
-                ? 'border-primary bg-primary/5 text-primary'
-                : 'border-gray-200 hover:border-gray-300'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-gray-200 hover:border-gray-300'
               }`}
           >
             {type}
@@ -273,8 +279,8 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
             key={purpose}
             onClick={() => updateData({ form_purpose: purpose })}
             className={`p-3 rounded-lg border text-left transition-all ${data.form_purpose === purpose
-                ? 'border-primary bg-primary/5 text-primary'
-                : 'border-gray-200 hover:border-gray-300'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-gray-200 hover:border-gray-300'
               }`}
           >
             {purpose}
@@ -299,8 +305,8 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
             key={field}
             onClick={() => handleFieldToggle(field)}
             className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${data.required_fields.includes(field)
-                ? 'border-primary bg-primary/5 text-primary'
-                : 'border-gray-200 hover:border-gray-300'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-gray-200 hover:border-gray-300'
               }`}
           >
             <span>{field}</span>
@@ -318,33 +324,49 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
       <h3 className="text-lg font-semibold text-gray-900">Privacy e GDPR</h3>
 
       <div className="space-y-3">
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            id="gdpr"
-            checked={data.gdpr_required}
-            onChange={e => updateData({ gdpr_required: e.target.checked })}
-            className="h-4 w-4 text-primary"
-          />
-          <label htmlFor="gdpr" className="text-sm font-medium text-gray-700">
-            Richiedi compliance GDPR (raccomandato per UE)
-          </label>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <input
+              type="checkbox"
+              id="gdpr"
+              checked={data.gdpr_required}
+              onChange={e => updateData({ gdpr_required: e.target.checked })}
+              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <div>
+              <label htmlFor="gdpr" className="text-sm font-medium text-gray-700">
+                <span className="text-blue-700">📋 GDPR COMPLIANCE</span><br />
+                Richiedi compliance GDPR (raccomandato per UE)
+              </label>
+              <p className="text-xs text-blue-600 mt-1">
+                Aggiunge automaticamente checkbox privacy policy
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            id="marketing"
-            checked={data.marketing_consent}
-            onChange={e => updateData({ marketing_consent: e.target.checked })}
-            className="h-4 w-4 text-primary"
-          />
-          <label
-            htmlFor="marketing"
-            className="text-sm font-medium text-gray-700"
-          >
-            Includi consenso per email marketing
-          </label>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <input
+              type="checkbox"
+              id="marketing"
+              checked={data.marketing_consent}
+              onChange={e => updateData({ marketing_consent: e.target.checked })}
+              className="mt-1 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+            />
+            <div>
+              <label
+                htmlFor="marketing"
+                className="text-sm font-medium text-gray-700"
+              >
+                <span className="text-green-700">📧 MARKETING NEWSLETTER</span><br />
+                Includi consenso per email marketing
+              </label>
+              <p className="text-xs text-green-600 mt-1">
+                ⚠️ Se NON spunti questa opzione, il campo marketing NON apparirà nel form!
+              </p>
+            </div>
+          </div>
         </div>
 
         <div>

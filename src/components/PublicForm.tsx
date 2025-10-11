@@ -22,24 +22,44 @@ interface ApiError {
 // }
 
 // Componente riutilizzabile per renderizzare campi di form dinamici
-const DynamicFormField: React.FC<{ 
-    field: FormField; 
-    formStyle?: FormStyle; 
-    privacyPolicyUrl?: string; 
+const DynamicFormField: React.FC<{
+    field: FormField;
+    formStyle?: FormStyle;
+    privacyPolicyUrl?: string;
 }> = ({ field, formStyle, privacyPolicyUrl }) => {
+    console.log('🔧 DynamicFormField rendering:', {
+        fieldName: field.name,
+        fieldType: field.type,
+        hasFormStyle: !!formStyle,
+        formStyleColors: formStyle ? {
+            primary: formStyle.primary_color,
+            background: formStyle.background_color,
+            text: formStyle.text_color
+        } : null
+    });
+
     const primaryColor = formStyle?.primary_color || '#6366f1';
-    const textColor = formStyle?.text_color || '#374151';
+
+    // 🎯 UX IMPROVEMENT: Se text_color non è specificato, usa primaryColor invece del grigio
+    const textColor = formStyle?.text_color || formStyle?.primary_color || '#374151';
+
     const borderRadius = formStyle?.border_radius || '6px';
-    
+
+    console.log('🎨 DynamicFormField calculated colors:', {
+        primaryColor,
+        textColor,
+        borderRadius,
+        isCustomColors: primaryColor !== '#6366f1'
+    });
+
     // Calcola il colore di sfondo per i campi input basato sul background del form
-    const fieldBackgroundColor = formStyle?.background_color ? 
+    const fieldBackgroundColor = formStyle?.background_color ?
         (formStyle.background_color === '#ffffff' ? '#f9fafb' : '#ffffff') : '#ffffff';
-    
-    // Calcola il colore del bordo basato sul colore primario con opacità
-    const borderColor = formStyle?.primary_color ? 
-        `${formStyle.primary_color}30` : '#d1d5db';
-    
-    const commonClasses = "mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 sm:text-sm";
+
+    // Calcola il colore del bordo basato sul colore primario (direct color for better visibility)
+    const borderColor = formStyle?.primary_color || '#d1d5db';
+
+    const commonClasses = "mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none sm:text-sm";
 
     // FIX: Privacy checkbox alignment - checkbox a sinistra, label a destra
     if (field.type === 'checkbox') {
@@ -59,9 +79,9 @@ const DynamicFormField: React.FC<{
                     />
                     <label htmlFor={field.name} className="text-sm flex-1" style={{ color: textColor }}>
                         Accetto l'
-                        <a 
-                            href={privacyPolicyUrl} 
-                            target="_blank" 
+                        <a
+                            href={privacyPolicyUrl}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="underline hover:no-underline"
                             style={{ color: primaryColor }}
@@ -73,7 +93,7 @@ const DynamicFormField: React.FC<{
                 </div>
             );
         }
-        
+
         // Checkbox generico
         return (
             <div className="flex items-start gap-3">
@@ -98,7 +118,7 @@ const DynamicFormField: React.FC<{
         );
     }
 
-    const label = <label htmlFor={field.name} className="block text-sm font-medium" style={{ color: formStyle?.text_color || '#374151' }}>{field.label}{field.required ? ' *' : ''}</label>;
+    const label = <label htmlFor={field.name} className="block text-sm font-medium" style={{ color: textColor }}>{field.label}{field.required ? ' *' : ''}</label>;
 
     // 🆕 SELECT support
     if (field.type === 'select') {
@@ -199,7 +219,9 @@ const DynamicFormField: React.FC<{
 
 // FIX: Updated component to use useParams hook instead of props to get formId.
 export const PublicForm: React.FC = () => {
+    console.log('🚨 PUBLIC FORM COMPONENT LOADED!');
     const { formId } = useParams<{ formId: string }>();
+    console.log('🚨 PUBLIC FORM - FormId from URL:', formId);
     const [form, setForm] = useState<Form | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -211,7 +233,7 @@ export const PublicForm: React.FC = () => {
             console.log('🔍 PublicForm - Starting fetch for formId:', formId);
             setLoading(true);
             setError(null);
-            
+
             try {
                 if (!formId) {
                     throw new Error("Form ID mancante nell'URL");
@@ -224,18 +246,18 @@ export const PublicForm: React.FC = () => {
                     .eq('id', formId)
                     .single();
 
-                console.log('🔍 PublicForm - Supabase Response:', { 
-                    hasData: !!data, 
+                console.log('🔍 PublicForm - Supabase Response:', {
+                    hasData: !!data,
                     error: fetchError,
                     dataKeys: data ? Object.keys(data) : []
                 });
 
-                if (fetchError) { 
+                if (fetchError) {
                     console.error('❌ PublicForm - Supabase Error:', fetchError);
                     throw new Error(`Database error: ${fetchError.message} (Code: ${fetchError.code})`);
                 }
-                
-                if (!data) { 
+
+                if (!data) {
                     console.error('❌ PublicForm - No data returned');
                     throw new Error("Form non trovato nel database");
                 }
@@ -245,9 +267,33 @@ export const PublicForm: React.FC = () => {
                     name: data.name,
                     fieldsCount: data.fields?.length || 0,
                     hasStyling: !!data.styling,
-                    hasPrivacyUrl: !!data.privacy_policy_url
+                    hasPrivacyUrl: !!data.privacy_policy_url,
+                    styling_details: data.styling
                 });
-                
+
+                console.log('🎨 PUBLIC FORM - STYLING ANALYSIS:', {
+                    raw_styling: data.styling,
+                    primary_color: data.styling?.primary_color,
+                    background_color: data.styling?.background_color,
+                    has_custom_primary: data.styling?.primary_color !== '#6366f1',
+                    has_custom_background: data.styling?.background_color !== '#ffffff'
+                });
+
+                // 🎨 LOAD CUSTOM STYLING FROM LOCALSTORAGE
+                const formStyleKey = `form_style_${data.id}`;
+                const localStorageStyle = localStorage.getItem(formStyleKey);
+
+                if (localStorageStyle) {
+                    try {
+                        const customStyle = JSON.parse(localStorageStyle);
+                        console.log('🎨 PublicForm - Loading custom style from localStorage:', customStyle);
+                        // Merge with database styling
+                        data.styling = { ...data.styling, ...customStyle };
+                    } catch (e) {
+                        console.warn('⚠️ PublicForm - Failed to parse localStorage style:', e);
+                    }
+                }
+
                 setForm(data);
             } catch (err: unknown) {
                 const error = err as ApiError;
@@ -317,12 +363,16 @@ export const PublicForm: React.FC = () => {
         }
     };
 
-    console.log('🎨 PublicForm - Render State:', { 
-        loading, 
-        hasError: !!error, 
+    console.log('🎨 PublicForm - Render State:', {
+        loading,
+        hasError: !!error,
         hasForm: !!form,
         submitSuccess,
-        formId 
+        formId,
+        formStyling: form?.styling,
+        hasCustomColors: !!form?.styling?.primary_color,
+        primaryColor: form?.styling?.primary_color,
+        backgroundColor: form?.styling?.background_color
     });
 
     if (loading) {
@@ -413,16 +463,24 @@ export const PublicForm: React.FC = () => {
                 <div
                     className="p-8 rounded-lg shadow-md"
                     style={{
-                        backgroundColor: form?.styling?.background_color ? 
+                        backgroundColor: form?.styling?.background_color ?
                             (form.styling.background_color === '#ffffff' ? '#f9fafb' : '#ffffff') : '#ffffff',
                         borderRadius: `${form?.styling?.border_radius || 8}px`
                     }}
                 >
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {(() => {
+                            console.log('🔍 DEBUG FIELDS RENDER:', {
+                                fieldsCount: form?.fields?.length,
+                                formStyling: form?.styling,
+                                hasStyleData: !!form?.styling?.primary_color
+                            });
+                            return null;
+                        })()}
                         {form?.fields.map(field => (
-                            <DynamicFormField 
-                                key={field.name} 
-                                field={field} 
+                            <DynamicFormField
+                                key={field.name}
+                                field={field}
                                 formStyle={form?.styling}
                                 privacyPolicyUrl={form?.privacy_policy_url}
                             />

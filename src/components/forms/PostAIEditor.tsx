@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormField, FormStyle } from '../../types';
 import { PlusIcon, TrashIcon } from '../ui/icons';
 // import { PencilIcon } from '../ui/icons'; // TODO: Re-enable when edit functionality is added
@@ -30,7 +30,15 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
     // Stati per la personalizzazione dei colori
     const [primaryColor, setPrimaryColor] = useState(style?.primary_color || '#6366f1');
     const [backgroundColor, setBackgroundColor] = useState(style?.background_color || '#ffffff');
-    const [textColor, setTextColor] = useState(style?.text_color || '#1f2937');
+
+    // 🎯 UX IMPROVEMENT: Se non c'è text_color, inizializza con primaryColor
+    const [textColor, setTextColor] = useState(
+        style?.text_color || style?.primary_color || '#1f2937'
+    );
+
+    // 🎯 UX IMPROVEMENT: Traccia se il testo è stato personalizzato manualmente
+    // Se non c'è text_color nel style iniziale, significa che è auto-sync
+    const [isTextColorCustomized, setIsTextColorCustomized] = useState(!!style?.text_color);
 
     // 🆕 CRITICAL FIX: Sincronizza state locale con props quando cambiano
     // Questo risolve il problema dove PostAIEditor mostra colori default
@@ -45,6 +53,10 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
         }
         if (style?.text_color) {
             setTextColor(style.text_color);
+            setIsTextColorCustomized(true); // Se c'è text_color, è personalizzato
+        } else if (style?.primary_color && !isTextColorCustomized) {
+            // Se non c'è text_color ma c'è primary_color, auto-sync
+            setTextColor(style.primary_color);
         }
     }, [style]); // ✅ FIX: Solo style nelle dependencies, non i colori locali
 
@@ -89,12 +101,23 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
         if (type === 'primary') {
             newPrimary = color;
             setPrimaryColor(color);
+
+            // 🎯 UX MAGIC: Sincronizza automaticamente il testo col primario 
+            // SOLO se l'utente non ha mai personalizzato il testo manualmente
+            if (!isTextColorCustomized) {
+                newText = color;
+                setTextColor(color);
+                console.log('🔄 Auto-syncing text color with primary:', color);
+            }
         } else if (type === 'background') {
             newBackground = color;
             setBackgroundColor(color);
         } else if (type === 'text') {
             newText = color;
             setTextColor(color);
+            // 🏷️ Marca il testo come personalizzato manualmente
+            setIsTextColorCustomized(true);
+            console.log('✏️ Text color manually customized:', color);
         }
 
         // ✅ Chiama onStyleChange IMMEDIATAMENTE con i nuovi valori
@@ -102,10 +125,26 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
     };
 
     const applyPreset = (preset: typeof colorPresets[0]) => {
+        // 🛡️ PROTEZIONE: Chiedi conferma se ci sono personalizzazioni
+        const hasCustomizations =
+            primaryColor !== '#6366f1' ||
+            backgroundColor !== '#ffffff' ||
+            textColor !== '#1f2937';
+
+        if (hasCustomizations) {
+            const confirmed = window.confirm(
+                `⚠️ Applicare il tema "${preset.name}" cancellerà le tue personalizzazioni colori.\n\nVuoi procedere?`
+            );
+            if (!confirmed) {
+                return; // Annulla operazione
+            }
+        }
+
         console.log('🎨 APPLYING PRESET:', { preset, timestamp: new Date().toISOString() });
         setPrimaryColor(preset.primary);
         setBackgroundColor(preset.background);
         setTextColor(preset.text);
+        setIsTextColorCustomized(false); // 🎯 Reset personalizzazione quando si applica un preset
 
         // ✅ Applica preset immediatamente
         onStyleChange(buildStyleObject(preset.primary, preset.background, preset.text));
@@ -191,9 +230,16 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Colore Testo
-                        </label>
+                        <div className="flex items-center justify-between">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Colore Testo
+                            </label>
+                            {!isTextColorCustomized && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    🔄 Auto-sync
+                                </span>
+                            )}
+                        </div>
                         <div className="flex items-center space-x-2">
                             <input
                                 type="color"
@@ -209,14 +255,26 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
                                 placeholder="#1f2937"
                             />
                         </div>
+                        {!isTextColorCustomized && (
+                            <p className="text-xs text-gray-500">
+                                💡 Il colore del testo segue automaticamente il primario. Modificalo per personalizzarlo.
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 {/* Preset Themes */}
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                        Temi Predefiniti
-                    </label>
+                    <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Temi Predefiniti
+                        </label>
+                        {(primaryColor !== '#6366f1' || backgroundColor !== '#ffffff' || textColor !== '#1f2937') && (
+                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded flex items-center">
+                                🎨 Personalizzato
+                            </span>
+                        )}
+                    </div>
                     <div className="flex flex-wrap gap-2">
                         {colorPresets.map((preset) => (
                             <button
@@ -237,6 +295,21 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
                                 <span>{preset.name}</span>
                             </button>
                         ))}
+                        {(primaryColor !== '#6366f1' || backgroundColor !== '#ffffff' || textColor !== '#1f2937') && (
+                            <button
+                                onClick={() => {
+                                    setPrimaryColor('#6366f1');
+                                    setBackgroundColor('#ffffff');
+                                    setTextColor('#1f2937');
+                                    setIsTextColorCustomized(false); // 🎯 Reset anche la personalizzazione
+                                    onStyleChange(buildStyleObject('#6366f1', '#ffffff', '#1f2937'));
+                                }}
+                                className="flex items-center space-x-2 px-3 py-2 text-sm border border-orange-300 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors"
+                                title="Ripristina colori di default"
+                            >
+                                <span>🔄 Reset</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 

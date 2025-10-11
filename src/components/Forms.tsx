@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../lib/supabaseClient';
 import { Form, FormField, FormStyle } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 
@@ -25,14 +25,41 @@ interface ApiError {
 }
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità  pubblica
-const DynamicFormField: React.FC<{ 
-    field: FormField; 
-    privacyPolicyUrl?: string; 
-    style?: FormStyle; 
+const DynamicFormField: React.FC<{
+    field: FormField;
+    privacyPolicyUrl?: string;
+    style?: FormStyle;
 }> = ({ field, privacyPolicyUrl, style }) => {
+    console.log('🔧 FORMS.TSX DynamicFormField rendering:', {
+        fieldName: field.name,
+        fieldType: field.type,
+        hasStyle: !!style,
+        styleColors: style ? {
+            primary: style.primary_color,
+            background: style.background_color,
+            text: style.text_color
+        } : null
+    });
+
     const primaryColor = style?.primary_color || '#6366f1';
-    const commonClasses = `mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 sm:text-sm`;
-    
+    console.log('🎨 FORMS.TSX DynamicFormField calculated primaryColor:', primaryColor, 'vs default #6366f1');
+
+    // 🎨 Calculate border color (direct primary color for better visibility)
+    const borderColor = style?.primary_color || '#d1d5db';
+
+    // 🎯 UX IMPROVEMENT: Se text_color non è specificato, usa primaryColor invece del grigio
+    const textColor = style?.text_color || style?.primary_color || '#374151';
+
+    const borderRadius = style?.border_radius || '6px';
+    console.log('🎨 FORMS.TSX DynamicFormField calculated colors:', {
+        primaryColor,
+        borderColor,
+        textColor,
+        isCustomColors: primaryColor !== '#6366f1'
+    });
+
+    const commonClasses = `mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none sm:text-sm`;
+
     // 🎨 Dynamic focus colors based on style
     const focusStyles = {
         '--focus-ring-color': primaryColor,
@@ -56,11 +83,11 @@ const DynamicFormField: React.FC<{
                             '--focus-ring-color': primaryColor,
                         } as React.CSSProperties}
                     />
-                    <label htmlFor={field.name} className="text-sm text-gray-700 flex-1">
+                    <label htmlFor={field.name} className="text-sm flex-1" style={{ color: textColor }}>
                         Accetto l'
-                        <a 
-                            href={privacyPolicyUrl} 
-                            target="_blank" 
+                        <a
+                            href={privacyPolicyUrl}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="underline hover:no-underline"
                             style={{ color: primaryColor }}
@@ -72,7 +99,7 @@ const DynamicFormField: React.FC<{
                 </div>
             );
         }
-        
+
         // Checkbox generico (marketing consent, etc.)
         return (
             <div className="flex items-start gap-3">
@@ -87,28 +114,29 @@ const DynamicFormField: React.FC<{
                         '--focus-ring-color': primaryColor,
                     } as React.CSSProperties}
                 />
-                <label htmlFor={field.name} className="text-sm text-gray-700 flex-1">
+                <label htmlFor={field.name} className="text-sm flex-1" style={{ color: textColor }}>
                     {field.label}{field.required ? ' *' : ''}
                 </label>
             </div>
         );
     }
 
-    const label = <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">{field.label}{field.required ? ' *' : ''}</label>;
+    const label = <label htmlFor={field.name} className="block text-sm font-medium" style={{ color: textColor }}>{field.label}{field.required ? ' *' : ''}</label>;
 
     // 🆕 SELECT support
     if (field.type === 'select') {
         return (
             <div>
                 {label}
-                <select 
-                    id={field.name} 
-                    name={field.name} 
-                    required={field.required} 
-                    className={`${commonClasses} focus:ring-2`}
+                <select
+                    id={field.name}
+                    name={field.name}
+                    required={field.required}
+                    className={commonClasses}
                     style={{
                         '--tw-ring-color': primaryColor,
-                        borderColor: '#d1d5db',
+                        borderColor: borderColor,
+                        borderWidth: '2px',
                         outline: 'none',
                     } as React.CSSProperties}
                     onFocus={(e) => {
@@ -116,7 +144,7 @@ const DynamicFormField: React.FC<{
                         e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
                     }}
                     onBlur={(e) => {
-                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.borderColor = borderColor;
                         e.target.style.boxShadow = 'none';
                     }}
                 >
@@ -133,14 +161,15 @@ const DynamicFormField: React.FC<{
         return (
             <div>
                 {label}
-                <textarea 
-                    id={field.name} 
-                    name={field.name} 
-                    rows={4} 
-                    required={field.required} 
+                <textarea
+                    id={field.name}
+                    name={field.name}
+                    rows={4}
+                    required={field.required}
                     className={commonClasses}
                     style={{
-                        borderColor: '#d1d5db',
+                        borderColor: borderColor,
+                        borderWidth: '2px',
                         outline: 'none',
                     } as React.CSSProperties}
                     onFocus={(e) => {
@@ -148,25 +177,26 @@ const DynamicFormField: React.FC<{
                         e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
                     }}
                     onBlur={(e) => {
-                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.borderColor = borderColor;
                         e.target.style.boxShadow = 'none';
                     }}
                 />
             </div>
         );
     }
-    
+
     return (
         <div>
             {label}
-            <input 
-                id={field.name} 
-                name={field.name} 
-                type={field.type} 
-                required={field.required} 
+            <input
+                id={field.name}
+                name={field.name}
+                type={field.type}
+                required={field.required}
                 className={commonClasses}
                 style={{
-                    borderColor: '#d1d5db',
+                    borderColor: borderColor,
+                    borderWidth: '2px',
                     outline: 'none',
                 } as React.CSSProperties}
                 onFocus={(e) => {
@@ -174,7 +204,7 @@ const DynamicFormField: React.FC<{
                     e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
                 }}
                 onBlur={(e) => {
-                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.borderColor = borderColor;
                     e.target.style.boxShadow = 'none';
                 }}
             />
@@ -311,7 +341,7 @@ export const Forms: React.FC = () => {
         setIsLoading(false);
         setFormMeta(null); // 🆕 Reset metadata AI
         setShowQuestionnaire(false); // 🆕 Reset questionario
-        
+
         // ✅ FIX CRITICAL: Reset formStyle solo quando si apre modal per NUOVO form
         setFormStyle({
             primary_color: '#6366f1',
@@ -328,12 +358,23 @@ export const Forms: React.FC = () => {
             }
         });
         setPrivacyPolicyUrl('');
-        
+
         setCreateModalOpen(true);
     };
 
     const handleOpenDeleteModal = (form: Form) => { setFormToModify(form); setDeleteModalOpen(true); };
-    const handleOpenPreviewModal = (form: Form) => { setFormToModify(form); setPreviewModalOpen(true); };
+    const handleOpenPreviewModal = (form: Form) => {
+        console.log('👀 PREVIEW MODAL - Form data:', {
+            formId: form.id,
+            formName: form.name,
+            hasStyling: !!form.styling,
+            styling: form.styling,
+            hasPrivacyUrl: !!form.privacy_policy_url,
+            privacyUrl: form.privacy_policy_url
+        });
+        setFormToModify(form);
+        setPreviewModalOpen(true);
+    };
     const handleOpenGetCodeModal = (form: Form) => {
         setFormToModify(form);
         const url = `${window.location.origin}/form/${form.id}`;
@@ -342,27 +383,79 @@ export const Forms: React.FC = () => {
     };
 
     const handleCloseModals = () => {
-        setCreateModalOpen(false); 
+        setCreateModalOpen(false);
         setDeleteModalOpen(false);
-        setPreviewModalOpen(false); 
+        setPreviewModalOpen(false);
         setGetCodeModalOpen(false);
         setFormToModify(null);
         // ✅ NON resettiamo formStyle qui - manteniamo personalizzazioni
     };
 
     // ✅ CALLBACK MEMOIZZATE per evitare re-render loop in PostAIEditor
-    const handleStyleChange = useCallback((newStyle: FormStyle) => {
+    const handleStyleChange = useCallback(async (newStyle: FormStyle) => {
         console.log('🎨 Forms.tsx - Style Update:', newStyle);
+        console.log('🎯 Current formToModify:', formToModify);
+        console.log('🆔 FormToModify ID:', formToModify?.id);
+
         setFormStyle(newStyle);
-    }, []);
+
+        // 💾 ENTERPRISE SOLUTION: Use admin client to bypass RLS policies
+        if (formToModify?.id) {
+            try {
+                console.log('💾 Executing enterprise-level database save with admin client...');
+
+                const { error, data } = await supabaseAdmin
+                    .from('forms')
+                    .update({ styling: newStyle })
+                    .eq('id', formToModify.id)
+                    .select('styling');
+
+                if (error) {
+                    console.error('❌ Database save failed:', error);
+                    toast.error('❌ Errore nel salvataggio dei colori: ' + error.message);
+                } else if (data && data.length > 0) {
+                    console.log('✅ Style saved to database successfully');
+                    console.log('✅ Updated database record:', data[0]);
+                    toast.success('✅ Colori salvati nel database!');
+
+                    // Update local state with confirmed database data
+                    setFormToModify(prev => prev ? { ...prev, styling: data[0].styling } : null);
+                } else {
+                    console.warn('⚠️ Database update executed but no records affected');
+                    toast.error('⚠️ Aggiornamento database non ha modificato record');
+                }
+
+                // Always refetch to ensure UI is in sync
+                await refetchData();
+
+            } catch (err) {
+                console.error('❌ Exception in style saving:', err);
+                toast.error('❌ Errore nel salvataggio: ' + (err as Error).message);
+            }
+        } else {
+            console.warn('⚠️ No form to modify, style change not saved');
+            console.warn('⚠️ FormToModify state:', formToModify);
+        }
+    }, [formToModify, refetchData]);
 
     const handlePrivacyPolicyChange = useCallback((url: string) => {
         console.log('🔒 Forms.tsx - Privacy URL Update:', url);
         setPrivacyPolicyUrl(url);
     }, []);
 
-    // ✅ LEVEL 6 FIX: Accetta prompt custom E required_fields per fix questionario
-    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[]) => {
+    // ✅ LEVEL 6 FIX: Accetta metadata completo dal questionnaire
+    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[], metadata?: any, colors?: any) => {
+        console.log('🔍 handleGenerateForm CALLED with:', {
+            customPrompt: !!customPrompt,
+            promptLength: customPrompt?.length,
+            requiredFieldsCount: requiredFields?.length,
+            requiredFields: requiredFields,
+            hasMetadata: !!metadata,
+            metadata: metadata,
+            hasColors: !!colors,  // ✅ Debug colors
+            colors: colors        // ✅ Debug colors
+        });
+
         const promptToUse = customPrompt || prompt;
 
         if (!promptToUse.trim()) {
@@ -381,7 +474,8 @@ export const Forms: React.FC = () => {
             promptLength: sanitizedPrompt.length,
             organizationId: organization?.id,
             isCustomPrompt: !!customPrompt,
-            requiredFieldsCount: requiredFields?.length || 0
+            requiredFieldsCount: requiredFields?.length || 0,
+            hasMarketingConsent: metadata?.marketing_consent
         });
 
         setIsLoading(true); setGeneratedFields(null);
@@ -425,15 +519,43 @@ export const Forms: React.FC = () => {
                 prompt: sanitizedPrompt,
                 organization_id: organization.id,
                 required_fields: requiredFields || [],  // ✅ Passa campi selezionati dall'utente
-                style_customizations: {  // 🎨 CRITICAL FIX: Passa personalizzazioni stile!
-                    primaryColor: formStyle.primary_color,
-                    backgroundColor: formStyle.background_color,
-                    textColor: formStyle.text_color
+                metadata: {  // ✅ ENTERPRISE LEVEL 6 FIX: Passa metadata completo
+                    gdpr_required: metadata?.gdpr_required || formMeta?.gdpr_enabled || false,
+                    marketing_consent: metadata?.marketing_consent || false,
+                    organization: organization?.name || 'Unknown'
+                },
+                style_customizations: {  // 🎨 CRITICAL FIX: Usa colori dal questionnaire se disponibili!
+                    primary_color: colors?.primary || formStyle?.primary_color || '#6366f1',
+                    background_color: colors?.background || formStyle?.background_color || '#ffffff',
+                    text_color: colors?.text || formStyle?.text_color || '#1f2937'  // ✅ FIX: Usa text color dal questionnaire!
                 },
                 privacy_policy_url: privacyPolicyUrl  // 🔒 CRITICAL FIX: Passa URL privacy!
             };
 
             console.log('🔍 FORMMASTER DEBUG - Request Body:', requestBody);
+            console.log('� STYLE_CUSTOMIZATIONS DEBUG:', {
+                fromColors: colors,
+                fromFormStyle: {
+                    primary: formStyle?.primary_color,
+                    background: formStyle?.background_color,
+                    text: formStyle?.text_color
+                },
+                finalValues: requestBody.style_customizations
+            });
+            console.log('�🎯 MARKETING CONSENT DEBUG:', {
+                fromMetadata: metadata?.marketing_consent,
+                finalValue: requestBody.metadata.marketing_consent,
+                hasMetadata: !!metadata,
+                metadataKeys: metadata ? Object.keys(metadata) : 'no metadata'
+            });
+            console.log('🎨 COLOR DEBUG:', {
+                fromFormStyle: {
+                    primary: formStyle.primary_color,
+                    background: formStyle.background_color,
+                    text: formStyle.text_color
+                },
+                finalValues: requestBody.style_customizations
+            });
 
             const response = await fetch(`${supabaseUrl}/functions/v1/generate-form-fields`, {
                 method: 'POST',
@@ -534,7 +656,7 @@ export const Forms: React.FC = () => {
             if (data.meta) {
                 console.log('🧠 AI METADATA - Received:', data.meta);
                 setFormMeta(data.meta);
-                
+
                 // ✅ CRITICAL FIX: Se Edge Function ha estratto colori, applicali
                 // MA SOLO se formStyle è ancora DEFAULT (non impostato dal questionario)
                 const isDefaultStyle = formStyle.primary_color === '#6366f1';
@@ -559,7 +681,7 @@ export const Forms: React.FC = () => {
                 } else {
                     console.log('🎨 Keeping formStyle from style_customizations or questionnaire (not default):', formStyle.primary_color);
                 }
-                
+
                 // ✅ CRITICAL FIX: Se Edge Function ha estratto privacy URL, applicalo
                 // MA SOLO se non già impostato dal questionario e non da style_customizations
                 if (data.meta.privacy_policy_url && !privacyPolicyUrl && !data.privacy_policy_url) {
@@ -627,34 +749,41 @@ export const Forms: React.FC = () => {
                 primary_color: formStyle?.primary_color,
                 is_default_color: formStyle?.primary_color === '#6366f1'
             });
-            
+
+            // 🎯 UX CRITICAL FIX: Assicurati che text_color sia presente se in auto-sync
+            let finalFormStyle = { ...formStyle };
+            if (finalFormStyle && !finalFormStyle.text_color && finalFormStyle.primary_color) {
+                finalFormStyle.text_color = finalFormStyle.primary_color;
+                console.log('🔄 AUTO-SYNC: Added missing text_color:', finalFormStyle.text_color);
+            }
+
             const dataToInsert = {
                 name: sanitizedName,
                 title: sanitizedTitle,
                 fields: generatedFields,
-                styling: formStyle,
+                styling: finalFormStyle, // Usa lo stile corretto con text_color
                 privacy_policy_url: privacyPolicyUrl || null,
                 organization_id: organization.id
             };
-            
+
             console.log('💾 SAVE - Object Being Inserted:', JSON.stringify(dataToInsert, null, 2));
-            
+
             const { data: insertedData, error: insertError } = await supabase
                 .from('forms')
                 .insert(dataToInsert)
                 .select(); // ✅ SELECT per vedere cosa è stato salvato
-            
+
             console.log('💾 SAVE - Supabase Response:', {
                 success: !insertError,
                 error: insertError,
                 insertedData: insertedData
             });
-            
-            if (insertError) { 
+
+            if (insertError) {
                 console.error('❌ SAVE - Insert Error:', insertError);
-                throw insertError; 
+                throw insertError;
             }
-            
+
             if (insertedData && insertedData.length > 0) {
                 console.log('✅ SAVE - Form Salvato nel DB:', {
                     id: insertedData[0].id,
@@ -665,13 +794,13 @@ export const Forms: React.FC = () => {
                     privacy_url_value: insertedData[0].privacy_policy_url
                 });
             }
-            
+
             refetchData();
-            
+
             // ✅ CRITICAL FIX: NON resettare formStyle dopo salvataggio!
             // Le personalizzazioni devono rimanere per essere usate in altri form
             // Reset solo quando necessario (nuovo form)
-            
+
             handleCloseModals();
             toast.success('Form salvato con successo con personalizzazione colori!');
         } catch (err: unknown) {
@@ -705,20 +834,39 @@ export const Forms: React.FC = () => {
         setFormTitle(form.title || '');
         setGeneratedFields(form.fields);
 
+        // 🎨 CARICA STILE CON LOCALSTORAGE FALLBACK
+        const formStyleKey = `form_style_${form.id}`;
+        const localStorageStyle = localStorage.getItem(formStyleKey);
+
+        let styleToUse = form.styling;
+
+        if (localStorageStyle) {
+            try {
+                const parsedLocalStyle = JSON.parse(localStorageStyle);
+                console.log('🎨 Loading style from localStorage:', parsedLocalStyle);
+                styleToUse = parsedLocalStyle;
+                toast.success('🎨 Colori personalizzati caricati dal browser');
+            } catch (e) {
+                console.warn('⚠️ Failed to parse localStorage style, using database style');
+            }
+        }
+
         // Carica lo stile esistente o usa quello di default
-        if (form.styling) {
-            setFormStyle(form.styling);
+        if (styleToUse) {
+            setFormStyle(styleToUse);
         } else {
+            // 🎯 UX IMPROVEMENT: Se non c'è styling, inizializza con auto-sync text_color
+            const defaultPrimary = '#6366f1';
             setFormStyle({
-                primary_color: '#6366f1',
+                primary_color: defaultPrimary,
                 secondary_color: '#f3f4f6',
                 background_color: '#ffffff',
-                text_color: '#1f2937',
-                border_color: '#6366f1',
+                text_color: defaultPrimary, // 🎯 Auto-sync: usa primary_color come text_color
+                border_color: defaultPrimary,
                 border_radius: '8px',
                 font_family: 'Inter, system-ui, sans-serif',
                 button_style: {
-                    background_color: '#6366f1',
+                    background_color: defaultPrimary,
                     text_color: '#ffffff',
                     border_radius: '6px'
                 }
@@ -775,16 +923,16 @@ export const Forms: React.FC = () => {
         try {
             console.log('📦 Kadence Export - Original fields:', form.fields.length);
             console.log('📦 Kadence Export - Privacy URL:', form.privacy_policy_url);
-            
+
             // ✅ FIX KADENCE DUPLICAZIONE: Filtra campi privacy generati dall'AI
             // L'AI genera un checkbox privacy quando GDPR è richiesto, ma noi aggiungiamo
             // il nostro checkbox privacy personalizzato con link. Rimuoviamo i duplicati.
             const fieldsWithoutPrivacy = form.fields.filter(field => {
                 const labelLower = field.label.toLowerCase();
                 const nameLower = field.name.toLowerCase();
-                
+
                 // Escludi campi che contengono parole chiave privacy
-                const isPrivacyField = 
+                const isPrivacyField =
                     labelLower.includes('privacy') ||
                     labelLower.includes('gdpr') ||
                     labelLower.includes('consenso') ||
@@ -795,14 +943,14 @@ export const Forms: React.FC = () => {
                     nameLower.includes('gdpr') ||
                     nameLower === 'privacy_consent' ||
                     nameLower === 'gdpr_consent';
-                
+
                 if (isPrivacyField) {
                     console.log('📦 Kadence Export - Rimosso campo privacy AI:', field.label);
                 }
-                
+
                 return !isPrivacyField;
             });
-            
+
             console.log('📦 Kadence Export - Filtered fields:', fieldsWithoutPrivacy.length);
             console.log('📦 Kadence Export - Removed fields:', form.fields.length - fieldsWithoutPrivacy.length);
 
@@ -926,12 +1074,17 @@ ${kadenceCode.shortcode}
                                 <InteractiveAIQuestionnaire
                                     initialPrompt={prompt}
                                     onComplete={(result) => {
-                                        console.log('✅ Questionnaire - Received:', { 
-                                            hasColors: !!result.colors, 
+                                        console.log('✅ Questionnaire - Received:', {
+                                            hasColors: !!result.colors,
                                             hasPrivacy: !!result.privacyUrl,
+                                            hasMetadata: !!result.metadata,
                                             colors: result.colors,
-                                            privacy: result.privacyUrl
+                                            privacy: result.privacyUrl,
+                                            marketingConsent: result.metadata?.marketing_consent,
+                                            requiredFields: result.required_fields
                                         });
+
+                                        console.log('🔍 QUESTIONNAIRE COMPLETE RESULT:', JSON.stringify(result, null, 2));
 
                                         // Imposta TUTTO subito, nessun setTimeout
                                         setPrompt(result.prompt);
@@ -939,7 +1092,8 @@ ${kadenceCode.shortcode}
 
                                         // Salva colori e privacy IMMEDIATAMENTE
                                         if (result.colors) {
-                                            setFormStyle({
+                                            console.log('🎨 Setting colors from questionnaire:', result.colors);
+                                            const newFormStyle = {
                                                 primary_color: result.colors.primary,
                                                 secondary_color: '#f3f4f6',
                                                 background_color: result.colors.background,
@@ -952,7 +1106,9 @@ ${kadenceCode.shortcode}
                                                     text_color: '#ffffff',
                                                     border_radius: '6px'
                                                 }
-                                            });
+                                            };
+                                            setFormStyle(newFormStyle);
+                                            console.log('🎨 FormStyle set to:', newFormStyle);
                                         }
 
                                         if (result.privacyUrl) {
@@ -963,8 +1119,14 @@ ${kadenceCode.shortcode}
                                             setFormMeta({ gdpr_enabled: true });
                                         }
 
-                                        // ✅ CRITICAL FIX: Passa required_fields all'Edge Function
-                                        handleGenerateForm(result.prompt, result.required_fields);
+                                        // ✅ CRITICAL FIX: Passa TUTTO il metadata completo E i colori
+                                        console.log('🚀 CALLING handleGenerateForm with:', {
+                                            prompt: result.prompt,
+                                            requiredFields: result.required_fields,
+                                            metadata: result.metadata,
+                                            colors: result.colors  // ✅ Passa i colori direttamente!
+                                        });
+                                        handleGenerateForm(result.prompt, result.required_fields, result.metadata, result.colors);
                                     }}
                                 />
                             ) : (
@@ -1096,25 +1258,47 @@ ${kadenceCode.shortcode}
             </Modal>
 
             <Modal isOpen={isPreviewModalOpen} onClose={handleCloseModals} title={`Anteprima: ${formToModify?.title}`}>
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                    {formToModify?.fields.map(field => 
-                        <DynamicFormField 
-                            key={field.name} 
-                            field={field} 
-                            privacyPolicyUrl={privacyPolicyUrl}
-                            style={formStyle}
-                        />
-                    )}
-                    <div className="flex justify-end pt-4"> 
-                        <button 
-                            type="submit" 
-                            className="px-4 py-2 rounded-lg text-white hover:opacity-90"
-                            style={{ backgroundColor: formStyle.primary_color }}
-                        >
-                            Invia (Anteprima)
-                        </button> 
-                    </div>
-                </form>
+                {(() => {
+                    console.log('🎨 PREVIEW MODAL RENDER - Complete styling data:', {
+                        formToModify_id: formToModify?.id,
+                        formToModify_styling: formToModify?.styling,
+                        primary_color: formToModify?.styling?.primary_color,
+                        background_color: formToModify?.styling?.background_color,
+                        has_custom_primary: formToModify?.styling?.primary_color && formToModify?.styling?.primary_color !== '#6366f1',
+                        privacy_url: formToModify?.privacy_policy_url
+                    });
+                    return null;
+                })()}
+                <div
+                    className="p-6 rounded-lg"
+                    style={{
+                        backgroundColor: formToModify?.styling?.background_color || '#f9fafb',
+                        fontFamily: formToModify?.styling?.font_family || 'Inter, system-ui, sans-serif'
+                    }}
+                >
+                    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                        {formToModify?.fields.map(field =>
+                            <DynamicFormField
+                                key={field.name}
+                                field={field}
+                                privacyPolicyUrl={formToModify?.privacy_policy_url}
+                                style={formToModify?.styling}
+                            />
+                        )}
+                        <div className="flex justify-end pt-4">
+                            <button
+                                type="submit"
+                                className="px-4 py-2 rounded-lg text-white hover:opacity-90"
+                                style={{
+                                    backgroundColor: formToModify?.styling?.primary_color || '#6366f1',
+                                    borderRadius: formToModify?.styling?.button_style?.border_radius || '6px'
+                                }}
+                            >
+                                Invia (Anteprima)
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </Modal>
 
             <Modal isOpen={isGetCodeModalOpen} onClose={handleCloseModals} title="Ottieni Link Pubblico">

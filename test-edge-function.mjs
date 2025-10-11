@@ -2,7 +2,8 @@ const supabaseUrl = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1NjM3OTMsImV4cCI6MjA0NDEzOTc5M30.gGPaJXeayAsuBZdJwfRCqVXiSE6TaJDtKfr-5JjvTSU';
 
 const testPayload = {
-    prompt: `form contatto agenzia web digitale
+    prompt: `form contatto agenzia
+- Tipo di business: Agenzia Assicurazioni
 - URL Privacy Policy: https://example.com/privacy
 - Consenso marketing richiesto
 - Colore primario: #ef4444

@@ -48,6 +48,26 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
 
     const label = <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">{field.label}{field.required ? ' *' : ''}</label>;
 
+    // 🆕 SELECT support
+    if (field.type === 'select') {
+        return (
+            <div>
+                {label}
+                <select 
+                    id={field.name} 
+                    name={field.name} 
+                    required={field.required} 
+                    className={commonClasses}
+                >
+                    <option value="">-- Seleziona --</option>
+                    {field.options?.map((option, idx) => (
+                        <option key={idx} value={option}>{option}</option>
+                    ))}
+                </select>
+            </div>
+        );
+    }
+
     if (field.type === 'textarea') {
         return (
             <div>

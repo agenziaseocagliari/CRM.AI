@@ -41,6 +41,7 @@ interface InteractiveAIQuestionnaire {
 
 interface QuestionnaireData {
   business_type: string;
+  business_type_other: string;  // 🆕 Campo separato per "Altro"
   target_audience: string;
   form_purpose: string;
   required_fields: string[];
@@ -59,6 +60,7 @@ export const InteractiveAIQuestionnaire: React.FC<
   const [step, setStep] = useState(1);
   const [data, setData] = useState<QuestionnaireData>({
     business_type: '',
+    business_type_other: '',  // 🆕 Inizializzato
     target_audience: '',
     form_purpose: '',
     required_fields: [],
@@ -105,15 +107,20 @@ export const InteractiveAIQuestionnaire: React.FC<
   };
 
   const generateEnhancedPrompt = () => {
+    // 🆕 Usa business_type_other se "Altro" è selezionato
+    const businessType = data.business_type === 'Altro' && data.business_type_other 
+      ? data.business_type_other 
+      : data.business_type;
+
     // Genera un prompt base intelligente basato sui dati del questionario
     const basePrompt =
       initialPrompt ||
-      `Crea un form ${data.form_purpose.toLowerCase()} per ${data.business_type.toLowerCase()} che si rivolge a: ${data.target_audience}`;
+      `Crea un form ${data.form_purpose.toLowerCase()} per ${businessType.toLowerCase()} che si rivolge a: ${data.target_audience}`;
 
     const enhanced = `${basePrompt}
 
 CONTESTO BUSINESS:
-- Tipo di business: ${data.business_type}
+- Tipo di business: ${businessType}
 - Target audience: ${data.target_audience}
 - Scopo del form: ${data.form_purpose}
 
@@ -221,8 +228,9 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
         <input
           type="text"
           placeholder="Specifica il tuo settore..."
+          value={data.business_type_other}
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          onChange={e => updateData({ business_type: e.target.value })}
+          onChange={e => updateData({ business_type_other: e.target.value })}
         />
       )}
     </div>

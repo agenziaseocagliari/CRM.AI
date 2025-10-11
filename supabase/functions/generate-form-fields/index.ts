@@ -260,6 +260,102 @@ function extractPrivacyUrlFromPrompt(prompt: string): string | undefined {
   return urlMatch ? urlMatch[1].trim() : undefined;
 }
 
+/**
+ * 🆕 LEVEL 7: Get industry-specific service options for servizi_interesse
+ * Returns appropriate options based on detected business type
+ */
+function getIndustryServiceOptions(industryContext: IndustryContext, businessType?: string): string[] {
+  const industry = industryContext.industry;
+  const lowerBusinessType = businessType?.toLowerCase() || '';
+  
+  // Check for specific business types mentioned in prompt/questionnaire
+  if (lowerBusinessType.includes('assicurazioni') || lowerBusinessType.includes('assicurazione')) {
+    return [
+      'Polizza Auto',
+      'Polizza Casa',
+      'Polizza Vita',
+      'Gestione Sinistri',
+      'Consulenza Assicurativa',
+      'Altro'
+    ];
+  }
+  
+  if (lowerBusinessType.includes('avvocato') || lowerBusinessType.includes('studio legale') || lowerBusinessType.includes('legal')) {
+    return [
+      'Consulenza Legale',
+      'Contrattualistica',
+      'Contenzioso Civile',
+      'Diritto di Famiglia',
+      'Diritto del Lavoro',
+      'Altro'
+    ];
+  }
+  
+  if (lowerBusinessType.includes('palestra') || lowerBusinessType.includes('fitness') || lowerBusinessType.includes('gym')) {
+    return [
+      'Abbonamento Mensile',
+      'Abbonamento Annuale',
+      'Personal Training',
+      'Corsi Gruppo',
+      'Consulenza Nutrizionale',
+      'Altro'
+    ];
+  }
+  
+  if (lowerBusinessType.includes('startup') || industry === 'startup') {
+    return [
+      'MVP Development',
+      'Funding & Pitch Deck',
+      'Business Strategy',
+      'Go-to-Market',
+      'Product Validation',
+      'Altro'
+    ];
+  }
+  
+  if (lowerBusinessType.includes('immobiliare') || industry === 'real_estate') {
+    return [
+      'Vendita Immobile',
+      'Affitto Immobile',
+      'Consulenza Acquisto',
+      'Valutazione',
+      'Gestione Proprietà',
+      'Altro'
+    ];
+  }
+  
+  if (lowerBusinessType.includes('medico') || lowerBusinessType.includes('clinica') || industry === 'healthcare') {
+    return [
+      'Prenotazione Visita',
+      'Consulto Online',
+      'Esami Diagnostici',
+      'Certificati Medici',
+      'Altro'
+    ];
+  }
+  
+  // Default per web agency o business generico
+  if (industry === 'web_agency' || lowerBusinessType.includes('web') || lowerBusinessType.includes('digital')) {
+    return [
+      'Realizzazione Sito Web',
+      'SEO e Posizionamento',
+      'Gestione Social Media',
+      'E-commerce',
+      'Consulenza Digitale',
+      'Altro'
+    ];
+  }
+  
+  // Fallback generico
+  return [
+    'Informazioni Generali',
+    'Preventivo',
+    'Consulenza',
+    'Assistenza',
+    'Altro'
+  ];
+}
+
 // ============================================================================
 // 🧠 LEVEL 5 AI ANALYSIS FUNCTIONS - ENGINEERING FELLOW SUPREME
 // ============================================================================
@@ -482,21 +578,21 @@ function generateIntelligentFormFields(
         return;
       }
       
-      // 📋 Servizi Interesse - SEMPRE select con options
+      // 📋 Servizi Interesse - SEMPRE select con options INDUSTRY-SPECIFIC
       if (normalizedLabel === 'servizi_interesse' || normalizedLabel.includes('servizi di interesse') || normalizedLabel === 'servizi') {
+        // 🆕 Extract business type from prompt for industry-specific options
+        const businessTypeMatch = prompt.match(/Tipo di business:\s*([^\n]+)/i);
+        const businessType = businessTypeMatch ? businessTypeMatch[1].trim() : undefined;
+        
+        // Get industry-specific options
+        const serviceOptions = getIndustryServiceOptions(detectedIndustryContext, businessType);
+        
         fields.push({
           name: "servizi_interesse",
           label: "Servizi di Interesse",
           type: "select",
           required: false,
-          options: [
-            'Realizzazione Sito Web',
-            'SEO e Posizionamento',
-            'Gestione Social Media',
-            'E-commerce',
-            'Consulenza Digitale',
-            'Altro'
-          ]
+          options: serviceOptions
         });
         return;
       }

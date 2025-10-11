@@ -566,8 +566,11 @@ function generateIntelligentFormFields(
     requiredFields.forEach(fieldLabel => {
       const normalizedLabel = fieldLabel.toLowerCase();
       
+      console.log(`🔍 Processing field: "${fieldLabel}" -> normalized: "${normalizedLabel}"`);
+      
       // 🔒 Privacy Consent - SEMPRE checkbox
       if (normalizedLabel === 'privacy_consent' || normalizedLabel.includes('privacy consent')) {
+        console.log(`✅ Matched privacy consent field`);
         fields.push({
           name: "privacy_consent",
           label: "Accetto l'informativa sulla privacy e il trattamento dei miei dati personali",
@@ -579,6 +582,7 @@ function generateIntelligentFormFields(
       
       // 📧 Marketing Consent - SEMPRE checkbox
       if (normalizedLabel === 'marketing_consent' || normalizedLabel.includes('marketing consent') || normalizedLabel.includes('newsletter consent')) {
+        console.log(`✅ Matched marketing consent field`);
         fields.push({
           name: "marketing_consent",
           label: "Accetto di ricevere comunicazioni commerciali e newsletter",
@@ -588,14 +592,22 @@ function generateIntelligentFormFields(
         return;
       }
       
-      // 📋 Servizi Interesse - SEMPRE select con options INDUSTRY-SPECIFIC
-      if (normalizedLabel === 'servizi_interesse' || normalizedLabel.includes('servizi di interesse') || normalizedLabel === 'servizi') {
+      // 📋 Servizi Interesse - SEMPRE select con options INDUSTRY-SPECIFIC  
+      if (normalizedLabel === 'servizi_interesse' || 
+          normalizedLabel.includes('servizi di interesse') || 
+          normalizedLabel.includes('servizi interesse') ||  // 🔧 FIX: aggiunto match senza "di"
+          normalizedLabel === 'servizi') {
+        console.log(`✅ Matched servizi interesse field - creating SELECT with options`);
         // 🆕 Extract business type from prompt for industry-specific options
         const businessTypeMatch = prompt.match(/Tipo di business:\s*([^\n]+)/i);
         const businessType = businessTypeMatch ? businessTypeMatch[1].trim() : undefined;
         
+        console.log(`🏢 Detected business type: "${businessType}"`);
+        
         // Get industry-specific options
         const serviceOptions = getIndustryServiceOptions(detectedIndustryContext, businessType);
+        
+        console.log(`📋 Generated service options: [${serviceOptions.join(', ')}]`);
         
         fields.push({
           name: "servizi_interesse",
@@ -651,7 +663,21 @@ function generateIntelligentFormFields(
       });
     });
     
-    console.log(`🎯 Generated ${fields.length} fields from user selection`);
+    // 🔒 CRITICAL FIX: Aggiungi automaticamente GDPR se rilevato nel prompt e non già presente
+    const hasPrivacyConsent = fields.some(f => f.name === 'privacy_consent');
+    const gdprDetected = detectGDPRRequirement(prompt);
+    
+    if (gdprDetected && !hasPrivacyConsent) {
+      console.log(`🔒 Auto-adding GDPR privacy consent field (detected in prompt)`);
+      fields.push({
+        name: "privacy_consent",
+        label: "Accetto l'informativa sulla privacy e il trattamento dei miei dati personali",
+        type: "checkbox",
+        required: true
+      });
+    }
+    
+    console.log(`🎯 Generated ${fields.length} fields from user selection (${gdprDetected ? 'with auto-GDPR' : 'no GDPR detected'})`);
     return fields;
   }
 

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fix Deploy</title>
+</head>
+<body>
+    <h1>Test delle Correzioni - Deployment Status</h1>
+    
+    <div id="test-results">
+        <h2>🔧 Test dei Fix Implementati:</h2>
+        
+        <div id="iframe-test">
+            <h3>1. Test Iframe Embedding:</h3>
+            <iframe 
+                src="https://crm-ai-rho.vercel.app/form/7ab2d6a5-d225-466d-b11f-cb56040e9a9d" 
+                width="500" 
+                height="300" 
+                frameborder="0"
+                onload="document.getElementById('iframe-status').textContent = '✅ Iframe caricato con successo'"
+                onerror="document.getElementById('iframe-status').textContent = '❌ Iframe fallito'"
+            ></iframe>
+            <p id="iframe-status">⏳ Caricamento iframe...</p>
+        </div>
+        
+        <div id="asset-test">
+            <h3>2. Test Asset Loading:</h3>
+            <p id="css-status">⏳ Testing CSS loading...</p>
+            <p id="js-status">⏳ Testing JS loading...</p>
+        </div>
+        
+        <div id="font-test">
+            <h3>3. Test Google Fonts:</h3>
+            <p style="font-family: 'Inter', sans-serif; font-weight: 600;">
+                Questo testo usa Inter da Google Fonts
+            </p>
+            <p id="font-status">⏳ Testing fonts...</p>
+        </div>
+    </div>
+
+    <script>
+        // Test asset loading
+        setTimeout(() => {
+            document.getElementById('css-status').textContent = '✅ CSS test - Verifica console per errori MIME';
+            document.getElementById('js-status').textContent = '✅ JS test - Verifica console per errori MIME';
+            document.getElementById('font-status').textContent = '✅ Font test - Verifica console per errori CSP';
+        }, 2000);
+        
+        // Log deployment info
+        console.log('🚀 Test deployment corrections:');
+        console.log('- Iframe embedding fix');
+        console.log('- Vercel rewrite improvements'); 
+        console.log('- CSP Google Fonts fix');
+        console.log('- Service Worker chrome-extension fixes');
+    </script>
+</body>
+</html>

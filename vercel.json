@@ -19,7 +19,91 @@
   },
   "rewrites": [
     {
-      "source": "/((?!api|_next|_static|_vercel|assets|.*\\.[a-zA-Z0-9]+$).*)",
+      "source": "/dashboard",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/contacts",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/contacts/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/forms",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/forms/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/integrations",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/integrations/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/activities",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/activities/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/opportunities",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/opportunities/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/organizations",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/organizations/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/agents",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/agents/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/settings",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/settings/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/analytics",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/analytics/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/form/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth/(.*)",
       "destination": "/index.html"
     }
   ],

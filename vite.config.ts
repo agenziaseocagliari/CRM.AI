@@ -12,7 +12,7 @@ export default defineConfig({
       SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key'
     }
   },
-  base: './',
+  base: '/',
   build: {
     outDir: 'dist',
     assetsDir: 'js',

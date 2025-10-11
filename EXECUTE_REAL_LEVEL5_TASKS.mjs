@@ -18,12 +18,12 @@ const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
  */
 async function executeDirectDatabaseSetup() {
   console.log('🗄️ Starting direct database setup...')
-  
+
   try {
     // Read SQL file content
     const sqlPath = path.join(__dirname, 'FORMMASTER_LEVEL5_DATABASE_SETUP.sql');
     let sqlContent;
-    
+
     try {
       sqlContent = await fs.readFile(sqlPath, 'utf8');
       console.log('✅ SQL file loaded successfully');
@@ -80,7 +80,7 @@ ON CONFLICT DO NOTHING;
     }
 
     const result = await executeSQL(sqlContent);
-    
+
     if (result.success) {
       console.log('✅ Database setup completed successfully');
       return { success: true, message: 'Database setup completed' };
@@ -88,7 +88,7 @@ ON CONFLICT DO NOTHING;
       console.error('❌ Database setup failed:', result.error);
       return { success: false, error: result.error };
     }
-    
+
   } catch (error) {
     console.error('❌ Database setup error:', error);
     return { success: false, error: error.message || String(error) };
@@ -100,12 +100,12 @@ ON CONFLICT DO NOTHING;
  */
 async function deployEdgeFunctionDirect() {
   console.log('🚀 Starting direct Edge Function deployment via Supabase CLI...')
-  
+
   try {
     // Use alternative deployment method via direct HTTP request
     const functionPath = path.join(__dirname, 'TEST_generate-form-fields.ts');
     let functionCode;
-    
+
     try {
       functionCode = await fs.readFile(functionPath, 'utf8');
       console.log('✅ Edge Function code loaded successfully');
@@ -116,16 +116,16 @@ async function deployEdgeFunctionDirect() {
 
     // Create function manually in Supabase
     console.log('📝 Creating function in Supabase directly...');
-    
+
     // For now, we return success as manual deployment is needed
     console.log('⚠️ Edge Function deployment requires manual steps:');
     console.log('1. Go to Supabase Dashboard > Edge Functions');
     console.log('2. Create new function named "generate-form-fields"');
     console.log('3. Copy content from TEST_generate-form-fields.ts');
     console.log('4. Deploy the function');
-    
+
     return { success: true, message: 'Edge Function ready for manual deployment' };
-    
+
   } catch (error) {
     console.error('❌ Edge Function deployment error:', error);
     return { success: false, error: error.message || String(error) };
@@ -137,11 +137,11 @@ async function deployEdgeFunctionDirect() {
  */
 async function testFormMasterComplete() {
   console.log('🧪 Testing complete FormMaster system...')
-  
+
   try {
     // Test the Edge Function
     const testResult = await testEdgeFunction();
-    
+
     if (testResult.success) {
       console.log('✅ FormMaster system test passed');
       return { success: true, message: 'System test completed' };
@@ -149,7 +149,7 @@ async function testFormMasterComplete() {
       console.error('❌ FormMaster system test failed:', testResult.error);
       return { success: false, error: testResult.error };
     }
-    
+
   } catch (error) {
     console.error('❌ System test error:', error);
     return { success: false, error: error.message || String(error) };
@@ -165,7 +165,7 @@ async function executeSQL(sql) {
     const data = JSON.stringify({
       sql: sql
     });
-    
+
     const options = {
       hostname: 'qjtaqrlpronohgpfdxsi.supabase.co',
       port: 443,

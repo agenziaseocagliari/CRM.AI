@@ -18,7 +18,7 @@ class BuildAnalyzer {
 
   analyzeBundle() {
     console.log('📊 Starting bundle analysis...');
-    
+
     if (!fs.existsSync(this.distPath)) {
       console.error('❌ Dist folder not found. Run npm run build first.');
       return;
@@ -35,18 +35,18 @@ class BuildAnalyzer {
     const getDirectorySize = (dirPath) => {
       let totalSize = 0;
       const files = fs.readdirSync(dirPath);
-      
+
       files.forEach(file => {
         const filePath = path.join(dirPath, file);
         const stat = fs.statSync(filePath);
-        
+
         if (stat.isDirectory()) {
           totalSize += getDirectorySize(filePath);
         } else {
           totalSize += stat.size;
         }
       });
-      
+
       return totalSize;
     };
 
@@ -59,11 +59,11 @@ class BuildAnalyzer {
     if (!fs.existsSync(jsDir)) return;
 
     const jsFiles = fs.readdirSync(jsDir).filter(file => file.endsWith('.js'));
-    
+
     jsFiles.forEach(file => {
       const filePath = path.join(jsDir, file);
       const stat = fs.statSync(filePath);
-      
+
       this.analysis.chunks.push({
         name: file,
         size: stat.size,
@@ -73,22 +73,22 @@ class BuildAnalyzer {
 
     // Sort by size
     this.analysis.chunks.sort((a, b) => b.size - a.size);
-    
+
     console.log('🧩 Chunk analysis:');
     this.analysis.chunks.slice(0, 5).forEach(chunk => {
-      console.log(  :  ());
+      console.log(  : ());
     });
   }
 
   analyzeAssets() {
     const analyzeDirectory = (dirPath, category) => {
       if (!fs.existsSync(dirPath)) return;
-      
+
       const files = fs.readdirSync(dirPath);
       files.forEach(file => {
         const filePath = path.join(dirPath, file);
         const stat = fs.statSync(filePath);
-        
+
         if (stat.isFile()) {
           this.analysis.assets.push({
             name: file,
@@ -104,8 +104,8 @@ class BuildAnalyzer {
     analyzeDirectory(path.join(this.distPath, 'images'), 'image');
     analyzeDirectory(path.join(this.distPath, 'fonts'), 'font');
     analyzeDirectory(path.join(this.distPath, 'styles'), 'css');
-    
-    console.log(🖼️ Assets analyzed:  files);
+
+    console.log(🖼️ Assets analyzed: files);
   }
 
   getChunkType(filename) {
@@ -157,37 +157,37 @@ class BuildAnalyzer {
     // Save to file
     const reportPath = path.join(this.distPath, 'bundle-analysis.json');
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    
+
     console.log('\\n📋 Bundle Analysis Report:');
-    console.log(   Performance Score: /100 ());
-    console.log(   Total Size: );
-    console.log(   Chunks: );
-    console.log(   Assets: );
-    
+    console.log(Performance Score: /100 ());
+    console.log(Total Size: );
+    console.log(Chunks: );
+    console.log(Assets: );
+
     if (this.analysis.recommendations.length > 0) {
       console.log('\\n⚠️ Recommendations:');
       this.analysis.recommendations.forEach(rec => {
         console.log(   : );
       });
     }
-    
+
     console.log(\\n📄 Full report saved to: );
   }
 
   calculatePerformanceScore() {
     let score = 100;
-    
+
     // Deduct points for large bundle
     if (this.analysis.totalSize > 1000000) score -= 20; // 1MB
     if (this.analysis.totalSize > 2000000) score -= 30; // 2MB
-    
+
     // Deduct points for large chunks
     const largeChunks = this.analysis.chunks.filter(c => c.size > 500000);
     score -= largeChunks.length * 10;
-    
+
     // Deduct points for too many chunks
     if (this.analysis.chunks.length > 10) score -= 10;
-    
+
     return Math.max(0, score);
   }
 

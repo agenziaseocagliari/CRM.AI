@@ -24,6 +24,20 @@ interface ApiError {
     code?: string;
 }
 
+// Interface for questionnaire metadata
+interface QuestionnaireMetadata {
+    gdpr_required?: boolean;
+    marketing_consent?: boolean;
+    organization?: string;
+}
+
+// Interface for questionnaire colors
+interface QuestionnaireColors {
+    primary?: string;
+    background?: string;
+    text?: string;
+}
+
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità  pubblica
 const DynamicFormField: React.FC<{
     field: FormField;
@@ -50,7 +64,6 @@ const DynamicFormField: React.FC<{
     // 🎯 UX IMPROVEMENT: Se text_color non è specificato, usa primaryColor invece del grigio
     const textColor = style?.text_color || style?.primary_color || '#374151';
 
-    const borderRadius = style?.border_radius || '6px';
     console.log('🎨 FORMS.TSX DynamicFormField calculated colors:', {
         primaryColor,
         borderColor,
@@ -59,12 +72,6 @@ const DynamicFormField: React.FC<{
     });
 
     const commonClasses = `mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none sm:text-sm`;
-
-    // 🎨 Dynamic focus colors based on style
-    const focusStyles = {
-        '--focus-ring-color': primaryColor,
-        '--focus-border-color': primaryColor,
-    } as React.CSSProperties;
 
     // FIX: Privacy checkbox alignment - checkbox a sinistra, label a destra
     if (field.type === 'checkbox') {
@@ -84,7 +91,7 @@ const DynamicFormField: React.FC<{
                         } as React.CSSProperties}
                     />
                     <label htmlFor={field.name} className="text-sm flex-1" style={{ color: textColor }}>
-                        Accetto l'
+                        Accetto l&apos;
                         <a
                             href={privacyPolicyUrl}
                             target="_blank"
@@ -444,7 +451,7 @@ export const Forms: React.FC = () => {
     }, []);
 
     // ✅ LEVEL 6 FIX: Accetta metadata completo dal questionnaire
-    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[], metadata?: any, colors?: any) => {
+    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[], metadata?: QuestionnaireMetadata, colors?: QuestionnaireColors) => {
         console.log('🔍 handleGenerateForm CALLED with:', {
             customPrompt: !!customPrompt,
             promptLength: customPrompt?.length,
@@ -751,9 +758,11 @@ export const Forms: React.FC = () => {
             });
 
             // 🎯 UX CRITICAL FIX: Assicurati che text_color sia presente se in auto-sync
-            let finalFormStyle = { ...formStyle };
-            if (finalFormStyle && !finalFormStyle.text_color && finalFormStyle.primary_color) {
-                finalFormStyle.text_color = finalFormStyle.primary_color;
+            const finalFormStyle = formStyle && !formStyle.text_color && formStyle.primary_color 
+                ? { ...formStyle, text_color: formStyle.primary_color }
+                : { ...formStyle };
+            
+            if (finalFormStyle && !formStyle?.text_color && formStyle?.primary_color) {
                 console.log('🔄 AUTO-SYNC: Added missing text_color:', finalFormStyle.text_color);
             }
 
@@ -846,7 +855,7 @@ export const Forms: React.FC = () => {
                 console.log('🎨 Loading style from localStorage:', parsedLocalStyle);
                 styleToUse = parsedLocalStyle;
                 toast.success('🎨 Colori personalizzati caricati dal browser');
-            } catch (e) {
+            } catch {
                 console.warn('⚠️ Failed to parse localStorage style, using database style');
             }
         }

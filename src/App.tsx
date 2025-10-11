@@ -18,6 +18,7 @@ import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
 // import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
+import DebugPage from './debug-env-page';
 
 // CRM Components - Riattivati
 import { Automations } from './components/Automations';
@@ -265,6 +266,7 @@ const App: React.FC = () => {
 
         <Route path="/form/:formId" element={<PublicForm />} />
         <Route path="/pricing" element={<PublicPricingPage />} />
+        <Route path="/debug-env" element={<DebugPage />} />
 
         {/* Vertical Landing Pages */}
         <Route path="/verticals/insurance-agency" element={<InsuranceAgencyLanding />} />

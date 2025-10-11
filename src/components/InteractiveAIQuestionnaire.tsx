@@ -87,7 +87,7 @@ export const InteractiveAIQuestionnaire: React.FC<
   }, []);
 
   // Handlers ottimizzati per i color picker
-  const handlePrimaryColorChange = (value: string) => {
+  const handlePrimaryColorChange = useCallback((value: string) => {
     setData(prev => ({
       ...prev,
       branding_colors: {
@@ -96,7 +96,7 @@ export const InteractiveAIQuestionnaire: React.FC<
         text: value // Auto-sync text color with primary color
       }
     }));
-  };
+  }, []);
 
   const handleSecondaryColorChange = useCallback((value: string) => {
     setData(prev => ({

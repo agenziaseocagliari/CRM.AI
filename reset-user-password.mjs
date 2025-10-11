@@ -10,20 +10,20 @@ console.log('🔑 RESET PASSWORD UTENTE ENTERPRISE');
 async function resetUserPassword() {
     try {
         console.log('📧 Cercando utente: webproseoid@gmail.com');
-        
+
         // Prima trova l'utente
         const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-        
+
         if (listError) {
             console.error('❌ Errore ricerca utenti:', listError);
             return;
         }
-        
+
         const user = users.users.find(u => u.email === 'webproseoid@gmail.com');
-        
+
         if (!user) {
             console.log('❌ Utente non trovato. Creiamo un nuovo utente...');
-            
+
             // Crea nuovo utente
             const { data: authData, error: authError } = await supabase.auth.admin.createUser({
                 email: 'webproseoid@gmail.com',
@@ -34,18 +34,18 @@ async function resetUserPassword() {
                     role: 'admin'
                 }
             });
-            
+
             if (authError) {
                 console.error('❌ Errore creazione nuovo utente:', authError);
                 return;
             }
-            
+
             console.log('✅ Nuovo utente creato:', authData.user.id);
             return;
         }
-        
+
         console.log('✅ Utente trovato:', user.id);
-        
+
         // Reset password
         const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
             user.id,
@@ -54,24 +54,24 @@ async function resetUserPassword() {
                 email_confirm: true
             }
         );
-        
+
         if (updateError) {
             console.error('❌ Errore reset password:', updateError);
             return;
         }
-        
+
         console.log('✅ Password resettata con successo!');
-        
+
         // Verifica se ha organization
         const { data: orgMember, error: orgError } = await supabase
             .from('organization_members')
             .select('organization_id, role')
             .eq('user_id', user.id)
             .single();
-            
+
         if (orgError || !orgMember) {
             console.log('🏢 Creando organization per l\'utente...');
-            
+
             // Crea organization
             const { data: orgData, error: createOrgError } = await supabase
                 .from('organizations')
@@ -84,12 +84,12 @@ async function resetUserPassword() {
                 })
                 .select()
                 .single();
-                
+
             if (createOrgError) {
                 console.error('❌ Errore creazione organization:', createOrgError);
                 return;
             }
-            
+
             // Aggiungi come member
             const { error: memberError } = await supabase
                 .from('organization_members')
@@ -98,23 +98,23 @@ async function resetUserPassword() {
                     user_id: user.id,
                     role: 'admin'
                 });
-                
+
             if (memberError) {
                 console.error('❌ Errore aggiunta member:', memberError);
                 return;
             }
-            
+
             console.log('✅ Organization creata e utente aggiunto come admin');
         } else {
             console.log('✅ Utente già ha organization:', orgMember.organization_id);
         }
-        
+
         console.log('\n🎉 SETUP COMPLETATO!');
         console.log('📧 Email: webproseoid@gmail.com');
         console.log('🔑 Password: WebProSEO@1980#');
         console.log('🏢 Plan: Enterprise');
         console.log('👤 Role: Admin');
-        
+
     } catch (error) {
         console.error('💥 Errore generale:', error);
     }

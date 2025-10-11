@@ -11,18 +11,18 @@ async function createTestAccount() {
     try {
         const testEmail = 'test.forms@guardianai.it';
         const testPassword = 'TestForms123!';
-        
+
         console.log('📧 Creando account test:', testEmail);
-        
+
         // Elimina account esistente se esiste
         const { data: users } = await supabase.auth.admin.listUsers();
         const existingUser = users.users.find(u => u.email === testEmail);
-        
+
         if (existingUser) {
             console.log('🗑️ Eliminando account esistente...');
             await supabase.auth.admin.deleteUser(existingUser.id);
         }
-        
+
         // Crea nuovo account
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email: testEmail,
@@ -33,14 +33,14 @@ async function createTestAccount() {
                 role: 'admin'
             }
         });
-        
+
         if (authError) {
             console.error('❌ Errore creazione account:', authError);
             return;
         }
-        
+
         console.log('✅ Account creato:', authData.user.id);
-        
+
         // Crea organization semplice
         const { data: orgData, error: orgError } = await supabase
             .from('organizations')
@@ -51,19 +51,19 @@ async function createTestAccount() {
             })
             .select()
             .single();
-            
+
         if (orgError) {
             console.log('⚠️ Organization non creata (normale):', orgError.message);
         } else {
             console.log('✅ Organization creata:', orgData.id);
         }
-        
+
         console.log('\n🎉 ACCOUNT TEST CREATO!');
         console.log('📧 Email: ' + testEmail);
         console.log('🔑 Password: ' + testPassword);
         console.log('');
         console.log('🎯 PROVA IL LOGIN CON QUESTE CREDENZIALI!');
-        
+
     } catch (error) {
         console.error('💥 Errore:', error);
     }

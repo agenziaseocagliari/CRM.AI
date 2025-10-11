@@ -10,7 +10,7 @@ console.log('🏢 CREAZIONE UTENTE ENTERPRISE');
 async function createEnterpriseUser() {
     try {
         console.log('📧 Creando utente: webproseoid@gmail.com');
-        
+
         // Crea l'utente con admin API
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email: 'webproseoid@gmail.com',
@@ -21,14 +21,14 @@ async function createEnterpriseUser() {
                 role: 'admin'
             }
         });
-        
+
         if (authError) {
             console.error('❌ Errore creazione auth:', authError);
             return;
         }
-        
+
         console.log('✅ Utente auth creato:', authData.user.id);
-        
+
         // Crea organization enterprise
         const { data: orgData, error: orgError } = await supabase
             .from('organizations')
@@ -41,14 +41,14 @@ async function createEnterpriseUser() {
             })
             .select()
             .single();
-            
+
         if (orgError) {
             console.error('❌ Errore creazione organization:', orgError);
             return;
         }
-        
+
         console.log('✅ Organization creata:', orgData.id);
-        
+
         // Aggiungi user alla organization
         const { error: memberError } = await supabase
             .from('organization_members')
@@ -57,14 +57,14 @@ async function createEnterpriseUser() {
                 user_id: authData.user.id,
                 role: 'admin'
             });
-            
+
         if (memberError) {
             console.error('❌ Errore aggiunta member:', memberError);
             return;
         }
-        
+
         console.log('✅ User aggiunto come admin all\' organization');
-        
+
         // Crea il profilo utente
         const { error: profileError } = await supabase
             .from('profiles')
@@ -74,21 +74,21 @@ async function createEnterpriseUser() {
                 name: 'Enterprise User',
                 organization_id: orgData.id
             });
-            
+
         if (profileError) {
             console.error('❌ Errore creazione profilo:', profileError);
             return;
         }
-        
+
         console.log('✅ Profilo utente creato');
-        
+
         console.log('\n🎉 UTENTE ENTERPRISE CREATO CON SUCCESSO!');
         console.log('📧 Email: webproseoid@gmail.com');
         console.log('🔑 Password: WebProSEO@1980#');
         console.log('🏢 Organization: WebProSEO Enterprise');
         console.log('👤 Role: Admin');
         console.log('💳 Credits: 10,000');
-        
+
     } catch (error) {
         console.error('💥 Errore generale:', error);
     }

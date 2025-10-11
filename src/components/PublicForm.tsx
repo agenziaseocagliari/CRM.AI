@@ -78,7 +78,7 @@ const DynamicFormField: React.FC<{
                         } as React.CSSProperties}
                     />
                     <label htmlFor={field.name} className="text-sm flex-1" style={{ color: textColor }}>
-                        Accetto l'
+                        Accetto l&apos;
                         <a
                             href={privacyPolicyUrl}
                             target="_blank"

@@ -17,19 +17,19 @@ const testAuth = async () => {
     try {
         const { data, error } = await supabase.auth.getSession();
         console.log('Auth session check:', { hasData: !!data, error: error?.message });
-        
+
         // Test database connection
         const { data: testData, error: dbError } = await supabase
             .from('forms')
             .select('count')
             .limit(1);
-            
-        console.log('Database connection test:', { 
-            hasData: !!testData, 
+
+        console.log('Database connection test:', {
+            hasData: !!testData,
             error: dbError?.message,
-            hint: dbError?.hint 
+            hint: dbError?.hint
         });
-        
+
     } catch (err) {
         console.error('Test failed:', err);
     }

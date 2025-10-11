@@ -58,7 +58,7 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
             // Se non c'è text_color ma c'è primary_color, auto-sync
             setTextColor(style.primary_color);
         }
-    }, [style]); // ✅ FIX: Solo style nelle dependencies, non i colori locali
+    }, [style, isTextColorCustomized]); // ✅ FIX: Aggiungi isTextColorCustomized alle dependencies
 
 
     // Preset di colori basati sui commit GitHub (Oct 8, 2025)

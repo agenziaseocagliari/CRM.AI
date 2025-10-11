@@ -435,11 +435,12 @@ function generateIntelligentFormFields(
 ): Array<{
   name: string;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox';
+  type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox' | 'select';
   required: boolean;
+  options?: string[];
 }> {
   const lowerPrompt = prompt.toLowerCase();
-  const fields: Array<{name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox'; required: boolean;}> = [];
+  const fields: Array<{name: string; label: string; type: 'text' | 'email' | 'tel' | 'textarea' | 'checkbox' | 'select'; required: boolean; options?: string[];}> = [];
 
   console.log(`🧠 Level 6 Analysis: "${lowerPrompt}"`);
   console.log(`🎯 User required fields: ${requiredFields?.join(', ') || 'NONE - using AI detection'}`);
@@ -458,6 +459,47 @@ function generateIntelligentFormFields(
     // Mappa campi selezionati a form fields con type e label corretti
     requiredFields.forEach(fieldLabel => {
       const normalizedLabel = fieldLabel.toLowerCase();
+      
+      // 🔒 Privacy Consent - SEMPRE checkbox
+      if (normalizedLabel === 'privacy_consent' || normalizedLabel.includes('privacy consent')) {
+        fields.push({
+          name: "privacy_consent",
+          label: "Accetto l'informativa sulla privacy e il trattamento dei miei dati personali",
+          type: "checkbox",
+          required: true
+        });
+        return;
+      }
+      
+      // 📧 Marketing Consent - SEMPRE checkbox
+      if (normalizedLabel === 'marketing_consent' || normalizedLabel.includes('marketing consent') || normalizedLabel.includes('newsletter consent')) {
+        fields.push({
+          name: "marketing_consent",
+          label: "Accetto di ricevere comunicazioni commerciali e newsletter",
+          type: "checkbox",
+          required: false
+        });
+        return;
+      }
+      
+      // 📋 Servizi Interesse - SEMPRE select con options
+      if (normalizedLabel === 'servizi_interesse' || normalizedLabel.includes('servizi di interesse') || normalizedLabel === 'servizi') {
+        fields.push({
+          name: "servizi_interesse",
+          label: "Servizi di Interesse",
+          type: "select",
+          required: false,
+          options: [
+            'Realizzazione Sito Web',
+            'SEO e Posizionamento',
+            'Gestione Social Media',
+            'E-commerce',
+            'Consulenza Digitale',
+            'Altro'
+          ]
+        });
+        return;
+      }
       
       // Email detection
       if (normalizedLabel.includes('email') || normalizedLabel === 'e-mail') {
@@ -484,7 +526,7 @@ function generateIntelligentFormFields(
       // Textarea detection (messaggio, descrizione, note lunghe)
       if (normalizedLabel.includes('messaggio') || normalizedLabel.includes('descrizione') || 
           normalizedLabel.includes('note') || normalizedLabel.includes('dettagli') ||
-          normalizedLabel.includes('richiesta') || normalizedLabel.includes('servizi')) {
+          normalizedLabel.includes('richiesta')) {
         fields.push({
           name: normalizedLabel.replace(/\s+/g, '_').toLowerCase(),
           label: fieldLabel,

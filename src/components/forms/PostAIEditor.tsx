@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormField, FormStyle } from '../../types';
 import { PlusIcon, TrashIcon } from '../ui/icons';
 // import { PencilIcon } from '../ui/icons'; // TODO: Re-enable when edit functionality is added
@@ -31,6 +31,22 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
     const [primaryColor, setPrimaryColor] = useState(style?.primary_color || '#6366f1');
     const [backgroundColor, setBackgroundColor] = useState(style?.background_color || '#ffffff');
     const [textColor, setTextColor] = useState(style?.text_color || '#1f2937');
+
+    // 🆕 CRITICAL FIX: Sincronizza state locale con props quando cambiano
+    // Questo risolve il problema dove PostAIEditor mostra colori default
+    // mentre il parent formStyle ha già i colori corretti dal questionario/meta
+    useEffect(() => {
+        console.log('🎨 PostAIEditor - Syncing with parent style prop:', style);
+        if (style?.primary_color && style.primary_color !== primaryColor) {
+            setPrimaryColor(style.primary_color);
+        }
+        if (style?.background_color && style.background_color !== backgroundColor) {
+            setBackgroundColor(style.background_color);
+        }
+        if (style?.text_color && style.text_color !== textColor) {
+            setTextColor(style.text_color);
+        }
+    }, [style?.primary_color, style?.background_color, style?.text_color]);
 
     // Preset di colori basati sui commit GitHub (Oct 8, 2025)
     const colorPresets = [

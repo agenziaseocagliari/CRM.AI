@@ -320,32 +320,10 @@ export const Forms: React.FC = () => {
                 timestamp: new Date().toISOString()
             });
 
-            // 🔒 CRITICAL FIX: Auto-aggiungi campo privacy consent se GDPR rilevato nel prompt
-            const finalRequiredFields = requiredFields || [];
-            const hasPrivacyField = finalRequiredFields.some(field => 
-                field.toLowerCase().includes('privacy') || field.toLowerCase().includes('consenso')
-            );
-            const gdprDetected = sanitizedPrompt.toLowerCase().includes('privacy') || 
-                                sanitizedPrompt.toLowerCase().includes('gdpr') ||
-                                sanitizedPrompt.toLowerCase().includes('consenso');
-            
-            if (gdprDetected && !hasPrivacyField) {
-                console.log('🔒 Auto-adding privacy consent field (GDPR detected in prompt)');
-                finalRequiredFields.push('Privacy consent');
-            }
-
             const requestBody = {
                 prompt: sanitizedPrompt,
                 organization_id: organization.id,
-                required_fields: finalRequiredFields.map(field => {
-                    // 🔧 CRITICAL FIX: Mappa i nomi dei campi al formato che l'Edge Function attuale riconosce
-                    const fieldMapping: Record<string, string> = {
-                        'Servizi interesse': 'servizi_interesse',  // Fix per select dropdown
-                        'Privacy consent': 'privacy_consent',      // Fix per GDPR checkbox
-                        'Marketing consent': 'marketing_consent'   // Fix per marketing
-                    };
-                    return fieldMapping[field] || field;
-                }),  // ✅ CRITICAL FIX: Passa campi selezionati con mapping corretto
+                required_fields: requiredFields || [],  // ✅ Passa campi selezionati dall'utente
                 style_customizations: {  // 🎨 CRITICAL FIX: Passa personalizzazioni stile!
                     primaryColor: formStyle.primary_color,
                     backgroundColor: formStyle.background_color,

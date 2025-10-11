@@ -25,11 +25,55 @@ interface ApiError {
 }
 
 // Componente per renderizzare dinamicamente i campi del form in anteprima o in modalità  pubblica
-const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
-    const commonClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
+const DynamicFormField: React.FC<{ 
+    field: FormField; 
+    privacyPolicyUrl?: string; 
+    style?: FormStyle; 
+}> = ({ field, privacyPolicyUrl, style }) => {
+    const primaryColor = style?.primary_color || '#6366f1';
+    const commonClasses = `mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 sm:text-sm`;
+    
+    // 🎨 Dynamic focus colors based on style
+    const focusStyles = {
+        '--focus-ring-color': primaryColor,
+        '--focus-border-color': primaryColor,
+    } as React.CSSProperties;
 
     // FIX: Privacy checkbox alignment - checkbox a sinistra, label a destra
     if (field.type === 'checkbox') {
+        // 🔒 CRITICAL FIX: Privacy policy checkbox con link cliccabile
+        if (field.name === 'privacy_consent' && privacyPolicyUrl) {
+            return (
+                <div className="flex items-start gap-3">
+                    <input
+                        id={field.name}
+                        name={field.name}
+                        type="checkbox"
+                        required={field.required}
+                        className="mt-1 h-4 w-4 border-gray-300 rounded"
+                        style={{
+                            accentColor: primaryColor,
+                            '--focus-ring-color': primaryColor,
+                        } as React.CSSProperties}
+                    />
+                    <label htmlFor={field.name} className="text-sm text-gray-700 flex-1">
+                        Accetto l'
+                        <a 
+                            href={privacyPolicyUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="underline hover:no-underline"
+                            style={{ color: primaryColor }}
+                        >
+                            informativa sulla privacy
+                        </a>
+                        {' '}e il trattamento dei miei dati personali{field.required ? ' *' : ''}
+                    </label>
+                </div>
+            );
+        }
+        
+        // Checkbox generico (marketing consent, etc.)
         return (
             <div className="flex items-start gap-3">
                 <input
@@ -37,7 +81,11 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
                     name={field.name}
                     type="checkbox"
                     required={field.required}
-                    className="mt-1 h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+                    className="mt-1 h-4 w-4 border-gray-300 rounded"
+                    style={{
+                        accentColor: primaryColor,
+                        '--focus-ring-color': primaryColor,
+                    } as React.CSSProperties}
                 />
                 <label htmlFor={field.name} className="text-sm text-gray-700 flex-1">
                     {field.label}{field.required ? ' *' : ''}
@@ -57,7 +105,20 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
                     id={field.name} 
                     name={field.name} 
                     required={field.required} 
-                    className={commonClasses}
+                    className={`${commonClasses} focus:ring-2`}
+                    style={{
+                        '--tw-ring-color': primaryColor,
+                        borderColor: '#d1d5db',
+                        outline: 'none',
+                    } as React.CSSProperties}
+                    onFocus={(e) => {
+                        e.target.style.borderColor = primaryColor;
+                        e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
+                    }}
+                    onBlur={(e) => {
+                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.boxShadow = 'none';
+                    }}
                 >
                     <option value="">-- Seleziona --</option>
                     {field.options?.map((option, idx) => (
@@ -72,14 +133,51 @@ const DynamicFormField: React.FC<{ field: FormField }> = ({ field }) => {
         return (
             <div>
                 {label}
-                <textarea id={field.name} name={field.name} rows={4} required={field.required} className={commonClasses} />
+                <textarea 
+                    id={field.name} 
+                    name={field.name} 
+                    rows={4} 
+                    required={field.required} 
+                    className={commonClasses}
+                    style={{
+                        borderColor: '#d1d5db',
+                        outline: 'none',
+                    } as React.CSSProperties}
+                    onFocus={(e) => {
+                        e.target.style.borderColor = primaryColor;
+                        e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
+                    }}
+                    onBlur={(e) => {
+                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.boxShadow = 'none';
+                    }}
+                />
             </div>
         );
     }
+    
     return (
         <div>
             {label}
-            <input id={field.name} name={field.name} type={field.type} required={field.required} className={commonClasses} />
+            <input 
+                id={field.name} 
+                name={field.name} 
+                type={field.type} 
+                required={field.required} 
+                className={commonClasses}
+                style={{
+                    borderColor: '#d1d5db',
+                    outline: 'none',
+                } as React.CSSProperties}
+                onFocus={(e) => {
+                    e.target.style.borderColor = primaryColor;
+                    e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
+                }}
+                onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                }}
+            />
         </div>
     );
 };
@@ -1009,8 +1107,23 @@ ${kadenceCode.shortcode}
 
             <Modal isOpen={isPreviewModalOpen} onClose={handleCloseModals} title={`Anteprima: ${formToModify?.title}`}>
                 <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                    {formToModify?.fields.map(field => <DynamicFormField key={field.name} field={field} />)}
-                    <div className="flex justify-end pt-4"> <button type="submit" className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Invia (Anteprima)</button> </div>
+                    {formToModify?.fields.map(field => 
+                        <DynamicFormField 
+                            key={field.name} 
+                            field={field} 
+                            privacyPolicyUrl={privacyPolicyUrl}
+                            style={formStyle}
+                        />
+                    )}
+                    <div className="flex justify-end pt-4"> 
+                        <button 
+                            type="submit" 
+                            className="px-4 py-2 rounded-lg text-white hover:opacity-90"
+                            style={{ backgroundColor: formStyle.primary_color }}
+                        >
+                            Invia (Anteprima)
+                        </button> 
+                    </div>
                 </form>
             </Modal>
 

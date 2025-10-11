@@ -311,25 +311,8 @@ export const Forms: React.FC = () => {
         setIsLoading(false);
         setFormMeta(null); // 🆕 Reset metadata AI
         setShowQuestionnaire(false); // 🆕 Reset questionario
-        // ✅ FIX QUESTIONARIO: NON resettare formStyle e privacyPolicyUrl qui
-        // Questi vengono impostati dal questionario e devono persistere fino al salvataggio
-        setCreateModalOpen(true);
-    };
-
-    const handleOpenDeleteModal = (form: Form) => { setFormToModify(form); setDeleteModalOpen(true); };
-    const handleOpenPreviewModal = (form: Form) => { setFormToModify(form); setPreviewModalOpen(true); };
-    const handleOpenGetCodeModal = (form: Form) => {
-        setFormToModify(form);
-        const url = `${window.location.origin}/form/${form.id}`;
-        setPublicUrl(url);
-        setGetCodeModalOpen(true);
-    };
-
-    const handleCloseModals = () => {
-        setCreateModalOpen(false); setDeleteModalOpen(false);
-        setPreviewModalOpen(false); setGetCodeModalOpen(false);
-        setFormToModify(null);
-        // ✅ FIX QUESTIONARIO: Reset formStyle e privacyPolicyUrl alla chiusura modal
+        
+        // ✅ FIX CRITICAL: Reset formStyle solo quando si apre modal per NUOVO form
         setFormStyle({
             primary_color: '#6366f1',
             secondary_color: '#f3f4f6',
@@ -345,6 +328,28 @@ export const Forms: React.FC = () => {
             }
         });
         setPrivacyPolicyUrl('');
+        
+        setCreateModalOpen(true);
+    };
+
+    const handleOpenDeleteModal = (form: Form) => { setFormToModify(form); setDeleteModalOpen(true); };
+    const handleOpenPreviewModal = (form: Form) => { setFormToModify(form); setPreviewModalOpen(true); };
+    const handleOpenGetCodeModal = (form: Form) => {
+        setFormToModify(form);
+        const url = `${window.location.origin}/form/${form.id}`;
+        setPublicUrl(url);
+        setGetCodeModalOpen(true);
+    };
+
+    const handleCloseModals = () => {
+        const handleCloseModal = () => {
+        setCreateModalOpen(false); setDeleteModalOpen(false);
+        setPreviewModalOpen(false); setGetCodeModalOpen(false);
+        setFormToModify(null);
+        // ✅ FIX CRITICAL: NON resettare MAI formStyle automaticamente
+        // Mantieni le personalizzazioni dell'utente
+        // Reset solo esplicito quando necessario
+    };
     };
 
     // ✅ CALLBACK MEMOIZZATE per evitare re-render loop in PostAIEditor

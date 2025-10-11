@@ -241,9 +241,19 @@ function extractColorsFromPrompt(prompt: string): {
 } | undefined {
   const colors: { primary_color?: string; background_color?: string; text_color?: string } = {};
   
+  // 🎨 BACKGROUND COLOR DEBUG: Log exact search (from working commit 1130935)
+  console.log('🔍 REGEX DEBUG - Full prompt search for colors:');
+  console.log('Looking for "Colore primario:" in:', prompt.includes('Colore primario:'));
+  console.log('Looking for "Colore sfondo:" in:', prompt.includes('Colore sfondo:'));
+  
   // Regex pattern per colori esadecimali
   const primaryMatch = prompt.match(/Colore primario:\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})/i);
   const backgroundMatch = prompt.match(/Colore sfondo:\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})/i);
+  
+  console.log('🎨 REGEX RESULTS:', {
+    primaryMatch: primaryMatch ? primaryMatch[1] : 'NOT FOUND',
+    backgroundMatch: backgroundMatch ? backgroundMatch[1] : 'NOT FOUND'
+  });
   
   if (primaryMatch) {
     colors.primary_color = primaryMatch[1];

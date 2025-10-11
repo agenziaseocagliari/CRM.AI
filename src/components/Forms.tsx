@@ -398,14 +398,16 @@ export const Forms: React.FC = () => {
             console.log('🔍 FORMMASTER DEBUG - Setting generated fields:', fields);
             setGeneratedFields(fields);
 
-            // 🆕 LEVEL 6 FIX: Applica colori e privacy dal meta
+            // 🆕 LEVEL 6 FIX: Applica colori e privacy dal meta SOLO se non già impostati dal questionario
             if (data.meta) {
                 console.log('🧠 AI METADATA - Received:', data.meta);
                 setFormMeta(data.meta);
                 
                 // ✅ CRITICAL FIX: Se Edge Function ha estratto colori, applicali
-                if (data.meta.colors) {
-                    console.log('🎨 Applying colors from Edge Function:', data.meta.colors);
+                // MA SOLO se formStyle è ancora DEFAULT (non impostato dal questionario)
+                const isDefaultStyle = formStyle.primary_color === '#6366f1';
+                if (data.meta.colors && isDefaultStyle) {
+                    console.log('🎨 Applying colors from Edge Function (formStyle was default):', data.meta.colors);
                     setFormStyle({
                         primary_color: data.meta.colors.primary_color || '#6366f1',
                         secondary_color: '#f3f4f6',
@@ -420,12 +422,19 @@ export const Forms: React.FC = () => {
                             border_radius: '6px'
                         }
                     });
+                } else if (isDefaultStyle) {
+                    console.log('🎨 Colors from Edge Function not available, keeping current formStyle');
+                } else {
+                    console.log('🎨 Keeping formStyle from questionnaire (not default):', formStyle.primary_color);
                 }
                 
                 // ✅ CRITICAL FIX: Se Edge Function ha estratto privacy URL, applicalo
-                if (data.meta.privacy_policy_url) {
+                // MA SOLO se non già impostato dal questionario
+                if (data.meta.privacy_policy_url && !privacyPolicyUrl) {
                     console.log('🔒 Applying privacy URL from Edge Function:', data.meta.privacy_policy_url);
                     setPrivacyPolicyUrl(data.meta.privacy_policy_url);
+                } else if (privacyPolicyUrl) {
+                    console.log('🔒 Keeping privacy URL from questionnaire:', privacyPolicyUrl);
                 }
             } else {
                 setFormMeta(null);

@@ -97,7 +97,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { prompt, organization_id, required_fields } = requestData;
+    const { prompt, organization_id, required_fields, style_customizations, privacy_policy_url } = requestData;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       console.error(`[ai_form_generation:${requestId}] ❌ Invalid prompt`);
@@ -109,6 +109,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     
     // ✅ CRITICAL FIX: Validate required_fields parameter
     console.log(`[ai_form_generation:${requestId}] 📋 Required fields from questionnaire:`, required_fields);
+    console.log(`[ai_form_generation:${requestId}] 🎨 Style customizations from frontend:`, style_customizations);
+    console.log(`[ai_form_generation:${requestId}] 🔒 Privacy policy URL from frontend:`, privacy_policy_url);
     const userSelectedFields = Array.isArray(required_fields) ? required_fields : [];
 
     // 2. JWT AUTHENTICATION (mantenuto per sicurezza)
@@ -192,7 +194,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
         platform: platformContext.platform,
         gdpr_enabled: detectGDPRRequirement(prompt),
         warning: 'TEST VERSION - Credit verification bypassed'
-      }
+      },
+      // 🎨 CRITICAL FIX: Passa style_customizations dal frontend alla response!
+      style_customizations: style_customizations || {
+        primaryColor: extractedColors?.primary_color || '#6366f1',
+        backgroundColor: extractedColors?.background_color || '#ffffff', 
+        textColor: extractedColors?.text_color || '#1f2937'
+      },
+      // 🔒 CRITICAL FIX: Passa privacy_policy_url dal frontend alla response!
+      privacy_policy_url: privacy_policy_url || extractedPrivacyUrl
     };
 
   console.log(`[ai_form_generation:${requestId}] ✅ SUCCESS! Generated ${formFields.length} fields:`, 

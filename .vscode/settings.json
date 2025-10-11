@@ -49,5 +49,17 @@
   "debug.internalConsoleOptions": "openOnSessionStart",
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
-  "less.lint.unknownAtRules": "ignore"
+  "less.lint.unknownAtRules": "ignore",
+  
+  // MCP Servers Configuration
+  "mcp.servers": {
+    "memory": {
+      "command": "mcp-server-memory",
+      "args": []
+    },
+    "filesystem": {
+      "command": "mcp-server-filesystem",
+      "args": ["/workspaces/CRM.AI"]
+    }
+  }
 }

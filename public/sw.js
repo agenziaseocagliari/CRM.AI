@@ -103,6 +103,11 @@ self.addEventListener('fetch', (event) => {
 
 // Network-first strategy for API requests
 async function handleApiRequest(request) {
+  // Skip unsupported schemes
+  if (!request.url.startsWith('http')) {
+    return fetch(request);
+  }
+  
   const url = new URL(request.url);
   
   try {
@@ -161,6 +166,11 @@ async function handleApiRequest(request) {
 
 // Cache-first strategy for static assets
 async function handleStaticAsset(request) {
+  // Skip unsupported schemes
+  if (!request.url.startsWith('http')) {
+    return fetch(request);
+  }
+  
   const cachedResponse = await caches.match(request);
   
   if (cachedResponse) {
@@ -186,6 +196,11 @@ async function handleStaticAsset(request) {
 
 // Cache-first strategy for images with progressive enhancement
 async function handleImageRequest(request) {
+  // Skip unsupported schemes
+  if (!request.url.startsWith('http')) {
+    return fetch(request);
+  }
+  
   const cachedResponse = await caches.match(request);
   
   if (cachedResponse) {
@@ -225,6 +240,11 @@ async function handleImageRequest(request) {
 
 // Network-first strategy for HTML pages
 async function handlePageRequest(request) {
+  // Skip unsupported schemes
+  if (!request.url.startsWith('http')) {
+    return fetch(request);
+  }
+  
   try {
     const networkResponse = await fetch(request);
     

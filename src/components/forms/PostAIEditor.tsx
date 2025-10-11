@@ -46,7 +46,8 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
         if (style?.text_color && style.text_color !== textColor) {
             setTextColor(style.text_color);
         }
-    }, [style?.primary_color, style?.background_color, style?.text_color]);
+    }, [style, primaryColor, backgroundColor, textColor]);
+
 
     // Preset di colori basati sui commit GitHub (Oct 8, 2025)
     const colorPresets = [

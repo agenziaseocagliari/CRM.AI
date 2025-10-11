@@ -1,5 +1,5 @@
 ﻿import { Session } from '@supabase/supabase-js';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useEffect, useState } from 'react';
 
 import { diagnoseJWT, JWTClaims } from '../lib/jwtUtils';
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
@@ -18,7 +18,7 @@ interface AuthContextType {
   isUser: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -216,11 +216,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// Re-export useAuth from separate file for backward compatibility
+export { useAuth } from './useAuth';
 

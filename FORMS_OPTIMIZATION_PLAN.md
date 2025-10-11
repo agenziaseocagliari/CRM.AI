@@ -501,7 +501,7 @@ const [creationMode, setCreationMode] = useState<'ai' | 'manual' | null>(null);
 
 ### 🔵 FASE 4 - ADVANCED (4+ ore):
 16. Rating/File upload fields
-17. InteractiveAIQuestionnaire
+17. RACCOMANDAZIONI IMMEDIATEveAIQuestionnaire
 18. Analytics dashboard (industry distribution)
 19. Template pre-configurati per settore
 20. A/B testing adaptive labels

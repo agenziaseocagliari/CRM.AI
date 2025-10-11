@@ -51,7 +51,7 @@ class BuildAnalyzer {
     };
 
     this.analysis.totalSize = getDirectorySize(this.distPath);
-    console.log(📦 Total bundle size: );
+    console.log(`📦 Total bundle size: ${this.analysis.totalSize}`);
   }
 
   analyzeChunks() {

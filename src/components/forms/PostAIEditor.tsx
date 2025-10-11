@@ -37,16 +37,16 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
     // mentre il parent formStyle ha già i colori corretti dal questionario/meta
     useEffect(() => {
         console.log('🎨 PostAIEditor - Syncing with parent style prop:', style);
-        if (style?.primary_color && style.primary_color !== primaryColor) {
+        if (style?.primary_color) {
             setPrimaryColor(style.primary_color);
         }
-        if (style?.background_color && style.background_color !== backgroundColor) {
+        if (style?.background_color) {
             setBackgroundColor(style.background_color);
         }
-        if (style?.text_color && style.text_color !== textColor) {
+        if (style?.text_color) {
             setTextColor(style.text_color);
         }
-    }, [style, primaryColor, backgroundColor, textColor]);
+    }, [style]); // ✅ FIX: Solo style nelle dependencies, non i colori locali
 
 
     // Preset di colori basati sui commit GitHub (Oct 8, 2025)

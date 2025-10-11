@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 // FIX: Corrected the import for useNavigate from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
-import { recordLoginAttempt, detectLoginMethodFromUrl, getLoginHistory, analyzeLoginHistory, generateLoginHistoryReport } from '../lib/loginTracker';
+import { analyzeLoginHistory, detectLoginMethodFromUrl, generateLoginHistoryReport, getLoginHistory, recordLoginAttempt } from '../lib/loginTracker';
 import { supabase } from '../lib/supabaseClient';
 
 import { GuardianIcon } from './ui/icons';
@@ -33,7 +33,7 @@ export const Login: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('session_expired') === 'true') {
             setSessionExpired(true);
-            toast.error('La tua sessione è scaduta. Effettua nuovamente il login.', { 
+            toast.error('La tua sessione è scaduta. Effettua nuovamente il login.', {
                 duration: 5000,
                 id: 'session-expired'
             });
@@ -47,10 +47,10 @@ export const Login: React.FC = () => {
             if (session?.access_token) {
                 const diag = diagnoseJWT(session.access_token);
                 setJwtDiagnostics(diag);
-                
+
                 // Detect login method from URL
                 const loginMethod = detectLoginMethodFromUrl();
-                
+
                 // Record the login attempt
                 recordLoginAttempt({
                     method: loginMethod,
@@ -59,7 +59,7 @@ export const Login: React.FC = () => {
                     success: true,
                     jwtHasUserRole: diag.hasUserRole,
                 });
-                
+
                 // Auto-show debug info if there's a JWT issue
                 if (!diag.hasUserRole && diag.isValid) {
                     setShowJwtDebug(true);
@@ -69,17 +69,17 @@ export const Login: React.FC = () => {
                 }
             }
         };
-        
+
         checkJWT();
-        
+
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (_event === 'SIGNED_IN' && session?.access_token) {
                 const diag = diagnoseJWT(session.access_token);
                 setJwtDiagnostics(diag);
-                
+
                 const loginMethod = detectLoginMethodFromUrl();
-                
+
                 recordLoginAttempt({
                     method: loginMethod,
                     timestamp: new Date().toISOString(),
@@ -87,7 +87,7 @@ export const Login: React.FC = () => {
                     success: true,
                     jwtHasUserRole: diag.hasUserRole,
                 });
-                
+
                 if (!diag.hasUserRole && diag.isValid) {
                     setShowJwtDebug(true);
                     toast.error(`⚠️ TOKEN DEFECT: user_role mancante (Login method: ${loginMethod})`, {
@@ -96,19 +96,19 @@ export const Login: React.FC = () => {
                 }
             }
         });
-        
+
         return () => subscription.unsubscribe();
     }, []);
 
     const handleAuthAction = async (event: React.FormEvent) => {
         event.preventDefault();
-        
+
         // Check if we need to add delay
         if (isDelayed) {
             toast.error('Troppi tentativi falliti. Attendi prima di riprovare.');
             return;
         }
-        
+
         setLoading(true);
         setError(null);
         setMessage(null);
@@ -118,11 +118,11 @@ export const Login: React.FC = () => {
             if (error) {
                 // Generic error message - don't leak account information
                 setError('Credenziali errate. Verifica email e password.');
-                
+
                 // Track failed attempts
                 const newFailedAttempts = failedAttempts + 1;
                 setFailedAttempts(newFailedAttempts);
-                
+
                 // Record failed login
                 recordLoginAttempt({
                     method: 'password',
@@ -131,7 +131,7 @@ export const Login: React.FC = () => {
                     success: false,
                     error: 'Credenziali errate',
                 });
-                
+
                 // Add delay after max attempts
                 if (newFailedAttempts >= MAX_FAILED_ATTEMPTS) {
                     setIsDelayed(true);
@@ -157,17 +157,17 @@ export const Login: React.FC = () => {
         }
         setLoading(false);
     };
-    
+
     const toggleMode = () => {
         setMode(mode === 'signIn' ? 'signUp' : 'signIn');
         setError(null);
         setMessage(null);
     }
-    
+
     const handleBackToHome = () => {
         navigate('/');
     };
-    
+
     const handleDeepLogout = async () => {
         localStorage.clear();
         sessionStorage.clear();
@@ -177,7 +177,7 @@ export const Login: React.FC = () => {
         setShowJwtDebug(false);
         window.location.reload();
     };
-    
+
     const copyLoginHistory = () => {
         const report = generateLoginHistoryReport();
         navigator.clipboard.writeText(report);
@@ -260,7 +260,7 @@ export const Login: React.FC = () => {
                                 />
                             </div>
                         </div>
-                        
+
                         {mode === 'signIn' && (
                             <div className="flex items-center justify-end">
                                 <button
@@ -272,7 +272,7 @@ export const Login: React.FC = () => {
                                 </button>
                             </div>
                         )}
-                        
+
                         {message && <p className="text-green-600 text-xs text-center">{message}</p>}
                         {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
@@ -286,13 +286,13 @@ export const Login: React.FC = () => {
                             </button>
                         </div>
                     </form>
-                    
+
                     <div className="mt-6 text-center text-sm">
                         <button onClick={toggleMode} className="font-medium text-primary hover:text-indigo-500">
                             {switchText}
                         </button>
                     </div>
-                    
+
                     {jwtDiagnostics && showJwtDebug && (
                         <div className="mt-6 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg">
                             <h3 className="font-bold text-yellow-800 mb-2">⚠️ TOKEN DEFECT RILEVATO</h3>
@@ -326,7 +326,7 @@ export const Login: React.FC = () => {
                             </div>
                         </div>
                     )}
-                    
+
                     {jwtDiagnostics && !showJwtDebug && !jwtDiagnostics.hasUserRole && (
                         <button
                             onClick={() => setShowJwtDebug(true)}
@@ -335,7 +335,7 @@ export const Login: React.FC = () => {
                             ⚠️ Mostra diagnostica JWT
                         </button>
                     )}
-                    
+
                     {/* Login History Viewer */}
                     {getLoginHistory().length > 0 && (
                         <div className="mt-4">
@@ -378,7 +378,7 @@ export const Login: React.FC = () => {
 const LoginHistoryView: React.FC = () => {
     const history = getLoginHistory();
     const analysis = analyzeLoginHistory();
-    
+
     return (
         <div className="text-xs space-y-2">
             <div className="grid grid-cols-2 gap-2 mb-2">
@@ -391,11 +391,11 @@ const LoginHistoryView: React.FC = () => {
                     <div className="font-bold text-green-600">{analysis.successfulLogins}</div>
                 </div>
             </div>
-            
+
             <div className="bg-white p-2 rounded">
                 <div className="font-semibold mb-1">Per Metodo:</div>
                 {Object.entries(analysis.methodBreakdown).map(([method, count]) => {
-                    if (count === 0) {return null;}
+                    if (count === 0) { return null; }
                     const defects = analysis.jwtDefectsByMethod[method as keyof typeof analysis.jwtDefectsByMethod];
                     return (
                         <div key={method} className="flex justify-between text-xs">
@@ -407,7 +407,7 @@ const LoginHistoryView: React.FC = () => {
                     );
                 })}
             </div>
-            
+
             <div className="bg-white p-2 rounded max-h-32 overflow-y-auto">
                 <div className="font-semibold mb-1">Recenti:</div>
                 {history.slice(0, 5).map((attempt, idx) => (

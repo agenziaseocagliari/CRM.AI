@@ -174,7 +174,7 @@ async function executeSQL(sql) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': data.length,
-        'Authorization': \`Bearer \${SUPABASE_SERVICE_KEY}\`,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
         'apikey': SUPABASE_SERVICE_KEY
       }
     };

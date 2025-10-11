@@ -342,14 +342,12 @@ export const Forms: React.FC = () => {
     };
 
     const handleCloseModals = () => {
-        const handleCloseModal = () => {
-        setCreateModalOpen(false); setDeleteModalOpen(false);
-        setPreviewModalOpen(false); setGetCodeModalOpen(false);
+        setCreateModalOpen(false); 
+        setDeleteModalOpen(false);
+        setPreviewModalOpen(false); 
+        setGetCodeModalOpen(false);
         setFormToModify(null);
-        // ✅ FIX CRITICAL: NON resettare MAI formStyle automaticamente
-        // Mantieni le personalizzazioni dell'utente
-        // Reset solo esplicito quando necessario
-    };
+        // ✅ NON resettiamo formStyle qui - manteniamo personalizzazioni
     };
 
     // ✅ CALLBACK MEMOIZZATE per evitare re-render loop in PostAIEditor
@@ -670,22 +668,9 @@ export const Forms: React.FC = () => {
             
             refetchData();
             
-            // ✅ FIX QUESTIONARIO: Reset formStyle e privacyPolicyUrl DOPO salvataggio riuscito
-            setFormStyle({
-                primary_color: '#6366f1',
-                secondary_color: '#f3f4f6',
-                background_color: '#ffffff',
-                text_color: '#1f2937',
-                border_color: '#6366f1',
-                border_radius: '8px',
-                font_family: 'Inter, system-ui, sans-serif',
-                button_style: {
-                    background_color: '#6366f1',
-                    text_color: '#ffffff',
-                    border_radius: '6px'
-                }
-            });
-            setPrivacyPolicyUrl('');
+            // ✅ CRITICAL FIX: NON resettare formStyle dopo salvataggio!
+            // Le personalizzazioni devono rimanere per essere usate in altri form
+            // Reset solo quando necessario (nuovo form)
             
             handleCloseModals();
             toast.success('Form salvato con successo con personalizzazione colori!');

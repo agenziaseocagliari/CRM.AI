@@ -31,6 +31,14 @@ const DynamicFormField: React.FC<{
     const textColor = formStyle?.text_color || '#374151';
     const borderRadius = formStyle?.border_radius || '6px';
     
+    // Calcola il colore di sfondo per i campi input basato sul background del form
+    const fieldBackgroundColor = formStyle?.background_color ? 
+        (formStyle.background_color === '#ffffff' ? '#f9fafb' : '#ffffff') : '#ffffff';
+    
+    // Calcola il colore del bordo basato sul colore primario con opacità
+    const borderColor = formStyle?.primary_color ? 
+        `${formStyle.primary_color}30` : '#d1d5db';
+    
     const commonClasses = "mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 sm:text-sm";
 
     // FIX: Privacy checkbox alignment - checkbox a sinistra, label a destra
@@ -103,18 +111,19 @@ const DynamicFormField: React.FC<{
                     required={field.required}
                     className={commonClasses}
                     style={{
-                        borderColor: '#d1d5db',
-                        backgroundColor: '#ffffff',
+                        borderColor: borderColor,
+                        backgroundColor: fieldBackgroundColor,
                         color: textColor,
                         borderRadius: borderRadius,
                         outline: 'none',
+                        borderWidth: '2px',
                     } as React.CSSProperties}
                     onFocus={(e) => {
                         e.target.style.borderColor = primaryColor;
                         e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
                     }}
                     onBlur={(e) => {
-                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.borderColor = borderColor;
                         e.target.style.boxShadow = 'none';
                     }}
                 >
@@ -138,18 +147,19 @@ const DynamicFormField: React.FC<{
                     required={field.required}
                     className={commonClasses}
                     style={{
-                        borderColor: '#d1d5db',
-                        backgroundColor: '#ffffff',
+                        borderColor: borderColor,
+                        backgroundColor: fieldBackgroundColor,
                         color: textColor,
                         borderRadius: borderRadius,
                         outline: 'none',
+                        borderWidth: '2px',
                     } as React.CSSProperties}
                     onFocus={(e) => {
                         e.target.style.borderColor = primaryColor;
                         e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
                     }}
                     onBlur={(e) => {
-                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.borderColor = borderColor;
                         e.target.style.boxShadow = 'none';
                     }}
                 />
@@ -166,18 +176,19 @@ const DynamicFormField: React.FC<{
                 required={field.required}
                 className={commonClasses}
                 style={{
-                    borderColor: '#d1d5db',
-                    backgroundColor: '#ffffff',
+                    borderColor: borderColor,
+                    backgroundColor: fieldBackgroundColor,
                     color: textColor,
                     borderRadius: borderRadius,
                     outline: 'none',
+                    borderWidth: '2px',
                 } as React.CSSProperties}
                 onFocus={(e) => {
                     e.target.style.borderColor = primaryColor;
                     e.target.style.boxShadow = `0 0 0 2px ${primaryColor}25`;
                 }}
                 onBlur={(e) => {
-                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.borderColor = borderColor;
                     e.target.style.boxShadow = 'none';
                 }}
             />
@@ -402,7 +413,8 @@ export const PublicForm: React.FC = () => {
                 <div
                     className="p-8 rounded-lg shadow-md"
                     style={{
-                        backgroundColor: form?.styling?.background_color || '#ffffff',
+                        backgroundColor: form?.styling?.background_color ? 
+                            (form.styling.background_color === '#ffffff' ? '#f9fafb' : '#ffffff') : '#ffffff',
                         borderRadius: `${form?.styling?.border_radius || 8}px`
                     }}
                 >

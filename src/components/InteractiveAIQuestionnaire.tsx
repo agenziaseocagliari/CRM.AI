@@ -206,7 +206,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
     'Prenotazione Consulenza',
   ];
 
-  const Step1 = () => (
+  const Step1 = useMemo(() => (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">
         Che tipo di business hai?
@@ -240,7 +240,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
         />
       )}
     </div>
-  );
+  ), [data.business_type, data.business_type_other, updateData]);
 
   const Step2 = useMemo(
     () => (
@@ -481,7 +481,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <Step1 />;
+        return Step1;
       case 2:
         return Step2;
       case 3:
@@ -493,7 +493,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
       case 6:
         return Step6;
       default:
-        return <Step1 />;
+        return Step1;
     }
   };
 

@@ -1,22 +1,59 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🔧 Hard Refresh Test</title>
     <style>
-        body { font-family: system-ui; padding: 30px; background: #f8fafc; }
-        .instructions { background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .test-btn { background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; margin: 10px; }
-        .test-btn:hover { background: #2563eb; }
-        .status { padding: 15px; border-radius: 8px; margin: 10px 0; }
-        .success { background: #d1fae5; border-left: 4px solid #10b981; }
-        .error { background: #fee2e2; border-left: 4px solid #ef4444; }
+        body {
+            font-family: system-ui;
+            padding: 30px;
+            background: #f8fafc;
+        }
+
+        .instructions {
+            background: #fef3c7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .test-btn {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .test-btn:hover {
+            background: #2563eb;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+        }
+
+        .error {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
     </style>
 </head>
+
 <body>
     <h1>🔧 Hard Refresh Test per Fix Assets</h1>
-    
+
     <div class="instructions">
         <h2>📋 Istruzioni per risolvere il problema:</h2>
         <ol>
@@ -26,7 +63,7 @@
             <li><strong>Test di nuovo</strong>: Vai su una route e premi F5</li>
         </ol>
     </div>
-    
+
     <div class="status success">
         <h3>✅ Fix Implementati:</h3>
         <ul>
@@ -35,56 +72,57 @@
             <li><strong>Cache headers</strong>: Configurati per assets statici</li>
         </ul>
     </div>
-    
+
     <div class="status" id="asset-test">
         <h3>🧪 Test Assets in Corso...</h3>
         <p>Testando se CSS e JS vengono caricati correttamente...</p>
     </div>
-    
+
     <button class="test-btn" onclick="testAssets()">🔄 Re-test Assets</button>
-    <button class="test-btn" onclick="window.location.href='https://crm-ai-rho.vercel.app/dashboard'">📊 Test Dashboard</button>
+    <button class="test-btn" onclick="window.location.href='https://crm-ai-rho.vercel.app/dashboard'">📊 Test
+        Dashboard</button>
     <button class="test-btn" onclick="clearCacheAndReload()">🗑️ Clear Cache & Reload</button>
-    
+
     <script>
         async function testAssets() {
             const statusEl = document.getElementById('asset-test');
             statusEl.innerHTML = '<h3>🧪 Testing...</h3>';
-            
+
             try {
                 // Test CSS
                 const cssResponse = await fetch('https://crm-ai-rho.vercel.app/styles/style.CdSQAgGj.css', {
                     cache: 'no-cache'
                 });
                 const cssType = cssResponse.headers.get('content-type');
-                
+
                 // Test JS  
                 const jsResponse = await fetch('https://crm-ai-rho.vercel.app/js/index.Dr_DTCGM.js', {
                     cache: 'no-cache'
                 });
                 const jsType = jsResponse.headers.get('content-type');
-                
+
                 let results = '';
                 if (cssType && cssType.includes('text/css')) {
                     results += '<p>✅ CSS: ' + cssType + '</p>';
                 } else {
                     results += '<p>❌ CSS: ' + cssType + '</p>';
                 }
-                
+
                 if (jsType && (jsType.includes('javascript') || jsType.includes('application/javascript'))) {
                     results += '<p>✅ JS: ' + jsType + '</p>';
                 } else {
                     results += '<p>❌ JS: ' + jsType + '</p>';
                 }
-                
+
                 statusEl.innerHTML = '<h3>🧪 Test Results:</h3>' + results;
                 statusEl.className = 'status success';
-                
+
             } catch (error) {
                 statusEl.innerHTML = '<h3>❌ Test Failed:</h3><p>' + error.message + '</p>';
                 statusEl.className = 'status error';
             }
         }
-        
+
         function clearCacheAndReload() {
             // Clear service worker cache
             if ('serviceWorker' in navigator) {
@@ -94,18 +132,19 @@
                     });
                 });
             }
-            
+
             // Hard reload
             window.location.reload(true);
         }
-        
+
         // Auto-test on load
         setTimeout(testAssets, 1000);
-        
+
         console.log('🔧 HARD REFRESH TEST PAGE');
         console.log('✅ Vite config: base = "/"');
         console.log('✅ Content-Type headers: configurati');
         console.log('🔄 Prova: Ctrl+Shift+R per hard refresh');
     </script>
 </body>
+
 </html>

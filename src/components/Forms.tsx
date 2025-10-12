@@ -64,11 +64,31 @@ const DynamicFormField: React.FC<{
     // 🎯 UX IMPROVEMENT: Se text_color non è specificato, usa primaryColor invece del grigio
     const textColor = style?.text_color || style?.primary_color || '#374151';
 
+    // 🎨 DESIGN AVANZATO: Supporto per design options avanzate
+    const borderRadius = style?.border_radius || '6px';
+    const borderWidth = style?.border_width || '1px';
+    const padding = style?.padding === 'compact' ? '8px 12px' :
+        style?.padding === 'spacious' ? '16px 20px' : '12px 16px';
+    const fontSize = style?.font_size === 'small' ? '14px' :
+        style?.font_size === 'large' ? '18px' : '16px';
+    const boxShadow = style?.shadow === 'none' ? 'none' :
+        style?.shadow === 'subtle' ? '0 1px 3px rgba(0,0,0,0.1)' :
+            style?.shadow === 'medium' ? '0 4px 6px rgba(0,0,0,0.1)' :
+                style?.shadow === 'strong' ? '0 10px 15px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.1)';
+
     console.log('🎨 FORMS.TSX DynamicFormField calculated colors:', {
         primaryColor,
         borderColor,
         textColor,
         isCustomColors: primaryColor !== '#6366f1'
+    });
+
+    console.log('🎨 FORMS.TSX DynamicFormField calculated design:', {
+        borderRadius,
+        borderWidth,
+        padding,
+        fontSize,
+        boxShadow
     });
 
     const commonClasses = `mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none sm:text-sm`;
@@ -143,7 +163,11 @@ const DynamicFormField: React.FC<{
                     style={{
                         '--tw-ring-color': primaryColor,
                         borderColor: borderColor,
-                        borderWidth: '2px',
+                        borderWidth: borderWidth,
+                        borderRadius: borderRadius,
+                        padding: padding,
+                        fontSize: fontSize,
+                        boxShadow: boxShadow,
                         outline: 'none',
                     } as React.CSSProperties}
                     onFocus={(e) => {
@@ -152,7 +176,7 @@ const DynamicFormField: React.FC<{
                     }}
                     onBlur={(e) => {
                         e.target.style.borderColor = borderColor;
-                        e.target.style.boxShadow = 'none';
+                        e.target.style.boxShadow = boxShadow;
                     }}
                 >
                     <option value="">-- Seleziona --</option>
@@ -176,7 +200,11 @@ const DynamicFormField: React.FC<{
                     className={commonClasses}
                     style={{
                         borderColor: borderColor,
-                        borderWidth: '2px',
+                        borderWidth: borderWidth,
+                        borderRadius: borderRadius,
+                        padding: padding,
+                        fontSize: fontSize,
+                        boxShadow: boxShadow,
                         outline: 'none',
                     } as React.CSSProperties}
                     onFocus={(e) => {
@@ -185,7 +213,7 @@ const DynamicFormField: React.FC<{
                     }}
                     onBlur={(e) => {
                         e.target.style.borderColor = borderColor;
-                        e.target.style.boxShadow = 'none';
+                        e.target.style.boxShadow = boxShadow;
                     }}
                 />
             </div>
@@ -203,7 +231,11 @@ const DynamicFormField: React.FC<{
                 className={commonClasses}
                 style={{
                     borderColor: borderColor,
-                    borderWidth: '2px',
+                    borderWidth: borderWidth,
+                    borderRadius: borderRadius,
+                    padding: padding,
+                    fontSize: fontSize,
+                    boxShadow: boxShadow,
                     outline: 'none',
                 } as React.CSSProperties}
                 onFocus={(e) => {
@@ -212,7 +244,7 @@ const DynamicFormField: React.FC<{
                 }}
                 onBlur={(e) => {
                     e.target.style.borderColor = borderColor;
-                    e.target.style.boxShadow = 'none';
+                    e.target.style.boxShadow = boxShadow;
                 }}
             />
         </div>
@@ -303,6 +335,7 @@ export const Forms: React.FC = () => {
     const [isPreviewModalOpen, setPreviewModalOpen] = useState(false);
     const [isGetCodeModalOpen, setGetCodeModalOpen] = useState(false);
     const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+    const [isDesignEditMode, setIsDesignEditMode] = useState(false); // 🎨 Per distinguere tra nuovo form e modifica design
 
     // Stati per i dati
     const [formToModify, setFormToModify] = useState<Form | null>(null);
@@ -348,6 +381,7 @@ export const Forms: React.FC = () => {
         setIsLoading(false);
         setFormMeta(null); // 🆕 Reset metadata AI
         setShowQuestionnaire(false); // 🆕 Reset questionario
+        setIsDesignEditMode(false); // 🎨 Reset design edit mode
 
         // ✅ FIX CRITICAL: Reset formStyle solo quando si apre modal per NUOVO form
         setFormStyle({
@@ -384,7 +418,16 @@ export const Forms: React.FC = () => {
     };
     const handleOpenGetCodeModal = (form: Form) => {
         setFormToModify(form);
-        const url = `${window.location.origin}/form/${form.id}`;
+        // 🌐 PRODUCTION FIX: Usa dominio di produzione invece di localhost
+        const getProductionUrl = () => {
+            const currentOrigin = window.location.origin;
+            // Se siamo in development (localhost), usa il dominio di produzione
+            if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
+                return 'https://crm-ai-rho.vercel.app';
+            }
+            return currentOrigin;
+        };
+        const url = `${getProductionUrl()}/form/${form.id}`;
         setPublicUrl(url);
         setGetCodeModalOpen(true);
     };
@@ -450,8 +493,8 @@ export const Forms: React.FC = () => {
         setPrivacyPolicyUrl(url);
     }, []);
 
-    // ✅ LEVEL 6 FIX: Accetta metadata completo dal questionnaire
-    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[], metadata?: QuestionnaireMetadata, colors?: QuestionnaireColors) => {
+    // ✅ LEVEL 6 FIX: Accetta metadata completo dal questionnaire + design_options
+    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[], metadata?: QuestionnaireMetadata, colors?: QuestionnaireColors, design_options?: any) => {
         console.log('🔍 handleGenerateForm CALLED with:', {
             customPrompt: !!customPrompt,
             promptLength: customPrompt?.length,
@@ -460,7 +503,9 @@ export const Forms: React.FC = () => {
             hasMetadata: !!metadata,
             metadata: metadata,
             hasColors: !!colors,  // ✅ Debug colors
-            colors: colors        // ✅ Debug colors
+            colors: colors,       // ✅ Debug colors
+            hasDesignOptions: !!design_options, // 🎨 Debug design options
+            design_options: design_options      // 🎨 Debug design options
         });
 
         const promptToUse = customPrompt || prompt;
@@ -535,6 +580,13 @@ export const Forms: React.FC = () => {
                     primary_color: colors?.primary || formStyle?.primary_color || '#6366f1',
                     background_color: colors?.background || formStyle?.background_color || '#ffffff',
                     text_color: colors?.text || formStyle?.text_color || '#1f2937'  // ✅ FIX: Usa text color dal questionnaire!
+                },
+                design_options: design_options || {  // 🎨 DESIGN AVANZATO: Passa design options
+                    border_radius: parseInt(formStyle?.border_radius?.replace('px', '') || '8'),
+                    border_width: parseInt(formStyle?.border_width?.replace('px', '') || '1'),
+                    padding: formStyle?.padding || 'normal',
+                    font_size: formStyle?.font_size || 'normal',
+                    shadow: formStyle?.shadow || 'subtle'
                 },
                 privacy_policy_url: privacyPolicyUrl  // 🔒 CRITICAL FIX: Passa URL privacy!
             };
@@ -653,6 +705,19 @@ export const Forms: React.FC = () => {
                 });
             }
 
+            // 🎨 DESIGN AVANZATO: Gestisci design_options dalla response
+            if (data.design_options) {
+                console.log('🎨 Applying design options from Edge Function:', data.design_options);
+                setFormStyle(prev => ({
+                    ...prev,
+                    border_radius: `${data.design_options.border_radius}px`,
+                    border_width: `${data.design_options.border_width}px`,
+                    padding: data.design_options.padding,
+                    font_size: data.design_options.font_size,
+                    shadow: data.design_options.shadow
+                }));
+            }
+
             // 🔒 CRITICAL FIX: Gestisci privacy_policy_url dalla response
             if (data.privacy_policy_url && data.privacy_policy_url !== privacyPolicyUrl) {
                 console.log('🔒 Applying privacy URL from Edge Function:', data.privacy_policy_url);
@@ -758,10 +823,10 @@ export const Forms: React.FC = () => {
             });
 
             // 🎯 UX CRITICAL FIX: Assicurati che text_color sia presente se in auto-sync
-            const finalFormStyle = formStyle && !formStyle.text_color && formStyle.primary_color 
+            const finalFormStyle = formStyle && !formStyle.text_color && formStyle.primary_color
                 ? { ...formStyle, text_color: formStyle.primary_color }
                 : { ...formStyle };
-            
+
             if (finalFormStyle && !formStyle?.text_color && formStyle?.primary_color) {
                 console.log('🔄 AUTO-SYNC: Added missing text_color:', finalFormStyle.text_color);
             }
@@ -892,7 +957,16 @@ export const Forms: React.FC = () => {
 
     // 🌐 Funzione per generare codice WordPress embed
     const generateWordPressEmbedCode = (form: Form): string => {
-        const baseUrl = window.location.origin;
+        // 🌐 PRODUCTION FIX: Usa dominio di produzione invece di localhost
+        const getProductionUrl = () => {
+            const currentOrigin = window.location.origin;
+            // Se siamo in development (localhost), usa il dominio di produzione
+            if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
+                return 'https://crm-ai-rho.vercel.app';
+            }
+            return currentOrigin;
+        };
+        const baseUrl = getProductionUrl();
         const formUrl = `${baseUrl}/form/${form.id}`;
 
         return `<!-- Guardian AI CRM - Form: ${form.title || form.name} -->
@@ -1076,21 +1150,24 @@ ${kadenceCode.shortcode}
 
             <Modal isOpen={isCreateModalOpen} onClose={handleCloseModals} title="Crea Nuovo Form con AI">
                 <div className="space-y-4">
-                    {!generatedFields ? (
+                    {!generatedFields || showQuestionnaire ? (
                         <>
                             {/* 🎯 QUESTIONARIO INTERATTIVO */}
                             {showQuestionnaire ? (
                                 <InteractiveAIQuestionnaire
                                     initialPrompt={prompt}
+                                    initialStep={isDesignEditMode ? 5 : 1} // 🎨 Start da step 5 per design editing
                                     onComplete={(result) => {
                                         console.log('✅ Questionnaire - Received:', {
                                             hasColors: !!result.colors,
                                             hasPrivacy: !!result.privacyUrl,
                                             hasMetadata: !!result.metadata,
+                                            hasDesign: !!result.design, // 🎨 Check design options
                                             colors: result.colors,
                                             privacy: result.privacyUrl,
                                             marketingConsent: result.metadata?.marketing_consent,
-                                            requiredFields: result.required_fields
+                                            requiredFields: result.required_fields,
+                                            design_options: result.design // 🎨 Log design options
                                         });
 
                                         console.log('🔍 QUESTIONNAIRE COMPLETE RESULT:', JSON.stringify(result, null, 2));
@@ -1098,6 +1175,7 @@ ${kadenceCode.shortcode}
                                         // Imposta TUTTO subito, nessun setTimeout
                                         setPrompt(result.prompt);
                                         setShowQuestionnaire(false);
+                                        setIsDesignEditMode(false); // 🎨 Reset design edit mode
 
                                         // Salva colori e privacy IMMEDIATAMENTE
                                         if (result.colors) {
@@ -1120,6 +1198,20 @@ ${kadenceCode.shortcode}
                                             console.log('🎨 FormStyle set to:', newFormStyle);
                                         }
 
+                                        // 🎨 DESIGN AVANZATO: Applica design options al formStyle
+                                        if (result.design) {
+                                            console.log('🎨 Setting design options from questionnaire:', result.design);
+                                            setFormStyle(prev => ({
+                                                ...prev,
+                                                border_radius: `${result.design!.border_radius}px`,
+                                                border_width: `${result.design!.border_width}px`,
+                                                padding: result.design!.padding,
+                                                font_size: result.design!.font_size,
+                                                shadow: result.design!.shadow
+                                            }));
+                                            console.log('🎨 Design options applied to FormStyle');
+                                        }
+
                                         if (result.privacyUrl) {
                                             setPrivacyPolicyUrl(result.privacyUrl);
                                         }
@@ -1128,14 +1220,15 @@ ${kadenceCode.shortcode}
                                             setFormMeta({ gdpr_enabled: true });
                                         }
 
-                                        // ✅ CRITICAL FIX: Passa TUTTO il metadata completo E i colori
+                                        // ✅ CRITICAL FIX: Passa TUTTO il metadata completo E i colori E le design options
                                         console.log('🚀 CALLING handleGenerateForm with:', {
                                             prompt: result.prompt,
                                             requiredFields: result.required_fields,
                                             metadata: result.metadata,
-                                            colors: result.colors  // ✅ Passa i colori direttamente!
+                                            colors: result.colors,  // ✅ Passa i colori direttamente!
+                                            design_options: result.design  // 🎨 Passa design options!
                                         });
-                                        handleGenerateForm(result.prompt, result.required_fields, result.metadata, result.colors);
+                                        handleGenerateForm(result.prompt, result.required_fields, result.metadata, result.colors, result.design);
                                     }}
                                 />
                             ) : (
@@ -1221,6 +1314,10 @@ ${kadenceCode.shortcode}
                                 onStyleChange={handleStyleChange}
                                 privacyPolicyUrl={privacyPolicyUrl}
                                 onPrivacyPolicyChange={handlePrivacyPolicyChange}
+                                onOpenQuestionnaire={() => {
+                                    setIsDesignEditMode(true);
+                                    setShowQuestionnaire(true);
+                                }}
                             />
 
                             {/* Nome e Titolo Form */}

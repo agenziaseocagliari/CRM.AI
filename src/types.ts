@@ -69,7 +69,11 @@ export interface FormStyle {
     text_color: string;
     border_color: string;
     border_radius: string;
+    border_width?: string;      // 🎨 DESIGN AVANZATO
     font_family: string;
+    padding?: 'compact' | 'normal' | 'spacious';     // 🎨 DESIGN AVANZATO
+    font_size?: 'small' | 'normal' | 'large';        // 🎨 DESIGN AVANZATO  
+    shadow?: 'none' | 'subtle' | 'medium' | 'strong'; // 🎨 DESIGN AVANZATO
     button_style: ButtonStyle;
 }
 

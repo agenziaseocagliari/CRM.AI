@@ -97,7 +97,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { prompt, organization_id, required_fields, style_customizations, privacy_policy_url, metadata } = requestData;
+    const { prompt, organization_id, required_fields, style_customizations, privacy_policy_url, metadata, design_options } = requestData;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       console.error(`[ai_form_generation:${requestId}] ❌ Invalid prompt`);
@@ -110,6 +110,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // ✅ CRITICAL FIX: Validate required_fields parameter
     console.log(`[ai_form_generation:${requestId}] 📋 Required fields from questionnaire:`, required_fields);
     console.log(`[ai_form_generation:${requestId}] 🎨 Style customizations from frontend:`, style_customizations);
+    console.log(`[ai_form_generation:${requestId}] ✨ Design options from questionnaire:`, design_options);
     console.log(`[ai_form_generation:${requestId}] 🔍 ENTERPRISE COLOR DEBUG:`, {
       'frontend_colors': style_customizations,
       'will_use_frontend': !!style_customizations?.primary_color,
@@ -183,7 +184,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       industryContext,
       platformContext,
       userSelectedFields,
-      metadata
+      metadata,
+      required_fields
     );
 
     // 4. PREPARE RESPONSE
@@ -209,6 +211,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         backgroundColor: style_customizations?.background_color || extractedColors?.background_color || '#ffffff',
         textColor: style_customizations?.text_color || extractedColors?.text_color || '#1f2937'
       },
+      // ✨ DESIGN OPTIONS: Include advanced design options from questionnaire
+      design_options: design_options || {},
       // 🔒 CRITICAL FIX: Passa privacy_policy_url dal frontend alla response!
       privacy_policy_url: privacy_policy_url || extractedPrivacyUrl
     };
@@ -562,7 +566,8 @@ function generateIntelligentFormFields(
   industryContext?: IndustryContext,
   platformContext?: PlatformContext,
   requiredFields?: string[],
-  metadata?: any
+  metadata?: any,
+  required_fields?: string[]
 ): Array<{
   name: string;
   label: string;
@@ -690,16 +695,27 @@ function generateIntelligentFormFields(
 
     // 🔒 CRITICAL FIX: Aggiungi automaticamente GDPR se rilevato nel prompt e non già presente
     const hasPrivacyConsent = fields.some(f => f.name === 'privacy_consent');
+
+    // 🔒 CHECK: Verifica se privacy consent è già nei required_fields del questionario
+    const privacyInRequiredFields = required_fields?.some((field: string) =>
+      field.toLowerCase().includes('privacy') ||
+      field.toLowerCase().includes('consenso') ||
+      field.toLowerCase().includes('gdpr')
+    );
+
     const gdprDetected = detectGDPRRequirement(prompt);
 
-    if (gdprDetected && !hasPrivacyConsent) {
-      console.log(`🔒 Auto-adding GDPR privacy consent field (detected in prompt)`);
+    // 🔒 FIX: Aggiungi privacy solo se necessario e NON già presente dal questionario
+    if (gdprDetected && !hasPrivacyConsent && !privacyInRequiredFields) {
+      console.log(`🔒 Auto-adding GDPR privacy consent field (detected in prompt, not in required_fields)`);
       fields.push({
         name: "privacy_consent",
         label: "Accetto l'informativa sulla privacy e il trattamento dei miei dati personali",
         type: "checkbox",
         required: true
       });
+    } else if (privacyInRequiredFields) {
+      console.log(`🔒 Privacy field skipped - already included in required_fields from questionnaire`);
     }
 
     // 📧 CRITICAL FIX: Aggiungi automaticamente MARKETING CONSENT se richiesto nei metadata

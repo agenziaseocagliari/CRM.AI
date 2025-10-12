@@ -43,13 +43,31 @@ const DynamicFormField: React.FC<{
     // 🎯 UX IMPROVEMENT: Se text_color non è specificato, usa primaryColor invece del grigio
     const textColor = formStyle?.text_color || formStyle?.primary_color || '#374151';
 
+    // 🎨 DESIGN AVANZATO: Supporto per design options avanzate
     const borderRadius = formStyle?.border_radius || '6px';
+    const borderWidth = formStyle?.border_width || '1px';
+    const padding = formStyle?.padding === 'compact' ? '8px 12px' :
+        formStyle?.padding === 'spacious' ? '16px 20px' : '12px 16px';
+    const fontSize = formStyle?.font_size === 'small' ? '14px' :
+        formStyle?.font_size === 'large' ? '18px' : '16px';
+    const boxShadow = formStyle?.shadow === 'none' ? 'none' :
+        formStyle?.shadow === 'subtle' ? '0 1px 3px rgba(0,0,0,0.1)' :
+            formStyle?.shadow === 'medium' ? '0 4px 6px rgba(0,0,0,0.1)' :
+                formStyle?.shadow === 'strong' ? '0 10px 15px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.1)';
 
     console.log('🎨 DynamicFormField calculated colors:', {
         primaryColor,
         textColor,
         borderRadius,
         isCustomColors: primaryColor !== '#6366f1'
+    });
+
+    console.log('🎨 PUBLICFORM DynamicFormField calculated design:', {
+        borderRadius,
+        borderWidth,
+        padding,
+        fontSize,
+        boxShadow
     });
 
     // Calcola il colore di sfondo per i campi input basato sul background del form
@@ -135,8 +153,11 @@ const DynamicFormField: React.FC<{
                         backgroundColor: fieldBackgroundColor,
                         color: textColor,
                         borderRadius: borderRadius,
+                        borderWidth: borderWidth,
+                        padding: padding,
+                        fontSize: fontSize,
+                        boxShadow: boxShadow,
                         outline: 'none',
-                        borderWidth: '2px',
                     } as React.CSSProperties}
                     onFocus={(e) => {
                         e.target.style.borderColor = primaryColor;
@@ -144,7 +165,7 @@ const DynamicFormField: React.FC<{
                     }}
                     onBlur={(e) => {
                         e.target.style.borderColor = borderColor;
-                        e.target.style.boxShadow = 'none';
+                        e.target.style.boxShadow = boxShadow;
                     }}
                 >
                     <option value="">-- Seleziona --</option>
@@ -171,8 +192,11 @@ const DynamicFormField: React.FC<{
                         backgroundColor: fieldBackgroundColor,
                         color: textColor,
                         borderRadius: borderRadius,
+                        borderWidth: borderWidth,
+                        padding: padding,
+                        fontSize: fontSize,
+                        boxShadow: boxShadow,
                         outline: 'none',
-                        borderWidth: '2px',
                     } as React.CSSProperties}
                     onFocus={(e) => {
                         e.target.style.borderColor = primaryColor;
@@ -200,8 +224,11 @@ const DynamicFormField: React.FC<{
                     backgroundColor: fieldBackgroundColor,
                     color: textColor,
                     borderRadius: borderRadius,
+                    borderWidth: borderWidth,
+                    padding: padding,
+                    fontSize: fontSize,
+                    boxShadow: boxShadow,
                     outline: 'none',
-                    borderWidth: '2px',
                 } as React.CSSProperties}
                 onFocus={(e) => {
                     e.target.style.borderColor = primaryColor;
@@ -209,7 +236,7 @@ const DynamicFormField: React.FC<{
                 }}
                 onBlur={(e) => {
                     e.target.style.borderColor = borderColor;
-                    e.target.style.boxShadow = 'none';
+                    e.target.style.boxShadow = boxShadow;
                 }}
             />
         </div>

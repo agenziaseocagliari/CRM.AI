@@ -33,7 +33,7 @@ const CACHE_DURATION = {
 
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker installing...');
-  
+
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
@@ -52,17 +52,17 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   console.log('🚀 Service Worker activating...');
-  
+
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             // Delete old caches
-            if (cacheName !== CACHE_NAME && 
-                cacheName !== STATIC_CACHE && 
-                cacheName !== DYNAMIC_CACHE && 
-                cacheName !== API_CACHE) {
+            if (cacheName !== CACHE_NAME &&
+              cacheName !== STATIC_CACHE &&
+              cacheName !== DYNAMIC_CACHE &&
+              cacheName !== API_CACHE) {
               console.log('🗑️ Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
@@ -79,12 +79,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
-  
+
   // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
   }
-  
+
   // Handle different types of requests
   if (url.pathname.startsWith('/api/')) {
     // API requests - Cache with network-first strategy
@@ -107,44 +107,44 @@ async function handleApiRequest(request) {
   if (!request.url.startsWith('http')) {
     return fetch(request);
   }
-  
+
   const url = new URL(request.url);
-  
+
   try {
     // Try network first
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       // Cache successful responses
       const cache = await caches.open(API_CACHE);
       const responseClone = networkResponse.clone();
-      
+
       // Add timestamp for cache expiration
       const headers = new Headers(responseClone.headers);
       headers.set('sw-cached-at', Date.now().toString());
-      
+
       const modifiedResponse = new Response(responseClone.body, {
         status: responseClone.status,
         statusText: responseClone.statusText,
         headers: headers
       });
-      
+
       cache.put(request, modifiedResponse);
       console.log('📡 API cached:', url.pathname);
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('🔄 Network failed, trying cache for:', url.pathname, error);
-    
+
     // Network failed, try cache
     const cachedResponse = await caches.match(request);
-    
+
     if (cachedResponse) {
       // Check if cache is still valid
       const cachedAt = cachedResponse.headers.get('sw-cached-at');
       const age = cachedAt ? (Date.now() - parseInt(cachedAt)) / 1000 : Infinity;
-      
+
       if (age < CACHE_DURATION.API) {
         console.log('✅ Serving from API cache:', url.pathname);
         return cachedResponse;
@@ -152,7 +152,7 @@ async function handleApiRequest(request) {
         console.log('⏰ API cache expired for:', url.pathname);
       }
     }
-    
+
     // Return error response if no cache available
     return new Response(
       JSON.stringify({ error: 'Network unavailable', offline: true }),
@@ -170,23 +170,23 @@ async function handleStaticAsset(request) {
   if (!request.url.startsWith('http')) {
     return fetch(request);
   }
-  
+
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     console.log('⚡ Serving static asset from cache:', request.url);
     return cachedResponse;
   }
-  
+
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(STATIC_CACHE);
       cache.put(request, networkResponse.clone());
       console.log('📦 Static asset cached:', request.url);
     }
-    
+
     return networkResponse;
   } catch {
     console.error('❌ Failed to fetch static asset:', request.url);
@@ -200,27 +200,27 @@ async function handleImageRequest(request) {
   if (!request.url.startsWith('http')) {
     return fetch(request);
   }
-  
+
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     console.log('🖼️ Serving image from cache:', request.url);
     return cachedResponse;
   }
-  
+
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, networkResponse.clone());
       console.log('🖼️ Image cached:', request.url);
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('🔄 Image failed to load:', request.url, error);
-    
+
     // Return placeholder image for failed requests
     return new Response(
       `<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -244,33 +244,33 @@ async function handlePageRequest(request) {
   if (!request.url.startsWith('http')) {
     return fetch(request);
   }
-  
+
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, networkResponse.clone());
       console.log('📄 Page cached:', request.url);
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('🔄 Network failed, trying cache for page:', request.url, error);
-    
+
     const cachedResponse = await caches.match(request);
-    
+
     if (cachedResponse) {
       console.log('📄 Serving page from cache:', request.url);
       return cachedResponse;
     }
-    
+
     // Return offline page if available
     const offlinePage = await caches.match('/offline.html');
     if (offlinePage) {
       return offlinePage;
     }
-    
+
     // Final fallback
     return new Response(
       `<!DOCTYPE html>
@@ -309,11 +309,11 @@ async function doBackgroundSync() {
   // Handle offline actions when connection is restored
   try {
     const offlineActions = await getOfflineActions();
-    
+
     for (const action of offlineActions) {
       await processOfflineAction(action);
     }
-    
+
     await clearOfflineActions();
     console.log('✅ Background sync completed');
   } catch (error) {
@@ -346,11 +346,11 @@ self.addEventListener('message', (event) => {
 
 async function cleanupOldCache() {
   const cacheNames = await caches.keys();
-  
+
   for (const cacheName of cacheNames) {
     const cache = await caches.open(cacheName);
     const requests = await cache.keys();
-    
+
     for (const request of requests) {
       const response = await cache.match(request);
       if (response) {
@@ -358,7 +358,7 @@ async function cleanupOldCache() {
         if (cachedAt) {
           const age = (Date.now() - parseInt(cachedAt)) / 1000;
           const maxAge = cacheName.includes('api') ? CACHE_DURATION.API : CACHE_DURATION.DYNAMIC;
-          
+
           if (age > maxAge) {
             await cache.delete(request);
             console.log('🗑️ Deleted expired cache entry:', request.url);
@@ -367,6 +367,6 @@ async function cleanupOldCache() {
       }
     }
   }
-  
+
   console.log('✅ Cache cleanup completed');
 }

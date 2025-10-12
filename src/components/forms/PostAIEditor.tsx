@@ -17,6 +17,8 @@ interface PostAIEditorProps {
     onStyleChange: (style: FormStyle) => void;
     privacyPolicyUrl?: string;
     onPrivacyPolicyChange: (url: string) => void;
+    // 🎨 DESIGN AVANZATO: Funzione per riaprire questionario
+    onOpenQuestionnaire?: () => void;
 }
 
 export const PostAIEditor: React.FC<PostAIEditorProps> = ({
@@ -25,7 +27,8 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
     style,
     onStyleChange,
     privacyPolicyUrl = '',
-    onPrivacyPolicyChange
+    onPrivacyPolicyChange,
+    onOpenQuestionnaire
 }) => {
     // Stati per la personalizzazione dei colori
     const [primaryColor, setPrimaryColor] = useState(style?.primary_color || '#6366f1');
@@ -177,12 +180,28 @@ export const PostAIEditor: React.FC<PostAIEditorProps> = ({
         <div className="space-y-6">
             {/* 🎨 Sezione Personalizzazione Colori */}
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
-                <div className="flex items-center space-x-2 mb-4">
-                    <SwatchIcon className="w-5 h-5 text-indigo-600" />
-                    <h3 className="font-semibold text-gray-900">Personalizza Colori Form</h3>
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                        ✨ FormMaster Level 6
-                    </span>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                        <SwatchIcon className="w-5 h-5 text-indigo-600" />
+                        <h3 className="font-semibold text-gray-900">Personalizza Colori Form</h3>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            ✨ FormMaster Level 6
+                        </span>
+                    </div>
+
+                    {/* 🎨 Pulsante per riaprire questionario */}
+                    {onOpenQuestionnaire && (
+                        <button
+                            onClick={onOpenQuestionnaire}
+                            className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200 rounded-md transition-colors"
+                            title="Apri questionario per personalizzazione avanzata"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <span>Design Avanzato</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Color Pickers */}

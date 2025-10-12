@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { supabase } from '../../lib/supabaseClient';
 import { APIIntegration, IntegrationUsageLog } from '../../types';
-import { 
-    ExclamationTriangleIcon,
-    PaperAirplaneIcon,
-    KeyIcon,
-    GlobeAltIcon,
+import {
     ChartBarIcon,
+    ExclamationTriangleIcon,
+    GlobeAltIcon,
+    KeyIcon,
+    PaperAirplaneIcon,
     PencilIcon,
     TrashIcon
 } from '../ui/icons';

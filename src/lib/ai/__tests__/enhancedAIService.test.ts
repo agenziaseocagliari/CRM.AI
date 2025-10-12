@@ -112,7 +112,7 @@ describe('EnhancedAIService', () => {
           cta: 'Schedule quick call',
           personalizedElements: ['company reference', 'role-specific pain point']
         })
-      } as any);
+      } as never);
 
       const result = await enhancedAIService.generateEmailContent(
         mockEmailContext,
@@ -132,7 +132,7 @@ describe('EnhancedAIService', () => {
       // Mock invalid JSON response
       vi.mocked(enhancedAIService['ai'].models.generateContent).mockResolvedValueOnce({
         text: () => 'Invalid JSON response'
-      } as any);
+      } as never);
 
       const result = await enhancedAIService.generateEmailContent(
         mockEmailContext,
@@ -156,7 +156,7 @@ describe('EnhancedAIService', () => {
       // Mock WhatsApp message generation
       vi.mocked(enhancedAIService['ai'].models.generateContent).mockResolvedValueOnce({
         text: () => 'Hi Mike! 👋 Thanks for demo interest. Can show TechStartup how we helped similar companies boost sales 30% in 10 min. Free to chat? Reply STOP to opt out.'
-      } as any);
+      } as never);
 
       const result = await enhancedAIService.generateWhatsAppMessage(
         mockMessageContext,
@@ -201,7 +201,7 @@ describe('EnhancedAIService', () => {
       // Mock healthy AI response
       vi.mocked(enhancedAIService['ai'].models.generateContent).mockResolvedValueOnce({
         text: () => 'OK'
-      } as any);
+      } as never);
 
       const health = await enhancedAIService.checkAIHealth();
 

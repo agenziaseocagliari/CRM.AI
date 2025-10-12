@@ -176,8 +176,8 @@ describe('AI Cache Manager', () => {
       mockSupabaseSingle.mockResolvedValueOnce({ data: mockTemplateData, error: null });
 
       // Mock template matching
-      vi.spyOn(aiCache as any, 'calculateTemplateMatch').mockReturnValue(0.8);
-      vi.spyOn(aiCache as any, 'personalizeTemplate').mockReturnValue(
+      vi.spyOn(aiCache as unknown as { calculateTemplateMatch: () => number }, 'calculateTemplateMatch').mockReturnValue(0.8);
+      vi.spyOn(aiCache as unknown as { personalizeTemplate: () => string }, 'personalizeTemplate').mockReturnValue(
         'Hi John, interested in improving TechCorp sales?'
       );
 

@@ -186,7 +186,7 @@ export interface AutomationAgent {
     type: AgentType;
     description: string;
     is_active: boolean;
-    configuration: Record<string, any>;
+    configuration: Record<string, unknown>;
     status: AgentStatus;
     last_run_at: string | null;
     last_error: string | null;
@@ -200,9 +200,9 @@ export interface AgentExecutionLog {
     execution_start: string;
     execution_end: string | null;
     status: 'running' | 'success' | 'error' | 'partial';
-    result_summary: Record<string, any> | null;
+    result_summary: Record<string, unknown> | null;
     error_details: string | null;
-    actions_taken: any[];
+    actions_taken: unknown[];
     created_at: string;
 }
 
@@ -215,12 +215,12 @@ export interface APIIntegration {
     provider_type: ProviderType;
     display_name: string;
     is_active: boolean;
-    credentials: Record<string, any>;
-    configuration: Record<string, any>;
+    credentials: Record<string, unknown>;
+    configuration: Record<string, unknown>;
     status: IntegrationStatus;
     last_ping_at: string | null;
     last_error: string | null;
-    usage_stats: Record<string, any>;
+    usage_stats: Record<string, unknown>;
     created_at: string;
     updated_at: string;
 }
@@ -230,8 +230,8 @@ export interface IntegrationUsageLog {
     integration_id: string;
     action_type: string;
     status: 'success' | 'error' | 'rate_limited';
-    request_details: Record<string, any> | null;
-    response_details: Record<string, any> | null;
+    request_details: Record<string, unknown> | null;
+    response_details: Record<string, unknown> | null;
     error_message: string | null;
     execution_time_ms: number | null;
     created_at: string;
@@ -243,8 +243,8 @@ export interface Integration {
     organization_id: string;
     integration_type: string;
     is_active: boolean;
-    configuration: Record<string, any>;
-    credentials: Record<string, any>;
+    configuration: Record<string, unknown>;
+    credentials: Record<string, unknown>;
     status: 'active' | 'inactive' | 'error' | 'rate_limited';
     last_sync_at: string | null;
     last_error: string | null;
@@ -260,10 +260,10 @@ export interface WorkflowDefinition {
     name: string;
     description: string | null;
     natural_language_prompt: string;
-    workflow_json: Record<string, any>;
+    workflow_json: Record<string, unknown>;
     is_active: boolean;
     trigger_type: TriggerType;
-    trigger_config: Record<string, any>;
+    trigger_config: Record<string, unknown>;
     created_by: string | null;
     created_at: string;
     updated_at: string;
@@ -277,8 +277,8 @@ export interface WorkflowExecutionLog {
     execution_start: string;
     execution_end: string | null;
     status: 'running' | 'success' | 'error' | 'partial';
-    trigger_data: Record<string, any> | null;
-    execution_result: Record<string, any> | null;
+    trigger_data: Record<string, unknown> | null;
+    execution_result: Record<string, unknown> | null;
     error_details: string | null;
     created_at: string;
 }

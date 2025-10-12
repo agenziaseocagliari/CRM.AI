@@ -22,7 +22,7 @@ async function checkExistingTables() {
     
     for (const table of tablesToCheck) {
         try {
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from(table)
                 .select('*')
                 .limit(1);
@@ -96,7 +96,7 @@ async function executeMigrationDirect() {
                         AND table_name = 'contact_imports'`;
         
         try {
-            const { data, error } = await supabase.rpc('sql', { query: testSQL });
+            const { error } = await supabase.rpc('sql', { query: testSQL });
             
             if (!error) {
                 console.log('✅ RPC SQL disponibile, uso questo metodo');
@@ -126,14 +126,14 @@ async function executeSQLViaRPC() {
     const sqlFile = readFileSync('./supabase/migrations/20261012000002_contact_import_complete.sql', 'utf8');
     
     try {
-        const { data, error } = await supabase.rpc('sql', { query: sqlFile });
+        const { error } = await supabase.rpc('sql', { query: sqlFile });
         
         if (error) {
             console.error('❌ Errore esecuzione SQL:', error);
             return false;
         }
         
-        console.log('✅ SQL eseguito con successo:', data);
+        console.log('✅ SQL eseguito con successo');
         return true;
         
     } catch (error) {
@@ -156,7 +156,7 @@ async function verifyMigration() {
     
     for (const tableName of tablesToCheck) {
         try {
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from(tableName)
                 .select('*')
                 .limit(1);

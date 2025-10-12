@@ -64,26 +64,18 @@ export const VisualWorkflowCanvas: React.FC<VisualWorkflowCanvasProps> = ({
     onSave, 
     onCancel 
 }) => {
-    const [nodes, setNodes] = useState<WorkflowNode[]>(() => {
-        if (workflow?.workflow_json?.nodes) {
-            return workflow.workflow_json.nodes;
-        }
-        return [{
-            id: 'start',
-            type: 'trigger',
-            subtype: 'manual',
-            label: 'Start',
-            config: {},
-            position: { x: 100, y: 100 }
-        }];
-    });
+    const initialNodes: WorkflowNode[] = (workflow?.workflow_json?.nodes as WorkflowNode[]) || [{
+        id: 'start',
+        type: 'trigger',
+        subtype: 'manual',
+        label: 'Start',
+        config: {},
+        position: { x: 100, y: 100 }
+    }];
+    const [nodes, setNodes] = useState<WorkflowNode[]>(initialNodes);
 
-    const [connections, setConnections] = useState<WorkflowConnection[]>(() => {
-        if (workflow?.workflow_json?.connections) {
-            return workflow.workflow_json.connections;
-        }
-        return [];
-    });
+    const initialConnections: WorkflowConnection[] = (workflow?.workflow_json?.connections as WorkflowConnection[]) || [];
+    const [connections, setConnections] = useState<WorkflowConnection[]>(initialConnections);
 
     const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null);
     const [draggedNode, setDraggedNode] = useState<string | null>(null);

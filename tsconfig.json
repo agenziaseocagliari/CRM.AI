@@ -28,6 +28,8 @@
     // "noUncheckedIndexedAccess": true, // TODO: Enable after index access fixes
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     /* Path Aliases */
     "paths": {
       "@/*": [

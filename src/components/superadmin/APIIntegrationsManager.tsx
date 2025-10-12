@@ -102,7 +102,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                     <div className="flex items-center justify-between">
                         <span className="text-text-secondary">Utilizzo Mensile:</span>
                         <span className="text-text-primary font-medium">
-                            {integration.usage_stats.monthly_requests || 0} richieste
+                            {`${integration.usage_stats.monthly_requests || 0} richieste`}
                         </span>
                     </div>
                 )}

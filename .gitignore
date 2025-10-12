@@ -18,6 +18,35 @@ dist-ssr
 .vercel
 .output
 
+# 🔒 CRITICAL SECURITY: Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.example
+.env.*
+
+# 🔒 SECURITY: Debug and test files with hardcoded secrets
+test-*.mjs
+debug-*.mjs
+create-*.mjs
+reset-*.mjs
+apply-*.mjs
+analyze-*.mjs
+check-*.mjs
+diagnose-*.mjs
+enterprise-*.mjs
+execute-*.mjs
+forensic-*.mjs
+fix-*.mjs
+get-*.mjs
+investigate-*.mjs
+final-*.mjs
+deploy-*.sh
+*.access.log
+EXECUTE_*.mjs
+
 # Test coverage
 coverage
 .nyc_output

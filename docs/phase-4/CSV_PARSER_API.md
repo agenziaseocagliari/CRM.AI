@@ -15,7 +15,8 @@ POST https://[project-ref].supabase.co/functions/v1/parse-csv-upload
 ## Authentication
 
 **Requires**: Bearer token (Supabase Auth)
-- User must be authenticated 
+
+- User must be authenticated
 - User must belong to an organization
 - Organization isolation enforced via RLS policies
 
@@ -24,6 +25,7 @@ POST https://[project-ref].supabase.co/functions/v1/parse-csv-upload
 ## Request
 
 ### Headers
+
 ```
 Content-Type: multipart/form-data
 Authorization: Bearer [token]
@@ -31,14 +33,15 @@ Authorization: Bearer [token]
 
 ### Body (multipart/form-data)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | File | ✅ Yes | CSV file to parse (max 10MB) |
-| `organization_id` | UUID | ✅ Yes | Organization ID for multi-tenant isolation |
-| `duplicate_strategy` | String | ❌ No | How to handle duplicates: "skip", "update", "merge" (default: "skip") |
-| `field_mapping_template_id` | UUID | ❌ No | Saved field mapping template to apply |
+| Field                       | Type   | Required | Description                                                           |
+| --------------------------- | ------ | -------- | --------------------------------------------------------------------- |
+| `file`                      | File   | ✅ Yes   | CSV file to parse (max 10MB)                                          |
+| `organization_id`           | UUID   | ✅ Yes   | Organization ID for multi-tenant isolation                            |
+| `duplicate_strategy`        | String | ❌ No    | How to handle duplicates: "skip", "update", "merge" (default: "skip") |
+| `field_mapping_template_id` | UUID   | ❌ No    | Saved field mapping template to apply                                 |
 
 ### Example Request
+
 ```bash
 curl -X POST \
   https://qjtaqrlpronohgpfdxsi.supabase.co/functions/v1/parse-csv-upload \
@@ -53,6 +56,7 @@ curl -X POST \
 ## Response
 
 ### Success (200)
+
 ```json
 {
   "success": true,
@@ -67,7 +71,7 @@ curl -X POST \
         "Azienda": "ACME Corp"
       },
       {
-        "Email": "giulia.bianchi@example.com", 
+        "Email": "giulia.bianchi@example.com",
         "Nome": "Giulia Bianchi",
         "Telefono": "347-1234567",
         "Azienda": "TechStart SRL"
@@ -77,7 +81,7 @@ curl -X POST \
     "total_rows": 1250,
     "detected_mappings": {
       "Email": "email",
-      "Nome": "full_name", 
+      "Nome": "full_name",
       "Telefono": "phone",
       "Azienda": "company"
     }
@@ -87,7 +91,7 @@ curl -X POST \
       {
         "row": 15,
         "field": "email",
-        "column": "Email", 
+        "column": "Email",
         "message": "Invalid email format",
         "value": "notanemail",
         "errorType": "INVALID_EMAIL_FORMAT"
@@ -118,6 +122,7 @@ curl -X POST \
 ### Error Responses
 
 #### File Too Large (413)
+
 ```json
 {
   "success": false,
@@ -127,6 +132,7 @@ curl -X POST \
 ```
 
 #### Invalid File Type (400)
+
 ```json
 {
   "success": false,
@@ -136,6 +142,7 @@ curl -X POST \
 ```
 
 #### Malformed CSV (400)
+
 ```json
 {
   "success": false,
@@ -149,6 +156,7 @@ curl -X POST \
 ```
 
 #### Unauthorized (401)
+
 ```json
 {
   "success": false,
@@ -158,6 +166,7 @@ curl -X POST \
 ```
 
 #### Organization Not Found (404)
+
 ```json
 {
   "success": false,
@@ -167,6 +176,7 @@ curl -X POST \
 ```
 
 #### Empty File (400)
+
 ```json
 {
   "success": false,
@@ -176,6 +186,7 @@ curl -X POST \
 ```
 
 #### Database Error (500)
+
 ```json
 {
   "success": false,
@@ -195,9 +206,9 @@ curl -X POST \
    ├── Check file presence and size
    └── Validate file type (CSV only)
 
-2. FILE UPLOAD PROCESSING  
+2. FILE UPLOAD PROCESSING
    ├── Parse multipart/form-data
-   ├── Extract file content 
+   ├── Extract file content
    ├── Detect encoding (prefer UTF-8)
    └── Validate file size limits
 
@@ -239,18 +250,19 @@ curl -X POST \
 
 ## Performance Characteristics
 
-| Metric | Limit | Rationale |
-|--------|-------|-----------|
-| **Max File Size** | 10MB | Balance usability vs. performance |
-| **Max Rows** | 50,000 | Prevent timeout and memory issues |
-| **Timeout** | 30 seconds | Edge Function limit |
-| **Memory Usage** | ~128MB | Estimated peak usage |
-| **Preview Rows** | 10 | Fast response time |
-| **Concurrent Uploads** | 5 per org | Rate limiting |
+| Metric                 | Limit      | Rationale                         |
+| ---------------------- | ---------- | --------------------------------- |
+| **Max File Size**      | 10MB       | Balance usability vs. performance |
+| **Max Rows**           | 50,000     | Prevent timeout and memory issues |
+| **Timeout**            | 30 seconds | Edge Function limit               |
+| **Memory Usage**       | ~128MB     | Estimated peak usage              |
+| **Preview Rows**       | 10         | Fast response time                |
+| **Concurrent Uploads** | 5 per org  | Rate limiting                     |
 
 ### Expected Performance
+
 - **Small files** (<1MB, <1K rows): 2-5 seconds
-- **Medium files** (1-5MB, 1K-10K rows): 5-15 seconds  
+- **Medium files** (1-5MB, 1K-10K rows): 5-15 seconds
 - **Large files** (5-10MB, 10K-50K rows): 15-30 seconds
 
 ---
@@ -258,24 +270,28 @@ curl -X POST \
 ## Security
 
 ### Multi-Tenant Isolation
+
 - All operations scoped to `organization_id`
 - RLS policies enforce data isolation
 - Import records linked to organization
 - User authorization checked via JWT
 
 ### File Validation
+
 - **File Type**: Only CSV accepted (MIME type + extension)
 - **File Size**: Hard limit at 10MB
 - **Content**: Scan for malicious patterns
 - **Encoding**: Validate UTF-8 or convertible encodings
 
-### Input Sanitization  
+### Input Sanitization
+
 - CSV content parsed safely (no eval/exec)
 - Column names sanitized for SQL injection
 - File names sanitized for path traversal
 - Organization ID validated as UUID
 
 ### Rate Limiting
+
 - **Per Organization**: Max 10 uploads per hour
 - **Per User**: Max 5 uploads per hour
 - **Concurrent**: Max 5 active uploads per org
@@ -288,26 +304,30 @@ curl -X POST \
 ### Auto-Detection Algorithms
 
 1. **Exact Match** (Confidence: 1.0)
+
    ```
    "email" → "email"
    "phone" → "phone"
    ```
 
 2. **Case-Insensitive Match** (Confidence: 0.9)
+
    ```
    "Email" → "email"
    "PHONE" → "phone"
    ```
 
 3. **Common Aliases** (Confidence: 0.8)
+
    ```
    "E-mail" → "email"
-   "Tel" → "phone"  
+   "Tel" → "phone"
    "Company" → "company"
    "Full Name" → "full_name"
    ```
 
 4. **Fuzzy Matching** (Confidence: 0.6-0.7)
+
    ```
    "Emial" → "email" (typo)
    "Telefono" → "phone" (Italian)
@@ -322,6 +342,7 @@ curl -X POST \
    ```
 
 ### Supported Languages
+
 - **English**: Standard field names
 - **Italian**: Business-common translations
 - **Mixed**: Handle multilingual headers
@@ -331,18 +352,21 @@ curl -X POST \
 ## Error Handling Strategy
 
 ### Graceful Degradation
+
 - **Parsing Errors**: Skip malformed rows, continue processing
 - **Validation Errors**: Collect all errors, don't stop on first
 - **Field Detection**: Partial mappings acceptable
 - **Encoding Issues**: Attempt conversion, report if failed
 
 ### User-Friendly Messages
+
 - Clear error descriptions in user's language
 - Specific row/column references
 - Actionable suggestions for fixes
 - Examples of correct formats
 
 ### Logging and Monitoring
+
 - Performance metrics per file size
 - Error rates by type
 - Field detection accuracy
@@ -353,18 +377,21 @@ curl -X POST \
 ## Integration Points
 
 ### Database Tables
+
 - `contact_imports`: Store import metadata
 - `contact_import_logs`: Row-level results (Task 3)
 - `contact_field_mappings`: Saved templates
 - `contacts`: Target table for final import
 
 ### Next Steps (Task 3)
+
 - Manual field mapping UI
 - Template save/load
 - Conflict resolution interface
 - Preview with corrections
 
 ### Webhook Events (Future)
+
 - Import started
 - Import completed
 - Import failed
@@ -375,12 +402,14 @@ curl -X POST \
 ## Testing Checklist
 
 ### Happy Path Tests
+
 - ✅ Standard CSV with common headers
 - ✅ Italian headers with auto-detection
 - ✅ Large file (5MB, 25K rows)
 - ✅ Perfect data with no errors
 
 ### Edge Cases
+
 - ✅ Empty file
 - ✅ Headers only (no data)
 - ✅ Malformed CSV (unclosed quotes)
@@ -389,6 +418,7 @@ curl -X POST \
 - ✅ Excel CSV quirks (BOM)
 
 ### Error Conditions
+
 - ✅ File too large (>10MB)
 - ✅ Invalid file type
 - ✅ Corrupted file
@@ -396,6 +426,7 @@ curl -X POST \
 - ✅ Database connection failure
 
 ### Security Tests
+
 - ✅ Unauthorized access
 - ✅ Organization isolation
 - ✅ Malicious file content
@@ -406,9 +437,9 @@ curl -X POST \
 
 ## API Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| v1.0 | 2025-10-12 | Initial specification |
+| Version | Date       | Changes               |
+| ------- | ---------- | --------------------- |
+| v1.0    | 2025-10-12 | Initial specification |
 
 ---
 

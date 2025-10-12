@@ -124,7 +124,7 @@ async function directAuthFix() {
           })
 
           if (profileResponse.ok) {
-            const result = await profileResponse.json()
+            await profileResponse.json()
             console.log(`✅ Profile created for ${user.email}`)
           } else {
             const errorText = await profileResponse.text()

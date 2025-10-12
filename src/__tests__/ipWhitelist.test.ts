@@ -55,7 +55,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
 
   describe('checkIPWhitelist', () => {
     it('should return true for whitelisted IP', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: true,
         error: null,
       });
@@ -70,7 +70,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should return false for non-whitelisted IP', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: false,
         error: null,
       });
@@ -81,7 +81,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: null,
         error: new Error('Database error'),
       });
@@ -94,7 +94,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
 
   describe('checkGeoRestriction', () => {
     it('should return allowed for allowed countries', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: { allowed: true, reason: 'Country explicitly allowed' },
         error: null,
       });
@@ -106,7 +106,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should return blocked for blocked countries', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: { allowed: false, reason: 'Country explicitly blocked' },
         error: null,
       });
@@ -118,7 +118,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: null,
         error: new Error('Database error'),
       });
@@ -131,7 +131,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
 
   describe('validateIPAccess', () => {
     it('should allow whitelisted IP regardless of geo-restrictions', async () => {
-      (supabase.rpc as any)
+      (supabase.rpc as unknown as jest.Mock)
         .mockResolvedValueOnce({ data: true, error: null }) // checkIPWhitelist
         .mockResolvedValueOnce({
           data: { allowed: false, reason: 'Country blocked' },
@@ -146,7 +146,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should block non-whitelisted IP from blocked country', async () => {
-      (supabase.rpc as any)
+      (supabase.rpc as unknown as jest.Mock)
         .mockResolvedValueOnce({ data: false, error: null }) // checkIPWhitelist
         .mockResolvedValueOnce({
           data: { allowed: false, reason: 'Country blocked' },
@@ -162,7 +162,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should allow non-whitelisted IP from allowed country', async () => {
-      (supabase.rpc as any)
+      (supabase.rpc as unknown as jest.Mock)
         .mockResolvedValueOnce({ data: false, error: null }) // checkIPWhitelist
         .mockResolvedValueOnce({
           data: { allowed: true, reason: 'Country allowed' },
@@ -177,7 +177,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should allow access when no country code is provided', async () => {
-      (supabase.rpc as any).mockResolvedValueOnce({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValueOnce({
         data: false,
         error: null,
       }); // checkIPWhitelist
@@ -193,7 +193,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
   describe('logIPAccess', () => {
     it('should log IP access successfully', async () => {
       const mockLogId = '323e4567-e89b-12d3-a456-426614174000';
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: mockLogId,
         error: null,
       });
@@ -222,7 +222,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
 
     it('should log blocked access and create audit event', async () => {
       const mockLogId = '323e4567-e89b-12d3-a456-426614174000';
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: mockLogId,
         error: null,
       });
@@ -243,7 +243,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: null,
         error: new Error('Database error'),
       });
@@ -272,7 +272,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         single: vi.fn().mockResolvedValue({ data: mockWhitelist, error: null }),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       const result = await addIPWhitelist(mockOrgId, mockIPAddress, {
         label: 'Office IP',
@@ -293,7 +293,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         }),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       await expect(
         addIPWhitelist(mockOrgId, mockIPAddress)
@@ -314,7 +314,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         eq: vi.fn().mockReturnValue(mockChain),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       const result = await removeIPWhitelist(mockOrgId, mockWhitelistId);
 
@@ -333,7 +333,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         eq: vi.fn().mockReturnValue(mockChain),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       const result = await removeIPWhitelist(mockOrgId, mockWhitelistId);
 
@@ -375,7 +375,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         eq: vi.fn().mockReturnValue(mockChain),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       // Test with activeOnly=false to avoid conditional eq() call
       const result = await listIPWhitelist(mockOrgId, false);
@@ -395,7 +395,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         }),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       const result = await listIPWhitelist(mockOrgId);
 
@@ -422,7 +422,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         single: vi.fn().mockResolvedValue({ data: mockRestriction, error: null }),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       const result = await addGeoRestriction(mockOrgId, 'US', 'allow', {
         label: 'Allow US',
@@ -450,7 +450,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         single: vi.fn().mockResolvedValue({ data: mockRestriction, error: null }),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       await addGeoRestriction(mockOrgId, 'us', 'allow');
 
@@ -475,7 +475,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         eq: vi.fn().mockReturnValue(mockChain),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       const result = await removeGeoRestriction(mockOrgId, mockRestrictionId);
 
@@ -518,7 +518,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         eq: vi.fn().mockReturnValue(mockChain),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       // Test with activeOnly=false to avoid conditional eq() call
       const result = await listGeoRestrictions(mockOrgId, false);
@@ -545,7 +545,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         ],
       };
 
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: mockStats,
         error: null,
       });
@@ -559,7 +559,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
     });
 
     it('should return empty stats on error', async () => {
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as unknown as jest.Mock).mockResolvedValue({
         data: null,
         error: new Error('Query failed'),
       });
@@ -600,7 +600,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         limit: vi.fn().mockResolvedValue({ data: mockLogs, error: null }),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       const result = await getIPAccessLogs(mockOrgId, { limit: 10 });
 
@@ -632,7 +632,7 @@ describe('IP Whitelist & Geo-Restrictions', () => {
         order: vi.fn().mockReturnValue(mockChain),
       };
 
-      (supabase.from as any).mockReturnValue(mockFrom);
+      (supabase.from as unknown as jest.Mock).mockReturnValue(mockFrom);
 
       // Test without blockedOnly to avoid conditional eq() call
       const result = await getIPAccessLogs(mockOrgId, { limit: 10 });

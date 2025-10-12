@@ -62,7 +62,7 @@ describe('Audit Logger - logAuditEvent', () => {
   });
 
   it('should handle logging errors gracefully', async () => {
-    const mockError = new Error('Database error') as any;
+    const mockError = new Error('Database error') as Error & { details: string; hint: string; code: string };
     mockError.details = 'Database connection failed';
     mockError.hint = 'Check database connectivity';
     mockError.code = 'PGRST500';
@@ -158,7 +158,7 @@ describe('Audit Logger - searchAuditLogs', () => {
   });
 
   it('should return empty array on error', async () => {
-    const mockError = new Error('Search failed') as any;
+    const mockError = new Error('Search failed') as Error & { details: string; hint: string; code: string };
     mockError.details = 'Query execution failed';
     mockError.hint = 'Check search parameters';
     mockError.code = 'PGRST400';
@@ -237,7 +237,7 @@ describe('Audit Logger - getAuditLogStats', () => {
   });
 
   it('should return null on error', async () => {
-    const mockError = new Error('Stats query failed') as any;
+    const mockError = new Error('Stats query failed') as Error & { details: string; hint: string; code: string };
     mockError.details = 'Unable to calculate statistics';
     mockError.hint = 'Verify data exists in the specified date range';
     mockError.code = 'PGRST500';

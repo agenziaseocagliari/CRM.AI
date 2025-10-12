@@ -410,28 +410,34 @@ $$;
 -- =========================================================
 
 -- Test function creation
-SELECT 
-    routine_name,
-    routine_type
+SELECT routine_name, routine_type
 FROM information_schema.routines
-WHERE routine_name IN ('initialize_trial_user', 'consume_credits_rpc')
+WHERE
+    routine_name IN (
+        'initialize_trial_user',
+        'consume_credits_rpc'
+    )
     AND routine_schema = 'public';
 
 -- Verify current organization trial status
-SELECT 
+SELECT
     o.name,
     oc.is_trial,
     oc.plan_name,
     oc.cycle_end_date,
-    CASE 
+    CASE
         WHEN oc.cycle_end_date > NOW() THEN 'ACTIVE'
         ELSE 'EXPIRED'
     END as trial_status,
-    EXTRACT(days FROM (oc.cycle_end_date - NOW())) as days_remaining,
+    EXTRACT(
+        days
+        FROM (oc.cycle_end_date - NOW())
+    ) as days_remaining,
     oc.ai_credits_available,
     oc.whatsapp_credits_available,
     oc.email_credits_available,
     oc.sms_credits_available
-FROM organizations o
-LEFT JOIN organization_credits oc ON o.id = oc.organization_id
+FROM
+    organizations o
+    LEFT JOIN organization_credits oc ON o.id = oc.organization_id
 ORDER BY o.created_at;

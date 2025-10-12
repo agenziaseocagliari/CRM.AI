@@ -19,7 +19,7 @@ const CheckIcon = ({ className }: { className?: string }) => (
 );
 
 interface InteractiveAIQuestionnaireProps {
-  onComplete: (data: any) => void;
+  onComplete: (data: QuestionnaireResult) => void;
   initialPrompt?: string;
   initialStep?: number;
 }
@@ -48,11 +48,7 @@ export interface QuestionnaireResult {
   };
 }
 
-interface InteractiveAIQuestionnaire {
-  onComplete: (result: QuestionnaireResult) => void;
-  initialPrompt: string;
-  initialStep?: number; // 🎯 Per aprire direttamente step specifico (es. step 5 per Design Avanzato)
-}
+
 
 interface QuestionnaireData {
   business_type: string;
@@ -276,15 +272,15 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
     'Obiettivi',
   ];
 
-  // � Form purposes universali per qualsiasi business
-  const formPurposes = [
+  // 🎯 Form purposes universali per qualsiasi business
+  const formPurposes = useMemo(() => [
     'Lead Generation',
     'Richiesta Preventivo',
     'Contatto Generale',
     'Iscrizione Newsletter',
     'Download Risorsa',
     'Prenotazione Consulenza',
-  ];
+  ], []);
 
   // �🆕 STEP 1: Target Audience (era Step2)
   const Step1 = useMemo(
@@ -751,18 +747,11 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
       </div>
     ),
     [
-      data.branding_colors.primary,
-      data.branding_colors.secondary,
-      data.branding_colors.text,
-      data.design_options.border_radius,
-      data.design_options.border_width,
-      data.design_options.padding,
-      data.design_options.font_size,
-      data.design_options.shadow,
-      data.business_type,
+      data.branding_colors,
+      data.design_options,
       data.form_purpose,
-      data.required_fields,
       data.gdpr_required,
+      data.required_fields,
       handlePrimaryColorChange,
       handleSecondaryColorChange,
       updateData,

@@ -122,7 +122,7 @@ describe('AI Cache Manager', () => {
       mockSupabaseSingle.mockResolvedValueOnce({ data: similarLeadData, error: null });
 
       // Mock cosine similarity calculation to return high similarity
-      vi.spyOn(aiCache as any, 'calculateCosineSimilarity').mockReturnValue(0.9);
+      vi.spyOn(aiCache as unknown as { calculateCosineSimilarity: () => number }, 'calculateCosineSimilarity').mockReturnValue(0.9);
 
       const result = await aiCache.getSemanticMatch(
         mockInput,

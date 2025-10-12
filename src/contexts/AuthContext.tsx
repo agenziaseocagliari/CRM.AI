@@ -18,6 +18,7 @@ interface AuthContextType {
   isUser: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -216,6 +217,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Re-export useAuth from separate file for backward compatibility
+// eslint-disable-next-line react-refresh/only-export-components
 export { useAuth } from './useAuth';
 

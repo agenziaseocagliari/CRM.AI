@@ -158,4 +158,4 @@ async function analyzeCurrentSchema() {
 // Auto-execute when run directly
 analyzeCurrentSchema().catch(console.error);
 
-export { supabase, analyzeCurrentSchema };
+export { analyzeCurrentSchema, supabase };

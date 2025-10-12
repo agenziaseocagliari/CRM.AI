@@ -109,20 +109,24 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+global.IntersectionObserver = class MockIntersectionObserver implements IntersectionObserver {
+    root = null;
+    rootMargin = '';
+    thresholds = [];
+    
     constructor() {}
     disconnect() {}
     observe() {}
-    takeRecords() {
+    takeRecords(): IntersectionObserverEntry[] {
         return [];
     }
     unobserve() {}
-} as any;
+};
 
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
+global.ResizeObserver = class MockResizeObserver implements ResizeObserver {
     constructor() {}
     disconnect() {}
     observe() {}
     unobserve() {}
-} as any;
+};

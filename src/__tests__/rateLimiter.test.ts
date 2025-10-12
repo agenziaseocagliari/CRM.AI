@@ -93,7 +93,11 @@ describe('Rate Limiter - checkRateLimit', () => {
   });
 
   it('should gracefully degrade when RPC call fails', async () => {
-    const mockError = new Error('Database connection failed') as any;
+    const mockError = new Error('Database connection failed') as Error & { 
+      details?: string; 
+      hint?: string; 
+      code?: string; 
+    };
     mockError.details = 'Connection timeout';
     mockError.hint = 'Check database availability';
     mockError.code = 'PGRST500';
@@ -104,9 +108,9 @@ describe('Rate Limiter - checkRateLimit', () => {
       count: null,
       status: 500,
       statusText: 'Internal Server Error',
-    };
+    } as const;
 
-    vi.mocked(supabase.rpc).mockResolvedValue(mockResponse);
+    vi.mocked(supabase.rpc).mockResolvedValue(mockResponse as never);
 
     const result = await checkRateLimit('org-123', 'api_call');
 

@@ -5,19 +5,19 @@
  * Target: >85% coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  logAuditEvent,
-  searchAuditLogs,
-  getAuditLogStats,
-  getRecentAuditLogs,
-  getUserAuditLogs,
-  getResourceAuditLogs,
-  requestAuditLogExport,
-  getExportStatus,
-  listExports,
-  AuditLogger,
+    AuditLogger,
+    getAuditLogStats,
+    getExportStatus,
+    getRecentAuditLogs,
+    getResourceAuditLogs,
+    getUserAuditLogs,
+    listExports,
+    logAuditEvent,
+    requestAuditLogExport,
+    searchAuditLogs,
 } from '../lib/auditLogger';
 import { supabase } from '../lib/supabaseClient';
 

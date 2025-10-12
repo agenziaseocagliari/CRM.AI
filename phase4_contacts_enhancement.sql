@@ -2,34 +2,62 @@
 -- Adding import tracking and duplicate detection to existing contacts
 
 -- Check if columns already exist (run this first)
-SELECT column_name 
-FROM information_schema.columns 
-WHERE table_name = 'contacts' 
-  AND table_schema = 'public'
-  AND column_name IN ('imported_from', 'import_row_number', 'last_import_update', 'import_metadata', 'normalized_email', 'normalized_phone', 'duplicate_check_hash');
+SELECT column_name
+FROM information_schema.columns
+WHERE
+    table_name = 'contacts'
+    AND table_schema = 'public'
+    AND column_name IN (
+        'imported_from',
+        'import_row_number',
+        'last_import_update',
+        'import_metadata',
+        'normalized_email',
+        'normalized_phone',
+        'duplicate_check_hash'
+    );
 
 -- ===== ADD IMPORT TRACKING COLUMNS =====
 
 -- Add import tracking columns to contacts table
-ALTER TABLE contacts ADD COLUMN IF NOT EXISTS imported_from UUID REFERENCES contact_imports(id) ON DELETE SET NULL;
-ALTER TABLE contacts ADD COLUMN IF NOT EXISTS import_row_number INTEGER;
-ALTER TABLE contacts ADD COLUMN IF NOT EXISTS last_import_update TIMESTAMPTZ;
+ALTER TABLE contacts
+ADD COLUMN IF NOT EXISTS imported_from UUID REFERENCES contact_imports (id) ON DELETE SET NULL;
+
+ALTER TABLE contacts
+ADD COLUMN IF NOT EXISTS import_row_number INTEGER;
+
+ALTER TABLE contacts
+ADD COLUMN IF NOT EXISTS last_import_update TIMESTAMPTZ;
+
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS import_metadata JSONB DEFAULT '{}'::jsonb;
 
 -- Create index on imported_from for finding all contacts from an import
-CREATE INDEX IF NOT EXISTS idx_contacts_imported_from ON contacts(imported_from) WHERE imported_from IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_contacts_imported_from ON contacts (imported_from)
+WHERE
+    imported_from IS NOT NULL;
 
 -- ===== ADD DUPLICATE DETECTION COLUMNS =====
 
 -- Add normalized fields for duplicate detection
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS normalized_email TEXT;
+
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS normalized_phone TEXT;
-ALTER TABLE contacts ADD COLUMN IF NOT EXISTS duplicate_check_hash TEXT;
+
+ALTER TABLE contacts
+ADD COLUMN IF NOT EXISTS duplicate_check_hash TEXT;
 
 -- Create indexes for duplicate detection
-CREATE INDEX IF NOT EXISTS idx_contacts_normalized_email ON contacts(normalized_email) WHERE normalized_email IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_contacts_normalized_phone ON contacts(normalized_phone) WHERE normalized_phone IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_contacts_duplicate_hash ON contacts(duplicate_check_hash) WHERE duplicate_check_hash IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_contacts_normalized_email ON contacts (normalized_email)
+WHERE
+    normalized_email IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_contacts_normalized_phone ON contacts (normalized_phone)
+WHERE
+    normalized_phone IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_contacts_duplicate_hash ON contacts (duplicate_check_hash)
+WHERE
+    duplicate_check_hash IS NOT NULL;
 
 -- ===== HELPER FUNCTIONS =====
 
@@ -113,6 +141,7 @@ $$;
 
 -- Create trigger to automatically update normalized fields
 DROP TRIGGER IF EXISTS trigger_update_contact_normalized_fields ON contacts;
+
 CREATE TRIGGER trigger_update_contact_normalized_fields
     BEFORE INSERT OR UPDATE ON contacts
     FOR EACH ROW
@@ -121,12 +150,12 @@ CREATE TRIGGER trigger_update_contact_normalized_fields
 -- ===== UPDATE EXISTING CONTACTS =====
 
 -- Update existing contacts to populate normalized fields
-UPDATE contacts 
-SET 
-    normalized_email = normalize_email(email),
-    normalized_phone = normalize_phone(phone),
-    duplicate_check_hash = calculate_duplicate_hash(email, phone, name)
-WHERE 
-    normalized_email IS NULL 
-    OR normalized_phone IS NULL 
+UPDATE contacts
+SET
+    normalized_email = normalize_email (email),
+    normalized_phone = normalize_phone (phone),
+    duplicate_check_hash = calculate_duplicate_hash (email, phone, name)
+WHERE
+    normalized_email IS NULL
+    OR normalized_phone IS NULL
     OR duplicate_check_hash IS NULL;

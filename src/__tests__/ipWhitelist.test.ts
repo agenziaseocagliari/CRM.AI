@@ -12,21 +12,21 @@
  * - Statistics and analytics
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  checkIPWhitelist,
-  checkGeoRestriction,
-  validateIPAccess,
-  addIPWhitelist,
-  removeIPWhitelist,
-  listIPWhitelist,
-  addGeoRestriction,
-  removeGeoRestriction,
-  listGeoRestrictions,
-  logIPAccess,
-  getIPAccessStats,
-  getIPAccessLogs,
+    addGeoRestriction,
+    addIPWhitelist,
+    checkGeoRestriction,
+    checkIPWhitelist,
+    getIPAccessLogs,
+    getIPAccessStats,
+    listGeoRestrictions,
+    listIPWhitelist,
+    logIPAccess,
+    removeGeoRestriction,
+    removeIPWhitelist,
+    validateIPAccess,
 } from '../lib/ipWhitelist';
 
 // Mock Supabase client

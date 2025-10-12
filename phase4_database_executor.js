@@ -178,4 +178,4 @@ async function analyzeCurrentSchema() {
 // Auto-execute when run directly
 analyzeCurrentSchema().catch(console.error);
 
-export { executeQuery, analyzeCurrentSchema };
+export { analyzeCurrentSchema, executeQuery };

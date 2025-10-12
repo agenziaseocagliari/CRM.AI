@@ -95,4 +95,4 @@ async function createTablesPhase2() {
 // Auto-execute when run directly
 createTablesPhase2().catch(console.error);
 
-export { executeSqlFile, createTablesPhase2 };
+export { createTablesPhase2, executeSqlFile };

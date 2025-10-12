@@ -91,9 +91,15 @@ INSERT INTO contacts (
 -- ===== TEST 4: Test RLS Policies =====
 -- This test simulates querying as different organization (should return 0 rows)
 -- Note: This will work properly with actual auth.uid() in real usage
-SELECT COUNT(*) as import_count_should_be_filtered
-FROM contact_imports 
-WHERE organization_id != (SELECT id FROM organizations LIMIT 1);
+SELECT
+    COUNT(*) as import_count_should_be_filtered
+FROM contact_imports
+WHERE
+    organization_id != (
+        SELECT id
+        FROM organizations
+        LIMIT 1
+    );
 
 -- ===== TEST 5: Create Field Mapping Template =====
 INSERT INTO contact_field_mappings (
@@ -124,63 +130,77 @@ INSERT INTO contact_field_mappings (
 
 -- ===== TEST 6: Test Duplicate Detection =====
 -- Insert contact with same email (should have same normalized_email)
-INSERT INTO contacts (
-    organization_id,
-    name,
-    email,
-    phone
-) VALUES (
-    (SELECT id FROM organizations LIMIT 1),
-    'Jane Smith',
-    '  JOHN.DOE@EXAMPLE.COM  ', -- Same email but different case/spacing
-    '(555) 123-4567'            -- Same phone but different format
-) RETURNING 
-    id,
+INSERT INTO
+    contacts (
+        organization_id,
+        name,
+        email,
+        phone
+    )
+VALUES (
+        (
+            SELECT id
+            FROM organizations
+            LIMIT 1
+        ),
+        'Jane Smith',
+        '  JOHN.DOE@EXAMPLE.COM  ', -- Same email but different case/spacing
+        '(555) 123-4567' -- Same phone but different format
+    ) RETURNING id,
     email,
     normalized_email,
     phone,
     normalized_phone,
     duplicate_check_hash,
     duplicate_check_hash = (
-        SELECT duplicate_check_hash 
-        FROM contacts 
-        WHERE email = 'john.doe@example.com' 
+        SELECT duplicate_check_hash
+        FROM contacts
+        WHERE
+            email = 'john.doe@example.com'
         LIMIT 1
     ) as is_duplicate_detected;
 
 -- ===== TEST 7: Performance Test =====
 -- Query all imports for an organization (should use indexes)
-EXPLAIN (ANALYZE, BUFFERS) 
-SELECT 
-    ci.id,
-    ci.filename,
-    ci.status,
-    ci.total_rows,
-    ci.successful_imports,
-    ci.created_at,
-    p.full_name as uploaded_by_name
-FROM contact_imports ci
-JOIN profiles p ON ci.uploaded_by = p.id
-WHERE ci.organization_id = (SELECT id FROM organizations LIMIT 1)
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT ci.id, ci.filename, ci.status, ci.total_rows, ci.successful_imports, ci.created_at, p.full_name as uploaded_by_name
+FROM
+    contact_imports ci
+    JOIN profiles p ON ci.uploaded_by = p.id
+WHERE
+    ci.organization_id = (
+        SELECT id
+        FROM organizations
+        LIMIT 1
+    )
 ORDER BY ci.created_at DESC;
 
 -- ===== VERIFICATION QUERIES =====
 
 -- Check all tables exist
-SELECT 
+SELECT
     table_name,
-    CASE 
-        WHEN table_name IN ('contact_imports', 'contact_import_logs', 'contact_field_mappings') 
-        THEN '✅ NEW TABLE' 
-        ELSE '✅ EXISTING TABLE' 
+    CASE
+        WHEN table_name IN (
+            'contact_imports',
+            'contact_import_logs',
+            'contact_field_mappings'
+        ) THEN '✅ NEW TABLE'
+        ELSE '✅ EXISTING TABLE'
     END as status
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
-  AND table_name IN ('contacts', 'contact_imports', 'contact_import_logs', 'contact_field_mappings')
+FROM information_schema.tables
+WHERE
+    table_schema = 'public'
+    AND table_name IN (
+        'contacts',
+        'contact_imports',
+        'contact_import_logs',
+        'contact_field_mappings'
+    )
 ORDER BY table_name;
 
 -- Check RLS policies
-SELECT 
+SELECT
     schemaname,
     tablename,
     policyname,
@@ -189,70 +209,84 @@ SELECT
     roles,
     qual,
     with_check
-FROM pg_policies 
-WHERE schemaname = 'public' 
-  AND tablename IN ('contact_imports', 'contact_import_logs', 'contact_field_mappings')
+FROM pg_policies
+WHERE
+    schemaname = 'public'
+    AND tablename IN (
+        'contact_imports',
+        'contact_import_logs',
+        'contact_field_mappings'
+    )
 ORDER BY tablename, policyname;
 
 -- Check indexes
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
     indexdef
-FROM pg_indexes 
-WHERE schemaname = 'public' 
-  AND tablename IN ('contacts', 'contact_imports', 'contact_import_logs', 'contact_field_mappings')
-  AND indexname NOT LIKE '%_pkey'
+FROM pg_indexes
+WHERE
+    schemaname = 'public'
+    AND tablename IN (
+        'contacts',
+        'contact_imports',
+        'contact_import_logs',
+        'contact_field_mappings'
+    )
+    AND indexname NOT LIKE '%_pkey'
 ORDER BY tablename, indexname;
 
 -- Check functions
-SELECT 
+SELECT
     routine_name,
     routine_type,
     data_type
-FROM information_schema.routines 
-WHERE routine_schema = 'public' 
-  AND routine_name IN ('normalize_email', 'normalize_phone', 'calculate_duplicate_hash')
+FROM information_schema.routines
+WHERE
+    routine_schema = 'public'
+    AND routine_name IN (
+        'normalize_email',
+        'normalize_phone',
+        'calculate_duplicate_hash'
+    )
 ORDER BY routine_name;
 
 -- Check triggers
-SELECT 
+SELECT
     event_object_table,
     trigger_name,
     event_manipulation,
     action_timing,
     action_statement
-FROM information_schema.triggers 
-WHERE event_object_schema = 'public' 
-  AND event_object_table = 'contacts'
-  AND trigger_name LIKE '%normalized%'
+FROM information_schema.triggers
+WHERE
+    event_object_schema = 'public'
+    AND event_object_table = 'contacts'
+    AND trigger_name LIKE '%normalized%'
 ORDER BY trigger_name;
 
 -- Final row counts
-SELECT 
-    'contact_imports' as table_name,
-    COUNT(*) as row_count
+SELECT 'contact_imports' as table_name, COUNT(*) as row_count
 FROM contact_imports
 UNION ALL
-SELECT 
-    'contact_import_logs' as table_name,
-    COUNT(*) as row_count  
+SELECT 'contact_import_logs' as table_name, COUNT(*) as row_count
 FROM contact_import_logs
 UNION ALL
-SELECT 
-    'contact_field_mappings' as table_name,
-    COUNT(*) as row_count
+SELECT 'contact_field_mappings' as table_name, COUNT(*) as row_count
 FROM contact_field_mappings
 UNION ALL
-SELECT 
-    'contacts_with_import_tracking' as table_name,
-    COUNT(*) as row_count
-FROM contacts 
-WHERE imported_from IS NOT NULL;
+SELECT 'contacts_with_import_tracking' as table_name, COUNT(*) as row_count
+FROM contacts
+WHERE
+    imported_from IS NOT NULL;
 
 -- Test normalization functions
-SELECT 
-    normalize_email('  TEST@EXAMPLE.COM  ') as normalized_email_result,
-    normalize_phone('+1 (555) 123-4567 ext 890') as normalized_phone_result,
-    calculate_duplicate_hash('test@example.com', '5551234567', 'John Doe') as hash_result;
+SELECT
+    normalize_email ('  TEST@EXAMPLE.COM  ') as normalized_email_result,
+    normalize_phone ('+1 (555) 123-4567 ext 890') as normalized_phone_result,
+    calculate_duplicate_hash (
+        'test@example.com',
+        '5551234567',
+        'John Doe'
+    ) as hash_result;

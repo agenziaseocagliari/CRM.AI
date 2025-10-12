@@ -294,39 +294,44 @@ WHERE
 
 -- ===== HELPER FUNCTIONS =====
 
+-- Drop existing functions if they exist to avoid parameter name conflicts
+DROP FUNCTION IF EXISTS normalize_email(TEXT);
+DROP FUNCTION IF EXISTS normalize_phone(TEXT);
+DROP FUNCTION IF EXISTS calculate_duplicate_hash(TEXT, TEXT, TEXT);
+
 -- Function to normalize email addresses
-CREATE OR REPLACE FUNCTION normalize_email(email_input TEXT)
+CREATE OR REPLACE FUNCTION normalize_email(email TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 IMMUTABLE
 AS $$
 BEGIN
-    IF email_input IS NULL OR trim(email_input) = '' THEN
+    IF email IS NULL OR trim(email) = '' THEN
         RETURN NULL;
     END IF;
 
-    RETURN lower(trim(email_input));
+    RETURN lower(trim(email));
 END;
 $$;
 
 -- Function to normalize phone numbers (extract digits only)
-CREATE OR REPLACE FUNCTION normalize_phone(phone_input TEXT)
+CREATE OR REPLACE FUNCTION normalize_phone(phone TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 IMMUTABLE
 AS $$
 BEGIN
-    IF phone_input IS NULL OR trim(phone_input) = '' THEN
+    IF phone IS NULL OR trim(phone) = '' THEN
         RETURN NULL;
     END IF;
 
     -- Extract only digits from phone number
-    RETURN regexp_replace(phone_input, '[^0-9]', '', 'g');
+    RETURN regexp_replace(phone, '[^0-9]', '', 'g');
 END;
 $$;
 
 -- Function to calculate duplicate detection hash
-CREATE OR REPLACE FUNCTION calculate_duplicate_hash(email_input TEXT, phone_input TEXT, name_input TEXT)
+CREATE OR REPLACE FUNCTION calculate_duplicate_hash(email TEXT, phone TEXT, name TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 IMMUTABLE
@@ -338,10 +343,10 @@ DECLARE
     hash_input TEXT;
 BEGIN
     -- Normalize inputs
-    normalized_email_val = normalize_email(email_input);
-    normalized_phone_val = normalize_phone(phone_input);
+    normalized_email_val = normalize_email(email);
+    normalized_phone_val = normalize_phone(phone);
     normalized_name_val = CASE
-        WHEN name_input IS NOT NULL THEN lower(trim(regexp_replace(name_input, '\s+', ' ', 'g')))
+        WHEN name IS NOT NULL THEN lower(trim(regexp_replace(name, '\s+', ' ', 'g')))
         ELSE NULL
     END;
 

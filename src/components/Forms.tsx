@@ -494,7 +494,7 @@ export const Forms: React.FC = () => {
     }, []);
 
     // ✅ LEVEL 6 FIX: Accetta metadata completo dal questionnaire + design_options
-    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[], metadata?: QuestionnaireMetadata, colors?: QuestionnaireColors, design_options?: any) => {
+    const handleGenerateForm = async (customPrompt?: string, requiredFields?: string[], metadata?: QuestionnaireMetadata, colors?: QuestionnaireColors, design_options?: Record<string, unknown>) => {
         console.log('🔍 handleGenerateForm CALLED with:', {
             customPrompt: !!customPrompt,
             promptLength: customPrompt?.length,
@@ -1203,11 +1203,11 @@ ${kadenceCode.shortcode}
                                             console.log('🎨 Setting design options from questionnaire:', result.design);
                                             setFormStyle(prev => ({
                                                 ...prev,
-                                                border_radius: `${result.design!.border_radius}px`,
-                                                border_width: `${result.design!.border_width}px`,
-                                                padding: result.design!.padding,
-                                                font_size: result.design!.font_size,
-                                                shadow: result.design!.shadow
+                                                border_radius: result.design?.border_radius ? `${result.design.border_radius}px` : prev.border_radius,
+                                                border_width: result.design?.border_width ? `${result.design.border_width}px` : prev.border_width,
+                                                padding: result.design?.padding || prev.padding,
+                                                font_size: result.design?.font_size || prev.font_size,
+                                                shadow: result.design?.shadow || prev.shadow
                                             }));
                                             console.log('🎨 Design options applied to FormStyle');
                                         }

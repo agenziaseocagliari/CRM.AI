@@ -313,7 +313,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
         Qual è lo scopo del form?
       </h3>
       <p className="text-sm text-gray-600">
-        Seleziona l'obiettivo principale per ottimizzare i campi consigliati
+        Seleziona l&apos;obiettivo principale per ottimizzare i campi consigliati
       </p>
 
       <div className="grid grid-cols-1 gap-3">
@@ -331,7 +331,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
         ))}
       </div>
     </div>
-  ), [data.form_purpose, handlePurposeChange]);
+  ), [data.form_purpose, handlePurposeChange, formPurposes]);
 
   // 🆕 STEP 3: Form Fields (era Step4)
   const Step3 = () => {
@@ -344,7 +344,7 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
             Quali campi vuoi includere?
           </h3>
           <p className="text-sm text-gray-600">
-            Campi consigliati per "{data.form_purpose}" + tutti gli altri disponibili
+            Campi consigliati per &ldquo;{data.form_purpose}&rdquo; + tutti gli altri disponibili
           </p>
         </div>
 

@@ -514,7 +514,7 @@ export const PublicForm: React.FC = () => {
                         ))}
 
                         {/* 🔒 Privacy Policy Checkbox (OBBLIGATORIO se URL presente e NON già presente nei campi) */}
-                        {form?.privacy_policy_url && !form.fields.some(field => 
+                        {form?.privacy_policy_url && !form.fields.some(field =>
                             field.type === 'checkbox' && (
                                 field.name.toLowerCase().includes('privacy') ||
                                 field.name.toLowerCase().includes('consenso') ||
@@ -526,35 +526,35 @@ export const PublicForm: React.FC = () => {
                                 field.label.toLowerCase().includes('acconsento')
                             )
                         ) && (
-                            <div className="mt-10 border-t-2 border-gray-200 pt-8">
-                                <label className="flex items-start cursor-pointer group hover:bg-gray-50 p-4 rounded-lg transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        required
-                                        className="mt-1 mr-4 h-5 w-5 rounded border-gray-300 focus:ring-2"
-                                        style={{
-                                            accentColor: form?.styling?.primary_color || '#6366f1'
-                                        }}
-                                    />
-                                    <span
-                                        className="text-sm leading-relaxed"
-                                        style={{ color: form?.styling?.text_color || '#374151' }}
-                                    >
-                                        Accetto la{' '}
-                                        <a
-                                            href={form.privacy_policy_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="font-semibold hover:underline transition-colors"
-                                            style={{ color: form?.styling?.primary_color || '#6366f1' }}
+                                <div className="mt-10 border-t-2 border-gray-200 pt-8">
+                                    <label className="flex items-start cursor-pointer group hover:bg-gray-50 p-4 rounded-lg transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            required
+                                            className="mt-1 mr-4 h-5 w-5 rounded border-gray-300 focus:ring-2"
+                                            style={{
+                                                accentColor: form?.styling?.primary_color || '#6366f1'
+                                            }}
+                                        />
+                                        <span
+                                            className="text-sm leading-relaxed"
+                                            style={{ color: form?.styling?.text_color || '#374151' }}
                                         >
-                                            Privacy Policy
-                                        </a>
-                                        {' '}e acconsento al trattamento dei miei dati personali. *
-                                    </span>
-                                </label>
-                            </div>
-                        )}
+                                            Accetto la{' '}
+                                            <a
+                                                href={form.privacy_policy_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-semibold hover:underline transition-colors"
+                                                style={{ color: form?.styling?.primary_color || '#6366f1' }}
+                                            >
+                                                Privacy Policy
+                                            </a>
+                                            {' '}e acconsento al trattamento dei miei dati personali. *
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
 
                         <div className="pt-2">
                             <button

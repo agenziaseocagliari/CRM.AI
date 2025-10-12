@@ -695,7 +695,7 @@ function generateIntelligentFormFields(
 
     // 🔒 POST-PROCESSING: Converti campi privacy da text a checkbox
     fields.forEach(field => {
-      const isPrivacyField = 
+      const isPrivacyField =
         field.name.toLowerCase().includes('privacy') ||
         field.name.toLowerCase().includes('consenso') ||
         field.name.toLowerCase().includes('gdpr') ||
@@ -704,7 +704,7 @@ function generateIntelligentFormFields(
         field.label.toLowerCase().includes('gdpr') ||
         field.label.toLowerCase().includes('accetto') ||
         field.label.toLowerCase().includes('acconsento');
-      
+
       if (isPrivacyField && field.type === 'text') {
         console.log(`🔄 Converting privacy field from text to checkbox: ${field.label}`);
         field.type = 'checkbox';
@@ -713,8 +713,8 @@ function generateIntelligentFormFields(
     });
 
     // 🔒 CRITICAL FIX: Aggiungi automaticamente GDPR se rilevato nel prompt e non già presente
-    const hasPrivacyConsent = fields.some(f => 
-      f.name === 'privacy_consent' || 
+    const hasPrivacyConsent = fields.some(f =>
+      f.name === 'privacy_consent' ||
       f.name.toLowerCase().includes('privacy') ||
       f.name.toLowerCase().includes('consenso') ||
       f.name.toLowerCase().includes('gdpr') ||

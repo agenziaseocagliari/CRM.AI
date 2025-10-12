@@ -5,11 +5,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  aiCache,
-  getCachedAIResult,
-  invalidateAICache,
-  setCachedAIResult,
-  type CacheEntry
+    aiCache,
+    getCachedAIResult,
+    invalidateAICache,
+    setCachedAIResult,
+    type CacheEntry
 } from '../aiCacheManager';
 
 // Mock successful Supabase operations for testing

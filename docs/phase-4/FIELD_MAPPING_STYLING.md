@@ -9,47 +9,49 @@
 ### Color Palette
 
 #### Status Colors
+
 ```css
 /* Mapping Status Colors */
---status-mapped: #10B981;        /* Green - Successfully mapped */
---status-unmapped: #6B7280;      /* Gray - Not mapped yet */
---status-warning: #F59E0B;       /* Amber - Mapped with warnings */
---status-error: #EF4444;         /* Red - Error/required missing */
---status-processing: #3B82F6;    /* Blue - Currently processing */
+--status-mapped: #10b981; /* Green - Successfully mapped */
+--status-unmapped: #6b7280; /* Gray - Not mapped yet */
+--status-warning: #f59e0b; /* Amber - Mapped with warnings */
+--status-error: #ef4444; /* Red - Error/required missing */
+--status-processing: #3b82f6; /* Blue - Currently processing */
 
 /* Confidence Level Colors */
---confidence-high: #10B981;      /* 90%+ confidence - solid green */
---confidence-medium: #F59E0B;    /* 70-89% - amber */
---confidence-low: #EF4444;       /* <70% - light red */
---confidence-override: #3B82F6;  /* Manual override - blue accent */
+--confidence-high: #10b981; /* 90%+ confidence - solid green */
+--confidence-medium: #f59e0b; /* 70-89% - amber */
+--confidence-low: #ef4444; /* <70% - light red */
+--confidence-override: #3b82f6; /* Manual override - blue accent */
 
 /* Interactive Colors */
---drag-active: #3B82F6;          /* Blue - Active drag state */
---drop-valid: #10B981;           /* Green - Valid drop zone */
---drop-invalid: #EF4444;         /* Red - Invalid drop zone */
---drop-hover: #F3F4F6;           /* Light gray - Hover state */
+--drag-active: #3b82f6; /* Blue - Active drag state */
+--drop-valid: #10b981; /* Green - Valid drop zone */
+--drop-invalid: #ef4444; /* Red - Invalid drop zone */
+--drop-hover: #f3f4f6; /* Light gray - Hover state */
 
 /* Background Colors */
---bg-primary: #FFFFFF;           /* Main background */
---bg-secondary: #F9FAFB;         /* Panel backgrounds */
---bg-tertiary: #F3F4F6;          /* Section dividers */
---bg-accent: #EEF2FF;            /* Highlight areas */
+--bg-primary: #ffffff; /* Main background */
+--bg-secondary: #f9fafb; /* Panel backgrounds */
+--bg-tertiary: #f3f4f6; /* Section dividers */
+--bg-accent: #eef2ff; /* Highlight areas */
 ```
 
 #### Semantic Colors
+
 ```css
 /* Text Colors */
---text-primary: #111827;         /* Main text */
---text-secondary: #6B7280;       /* Secondary text */
---text-muted: #9CA3AF;           /* Muted text */
---text-inverse: #FFFFFF;         /* Text on dark backgrounds */
+--text-primary: #111827; /* Main text */
+--text-secondary: #6b7280; /* Secondary text */
+--text-muted: #9ca3af; /* Muted text */
+--text-inverse: #ffffff; /* Text on dark backgrounds */
 
 /* Border Colors */
---border-primary: #E5E7EB;       /* Default borders */
---border-secondary: #D1D5DB;     /* Subtle borders */
---border-focus: #3B82F6;         /* Focus indicators */
---border-error: #EF4444;         /* Error borders */
---border-success: #10B981;       /* Success borders */
+--border-primary: #e5e7eb; /* Default borders */
+--border-secondary: #d1d5db; /* Subtle borders */
+--border-focus: #3b82f6; /* Focus indicators */
+--border-error: #ef4444; /* Error borders */
+--border-success: #10b981; /* Success borders */
 
 /* Shadow Colors */
 --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -63,21 +65,24 @@
 ### Typography Scale
 
 #### Font Families
+
 ```css
---font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+--font-primary:
+  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
 ```
 
 #### Font Sizes & Line Heights
+
 ```css
 /* Font Scale (1.125 ratio) */
---text-xs: 0.75rem;     /* 12px */
---text-sm: 0.875rem;    /* 14px */
---text-base: 1rem;      /* 16px */
---text-lg: 1.125rem;    /* 18px */
---text-xl: 1.25rem;     /* 20px */
---text-2xl: 1.5rem;     /* 24px */
---text-3xl: 1.875rem;   /* 30px */
+--text-xs: 0.75rem; /* 12px */
+--text-sm: 0.875rem; /* 14px */
+--text-base: 1rem; /* 16px */
+--text-lg: 1.125rem; /* 18px */
+--text-xl: 1.25rem; /* 20px */
+--text-2xl: 1.5rem; /* 24px */
+--text-3xl: 1.875rem; /* 30px */
 
 /* Line Heights */
 --leading-tight: 1.25;
@@ -92,6 +97,7 @@
 ```
 
 #### Component Typography
+
 ```css
 /* Component-specific typography */
 .field-mapping-interface {
@@ -109,36 +115,38 @@
 ### Spacing System
 
 #### Base Scale (8px grid)
+
 ```css
 --spacing-0: 0;
---spacing-1: 0.25rem;   /* 4px */
---spacing-2: 0.5rem;    /* 8px */
---spacing-3: 0.75rem;   /* 12px */
---spacing-4: 1rem;      /* 16px */
---spacing-5: 1.25rem;   /* 20px */
---spacing-6: 1.5rem;    /* 24px */
---spacing-8: 2rem;      /* 32px */
---spacing-10: 2.5rem;   /* 40px */
---spacing-12: 3rem;     /* 48px */
---spacing-16: 4rem;     /* 64px */
---spacing-20: 5rem;     /* 80px */
+--spacing-1: 0.25rem; /* 4px */
+--spacing-2: 0.5rem; /* 8px */
+--spacing-3: 0.75rem; /* 12px */
+--spacing-4: 1rem; /* 16px */
+--spacing-5: 1.25rem; /* 20px */
+--spacing-6: 1.5rem; /* 24px */
+--spacing-8: 2rem; /* 32px */
+--spacing-10: 2.5rem; /* 40px */
+--spacing-12: 3rem; /* 48px */
+--spacing-16: 4rem; /* 64px */
+--spacing-20: 5rem; /* 80px */
 ```
 
 #### Component Spacing
+
 ```css
 .field-mapping-interface {
   /* Panel spacing */
   --panel-padding: var(--spacing-6);
   --panel-gap: var(--spacing-4);
-  
+
   /* Item spacing */
   --item-padding: var(--spacing-4);
   --item-margin: var(--spacing-2);
-  
+
   /* Button spacing */
   --button-padding-x: var(--spacing-4);
   --button-padding-y: var(--spacing-2);
-  
+
   /* Input spacing */
   --input-padding: var(--spacing-3);
 }
@@ -149,6 +157,7 @@
 ### Layout & Sizing
 
 #### Container Sizes
+
 ```css
 --container-sm: 640px;
 --container-md: 768px;
@@ -158,6 +167,7 @@
 ```
 
 #### Component Dimensions
+
 ```css
 .field-mapping-interface {
   /* Panel dimensions */
@@ -165,12 +175,12 @@
   --db-panel-width: 360px;
   --preview-height: 300px;
   --summary-height: 80px;
-  
+
   /* Item dimensions */
   --column-item-height: 80px;
   --field-item-height: 72px;
   --drag-handle-size: 24px;
-  
+
   /* Interactive elements */
   --button-height: 40px;
   --input-height: 36px;
@@ -184,13 +194,13 @@
 
 ```css
 --radius-none: 0;
---radius-sm: 0.125rem;   /* 2px */
---radius-base: 0.25rem;  /* 4px */
---radius-md: 0.375rem;   /* 6px */
---radius-lg: 0.5rem;     /* 8px */
---radius-xl: 0.75rem;    /* 12px */
---radius-2xl: 1rem;      /* 16px */
---radius-full: 9999px;   /* Fully rounded */
+--radius-sm: 0.125rem; /* 2px */
+--radius-base: 0.25rem; /* 4px */
+--radius-md: 0.375rem; /* 6px */
+--radius-lg: 0.5rem; /* 8px */
+--radius-xl: 0.75rem; /* 12px */
+--radius-2xl: 1rem; /* 16px */
+--radius-full: 9999px; /* Fully rounded */
 
 /* Component-specific radius */
 .field-mapping-interface {
@@ -206,6 +216,7 @@
 ### Animation & Transitions
 
 #### Timing Functions
+
 ```css
 --ease-linear: linear;
 --ease-in: cubic-bezier(0.4, 0, 1, 1);
@@ -215,6 +226,7 @@
 ```
 
 #### Duration Scale
+
 ```css
 --duration-75: 75ms;
 --duration-100: 100ms;
@@ -227,17 +239,18 @@
 ```
 
 #### Component Transitions
+
 ```css
 .field-mapping-interface {
   /* Hover transitions */
   --hover-transition: all var(--duration-150) var(--ease-out);
-  
+
   /* Drag transitions */
   --drag-transition: transform var(--duration-200) var(--ease-out);
-  
+
   /* State transitions */
   --state-transition: all var(--duration-300) var(--ease-in-out);
-  
+
   /* Layout transitions */
   --layout-transition: all var(--duration-500) var(--ease-in-out);
 }
@@ -249,10 +262,10 @@
 
 ```css
 /* Mobile-first breakpoints */
---bp-sm: 640px;   /* Small tablets */
---bp-md: 768px;   /* Tablets */
---bp-lg: 1024px;  /* Small desktops */
---bp-xl: 1280px;  /* Large desktops */
+--bp-sm: 640px; /* Small tablets */
+--bp-md: 768px; /* Tablets */
+--bp-lg: 1024px; /* Small desktops */
+--bp-xl: 1280px; /* Large desktops */
 --bp-2xl: 1536px; /* Very large screens */
 
 /* Component breakpoints */
@@ -269,6 +282,7 @@
 ## COMPONENT STYLING
 
 ### Main Interface Layout
+
 ```css
 .field-mapping-interface {
   display: grid;
@@ -296,7 +310,7 @@
     display: block;
     overflow-x: auto;
   }
-  
+
   .csv-column-list,
   .database-field-list {
     display: inline-block;
@@ -311,17 +325,17 @@
   .field-mapping-interface {
     grid-template-rows: auto auto 1fr;
   }
-  
+
   .mapping-panels {
     display: none; /* Hidden by default */
   }
-  
+
   .panel-selector {
     display: flex;
     justify-content: center;
     gap: var(--spacing-2);
   }
-  
+
   .active-panel {
     display: block;
   }
@@ -329,6 +343,7 @@
 ```
 
 ### Panel Styling
+
 ```css
 .mapping-panel {
   background: var(--bg-secondary);
@@ -362,6 +377,7 @@
 ```
 
 ### Draggable Column Styling
+
 ```css
 .draggable-column {
   display: flex;
@@ -383,7 +399,7 @@
   transform: translateY(-1px);
 }
 
-.draggable-column[data-dragging="true"] {
+.draggable-column[data-dragging='true'] {
   opacity: 0.5;
   cursor: grabbing;
   transform: rotate(2deg);
@@ -449,6 +465,7 @@
 ```
 
 ### Drop Zone Styling
+
 ```css
 .drop-zone-field {
   padding: var(--item-padding);
@@ -463,13 +480,13 @@
   gap: var(--spacing-3);
 }
 
-.drop-zone-field[data-drop-target="true"] {
+.drop-zone-field[data-drop-target='true'] {
   border-color: var(--drop-valid);
   background: color-mix(in srgb, var(--drop-valid) 5%, transparent);
   transform: scale(1.02);
 }
 
-.drop-zone-field[data-drop-invalid="true"] {
+.drop-zone-field[data-drop-invalid='true'] {
   border-color: var(--drop-invalid);
   background: color-mix(in srgb, var(--drop-invalid) 5%, transparent);
 }
@@ -478,7 +495,7 @@
   border-left: 4px solid var(--status-error);
 }
 
-.drop-zone-field--required[data-mapped="true"] {
+.drop-zone-field--required[data-mapped='true'] {
   border-left-color: var(--status-mapped);
 }
 
@@ -503,7 +520,7 @@
 }
 
 .field-name--required::after {
-  content: " *";
+  content: ' *';
   color: var(--status-error);
 }
 
@@ -557,6 +574,7 @@
 ```
 
 ### Preview Table Styling
+
 ```css
 .mapping-preview {
   background: var(--bg-secondary);
@@ -627,6 +645,7 @@
 ```
 
 ### Summary Bar Styling
+
 ```css
 .mapping-summary {
   display: flex;
@@ -707,6 +726,7 @@
 ## ACCESSIBILITY STYLING
 
 ### Focus Indicators
+
 ```css
 .focusable:focus {
   outline: 2px solid var(--border-focus);
@@ -725,6 +745,7 @@
 ```
 
 ### Screen Reader Only Content
+
 ```css
 .sr-only {
   position: absolute;
@@ -740,6 +761,7 @@
 ```
 
 ### High Contrast Mode Support
+
 ```css
 @media (prefers-contrast: high) {
   .field-mapping-interface {
@@ -748,7 +770,7 @@
     --text-primary: #000000;
     --text-secondary: #333333;
   }
-  
+
   .draggable-column,
   .drop-zone-field {
     border-width: 2px;
@@ -758,6 +780,7 @@
 ```
 
 ### Reduced Motion Support
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -766,8 +789,8 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
-  .draggable-column[data-dragging="true"] {
+
+  .draggable-column[data-dragging='true'] {
     transform: none;
   }
 }
@@ -778,37 +801,38 @@
 ## RESPONSIVE UTILITIES
 
 ### Mobile-Specific Styles
+
 ```css
 @media (max-width: 767px) {
   .field-mapping-interface {
     --panel-padding: var(--spacing-4);
     --item-padding: var(--spacing-3);
   }
-  
+
   .draggable-column,
   .drop-zone-field {
     min-height: 60px;
   }
-  
+
   .preview-table {
     font-size: var(--text-sm);
   }
-  
+
   .preview-cell {
     padding: var(--spacing-2);
   }
-  
+
   .summary-stats {
     flex-direction: column;
     gap: var(--spacing-2);
     align-items: flex-start;
   }
-  
+
   .summary-actions {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .action-button {
     justify-content: center;
     width: 100%;
@@ -817,19 +841,20 @@
 ```
 
 ### Touch-Friendly Sizing
+
 ```css
 @media (pointer: coarse) {
   .draggable-column,
   .drop-zone-field {
     min-height: 64px; /* Larger touch target */
   }
-  
+
   .clear-mapping,
   .action-button {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   .drag-handle {
     width: 32px;
     height: 32px;
@@ -844,17 +869,17 @@
 ```css
 @media (prefers-color-scheme: dark) {
   .field-mapping-interface {
-    --bg-primary: #1F2937;
+    --bg-primary: #1f2937;
     --bg-secondary: #111827;
     --bg-tertiary: #374151;
-    --bg-accent: #1E3A8A;
-    
-    --text-primary: #F9FAFB;
-    --text-secondary: #D1D5DB;
-    --text-muted: #9CA3AF;
-    
+    --bg-accent: #1e3a8a;
+
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+
     --border-primary: #374151;
-    --border-secondary: #4B5563;
+    --border-secondary: #4b5563;
   }
 }
 ```

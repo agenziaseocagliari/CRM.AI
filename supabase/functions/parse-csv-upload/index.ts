@@ -4,15 +4,13 @@
 // This file: Skeleton structure for tomorrow's implementation
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import type { 
-  ParseCSVRequest, 
-  ParseCSVResponse, 
-  CSVParseResult,
-  FileUploadResult,
-  ValidationResult,
-  FieldMapping 
+import type {
+    CSVParseResult,
+    FieldMapping,
+    FileUploadResult,
+    ParseCSVResponse,
+    ValidationResult
 } from './types.ts'
 
 // CORS headers for preflight requests

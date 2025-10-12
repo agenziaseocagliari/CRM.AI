@@ -18,15 +18,25 @@
 ### Test Case 1: All Valid Rows
 
 **Input Data**:
+
 ```json
 [
-  {"email": "john@example.com", "name": "John Smith", "phone": "123-456-7890"},
-  {"email": "jane@company.com", "name": "Jane Doe", "phone": "987-654-3210"},
-  {"email": "bob@business.org", "name": "Bob Wilson", "phone": "+1-555-123-4567"}
+  {
+    "email": "john@example.com",
+    "name": "John Smith",
+    "phone": "123-456-7890"
+  },
+  { "email": "jane@company.com", "name": "Jane Doe", "phone": "987-654-3210" },
+  {
+    "email": "bob@business.org",
+    "name": "Bob Wilson",
+    "phone": "+1-555-123-4567"
+  }
 ]
 ```
 
 **Expected Output**:
+
 - Total rows: 3
 - Valid rows: 3 (100%)
 - Warning rows: 0
@@ -41,17 +51,27 @@
 ### Test Case 2: Email Format Errors
 
 **Input Data**:
+
 ```json
 [
-  {"email": "invalid-email", "name": "Test User 1", "phone": "123-456-7890"},
-  {"email": "missing@", "name": "Test User 2", "phone": "987-654-3210"},
-  {"email": "@nodomain.com", "name": "Test User 3", "phone": "555-123-4567"},
-  {"email": "spaces in@email.com", "name": "Test User 4", "phone": "444-555-6666"},
-  {"email": "valid@example.com", "name": "Valid User", "phone": "777-888-9999"}
+  { "email": "invalid-email", "name": "Test User 1", "phone": "123-456-7890" },
+  { "email": "missing@", "name": "Test User 2", "phone": "987-654-3210" },
+  { "email": "@nodomain.com", "name": "Test User 3", "phone": "555-123-4567" },
+  {
+    "email": "spaces in@email.com",
+    "name": "Test User 4",
+    "phone": "444-555-6666"
+  },
+  {
+    "email": "valid@example.com",
+    "name": "Valid User",
+    "phone": "777-888-9999"
+  }
 ]
 ```
 
 **Expected Output**:
+
 - Total rows: 5
 - Valid rows: 1 (20%)
 - Error rows: 4 (80%)
@@ -69,17 +89,35 @@
 ### Test Case 3: Phone Format Errors
 
 **Input Data**:
+
 ```json
 [
-  {"email": "test1@example.com", "phone": "123456", "name": "Too Short"},
-  {"email": "test2@example.com", "phone": "abc-def-ghij", "name": "No Digits"},
-  {"email": "test3@example.com", "phone": "123456789012345678", "name": "Too Long"},
-  {"email": "test4@example.com", "phone": "(555) 123-4567", "name": "Valid Format"},
-  {"email": "test5@example.com", "phone": "+1-800-555-1234", "name": "International"}
+  { "email": "test1@example.com", "phone": "123456", "name": "Too Short" },
+  {
+    "email": "test2@example.com",
+    "phone": "abc-def-ghij",
+    "name": "No Digits"
+  },
+  {
+    "email": "test3@example.com",
+    "phone": "123456789012345678",
+    "name": "Too Long"
+  },
+  {
+    "email": "test4@example.com",
+    "phone": "(555) 123-4567",
+    "name": "Valid Format"
+  },
+  {
+    "email": "test5@example.com",
+    "phone": "+1-800-555-1234",
+    "name": "International"
+  }
 ]
 ```
 
 **Expected Output**:
+
 - Total rows: 5
 - Valid rows: 2 (40%)
 - Error rows: 2 (40%)
@@ -96,17 +134,19 @@
 ### Test Case 4: Missing Required Fields
 
 **Input Data**:
+
 ```json
 [
-  {"name": "No Contact Method", "company": "Test Corp"},
-  {"email": "", "phone": "", "name": "Empty Fields"},
-  {"email": "   ", "phone": "   ", "name": "Whitespace Only"},
-  {"email": "valid@example.com", "name": "Has Email"},
-  {"phone": "123-456-7890", "name": "Has Phone"}
+  { "name": "No Contact Method", "company": "Test Corp" },
+  { "email": "", "phone": "", "name": "Empty Fields" },
+  { "email": "   ", "phone": "   ", "name": "Whitespace Only" },
+  { "email": "valid@example.com", "name": "Has Email" },
+  { "phone": "123-456-7890", "name": "Has Phone" }
 ]
 ```
 
 **Expected Output**:
+
 - Total rows: 5
 - Valid rows: 2 (40%)
 - Critical errors: 3 (60%)
@@ -121,17 +161,19 @@
 ### Test Case 5: Mixed Valid/Warning/Error
 
 **Input Data**:
+
 ```json
 [
-  {"email": "john@gmail.com", "name": "John Smith", "phone": "123-456-7890"},
-  {"email": "jane@company.com", "name": "Jane Doe"},
-  {"email": "invalid-email", "name": "Bob Wilson", "phone": "987-654-3210"},
-  {"email": "alice@yahoo.com", "name": "ALICE WONDERLAND", "company": ""},
-  {"phone": "555-123-4567", "name": "Charlie Brown"}
+  { "email": "john@gmail.com", "name": "John Smith", "phone": "123-456-7890" },
+  { "email": "jane@company.com", "name": "Jane Doe" },
+  { "email": "invalid-email", "name": "Bob Wilson", "phone": "987-654-3210" },
+  { "email": "alice@yahoo.com", "name": "ALICE WONDERLAND", "company": "" },
+  { "phone": "555-123-4567", "name": "Charlie Brown" }
 ]
 ```
 
 **Expected Output**:
+
 - Total rows: 5
 - Valid rows: 2 (40%)
 - Warning rows: 2 (40%)
@@ -151,6 +193,7 @@
 **Input**: ValidationResult array with 100 rows (various statuses)
 
 **Test Process**:
+
 1. Render PreviewTable component
 2. Verify first 50 rows displayed
 3. Check status indicators (✅⚠️❌🔍)
@@ -158,6 +201,7 @@
 5. Verify sorting and filtering
 
 **Expected Behavior**:
+
 - Table renders within 500ms
 - Status icons correctly match row status
 - Pagination shows "Page 1 of 2"
@@ -173,6 +217,7 @@
 **Input**: ValidationSummary with mixed results
 
 **Test Process**:
+
 1. Render SummaryDashboard component
 2. Verify all statistics accurate
 3. Check quality score calculation
@@ -180,6 +225,7 @@
 5. Verify error breakdown display
 
 **Expected Behavior**:
+
 - Statistics match validation results exactly
 - Quality score reflects error severity correctly
 - Import button enabled/disabled based on critical errors
@@ -195,6 +241,7 @@
 **Input**: ValidationResult with email format error
 
 **Test Process**:
+
 1. Click on error row in preview table
 2. Row detail modal opens
 3. Edit email field to valid format
@@ -202,6 +249,7 @@
 5. Check preview table updates
 
 **Expected Behavior**:
+
 - Modal opens within 100ms
 - Error clearly displayed with suggestions
 - Real-time validation as user types (debounced)
@@ -220,6 +268,7 @@
 **Input**: CSV data with 10,000 rows (mix of valid/warning/error)
 
 **Test Process**:
+
 1. Start validation timer
 2. Process all 10,000 rows
 3. Measure memory usage
@@ -227,6 +276,7 @@
 5. Verify result accuracy
 
 **Expected Performance**:
+
 - Validation completes in <8 seconds
 - Memory usage <50MB increase
 - UI remains responsive (no freezing)
@@ -242,13 +292,15 @@
 **Input**: 10,000 validation results
 
 **Test Process**:
+
 1. Render preview table
 2. Test pagination performance
-3. Test filtering performance  
+3. Test filtering performance
 4. Test sorting performance
 5. Measure render times
 
 **Expected Performance**:
+
 - Initial render <500ms
 - Page changes <200ms
 - Filter application <300ms
@@ -266,6 +318,7 @@
 **Input**: CSV file with various data quality issues
 
 **Test Process**:
+
 1. Upload CSV through Task 2 parser
 2. Pass parsed data to validation engine
 3. Verify field mapping applied correctly
@@ -273,6 +326,7 @@
 5. Test complete pipeline
 
 **Expected Behavior**:
+
 - Parsed data flows seamlessly to validation
 - Field mapping preserved in validation results
 - Parse errors handled gracefully
@@ -287,13 +341,15 @@
 **Input**: CSV with potential duplicates
 
 **Test Process**:
+
 1. Validate CSV data (Task 5)
-2. Run duplicate detection (Task 4)  
+2. Run duplicate detection (Task 4)
 3. Merge duplicate results into validation
 4. Verify preview shows duplicate indicators
 5. Test duplicate resolution workflow
 
 **Expected Behavior**:
+
 - Duplicates identified and flagged
 - Duplicate status shows in preview table (🔍)
 - Confidence scores displayed
@@ -311,6 +367,7 @@
 **Input**: Empty CSV file (0 rows)
 
 **Expected Behavior**:
+
 - Validation completes without errors
 - Summary shows 0 rows processed
 - Preview table shows "No data" message
@@ -326,16 +383,18 @@
 **Input**: CSV with various malformed entries
 
 **Data Examples**:
+
 ```json
 [
-  {"email": null, "name": null, "phone": undefined},
-  {"email": 12345, "name": ["array", "instead", "of", "string"]},
-  {"extra_field": "unexpected", "missing_expected": true},
+  { "email": null, "name": null, "phone": undefined },
+  { "email": 12345, "name": ["array", "instead", "of", "string"] },
+  { "extra_field": "unexpected", "missing_expected": true },
   {}
 ]
 ```
 
 **Expected Behavior**:
+
 - Type coercion attempts made where possible
 - Clear error messages for unrecoverable data
 - No application crashes
@@ -353,6 +412,7 @@
 **Scenario**: User imports CSV with errors, fixes them, and proceeds
 
 **Steps**:
+
 1. Upload CSV with known validation issues
 2. Review validation summary and preview
 3. Use inline edit to fix several errors
@@ -361,6 +421,7 @@
 6. Proceed with import of valid rows
 
 **Expected Experience**:
+
 - Each step clear and intuitive
 - Progress feedback provided throughout
 - Error messages helpful and actionable
@@ -374,13 +435,14 @@
 ## AUTOMATED TEST EXAMPLES
 
 ### Unit Test: Email Validation
+
 ```javascript
 describe('Email Validation', () => {
   test('should accept valid email formats', () => {
     expect(validateEmail('test@example.com')).toBe(null);
     expect(validateEmail('user.name+tag@domain.co.uk')).toBe(null);
   });
-  
+
   test('should reject invalid email formats', () => {
     const result = validateEmail('invalid-email');
     expect(result).toHaveProperty('severity', 'high');
@@ -390,16 +452,17 @@ describe('Email Validation', () => {
 ```
 
 ### Integration Test: Complete Validation Flow
+
 ```javascript
 describe('Validation Flow', () => {
   test('should process CSV data end-to-end', async () => {
     const csvData = [
-      {email: 'valid@example.com', name: 'Valid User'},
-      {email: 'invalid-email', name: 'Invalid User'}
+      { email: 'valid@example.com', name: 'Valid User' },
+      { email: 'invalid-email', name: 'Invalid User' },
     ];
-    
+
     const result = await validateImportData(csvData);
-    
+
     expect(result.totalRows).toBe(2);
     expect(result.validRows).toBe(1);
     expect(result.errorRows).toBe(1);
@@ -409,14 +472,15 @@ describe('Validation Flow', () => {
 ```
 
 ### Performance Test: Large Dataset
+
 ```javascript
 describe('Performance', () => {
   test('should validate 10k rows within time limit', async () => {
     const largeDataset = generateTestData(10000);
     const startTime = performance.now();
-    
+
     const result = await validateImportData(largeDataset);
-    
+
     const duration = performance.now() - startTime;
     expect(duration).toBeLessThan(8000); // 8 seconds
     expect(result.totalRows).toBe(10000);
@@ -429,39 +493,65 @@ describe('Performance', () => {
 ## TEST DATA SETS
 
 ### Dataset A: Perfect Data
+
 ```json
 [
-  {"email": "perfect1@example.com", "name": "Perfect User 1", "phone": "123-456-7890", "company": "Example Corp"},
-  {"email": "perfect2@business.com", "name": "Perfect User 2", "phone": "987-654-3210", "company": "Business Inc"}
+  {
+    "email": "perfect1@example.com",
+    "name": "Perfect User 1",
+    "phone": "123-456-7890",
+    "company": "Example Corp"
+  },
+  {
+    "email": "perfect2@business.com",
+    "name": "Perfect User 2",
+    "phone": "987-654-3210",
+    "company": "Business Inc"
+  }
 ]
 ```
 
 ### Dataset B: Common Errors
+
 ```json
 [
-  {"email": "invalid-email", "name": "Error User 1", "phone": "123456"},
-  {"email": "missing@", "name": "Error User 2", "phone": "abc-def-ghij"},
-  {"name": "Error User 3", "company": "No Contact Info"}
+  { "email": "invalid-email", "name": "Error User 1", "phone": "123456" },
+  { "email": "missing@", "name": "Error User 2", "phone": "abc-def-ghij" },
+  { "name": "Error User 3", "company": "No Contact Info" }
 ]
 ```
 
 ### Dataset C: Edge Cases
+
 ```json
 [
-  {"email": "   TRIMME@EXAMPLE.COM   ", "name": " Whitespace User ", "phone": "  123-456-7890  "},
-  {"email": "unicode@exämple.com", "name": "Üñíçødé Ñámé", "phone": "+1-800-555-CALL"},
-  {"email": "very.long.email.address@extremely.long.domain.name.example.com", "name": "Very Long Name That Exceeds Reasonable Limits", "phone": "1234567890123456789"}
+  {
+    "email": "   TRIMME@EXAMPLE.COM   ",
+    "name": " Whitespace User ",
+    "phone": "  123-456-7890  "
+  },
+  {
+    "email": "unicode@exämple.com",
+    "name": "Üñíçødé Ñámé",
+    "phone": "+1-800-555-CALL"
+  },
+  {
+    "email": "very.long.email.address@extremely.long.domain.name.example.com",
+    "name": "Very Long Name That Exceeds Reasonable Limits",
+    "phone": "1234567890123456789"
+  }
 ]
 ```
 
 ### Dataset D: Performance Test (Generated)
+
 ```javascript
 function generatePerformanceDataset(count) {
-  return Array.from({length: count}, (_, i) => ({
+  return Array.from({ length: count }, (_, i) => ({
     email: `user${i}@example.com`,
     name: `Test User ${i}`,
     phone: `555-${String(i).padStart(7, '0')}`,
-    company: `Company ${i % 100}`
+    company: `Company ${i % 100}`,
   }));
 }
 ```
@@ -471,20 +561,23 @@ function generatePerformanceDataset(count) {
 ## SUCCESS CRITERIA SUMMARY
 
 ### Functional Requirements ✅
+
 - **15/15 test cases pass**: All scenarios work correctly
 - **No critical bugs**: System handles edge cases gracefully
 - **Accurate validation**: <2% false positives/negatives
 - **Complete UI coverage**: All components tested
 
-### Performance Requirements ✅  
+### Performance Requirements ✅
+
 - **Large file validation**: <8 seconds for 10K rows
 - **UI responsiveness**: <500ms render times
 - **Memory efficiency**: <50MB for large datasets
 - **Integration speed**: <200ms between components
 
 ### User Experience Requirements ✅
+
 - **Intuitive workflow**: Users complete tasks without confusion
-- **Clear error messaging**: Issues actionable and understandable  
+- **Clear error messaging**: Issues actionable and understandable
 - **Smooth interactions**: No jarring delays or confusing states
 - **Responsive design**: Works well on all screen sizes
 

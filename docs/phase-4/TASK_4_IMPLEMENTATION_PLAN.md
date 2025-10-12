@@ -20,6 +20,7 @@
 **Objective**: Create utility functions for duplicate matching
 
 **Steps**:
+
 1. **Create `detect_duplicates` database function** (15 min)
    - Input: contact data + organization_id
    - Hash-based lookup first (fast path)
@@ -37,6 +38,7 @@
    - Performance check (<5ms for hash lookup)
 
 **Deliverables**:
+
 - ✅ Database function `detect_duplicates()` operational
 - ✅ Tested with sample data
 - ✅ Fast hash-based matching working
@@ -51,6 +53,7 @@
 **Objective**: Implement Levenshtein distance for name matching
 
 **Steps**:
+
 1. **Add Levenshtein library** (5 min)
    - Install `fastest-levenshtein` for Deno
    - Test import and basic functionality
@@ -63,7 +66,7 @@
 3. **Implement multi-field scoring** (20 min)
    - Email match scoring (exact/domain)
    - Phone match scoring (exact/area code)
-   - Name similarity scoring  
+   - Name similarity scoring
    - Location match scoring
    - Combined confidence calculation
 
@@ -73,6 +76,7 @@
    - Edge cases (empty fields, common names)
 
 **Deliverables**:
+
 - ✅ Fuzzy matching working with Levenshtein
 - ✅ Multi-field confidence scores calculated
 - ✅ Scoring algorithm tuned and tested
@@ -87,9 +91,10 @@
 **Objective**: Expose duplicate detection via Edge Function or RPC
 
 **Steps**:
+
 1. **Create API endpoint** (10 min)
    - Supabase Edge Function or RPC call
-   - Accept: contact data + organization_id  
+   - Accept: contact data + organization_id
    - Validate input parameters
 
 2. **Implement detection logic** (15 min)
@@ -104,6 +109,7 @@
    - Performance check (<50ms per contact)
 
 **Deliverables**:
+
 - ✅ API endpoint operational
 - ✅ Returns JSON with matches and scores
 - ✅ Error handling for invalid input
@@ -118,6 +124,7 @@
 **Objective**: UI to show duplicates during import preview
 
 **Steps**:
+
 1. **Create DuplicatePreview React component** (20 min)
    - Display matches in comparison table
    - Show confidence scores with color coding
@@ -126,7 +133,7 @@
 
 2. **Add action buttons** (15 min)
    - Skip Import button
-   - Update Existing button  
+   - Update Existing button
    - Merge Data button
    - Import Anyway button
    - Batch action options
@@ -138,6 +145,7 @@
    - Update UI state accordingly
 
 **Deliverables**:
+
 - ✅ Component renders duplicate matches
 - ✅ User can see field comparisons
 - ✅ Action buttons functional
@@ -153,6 +161,7 @@
 **Objective**: Implement field-by-field merge functionality
 
 **Steps**:
+
 1. **Create merge utility function** (15 min)
    - Field-by-field merge rules
    - Prefer non-empty values
@@ -172,6 +181,7 @@
    - Performance check
 
 **Deliverables**:
+
 - ✅ Merge function working correctly
 - ✅ Conflicts detected and flagged
 - ✅ Manual resolution UI ready
@@ -187,12 +197,13 @@
 **Objective**: Test all scenarios and edge cases thoroughly
 
 **Steps**:
+
 1. **Test exact matches** (5 min)
    - Email exact match (100% confidence)
    - Phone exact match (95% confidence)
    - Both fields match (100% confidence)
 
-2. **Test fuzzy matches** (5 min)  
+2. **Test fuzzy matches** (5 min)
    - Name similarity at various levels
    - Domain + name matches
    - Phone + name partial matches
@@ -215,8 +226,9 @@
    - Polish UI interactions
 
 **Deliverables**:
+
 - ✅ All test scenarios pass
-- ✅ Edge cases handled gracefully  
+- ✅ Edge cases handled gracefully
 - ✅ Performance meets targets (<50ms/contact)
 - ✅ Bug-free implementation
 
@@ -230,9 +242,10 @@
 ### Tomorrow's Session Options
 
 #### Option A: 3-Hour Continuous Block
+
 ```
 09:00-09:30  Subtask 4.1 (Database Functions)
-09:30-10:15  Subtask 4.2 (Fuzzy Matching) 
+09:30-10:15  Subtask 4.2 (Fuzzy Matching)
 10:15-10:45  Subtask 4.3 (API Endpoint)
 10:45-11:00  Break
 11:00-11:45  Subtask 4.4 (Frontend UI)
@@ -242,12 +255,15 @@
 ```
 
 #### Option B: Split Sessions (2h + 1h)
+
 **Session 1: Backend (2h)**
+
 - Subtasks 4.1-4.3 (Database + API + Fuzzy matching)
 - Core duplicate detection engine
 - API testing and validation
 
-**Session 2: Frontend + Testing (1h)**  
+**Session 2: Frontend + Testing (1h)**
+
 - Subtask 4.4 (UI Component)
 - Subtask 4.5 (Merge Logic)
 - Subtask 4.6 (Comprehensive Testing)
@@ -257,13 +273,15 @@
 ## SUCCESS CRITERIA
 
 ### Technical Requirements ✅
+
 - [ ] **Hash-based matching**: <5ms per contact
-- [ ] **Fuzzy matching**: <50ms per contact  
+- [ ] **Fuzzy matching**: <50ms per contact
 - [ ] **API response**: <100ms total
 - [ ] **UI responsiveness**: <200ms interactions
 - [ ] **Batch processing**: 1000 contacts in <30 seconds
 
 ### Functionality Requirements ✅
+
 - [ ] **Exact email duplicates detected** (100% confidence)
 - [ ] **Exact phone duplicates detected** (95% confidence)
 - [ ] **Fuzzy name matching working** (80%+ accuracy)
@@ -274,7 +292,8 @@
 - [ ] **Conflict resolution working**
 
 ### User Experience Requirements ✅
-- [ ] **Duplicates visible in preview** 
+
+- [ ] **Duplicates visible in preview**
 - [ ] **Confidence scores clear**
 - [ ] **Field comparisons obvious**
 - [ ] **Actions intuitive**
@@ -287,6 +306,7 @@
 ## RISK MITIGATION
 
 ### Technical Risks
+
 **Risk**: Fuzzy matching performance  
 **Mitigation**: Start with simple Levenshtein, optimize later  
 **Fallback**: Hash-only matching if performance issues
@@ -300,6 +320,7 @@
 **Fallback**: Application-level matching
 
 ### Timeline Risks
+
 **Risk**: Underestimating fuzzy matching complexity  
 **Buffer**: 45min allocated vs typical 30min  
 **Mitigation**: Have exact-match-only fallback ready
@@ -313,18 +334,21 @@
 ## TESTING STRATEGY
 
 ### Unit Tests
+
 - Duplicate detection function
-- Confidence scoring algorithm  
+- Confidence scoring algorithm
 - Merge logic utility
 - Name normalization
 
 ### Integration Tests
+
 - API endpoint with various inputs
 - UI component with mock data
 - End-to-end import flow
 - Performance benchmarks
 
 ### Manual Tests
+
 - Edge cases (empty fields, multiple matches)
 - User workflow (preview → action → result)
 - Mobile responsiveness
@@ -335,11 +359,13 @@
 ## DEPENDENCIES
 
 ### Required ✅
+
 - **Task 1**: Database schema (completed)
 - **Supabase setup**: Edge Functions capability
 - **React components**: Basic import UI structure
 
 ### Optional 🔄
+
 - **Task 2**: CSV Parser (can work with mock data)
 - **Task 3**: Field Mapping UI (independent systems)
 
@@ -350,18 +376,21 @@
 By end of 3-hour implementation:
 
 ### Backend ✅
+
 - Database duplicate detection function
-- Fuzzy matching with Levenshtein  
+- Fuzzy matching with Levenshtein
 - API endpoint returning JSON matches
 - Confidence scoring system
 
 ### Frontend ✅
+
 - React duplicate preview component
 - Action buttons (skip/update/merge)
 - Field comparison table
 - Batch operation options
 
 ### Testing ✅
+
 - Comprehensive test scenarios
 - Edge case handling
 - Performance validation

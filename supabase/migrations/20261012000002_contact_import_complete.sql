@@ -45,8 +45,7 @@ started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 completed_at TIMESTAMPTZ NULL,
 
 -- Error tracking
-error_message TEXT NULL,
-error_details JSONB NULL,
+error_message TEXT NULL, error_details JSONB NULL,
 
 -- Configuration
 field_mapping JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -59,7 +58,9 @@ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 -- Performance indexes for contact_imports
 CREATE INDEX IF NOT EXISTS idx_contact_imports_organization_id ON contact_imports (organization_id);
+
 CREATE INDEX IF NOT EXISTS idx_contact_imports_status ON contact_imports (status);
+
 CREATE INDEX IF NOT EXISTS idx_contact_imports_created_at ON contact_imports (created_at DESC);
 
 -- Enable RLS on contact_imports
@@ -67,7 +68,9 @@ ALTER TABLE contact_imports ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for contact_imports
 DROP POLICY IF EXISTS "Users can view their organization's imports" ON contact_imports;
-CREATE POLICY "Users can view their organization's imports" ON contact_imports FOR SELECT USING (
+
+CREATE POLICY "Users can view their organization's imports" ON contact_imports FOR
+SELECT USING (
         organization_id IN (
             SELECT organization_id
             FROM profiles
@@ -77,7 +80,9 @@ CREATE POLICY "Users can view their organization's imports" ON contact_imports F
     );
 
 DROP POLICY IF EXISTS "Users can insert imports for their organization" ON contact_imports;
-CREATE POLICY "Users can insert imports for their organization" ON contact_imports FOR INSERT
+
+CREATE POLICY "Users can insert imports for their organization" ON contact_imports FOR
+INSERT
 WITH
     CHECK (
         organization_id IN (
@@ -90,7 +95,9 @@ WITH
     );
 
 DROP POLICY IF EXISTS "Users can update their organization's imports" ON contact_imports;
-CREATE POLICY "Users can update their organization's imports" ON contact_imports FOR UPDATE USING (
+
+CREATE POLICY "Users can update their organization's imports" ON contact_imports FOR
+UPDATE USING (
     organization_id IN (
         SELECT organization_id
         FROM profiles
@@ -126,12 +133,13 @@ error_message TEXT NULL,
 error_field VARCHAR(100) NULL,
 
 -- Audit
-created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW() );
 
 -- Performance indexes for contact_import_logs
 CREATE INDEX IF NOT EXISTS idx_contact_import_logs_import_id ON contact_import_logs (import_id);
+
 CREATE INDEX IF NOT EXISTS idx_contact_import_logs_status ON contact_import_logs (status);
+
 CREATE INDEX IF NOT EXISTS idx_contact_import_logs_contact_id ON contact_import_logs (contact_id)
 WHERE
     contact_id IS NOT NULL;
@@ -141,7 +149,9 @@ ALTER TABLE contact_import_logs ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for contact_import_logs
 DROP POLICY IF EXISTS "Users can view logs for accessible imports" ON contact_import_logs;
-CREATE POLICY "Users can view logs for accessible imports" ON contact_import_logs FOR SELECT USING (
+
+CREATE POLICY "Users can view logs for accessible imports" ON contact_import_logs FOR
+SELECT USING (
         import_id IN (
             SELECT id
             FROM contact_imports
@@ -156,7 +166,9 @@ CREATE POLICY "Users can view logs for accessible imports" ON contact_import_log
     );
 
 DROP POLICY IF EXISTS "Users can insert logs for accessible imports" ON contact_import_logs;
-CREATE POLICY "Users can insert logs for accessible imports" ON contact_import_logs FOR INSERT
+
+CREATE POLICY "Users can insert logs for accessible imports" ON contact_import_logs FOR
+INSERT
 WITH
     CHECK (
         import_id IN (
@@ -179,15 +191,13 @@ CREATE TABLE IF NOT EXISTS public.contact_field_mappings (
     created_by UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
 
 -- Template info
-template_name VARCHAR(255) NOT NULL,
-description TEXT NULL,
+template_name VARCHAR(255) NOT NULL, description TEXT NULL,
 
 -- Configuration
 field_mapping JSONB NOT NULL DEFAULT '{}'::jsonb,
 
 -- Usage tracking
-times_used INTEGER NOT NULL DEFAULT 0,
-last_used_at TIMESTAMPTZ NULL,
+times_used INTEGER NOT NULL DEFAULT 0, last_used_at TIMESTAMPTZ NULL,
 
 -- Default template per organization
 is_default BOOLEAN NOT NULL DEFAULT FALSE,
@@ -197,11 +207,11 @@ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
 -- Ensure only one default per organization
-UNIQUE(organization_id, template_name)
-);
+UNIQUE(organization_id, template_name) );
 
 -- Performance indexes for contact_field_mappings
 CREATE INDEX IF NOT EXISTS idx_contact_field_mappings_organization_id ON contact_field_mappings (organization_id);
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_contact_field_mappings_default ON contact_field_mappings (organization_id)
 WHERE
     is_default = true;
@@ -211,7 +221,9 @@ ALTER TABLE contact_field_mappings ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for contact_field_mappings
 DROP POLICY IF EXISTS "Users can view their organization's field mappings" ON contact_field_mappings;
-CREATE POLICY "Users can view their organization's field mappings" ON contact_field_mappings FOR SELECT USING (
+
+CREATE POLICY "Users can view their organization's field mappings" ON contact_field_mappings FOR
+SELECT USING (
         organization_id IN (
             SELECT organization_id
             FROM profiles
@@ -221,7 +233,9 @@ CREATE POLICY "Users can view their organization's field mappings" ON contact_fi
     );
 
 DROP POLICY IF EXISTS "Users can insert field mappings for their organization" ON contact_field_mappings;
-CREATE POLICY "Users can insert field mappings for their organization" ON contact_field_mappings FOR INSERT
+
+CREATE POLICY "Users can insert field mappings for their organization" ON contact_field_mappings FOR
+INSERT
 WITH
     CHECK (
         organization_id IN (
@@ -234,7 +248,9 @@ WITH
     );
 
 DROP POLICY IF EXISTS "Users can update their organization's field mappings" ON contact_field_mappings;
-CREATE POLICY "Users can update their organization's field mappings" ON contact_field_mappings FOR UPDATE USING (
+
+CREATE POLICY "Users can update their organization's field mappings" ON contact_field_mappings FOR
+UPDATE USING (
     organization_id IN (
         SELECT organization_id
         FROM profiles
@@ -244,6 +260,7 @@ CREATE POLICY "Users can update their organization's field mappings" ON contact_
 );
 
 DROP POLICY IF EXISTS "Users can delete their organization's field mappings" ON contact_field_mappings;
+
 CREATE POLICY "Users can delete their organization's field mappings" ON contact_field_mappings FOR DELETE USING (
     organization_id IN (
         SELECT organization_id
@@ -296,8 +313,10 @@ WHERE
 
 -- Drop existing functions if they exist to avoid parameter name conflicts
 DROP FUNCTION IF EXISTS normalize_email(TEXT);
-DROP FUNCTION IF EXISTS normalize_phone(TEXT);
-DROP FUNCTION IF EXISTS calculate_duplicate_hash(TEXT, TEXT, TEXT);
+
+DROP FUNCTION IF EXISTS normalize_phone (TEXT);
+
+DROP FUNCTION IF EXISTS calculate_duplicate_hash (TEXT, TEXT, TEXT);
 
 -- Function to normalize email addresses
 CREATE OR REPLACE FUNCTION normalize_email(email TEXT)

@@ -73,38 +73,39 @@ FieldMappingInterface (main container)
 ## STATE MANAGEMENT ARCHITECTURE
 
 ### Main State Interface
+
 ```typescript
 interface FieldMappingState {
   // CSV Data
   csvColumns: CSVColumn[];
   csvPreviewRows: Record<string, any>[];
   csvRowCount: number;
-  
+
   // Database Schema
   databaseFields: DatabaseField[];
   fieldCategories: FieldCategory[];
-  
+
   // Mapping Configuration
   mappings: FieldMapping[];
   autoMappings: AutoMapping[];
   userOverrides: UserOverride[];
-  
+
   // UI State
   isDragging: boolean;
   draggedColumn: CSVColumn | null;
   selectedColumn: CSVColumn | null;
   activePanel: 'csv' | 'database' | 'preview';
-  
+
   // Validation State
   validationResults: ValidationResult[];
   validationErrors: ValidationError[];
   validationWarnings: ValidationWarning[];
   isValid: boolean;
-  
+
   // Loading State
   isLoading: boolean;
   loadingOperations: LoadingOperation[];
-  
+
   // Configuration
   previewRowCount: number;
   previewCurrentPage: number;
@@ -114,6 +115,7 @@ interface FieldMappingState {
 ```
 
 ### Action Types
+
 ```typescript
 type FieldMappingAction =
   // Mapping Actions
@@ -122,19 +124,19 @@ type FieldMappingAction =
   | { type: 'CLEAR_ALL_MAPPINGS' }
   | { type: 'APPLY_AUTO_MAPPINGS'; mappings: AutoMapping[] }
   | { type: 'OVERRIDE_MAPPING'; mapping: FieldMapping; reason: string }
-  
+
   // Data Loading Actions
   | { type: 'LOAD_CSV_DATA'; columns: CSVColumn[]; previewRows: any[] }
   | { type: 'LOAD_DATABASE_SCHEMA'; fields: DatabaseField[] }
   | { type: 'SET_LOADING'; operation: string; isLoading: boolean }
-  
+
   // UI Actions
   | { type: 'SET_DRAG_STATE'; isDragging: boolean; draggedColumn?: CSVColumn }
   | { type: 'SET_SELECTED_COLUMN'; column: CSVColumn | null }
   | { type: 'SET_ACTIVE_PANEL'; panel: 'csv' | 'database' | 'preview' }
   | { type: 'SET_SEARCH_FILTER'; filter: string }
   | { type: 'SET_PREVIEW_PAGE'; page: number }
-  
+
   // Validation Actions
   | { type: 'SET_VALIDATION_RESULTS'; results: ValidationResult[] }
   | { type: 'ADD_VALIDATION_ERROR'; error: ValidationError }
@@ -142,7 +144,9 @@ type FieldMappingAction =
 ```
 
 ### State Management Pattern
+
 **Using useReducer + Context for complex state**:
+
 ```typescript
 // Context for global state
 const FieldMappingContext = createContext<{
@@ -162,6 +166,7 @@ const { state, dispatch } = useContext(FieldMappingContext);
 ## COMPONENT PROPS INTERFACES
 
 ### FieldMappingInterface Props
+
 ```typescript
 interface FieldMappingInterfaceProps {
   // From Task 2 CSV Upload
@@ -171,17 +176,17 @@ interface FieldMappingInterfaceProps {
     previewRows: any[];
     rowCount: number;
   };
-  
+
   // Callbacks
   onMappingComplete: (mappings: FieldMapping[]) => void;
   onCancel: () => void;
   onSaveDraft: (mappings: FieldMapping[]) => void;
-  
+
   // Configuration
   organizationId: string;
   initialMappings?: FieldMapping[];
   validationRules?: ValidationRule[];
-  
+
   // UI Options
   allowSaveDraft?: boolean;
   showAdvancedOptions?: boolean;
@@ -190,6 +195,7 @@ interface FieldMappingInterfaceProps {
 ```
 
 ### Sub-component Props
+
 ```typescript
 // CSV Column List
 interface CSVColumnListProps {
@@ -204,7 +210,7 @@ interface CSVColumnListProps {
   onSearchChange: (filter: string) => void;
 }
 
-// Database Field List  
+// Database Field List
 interface DatabaseFieldListProps {
   fields: DatabaseField[];
   mappings: FieldMapping[];
@@ -244,6 +250,7 @@ interface MappingSummaryProps {
 ## CUSTOM HOOKS SPECIFICATION
 
 ### 1. useFieldMapping Hook
+
 ```typescript
 interface UseFieldMappingReturn {
   // State
@@ -251,14 +258,14 @@ interface UseFieldMappingReturn {
   autoMappings: AutoMapping[];
   isValid: boolean;
   confidence: number;
-  
+
   // Actions
   setMapping: (csvColumn: CSVColumn, dbField: DatabaseField) => void;
   removeMapping: (csvColumn: CSVColumn) => void;
   clearAllMappings: () => void;
   autoMapFields: () => Promise<void>;
   resetMappings: () => void;
-  
+
   // Utilities
   getMappingForColumn: (column: CSVColumn) => FieldMapping | null;
   getMappingForField: (field: DatabaseField) => FieldMapping | null;
@@ -272,17 +279,18 @@ const useFieldMapping = (
   initialMappings?: FieldMapping[]
 ): UseFieldMappingReturn => {
   // Implementation handles mapping logic, auto-detection, validation
-}
+};
 ```
 
 ### 2. useDragAndDrop Hook
+
 ```typescript
 interface UseDragAndDropReturn {
   // Drag State
   isDragging: boolean;
   draggedItem: CSVColumn | null;
   dragOverTarget: DatabaseField | null;
-  
+
   // Event Handlers
   handleDragStart: (column: CSVColumn, event: DragEvent) => void;
   handleDragOver: (field: DatabaseField, event: DragEvent) => void;
@@ -290,7 +298,7 @@ interface UseDragAndDropReturn {
   handleDragLeave: (field: DatabaseField, event: DragEvent) => void;
   handleDrop: (field: DatabaseField, event: DragEvent) => void;
   handleDragEnd: (event: DragEvent) => void;
-  
+
   // Utilities
   canDropOn: (field: DatabaseField) => boolean;
   getDropEffect: (field: DatabaseField) => 'copy' | 'move' | 'none';
@@ -301,10 +309,11 @@ const useDragAndDrop = (
   mappings: FieldMapping[]
 ): UseDragAndDropReturn => {
   // Implementation handles HTML5 drag & drop API
-}
+};
 ```
 
 ### 3. useMappingValidation Hook
+
 ```typescript
 interface UseMappingValidationReturn {
   // Validation Results
@@ -312,13 +321,13 @@ interface UseMappingValidationReturn {
   warnings: ValidationWarning[];
   isValid: boolean;
   fieldValidation: Record<string, ValidationResult>;
-  
+
   // Validation Methods
   validateMapping: (mapping: FieldMapping) => ValidationResult;
   validateAllMappings: () => ValidationResult[];
   validateRequiredFields: () => ValidationError[];
   validateDataTypes: (previewRows: any[]) => ValidationResult[];
-  
+
   // Utilities
   getFieldErrors: (fieldName: string) => ValidationError[];
   getFieldWarnings: (fieldName: string) => ValidationWarning[];
@@ -332,7 +341,7 @@ const useMappingValidation = (
   previewRows: any[]
 ): UseMappingValidationReturn => {
   // Implementation handles all validation logic
-}
+};
 ```
 
 ---
@@ -340,6 +349,7 @@ const useMappingValidation = (
 ## TYPE DEFINITIONS
 
 ### Core Types
+
 ```typescript
 // CSV Column from uploaded file
 interface CSVColumn {
@@ -413,6 +423,7 @@ interface UserOverride {
 ```
 
 ### UI State Types
+
 ```typescript
 interface LoadingOperation {
   id: string;
@@ -445,6 +456,7 @@ interface ValidationWarning extends ValidationResult {
 ## DATA FLOW & INTEGRATION POINTS
 
 ### Integration with Task 2 (CSV Parser)
+
 ```typescript
 // API call to get CSV data from importId
 const fetchCSVData = async (importId: string) => {
@@ -459,6 +471,7 @@ const fetchCSVData = async (importId: string) => {
 ```
 
 ### Integration with Task 4 (Duplicate Detection)
+
 ```typescript
 // Pass mappings to duplicate detection
 const proceedToValidation = (mappings: FieldMapping[]) => {
@@ -467,14 +480,18 @@ const proceedToValidation = (mappings: FieldMapping[]) => {
     nextStep: 'duplicate-detection',
     config: {
       compareFields: mappings
-        .filter(m => m.databaseField.type === 'email' || m.databaseField.type === 'text')
-        .map(m => m.databaseField.name)
-    }
+        .filter(
+          m =>
+            m.databaseField.type === 'email' || m.databaseField.type === 'text'
+        )
+        .map(m => m.databaseField.name),
+    },
   });
 };
 ```
 
 ### Integration with Task 6 (Bulk Import)
+
 ```typescript
 // Final mappings for import execution
 interface ImportMapping {
@@ -489,7 +506,7 @@ const generateImportMappings = (mappings: FieldMapping[]): ImportMapping[] => {
     csvColumn: mapping.csvColumn.name,
     databaseField: mapping.databaseField.name,
     transformation: getTransformationFunction(mapping),
-    validation: getValidationFunction(mapping)
+    validation: getValidationFunction(mapping),
   }));
 };
 ```
@@ -499,6 +516,7 @@ const generateImportMappings = (mappings: FieldMapping[]): ImportMapping[] => {
 ## PERFORMANCE OPTIMIZATIONS
 
 ### Component Optimization
+
 ```typescript
 // Memoize heavy calculations
 const memoizedAutoDetection = useMemo(() => {
@@ -512,12 +530,14 @@ const memoizedValidation = useMemo(() => {
 
 // Optimize list rendering
 const MemoizedDraggableColumn = memo(DraggableColumn, (prev, next) => {
-  return prev.column.id === next.column.id && 
-         prev.isDragging === next.isDragging;
+  return (
+    prev.column.id === next.column.id && prev.isDragging === next.isDragging
+  );
 });
 ```
 
 ### Virtualization for Large Datasets
+
 ```typescript
 // Use react-window for large CSV column lists
 import { FixedSizeList } from 'react-window';
@@ -541,6 +561,7 @@ const CSVColumnVirtualizedList = ({ columns, ...props }) => {
 ```
 
 ### Debounced Operations
+
 ```typescript
 // Debounce validation and auto-mapping
 const debouncedValidation = useCallback(
@@ -565,6 +586,7 @@ const debouncedAutoMapping = useCallback(
 ## ERROR BOUNDARIES & ERROR HANDLING
 
 ### Component Error Boundaries
+
 ```typescript
 class FieldMappingErrorBoundary extends Component {
   state = { hasError: false, error: null };
@@ -588,6 +610,7 @@ class FieldMappingErrorBoundary extends Component {
 ```
 
 ### Async Error Handling
+
 ```typescript
 const useAsyncError = () => {
   const [error, setError] = useState<Error | null>(null);
@@ -611,6 +634,7 @@ const useAsyncError = () => {
 ## TESTING STRATEGY
 
 ### Component Testing Hierarchy
+
 ```typescript
 // Unit Tests (hooks and utilities)
 describe('useFieldMapping', () => {
@@ -642,6 +666,7 @@ describe('Field Mapping Workflow', () => {
 ```
 
 ### Mock Data Strategy
+
 ```typescript
 // Test data factories
 const createMockCSVColumn = (overrides?: Partial<CSVColumn>): CSVColumn => ({
@@ -654,10 +679,12 @@ const createMockCSVColumn = (overrides?: Partial<CSVColumn>): CSVColumn => ({
   uniqueValues: 150,
   emptyValues: 0,
   totalValues: 150,
-  ...overrides
+  ...overrides,
 });
 
-const createMockDatabaseField = (overrides?: Partial<DatabaseField>): DatabaseField => ({
+const createMockDatabaseField = (
+  overrides?: Partial<DatabaseField>
+): DatabaseField => ({
   id: 'field-email',
   name: 'email',
   displayName: 'Email Address',
@@ -665,7 +692,7 @@ const createMockDatabaseField = (overrides?: Partial<DatabaseField>): DatabaseFi
   isRequired: true,
   category: 'contact',
   icon: '📧',
-  ...overrides
+  ...overrides,
 });
 ```
 
@@ -674,6 +701,7 @@ const createMockDatabaseField = (overrides?: Partial<DatabaseField>): DatabaseFi
 ## ACCESSIBILITY IMPLEMENTATION
 
 ### Focus Management
+
 ```typescript
 const useFocusManagement = () => {
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -693,17 +721,21 @@ const useFocusManagement = () => {
 ```
 
 ### Screen Reader Announcements
+
 ```typescript
 const useScreenReaderAnnouncements = () => {
-  const announce = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+  const announce = (
+    message: string,
+    priority: 'polite' | 'assertive' = 'polite'
+  ) => {
     const announcement = document.createElement('div');
     announcement.setAttribute('aria-live', priority);
     announcement.setAttribute('aria-atomic', 'true');
     announcement.className = 'sr-only';
     announcement.textContent = message;
-    
+
     document.body.appendChild(announcement);
-    
+
     setTimeout(() => {
       document.body.removeChild(announcement);
     }, 1000);

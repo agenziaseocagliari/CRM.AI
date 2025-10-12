@@ -16,11 +16,13 @@
 ## USER FLOW
 
 ### 1. Entry Point
+
 - User has uploaded CSV file (from Task 2)
 - System has auto-detected field mappings
 - User needs to review/adjust mappings
 
 ### 2. Mapping Process
+
 ```
 User sees suggested mappings with confidence scores
     ↓
@@ -32,6 +34,7 @@ User confirms and proceeds to import
 ```
 
 ### 3. Exit Points
+
 - **Success**: All required fields mapped → Proceed to import
 - **Cancel**: Return to file upload
 - **Save Draft**: Save mappings for later completion
@@ -41,6 +44,7 @@ User confirms and proceeds to import
 ## COMPONENT BREAKDOWN
 
 ### Main Component: FieldMappingInterface
+
 - **Purpose**: Parent container managing entire mapping process
 - **Responsibilities**: State management, API calls, validation orchestration
 - **Layout**: 4-panel layout with responsive behavior
@@ -50,9 +54,11 @@ User confirms and proceeds to import
 ## SUB-COMPONENTS SPECIFICATION
 
 ### 1. CSVColumnList (Left Panel)
+
 **Purpose**: Display available CSV columns from uploaded file
 
 **Visual Layout**:
+
 ```
 ┌─────────────────────────┐
 │ CSV Columns (8)         │
@@ -60,7 +66,7 @@ User confirms and proceeds to import
 │ 🟢 📄 Email             │ ← Draggable, mapped
 │   └ john@test.com       │   (preview)
 │                         │
-│ 🟢 📄 First Name        │ ← Draggable, mapped  
+│ 🟢 📄 First Name        │ ← Draggable, mapped
 │   └ John, Jane, Bob     │   (preview)
 │                         │
 │ 🟢 📄 Phone Number      │ ← Draggable, mapped
@@ -78,6 +84,7 @@ User confirms and proceeds to import
 ```
 
 **Features**:
+
 - ✅ **Column Header**: CSV column name with drag handle (⋮⋮)
 - ✅ **Status Badge**: 🟢 Mapped / ⚪ Unmapped / 🟡 Mapped with warnings
 - ✅ **Data Preview**: First 3 unique values from column
@@ -86,6 +93,7 @@ User confirms and proceeds to import
 - ✅ **Bulk Actions**: Select multiple columns for batch operations
 
 **Interactions**:
+
 - **Drag**: Grab column to map to database field
 - **Click**: Select column for dropdown mapping (accessibility)
 - **Hover**: Show full preview tooltip with more values
@@ -93,9 +101,11 @@ User confirms and proceeds to import
 ---
 
 ### 2. DatabaseFieldList (Right Panel)
+
 **Purpose**: Show available database fields with drop zones
 
 **Visual Layout**:
+
 ```
 ┌─────────────────────────┐
 │ Database Fields         │
@@ -122,6 +132,7 @@ User confirms and proceeds to import
 ```
 
 **Features**:
+
 - ✅ **Field Type Icons**: 📧 Email, 👤 Name, 📱 Phone, 🏢 Company, 📝 Text, 📅 Date
 - ✅ **Required Indicator**: Bold text + "(required)" label
 - ✅ **Drop Zone**: Clear visual indicator when dragging
@@ -130,6 +141,7 @@ User confirms and proceeds to import
 - ✅ **Field Description**: Tooltip with database field info
 
 **Interactions**:
+
 - **Drop**: Accept CSV column from drag operation
 - **Clear**: Remove current mapping
 - **Click**: Alternative dropdown selector for accessibility
@@ -137,9 +149,11 @@ User confirms and proceeds to import
 ---
 
 ### 3. MappingPreview (Bottom Panel)
+
 **Purpose**: Show preview of mapped data with validation
 
 **Visual Layout**:
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ Preview (First 5 Rows) - 🟢 145 valid, ⚠️ 3 warnings    │
@@ -159,6 +173,7 @@ User confirms and proceeds to import
 ```
 
 **Features**:
+
 - ✅ **Data Table**: First 5 rows of actual CSV data
 - ✅ **Column Headers**: Database field names with mapping status
 - ✅ **Cell Validation**: ✅ Valid, ⚠️ Warning, ❌ Error, ⚪ Empty
@@ -167,6 +182,7 @@ User confirms and proceeds to import
 - ✅ **Pagination**: View more rows (5, 10, 25)
 
 **Validation Indicators**:
+
 - ✅ **Green**: Data valid, field mapped correctly
 - ⚠️ **Yellow**: Data mapped, but format/quality warnings
 - ❌ **Red**: Required field unmapped OR invalid data
@@ -175,9 +191,11 @@ User confirms and proceeds to import
 ---
 
 ### 4. MappingSummary (Top Bar)
+
 **Purpose**: Show mapping status at a glance with quick actions
 
 **Visual Layout**:
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ Field Mapping Progress                                   │
@@ -190,6 +208,7 @@ User confirms and proceeds to import
 ```
 
 **Features**:
+
 - ✅ **Progress Summary**: Count of mapped/unmapped/problem fields
 - ✅ **Quick Actions**: Auto-map, reset, save draft, help
 - ✅ **Overall Confidence**: Average confidence score across mappings
@@ -197,6 +216,7 @@ User confirms and proceeds to import
 - ✅ **Status Indicator**: Ready/Not Ready for import
 
 **Action Buttons**:
+
 - **Auto-Map Remaining**: Re-run auto-detection on unmapped fields
 - **Reset All**: Clear all mappings, start fresh
 - **Save Draft**: Save current state, continue later
@@ -207,6 +227,7 @@ User confirms and proceeds to import
 ## LAYOUT SPECIFICATIONS
 
 ### Desktop Layout (≥1024px)
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    MappingSummary                       │
@@ -228,11 +249,13 @@ User confirms and proceeds to import
 ```
 
 **Responsive Breakdowns**:
+
 - **≥1400px**: Side panels 350px each, preview full width
 - **1024-1399px**: Side panels 300px each, preview scrollable
 - **768-1023px**: Switch to tablet layout
 
 ### Tablet Layout (768-1023px)
+
 ```
 ┌─────────────────────────────┐
 │      MappingSummary         │
@@ -249,6 +272,7 @@ User confirms and proceeds to import
 ```
 
 ### Mobile Layout (≤767px)
+
 ```
 ┌─────────────────┐
 │ MappingSummary  │
@@ -269,6 +293,7 @@ User confirms and proceeds to import
 ```
 
 **Mobile Interactions**:
+
 - **Tap to Map**: Instead of drag & drop, tap CSV column then tap target field
 - **Panel Navigation**: Tab between CSV/Database/Preview
 - **Swipe**: Horizontal swipe between panels
@@ -279,28 +304,28 @@ User confirms and proceeds to import
 ## INTERACTION PATTERNS
 
 ### Drag & Drop (Primary)
+
 **Desktop Experience**:
-1. **Drag Start**: 
+
+1. **Drag Start**:
    - Cursor changes to grab hand
    - CSV column becomes semi-transparent
    - Drop zones highlight with blue border
-   
 2. **Drag Over**:
    - Compatible drop zones glow green
    - Incompatible zones show red border
    - Show confidence preview tooltip
-   
 3. **Drop Success**:
    - Green flash animation
    - Mapping line draws from source to target
    - Preview updates immediately
-   
 4. **Drop Invalid**:
    - Red shake animation
    - Error message tooltip
    - Column returns to original position
 
 **Visual Feedback**:
+
 ```
 Drag State:     [📄 Email] ← Being dragged (50% opacity)
                     ↓
@@ -310,19 +335,24 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ```
 
 ### Alternative Mapping (Accessibility)
+
 **For users who can't drag & drop**:
+
 1. Click CSV column → Selection mode
 2. Click target database field → Mapping created
 3. Or use dropdown selector on each database field
 
 ### Auto-Mapping Workflow
+
 **Automatic Detection**:
+
 1. **On Load**: Auto-map runs immediately
 2. **Algorithm**: Exact match > Fuzzy match > ML prediction
 3. **Confidence Scores**: High (90%+), Medium (70-89%), Low (<70%)
 4. **User Review**: All auto-mappings flagged for review
 
 **Manual Override**:
+
 - User can always override auto-mappings
 - System remembers user preferences for future uploads
 - Confidence scores update based on user corrections
@@ -332,7 +362,9 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ## VALIDATION SYSTEM
 
 ### Real-Time Validation
+
 **Triggers**:
+
 - On mapping change (debounced 500ms)
 - On preview scroll/pagination
 - On manual validation request
@@ -363,12 +395,15 @@ Success:        [📧 email] ← Mapped (✅ Email)
    - Confidence threshold warnings
 
 ### Error Display Strategy
+
 **Inline Errors**:
+
 - Red border on problematic elements
 - Icon indicators (❌, ⚠️) next to issues
 - Tooltip with detailed error message
 
 **Summary Errors**:
+
 - Error panel at top with all issues listed
 - Click error → jump to relevant field
 - Progress indicator showing completion status
@@ -378,6 +413,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ## COLOR CODING SYSTEM
 
 ### Status Colors
+
 - **🟢 Green (#10B981)**: Successfully mapped, data valid
 - **🟡 Yellow (#F59E0B)**: Mapped but has warnings/low confidence
 - **🔴 Red (#EF4444)**: Error state - required field unmapped or invalid data
@@ -385,12 +421,14 @@ Success:        [📧 email] ← Mapped (✅ Email)
 - **🔵 Blue (#3B82F6)**: Active drag state, selected elements
 
 ### Confidence Level Colors
+
 - **High Confidence (90%+)**: Solid green background
 - **Medium Confidence (70-89%)**: Yellow/amber background
 - **Low Confidence (<70%)**: Light red background
 - **Manual Override**: Blue accent border
 
 ### Interactive States
+
 - **Hover**: Lighten background by 10%
 - **Active/Selected**: Bold border, slight elevation shadow
 - **Disabled**: 50% opacity, no interactions
@@ -401,13 +439,16 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ## ACCESSIBILITY REQUIREMENTS
 
 ### Keyboard Navigation
+
 **Tab Order**:
+
 1. Summary actions (Auto-map, Reset, Save)
 2. CSV columns (left panel) - Arrow keys to navigate
-3. Database fields (right panel) - Arrow keys to navigate  
+3. Database fields (right panel) - Arrow keys to navigate
 4. Preview controls (pagination, filters)
 
 **Keyboard Shortcuts**:
+
 - `Tab`: Next element
 - `Shift + Tab`: Previous element
 - `Space/Enter`: Select element for mapping
@@ -416,18 +457,22 @@ Success:        [📧 email] ← Mapped (✅ Email)
 - `Delete`: Clear selected mapping
 
 ### Screen Reader Support
+
 **ARIA Labels**:
+
 - `aria-label="CSV column Email, mapped to database field email"`
 - `aria-describedby="mapping-status-email"` for status descriptions
 - `role="button"` for interactive elements
 - `aria-live="polite"` for status updates
 
 **Announcements**:
+
 - Mapping created: "Email column mapped to email field successfully"
 - Validation error: "Warning: First name is required but not mapped"
 - Progress updates: "4 of 6 required fields mapped"
 
 ### Visual Accessibility
+
 - **High Contrast Mode**: All colors meet WCAG AA standards (4.5:1 ratio)
 - **Focus Indicators**: 2px solid outline on keyboard focus
 - **Text Size**: All text 14px+ with relative sizing support
@@ -438,6 +483,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ## ERROR STATES & EDGE CASES
 
 ### No CSV Uploaded
+
 ```
 ┌─────────────────────────────┐
 │         📋 No Data          │
@@ -448,6 +494,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ```
 
 ### No Columns Detected
+
 ```
 ┌─────────────────────────────┐
 │      ⚠️ Invalid File        │
@@ -460,6 +507,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ```
 
 ### Large File Warning
+
 ```
 ┌─────────────────────────────┐
 │     📊 Large Dataset        │
@@ -473,6 +521,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ```
 
 ### Validation Blocking Import
+
 ```
 ┌─────────────────────────────┐
 │    ❌ Cannot Proceed        │
@@ -490,6 +539,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ## SUCCESS STATES
 
 ### All Fields Mapped Successfully
+
 ```
 ┌─────────────────────────────┐
 │      ✅ Ready to Import     │
@@ -503,6 +553,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ```
 
 ### Auto-Mapping High Confidence
+
 ```
 ┌─────────────────────────────┐
 │   🎯 Excellent Mapping      │
@@ -520,6 +571,7 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ## ANIMATION & TRANSITIONS
 
 ### Micro-interactions
+
 - **Hover Effects**: 150ms ease-in-out scale(1.02)
 - **Button Press**: 100ms ease-in scale(0.98)
 - **Drag Start**: 200ms ease-out opacity and transform
@@ -527,11 +579,13 @@ Success:        [📧 email] ← Mapped (✅ Email)
 - **Validation Update**: 250ms ease-in-out color transition
 
 ### Panel Transitions
+
 - **Layout Changes**: 400ms ease-in-out for responsive breakpoints
 - **Panel Slide**: 300ms ease-out for mobile panel switching
 - **Preview Update**: 200ms fade-out old → fade-in new content
 
 ### Loading States
+
 - **Skeleton Loading**: Subtle pulse animation for content placeholders
 - **Progress Indication**: Smooth progress bar animation
 - **Spinner**: 1s linear rotation for async operations
@@ -541,17 +595,20 @@ Success:        [📧 email] ← Mapped (✅ Email)
 ## PERFORMANCE CONSIDERATIONS
 
 ### Large Dataset Handling
+
 - **Virtualization**: CSV columns list virtualizes after 50+ columns
 - **Preview Pagination**: Show max 25 rows at once
 - **Debounced Validation**: Wait 500ms after last mapping change
 - **Lazy Loading**: Load field descriptions on hover/focus
 
 ### Memory Management
+
 - **Preview Data**: Only keep current page in memory
 - **Validation Cache**: Cache validation results, invalidate on change
 - **Component Unmounting**: Clean up event listeners and timers
 
 ### Bundle Size Optimization
+
 - **Code Splitting**: Lazy load drag & drop library
 - **Tree Shaking**: Import only needed utilities
 - **Icon Optimization**: Use icon font or optimized SVGs

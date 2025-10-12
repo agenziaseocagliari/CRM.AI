@@ -19,16 +19,20 @@
 ### SESSION 1: Foundation & Core Components (2 hours)
 
 #### Subtask 3.1: Project Setup & Types (20 min)
+
 **Objective**: Create file structure and TypeScript interfaces  
 **Time**: 09:00 - 09:20
 
 **Steps**:
+
 1. **Create directory structure** (5 min)
+
    ```bash
    mkdir -p src/components/contacts/FieldMappingInterface/{components,hooks,types,utils}
    ```
 
 2. **Install dependencies** (3 min)
+
    ```bash
    npm install @dnd-kit/core @dnd-kit/utilities
    ```
@@ -43,24 +47,28 @@
    - Add proper imports and exports
 
 **Deliverables**:
+
 - ✅ Directory structure created
-- ✅ Dependencies installed  
+- ✅ Dependencies installed
 - ✅ TypeScript interfaces defined (12 interfaces)
 - ✅ Basic component files created (8 files)
 
 **Test Criteria**: TypeScript compiles with no errors
 
 **Potential Issues**:
+
 - Import path conflicts → Use absolute imports
 - Type definition errors → Start simple, add complexity gradually
 
 ---
 
 #### Subtask 3.2: Main Component Shell (30 min)
+
 **Objective**: Create FieldMappingInterface component with layout  
 **Time**: 09:20 - 09:50
 
 **Steps**:
+
 1. **Setup main component structure** (10 min)
    - Create FieldMappingInterface component
    - Define props interface
@@ -77,6 +85,7 @@
    - Basic styling for panel structure
 
 **Code Structure**:
+
 ```typescript
 interface FieldMappingInterfaceProps {
   importId: string;
@@ -105,6 +114,7 @@ const FieldMappingInterface: React.FC<FieldMappingInterfaceProps> = ({
 ```
 
 **Deliverables**:
+
 - ✅ Main component renders without errors
 - ✅ Layout structure visible (4 panels)
 - ✅ State management working
@@ -115,10 +125,12 @@ const FieldMappingInterface: React.FC<FieldMappingInterfaceProps> = ({
 ---
 
 #### Subtask 3.3: CSV Column List Component (30 min)
+
 **Objective**: Build left panel displaying CSV columns  
 **Time**: 09:50 - 10:20
 
 **Steps**:
+
 1. **Create CSVColumnList component** (15 min)
    - Map over CSV columns from state
    - Display column name, type, and preview
@@ -132,6 +144,7 @@ const FieldMappingInterface: React.FC<FieldMappingInterfaceProps> = ({
    - Hover effects and interactions
 
 **Component Structure**:
+
 ```typescript
 const CSVColumnList: React.FC<CSVColumnListProps> = ({
   columns,
@@ -139,7 +152,7 @@ const CSVColumnList: React.FC<CSVColumnListProps> = ({
   searchFilter,
   onDragStart
 }) => {
-  const filteredColumns = columns.filter(col => 
+  const filteredColumns = columns.filter(col =>
     col.name.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
@@ -165,6 +178,7 @@ const CSVColumnList: React.FC<CSVColumnListProps> = ({
 ```
 
 **Deliverables**:
+
 - ✅ CSV columns display correctly
 - ✅ Search functionality working
 - ✅ Column previews show sample data
@@ -175,10 +189,12 @@ const CSVColumnList: React.FC<CSVColumnListProps> = ({
 ---
 
 #### Subtask 3.4: Database Field List Component (40 min)
+
 **Objective**: Build right panel with drop zones  
 **Time**: 10:20 - 11:00
 
 **Steps**:
+
 1. **Create DatabaseFieldList component** (20 min)
    - Map over database fields
    - Group by categories (required/optional)
@@ -192,6 +208,7 @@ const CSVColumnList: React.FC<CSVColumnListProps> = ({
    - Clear mapping action button
 
 **Component Structure**:
+
 ```typescript
 const DatabaseFieldList: React.FC<DatabaseFieldListProps> = ({
   fields,
@@ -228,6 +245,7 @@ const DatabaseFieldList: React.FC<DatabaseFieldListProps> = ({
 ```
 
 **Deliverables**:
+
 - ✅ Database fields organized by required/optional
 - ✅ Field information displays correctly
 - ✅ Current mappings shown
@@ -240,10 +258,12 @@ const DatabaseFieldList: React.FC<DatabaseFieldListProps> = ({
 ### SESSION 2: Interactions & Validation (2 hours)
 
 #### Subtask 3.5: Drag & Drop Implementation (45 min)
+
 **Objective**: Implement @dnd-kit drag & drop functionality  
 **Time**: 11:00 - 11:45
 
 **Steps**:
+
 1. **Setup DndContext** (10 min)
    - Install and configure @dnd-kit
    - Setup sensors (pointer, keyboard, touch)
@@ -265,6 +285,7 @@ const DatabaseFieldList: React.FC<DatabaseFieldListProps> = ({
    - Handle invalid drops with feedback
 
 **Implementation**:
+
 ```typescript
 const FieldMappingInterface = () => {
   const sensors = useSensors(
@@ -277,11 +298,11 @@ const FieldMappingInterface = () => {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (over && active.data.current?.column && over.data.current?.field) {
       const csvColumn = active.data.current.column;
       const dbField = over.data.current.field;
-      
+
       dispatch({
         type: 'SET_MAPPING',
         csvColumn,
@@ -313,6 +334,7 @@ const FieldMappingInterface = () => {
 ```
 
 **Deliverables**:
+
 - ✅ Drag & drop working smoothly
 - ✅ Visual feedback during interactions
 - ✅ Mapping state updates correctly
@@ -323,10 +345,12 @@ const FieldMappingInterface = () => {
 ---
 
 #### Subtask 3.6: Auto-Mapping Algorithm (30 min)
+
 **Objective**: Implement automatic field detection  
 **Time**: 11:45 - 12:15
 
 **Steps**:
+
 1. **Create auto-detection utility** (15 min)
    - Exact match algorithm (case-insensitive)
    - Fuzzy matching using Levenshtein distance
@@ -343,6 +367,7 @@ const FieldMappingInterface = () => {
    - Respect user overrides
 
 **Algorithm Implementation**:
+
 ```typescript
 const autoDetectMappings = (
   csvColumns: CSVColumn[],
@@ -351,43 +376,53 @@ const autoDetectMappings = (
   const mappings: AutoMapping[] = [];
 
   csvColumns.forEach(column => {
-    const matches = databaseFields.map(field => {
-      // Exact match (highest confidence)
-      if (column.name.toLowerCase() === field.name.toLowerCase()) {
-        return { field, confidence: 1.0, algorithm: 'exact' };
-      }
+    const matches = databaseFields
+      .map(field => {
+        // Exact match (highest confidence)
+        if (column.name.toLowerCase() === field.name.toLowerCase()) {
+          return { field, confidence: 1.0, algorithm: 'exact' };
+        }
 
-      // Alias matching
-      const aliases = getFieldAliases(field.name);
-      if (aliases.includes(column.name.toLowerCase())) {
-        return { field, confidence: 0.9, algorithm: 'alias' };
-      }
+        // Alias matching
+        const aliases = getFieldAliases(field.name);
+        if (aliases.includes(column.name.toLowerCase())) {
+          return { field, confidence: 0.9, algorithm: 'alias' };
+        }
 
-      // Fuzzy matching
-      const similarity = calculateSimilarity(column.name, field.displayName);
-      if (similarity > 0.7) {
-        return { field, confidence: similarity, algorithm: 'fuzzy' };
-      }
+        // Fuzzy matching
+        const similarity = calculateSimilarity(column.name, field.displayName);
+        if (similarity > 0.7) {
+          return { field, confidence: similarity, algorithm: 'fuzzy' };
+        }
 
-      // Data type matching
-      const dataTypeMatch = analyzeDataTypeMatch(column, field);
-      if (dataTypeMatch.isMatch) {
-        return { field, confidence: dataTypeMatch.confidence, algorithm: 'pattern' };
-      }
+        // Data type matching
+        const dataTypeMatch = analyzeDataTypeMatch(column, field);
+        if (dataTypeMatch.isMatch) {
+          return {
+            field,
+            confidence: dataTypeMatch.confidence,
+            algorithm: 'pattern',
+          };
+        }
 
-      return null;
-    }).filter(Boolean);
+        return null;
+      })
+      .filter(Boolean);
 
     // Take highest confidence match
     if (matches.length > 0) {
-      const bestMatch = matches.reduce((a, b) => a.confidence > b.confidence ? a : b);
+      const bestMatch = matches.reduce((a, b) =>
+        a.confidence > b.confidence ? a : b
+      );
       if (bestMatch.confidence > 0.6) {
         mappings.push({
           csvColumn: column,
           databaseField: bestMatch.field,
           confidence: bestMatch.confidence,
           algorithm: bestMatch.algorithm,
-          reasons: [`${bestMatch.algorithm} match with ${bestMatch.confidence}% confidence`]
+          reasons: [
+            `${bestMatch.algorithm} match with ${bestMatch.confidence}% confidence`,
+          ],
         });
       }
     }
@@ -398,6 +433,7 @@ const autoDetectMappings = (
 ```
 
 **Deliverables**:
+
 - ✅ Auto-mapping runs on load
 - ✅ Confidence scores calculated
 - ✅ Common fields mapped automatically (email, name, phone)
@@ -408,10 +444,12 @@ const autoDetectMappings = (
 ---
 
 #### Subtask 3.7: Mapping Preview & Validation (40 min)
+
 **Objective**: Show data preview and validate mappings  
 **Time**: 12:15 - 12:55
 
 **Steps**:
+
 1. **Create MappingPreview component** (20 min)
    - Display preview table with first 5-10 rows
    - Show mapped data transformation
@@ -430,6 +468,7 @@ const autoDetectMappings = (
    - Color coding for status
 
 **Validation Implementation**:
+
 ```typescript
 const validateMappings = (
   mappings: FieldMapping[],
@@ -448,7 +487,7 @@ const validateMappings = (
         type: 'error',
         field: field.name,
         message: `${field.displayName} is required but not mapped`,
-        blocking: true
+        blocking: true,
       });
     }
   });
@@ -472,7 +511,7 @@ const validateMappings = (
           field: dbField.name,
           message: `${invalidEmails.length} invalid email format(s) detected`,
           details: `Rows: ${invalidEmails.map(e => e.rowIndex + 1).join(', ')}`,
-          affectedRows: invalidEmails.map(e => e.rowIndex)
+          affectedRows: invalidEmails.map(e => e.rowIndex),
         });
       }
     }
@@ -483,6 +522,7 @@ const validateMappings = (
 ```
 
 **Deliverables**:
+
 - ✅ Preview table shows mapped data
 - ✅ Validation runs on mapping changes
 - ✅ Errors and warnings display clearly
@@ -493,10 +533,12 @@ const validateMappings = (
 ---
 
 #### Subtask 3.8: Polish & Final Integration (25 min)
+
 **Objective**: Final touches and comprehensive testing  
 **Time**: 12:55 - 13:20
 
 **Steps**:
+
 1. **Add loading states** (5 min)
    - Loading indicators for async operations
    - Skeleton loading for data fetching
@@ -519,6 +561,7 @@ const validateMappings = (
    - Verify cross-browser compatibility
 
 **Accessibility Enhancements**:
+
 ```typescript
 // Screen reader announcements
 const useScreenReaderAnnouncements = () => {
@@ -528,7 +571,7 @@ const useScreenReaderAnnouncements = () => {
     announcement.setAttribute('aria-atomic', 'true');
     announcement.className = 'sr-only';
     announcement.textContent = message;
-    
+
     document.body.appendChild(announcement);
     setTimeout(() => document.body.removeChild(announcement), 1000);
   };
@@ -565,6 +608,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 ```
 
 **Deliverables**:
+
 - ✅ Loading states implemented
 - ✅ Accessibility features complete
 - ✅ Mobile responsive
@@ -578,6 +622,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 ## SUCCESS CRITERIA CHECKLIST
 
 ### Functional Requirements
+
 - [ ] **Drag & Drop**: Smooth drag and drop from CSV columns to database fields
 - [ ] **Auto-Mapping**: 85%+ accuracy on common field types (email, name, phone)
 - [ ] **Validation**: Catches all required field issues and data format problems
@@ -586,6 +631,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 - [ ] **Accessibility**: Full keyboard navigation and screen reader support
 
 ### Technical Requirements
+
 - [ ] **Performance**: No lag with up to 100 CSV columns
 - [ ] **Memory**: Efficient handling of preview data (virtualization if needed)
 - [ ] **Error Handling**: Graceful error states and user feedback
@@ -593,6 +639,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 - [ ] **Type Safety**: Full TypeScript coverage with no `any` types
 
 ### User Experience Requirements
+
 - [ ] **Intuitive**: First-time users can complete mapping without help
 - [ ] **Visual Feedback**: Clear indication of mapping status and validation issues
 - [ ] **Efficiency**: Power users can map 20+ fields in under 2 minutes
@@ -604,6 +651,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 ## RISK MITIGATION
 
 ### High Risk Items
+
 1. **Drag & Drop Complexity**
    - **Risk**: Library integration issues, touch device problems
    - **Mitigation**: Comprehensive testing, fallback to dropdown interface
@@ -615,6 +663,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
    - **Contingency**: Manual mapping always available, clear confidence indicators
 
 ### Medium Risk Items
+
 1. **Performance with Large CSVs**
    - **Risk**: UI lag with 500+ columns
    - **Mitigation**: Virtualization, pagination, search filtering
@@ -630,14 +679,16 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 ## TOMORROW'S EXECUTION SCHEDULE
 
 ### Session 1: 09:00 - 11:00 (2 hours)
+
 ```
 09:00 - 09:20  Subtask 3.1: Setup & Types
-09:20 - 09:50  Subtask 3.2: Main Component Shell  
+09:20 - 09:50  Subtask 3.2: Main Component Shell
 09:50 - 10:20  Subtask 3.3: CSV Column List
 10:20 - 11:00  Subtask 3.4: Database Field List
 ```
 
-### Session 2: 11:00 - 13:00 (2 hours)  
+### Session 2: 11:00 - 13:00 (2 hours)
+
 ```
 11:00 - 11:45  Subtask 3.5: Drag & Drop Implementation
 11:45 - 12:15  Subtask 3.6: Auto-Mapping Algorithm
@@ -646,6 +697,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 ```
 
 ### Buffer Time
+
 - **Built-in**: 5 min per subtask (40 min total)
 - **Emergency**: 20 min contingency for critical issues
 - **Testing**: Final 30 min for comprehensive testing
@@ -655,6 +707,7 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 ## TESTING STRATEGY
 
 ### During Development (Incremental)
+
 - **Subtask 3.1**: TypeScript compilation, no errors
 - **Subtask 3.2**: Component renders, layout visible
 - **Subtask 3.3**: CSV columns display with data
@@ -665,33 +718,34 @@ const useKeyboardShortcuts = (mappings: FieldMapping[], dispatch: Dispatch) => {
 - **Subtask 3.8**: Full user flow works end-to-end
 
 ### Final Integration Testing
+
 ```typescript
 describe('FieldMapping Integration', () => {
   test('Complete mapping workflow', async () => {
     // 1. Load component with CSV data
     render(<FieldMappingInterface importId="test-123" />);
-    
+
     // 2. Verify auto-mapping ran
     expect(screen.getByText('3 mapped')).toBeInTheDocument();
-    
+
     // 3. Manually map remaining field
     const emailColumn = screen.getByText('Email');
     const emailField = screen.getByText('email (required)');
-    
+
     // Simulate drag & drop
     fireEvent.dragStart(emailColumn);
     fireEvent.dragEnter(emailField);
     fireEvent.drop(emailField);
-    
+
     // 4. Verify mapping created
     expect(screen.getByText('4 mapped')).toBeInTheDocument();
-    
+
     // 5. Check preview updates
     expect(screen.getByText('john@test.com')).toBeInTheDocument();
-    
+
     // 6. Verify validation passes
     expect(screen.getByText('Ready to import')).toBeInTheDocument();
-    
+
     // 7. Complete workflow
     fireEvent.click(screen.getByText('Proceed to Import'));
     expect(onMappingComplete).toHaveBeenCalledWith(
@@ -711,18 +765,21 @@ describe('FieldMapping Integration', () => {
 ## POST-IMPLEMENTATION TASKS
 
 ### Immediate (Tomorrow Evening)
+
 - [ ] **Documentation**: Update component documentation
 - [ ] **Screenshots**: Capture UI for documentation
 - [ ] **Performance**: Run performance profiling
 - [ ] **Accessibility**: Test with screen readers
 
 ### Week 1 Follow-up
+
 - [ ] **User Testing**: Get feedback from real users
 - [ ] **Analytics**: Implement usage tracking
 - [ ] **Optimization**: Address any performance issues
 - [ ] **Bug Fixes**: Resolve user-reported issues
 
 ### Future Enhancements
+
 - [ ] **Advanced Auto-Mapping**: ML-based field detection
 - [ ] **Mapping Templates**: Save/load common mapping patterns
 - [ ] **Batch Operations**: Multi-select column operations
@@ -737,7 +794,7 @@ describe('FieldMapping Integration', () => {
 **Success Criteria**: 15 specific checkpoints  
 **Risk Mitigation**: High/Medium risks identified with contingencies  
 **Testing Strategy**: Incremental + final integration testing  
-**Dependencies**: @dnd-kit library, Task 2 CSV data format  
+**Dependencies**: @dnd-kit library, Task 2 CSV data format
 
 **Confidence Level**: 95% (comprehensive planning completed)  
 **Implementation Ready**: ✅ YES - detailed step-by-step plan available  

@@ -5,16 +5,16 @@
  * Target: >85% coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  checkRateLimit,
-  trackRequest,
-  getRateLimitConfig,
-  updateRateLimitConfig,
-  getQuotaUsage,
-  withRateLimit,
-  getRateLimitStatus,
+    checkRateLimit,
+    getQuotaUsage,
+    getRateLimitConfig,
+    getRateLimitStatus,
+    trackRequest,
+    updateRateLimitConfig,
+    withRateLimit,
 } from '../lib/rateLimiter';
 import { supabase } from '../lib/supabaseClient';
 

@@ -1,0 +1,6 @@
+Email,Contact Name,Phone Number,Company,First Name,Last Name
+john.doe@example.com,John Doe,+1-555-0123,Acme Corp,John,Doe
+jane.smith@gmail.com,Jane Smith,555-0124,Tech Inc,Jane,Smith
+invalid-email,Bob Johnson,123,StartupCo,Bob,Johnson
+mary.jones@company.com,,+1-555-9999,Global Ltd,Mary,Jones
+,Alice Brown,555-0126,Innovation Hub,Alice,Brown

@@ -13,10 +13,16 @@ const CheckIcon = ({ className }: { className?: string }) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
-      d="M5 13l4 4L19 7"
+      d="m9 12 2 2 4-4"
     />
   </svg>
 );
+
+interface InteractiveAIQuestionnaireProps {
+  onComplete: (data: any) => void;
+  initialPrompt?: string;
+  initialStep?: number;
+}
 
 // ✅ LEVEL 6 FIX: Interfaccia risultato strutturato con required_fields + design avanzato
 export interface QuestionnaireResult {
@@ -72,8 +78,8 @@ interface QuestionnaireData {
   marketing_consent: boolean;
 }
 
-export const InteractiveAIQuestionnaire: React.FC<
-  InteractiveAIQuestionnaire
+export const InteractiveAIQuestionnaireComponent: React.FC<
+  InteractiveAIQuestionnaireProps
 > = ({ onComplete, initialPrompt, initialStep = 1 }) => {
   const [step, setStep] = useState(initialStep);
   const [data, setData] = useState<QuestionnaireData>({
@@ -851,3 +857,5 @@ Genera i campi specificamente richiesti: ${data.required_fields.join(', ')}.
     </div>
   );
 };
+
+export { InteractiveAIQuestionnaireComponent as InteractiveAIQuestionnaire };

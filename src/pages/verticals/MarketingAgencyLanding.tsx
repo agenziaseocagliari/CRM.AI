@@ -35,7 +35,7 @@ const MarketingAgencyLandingPage: React.FC = () => {
                 to="/register?account_type=marketing_agency"
                 className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
               >
-                Prova Gratis 30 Giorni
+                Prova Gratis 14 Giorni
               </Link>
             </div>
           </div>
@@ -355,7 +355,7 @@ const MarketingAgencyLandingPage: React.FC = () => {
 
           <div className="text-center mt-12">
             <p className="text-gray-600 mb-4">
-              Tutti i piani includono 30 giorni di prova gratuita e onboarding personalizzato
+              Tutti i piani includono 14 giorni di prova gratuita e onboarding personalizzato
             </p>
             <div className="flex justify-center space-x-8 text-sm text-gray-500">
               <span>✓ Setup campagne incluso</span>

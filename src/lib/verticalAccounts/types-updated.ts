@@ -633,7 +633,7 @@ export const VERTICAL_ACCOUNT_CONSTANTS = {
   MAX_ENTERPRISE_USERS: -1,
   MAX_ENTERPRISE_CONTACTS: -1,
   MAX_ENTERPRISE_DEALS: -1,
-  DEFAULT_TRIAL_DAYS: 30,
+  DEFAULT_TRIAL_DAYS: 14,
   POPULAR_TIER: 'professional' as const,
   MINIMUM_TIER: 'starter' as const,
   MAXIMUM_TIER: 'enterprise' as const

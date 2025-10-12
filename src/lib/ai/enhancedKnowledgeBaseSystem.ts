@@ -376,7 +376,7 @@ class EnhancedKnowledgeBaseSystem implements KnowledgeBase {
         
         📎 **Next Steps**:
         1. Invio proposta personalizzata entro [data]
-        2. Trial gratuito di 30 giorni
+        2. Trial gratuito di 14 giorni
         3. Meeting con il vostro team IT per integrazione
         
         Domande o dubbi? Sono a disposizione.

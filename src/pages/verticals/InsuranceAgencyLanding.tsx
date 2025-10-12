@@ -35,7 +35,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
                 to="/register?account_type=insurance_agency"
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Prova Gratis 30 Giorni
+                Prova Gratis 14 Giorni
               </Link>
             </div>
           </div>
@@ -392,7 +392,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
 
           <div className="text-center mt-12">
             <p className="text-gray-600 mb-4">
-              Tutti i piani includono 30 giorni di prova gratuita e supporto dedicato
+              Tutti i piani includono 14 giorni di prova gratuita e supporto dedicato
             </p>
             <div className="flex justify-center space-x-8 text-sm text-gray-500">
               <span>✓ Nessun contratto vincolante</span>

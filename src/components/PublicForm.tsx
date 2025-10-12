@@ -513,8 +513,19 @@ export const PublicForm: React.FC = () => {
                             />
                         ))}
 
-                        {/* � Privacy Policy Checkbox (OBBLIGATORIO se URL presente) */}
-                        {form?.privacy_policy_url && (
+                        {/* 🔒 Privacy Policy Checkbox (OBBLIGATORIO se URL presente e NON già presente nei campi) */}
+                        {form?.privacy_policy_url && !form.fields.some(field => 
+                            field.type === 'checkbox' && (
+                                field.name.toLowerCase().includes('privacy') ||
+                                field.name.toLowerCase().includes('consenso') ||
+                                field.name.toLowerCase().includes('gdpr') ||
+                                field.label.toLowerCase().includes('privacy') ||
+                                field.label.toLowerCase().includes('consenso') ||
+                                field.label.toLowerCase().includes('gdpr') ||
+                                field.label.toLowerCase().includes('accetto') ||
+                                field.label.toLowerCase().includes('acconsento')
+                            )
+                        ) && (
                             <div className="mt-10 border-t-2 border-gray-200 pt-8">
                                 <label className="flex items-start cursor-pointer group hover:bg-gray-50 p-4 rounded-lg transition-colors">
                                     <input

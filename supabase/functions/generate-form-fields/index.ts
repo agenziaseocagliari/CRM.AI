@@ -693,8 +693,35 @@ function generateIntelligentFormFields(
       });
     });
 
+    // 🔒 POST-PROCESSING: Converti campi privacy da text a checkbox
+    fields.forEach(field => {
+      const isPrivacyField = 
+        field.name.toLowerCase().includes('privacy') ||
+        field.name.toLowerCase().includes('consenso') ||
+        field.name.toLowerCase().includes('gdpr') ||
+        field.label.toLowerCase().includes('privacy') ||
+        field.label.toLowerCase().includes('consenso') ||
+        field.label.toLowerCase().includes('gdpr') ||
+        field.label.toLowerCase().includes('accetto') ||
+        field.label.toLowerCase().includes('acconsento');
+      
+      if (isPrivacyField && field.type === 'text') {
+        console.log(`🔄 Converting privacy field from text to checkbox: ${field.label}`);
+        field.type = 'checkbox';
+        field.required = true;
+      }
+    });
+
     // 🔒 CRITICAL FIX: Aggiungi automaticamente GDPR se rilevato nel prompt e non già presente
-    const hasPrivacyConsent = fields.some(f => f.name === 'privacy_consent');
+    const hasPrivacyConsent = fields.some(f => 
+      f.name === 'privacy_consent' || 
+      f.name.toLowerCase().includes('privacy') ||
+      f.name.toLowerCase().includes('consenso') ||
+      f.name.toLowerCase().includes('gdpr') ||
+      f.label.toLowerCase().includes('privacy') ||
+      f.label.toLowerCase().includes('consenso') ||
+      f.label.toLowerCase().includes('gdpr')
+    );
 
     // 🔒 CHECK: Verifica se privacy consent è già nei required_fields del questionario
     const privacyInRequiredFields = required_fields?.some((field: string) =>
@@ -714,11 +741,9 @@ function generateIntelligentFormFields(
         type: "checkbox",
         required: true
       });
-    } else if (privacyInRequiredFields) {
-      console.log(`🔒 Privacy field skipped - already included in required_fields from questionnaire`);
-    }
-
-    // 📧 CRITICAL FIX: Aggiungi automaticamente MARKETING CONSENT se richiesto nei metadata
+    } else if (privacyInRequiredFields || hasPrivacyConsent) {
+      console.log(`🔒 Privacy field skipped - already included in required_fields or generated fields`);
+    }    // 📧 CRITICAL FIX: Aggiungi automaticamente MARKETING CONSENT se richiesto nei metadata
     const hasMarketingConsent = fields.some(f => f.name === 'marketing_consent');
     const marketingConsentRequested = metadata?.marketing_consent === true;
 

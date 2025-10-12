@@ -32,7 +32,7 @@ async function diagnosticTest() {
     console.log(`📊 Health check: ${healthResponse.status} ${healthResponse.statusText}`)
     
     if (healthResponse.ok) {
-      const healthData = await healthResponse.text()
+      await healthResponse.text()
       console.log('✅ REST API is accessible')
     } else {
       console.log('❌ REST API access failed')

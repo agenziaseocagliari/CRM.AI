@@ -6,7 +6,6 @@ const https = require('https');
 const fs = require('fs').promises;
 const path = require('path');
 
-const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co'
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyODQ2OTU3NiwiZXhwIjoyMDQ0MDQ1NTc2fQ.5Zo3z3qLm8LN4Z1AqWRnfzd8DJqzXpJpDnF0nT-ydOQ'
 
 /**

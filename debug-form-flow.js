@@ -23,7 +23,7 @@ console.log('   Privacy URL:', questionnaireResult.privacy_url);
 console.log('');
 
 // Simula Forms.tsx che riceve i dati dal questionario
-let formStyle = {
+const formStyle = {
     primary_color: questionnaireResult.colors.primary_color,
     background_color: questionnaireResult.colors.background_color,
     text_color: questionnaireResult.colors.text_color,
@@ -38,7 +38,7 @@ let formStyle = {
     }
 };
 
-let privacyPolicyUrl = questionnaireResult.privacy_url;
+const privacyPolicyUrl = questionnaireResult.privacy_url;
 
 console.log('2️⃣ FORMS.tsx STATE INIZIALIZZATO');
 console.log('   formStyle.primary_color:', formStyle.primary_color);

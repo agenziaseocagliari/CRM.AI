@@ -147,9 +147,9 @@ BEGIN
 END;
 $$;
 
--- Grant permissions
-GRANT EXECUTE ON FUNCTION initialize_trial_user TO authenticated;
-GRANT EXECUTE ON FUNCTION initialize_trial_user TO service_role;
+-- Grant permissions (commented out for Supabase hosted - RLS policies control access)
+-- GRANT EXECUTE ON FUNCTION initialize_trial_user TO authenticated;
+-- GRANT EXECUTE ON FUNCTION initialize_trial_user TO service_role;
 
 -- =========================================================
 -- 2. Update consume_credits_rpc with 14-day trial check

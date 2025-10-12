@@ -18,7 +18,7 @@ async function verifyDeployment() {
     try {
         // Test 1: Database Connection
         console.log('🔗 Testing database connection...');
-        const { data: dbTest, error: dbError } = await supabase
+        const { error: dbError } = await supabase
             .from('profiles')
             .select('count')
             .limit(1);
@@ -31,7 +31,7 @@ async function verifyDeployment() {
         
         // Test 2: RPC Function Availability
         console.log('🔧 Testing RPC function availability...');
-        const { data: rpcData, error: rpcError } = await supabase
+        const { error: rpcError } = await supabase
             .rpc('consume_credits_rpc', {
                 p_organization_id: '00000000-0000-0000-0000-000000000000',
                 p_agent_type: 'test',
@@ -53,7 +53,7 @@ async function verifyDeployment() {
         
         // Test 3: Security Tables (if migration applied)
         console.log('🛡️ Testing security tables...');
-        const { data: securityTest, error: securityError } = await supabase
+        const { error: securityError } = await supabase
             .from('security_audit_log')
             .select('count')
             .limit(1);

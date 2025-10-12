@@ -27,7 +27,7 @@ async function applyMigration() {
         console.log('📊 Checking if metadata column exists...');
 
         // Check if column exists
-        const { data: existingColumn, error: checkError } = await supabase
+        const { error: checkError } = await supabase
             .from('forms')
             .select('metadata')
             .limit(1);
@@ -51,7 +51,7 @@ async function applyMigration() {
 
         // Verify index exists
         console.log('📊 Verifying index...');
-        const { data: indexData, error: indexError } = await supabase.rpc('pg_indexes', {
+        await supabase.rpc('pg_indexes', {
             schemaname: 'public',
             tablename: 'forms'
         }).select('indexname');

@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, Briefcase, Calendar, Clock, Link as LinkIcon, Save, User } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -46,11 +46,7 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchCurrentProfile();
-    }, []);
-
-    const fetchCurrentProfile = async () => {
+    const fetchCurrentProfile = useCallback(async () => {
         try {
             console.log('Fetching current profile...');
             const { data: { session } } = await supabase.auth.getSession();
@@ -94,7 +90,11 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId]);
+
+    useEffect(() => {
+        fetchCurrentProfile();
+    }, [fetchCurrentProfile]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -137,16 +137,16 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
 
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Save error:', error);
             
             // Show detailed error to user
             let errorMessage = 'Errore durante il salvataggio';
-            if (error.message) {
+            if (error instanceof Error && error.message) {
                 errorMessage += `:\n${error.message}`;
             }
-            if (error.code) {
-                errorMessage += `\nCodice errore: ${error.code}`;
+            if (typeof error === 'object' && error !== null && 'code' in error) {
+                errorMessage += `\nCodice errore: ${(error as { code: string }).code}`;
             }
             errorMessage += '\n\nControlla la console per maggiori dettagli.';
             

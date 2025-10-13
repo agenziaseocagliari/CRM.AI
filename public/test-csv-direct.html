@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Upload Direct Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        button {
+            width: 100%;
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0051cc;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            margin-top: 10px;
+            border: 1px solid #e9ecef;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 CSV Upload Direct Test</h1>
+        <p class="subtitle">Direct test of CSV parser (no routing needed)</p>
+        
+        <div class="upload-section">
+            <label for="fileInput">Select CSV File:</label>
+            <input type="file" id="fileInput" accept=".csv">
+            <button onclick="uploadCSV()">📤 Upload CSV</button>
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <div class="info-box">
+            <h3>📋 Test Instructions:</h3>
+            <ol>
+                <li>Create a CSV file with headers like: <code>Name,Email,Phone,Company</code></li>
+                <li>Add a few data rows with sample information</li>
+                <li>Click "Choose File" and select your CSV</li>
+                <li>Click "Upload CSV" and wait for results</li>
+                <li>Look for success message with Import ID</li>
+            </ol>
+            
+            <h3>📊 Expected Results:</h3>
+            <ul>
+                <li>✅ Green success message</li>
+                <li>✅ Import ID (UUID format)</li>
+                <li>✅ Field mappings with confidence scores</li>
+                <li>✅ Processing time and row counts</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function uploadCSV() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file first');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result');
+            
+            // Show loading state
+            resultDiv.className = 'result loading';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<h2>⏳ Uploading...</h2><p>Processing your CSV file...</p>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('csvFile', file);
+                formData.append('organizationId', '00000000-0000-0000-0000-000000000001');
+                
+                const response = await fetch(
+                    'https://qjtaqrlpronohgpfdxsi.supabase.co/functions/v1/parse-csv-upload',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzQzODY2NCwiZXhwIjoyMDczMDE0NjY0fQ.Z5i-lxQGKtKtVbATTd_9uB_Q3HhF5in-kvLW8Tym4z0'
+                        },
+                        body: formData
+                    }
+                );
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}: ${data.message || 'Upload failed'}`);
+                }
+                
+                // Show success
+                resultDiv.className = 'result success';
+                let successHTML = `
+                    <h2>✅ Upload Successful!</h2>
+                    <div style="margin: 15px 0;">
+                        <strong>🆔 Import ID:</strong><br>
+                        <code style="background: #f8f9fa; padding: 5px; border-radius: 3px; font-size: 14px;">${data.import_id}</code>
+                    </div>
+                `;
+                
+                if (data.summary) {
+                    successHTML += `
+                        <div style="margin: 15px 0;">
+                            <strong>📊 Summary:</strong><br>
+                            • Filename: ${data.summary.filename}<br>
+                            • Total Rows: ${data.summary.total_rows}<br>
+                            • Valid Rows: ${data.summary.valid_rows}<br>
+                            • Invalid Rows: ${data.summary.invalid_rows}<br>
+                            • Contacts Created: ${data.summary.contacts_created}<br>
+                            • Processing Time: ${data.summary.processing_time_ms}ms
+                        </div>
+                    `;
+                }
+                
+                if (data.field_mappings && data.field_mappings.length > 0) {
+                    successHTML += `
+                        <div style="margin: 15px 0;">
+                            <strong>🎯 Field Mappings:</strong><br>
+                    `;
+                    data.field_mappings.forEach(mapping => {
+                        successHTML += `• ${mapping.original_header} → ${mapping.mapped_field} (${(mapping.confidence_score * 100).toFixed(0)}% confidence)<br>`;
+                    });
+                    successHTML += '</div>';
+                }
+                
+                successHTML += `
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor: pointer; font-weight: bold;">📄 View Full Response</summary>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+                
+                resultDiv.innerHTML = successHTML;
+                
+            } catch (err) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h2>❌ Upload Failed</h2>
+                    <p><strong>Error:</strong> ${err.message}</p>
+                    <p><strong>Troubleshooting:</strong></p>
+                    <ul>
+                        <li>Check that your CSV has proper headers (Name, Email, Phone, etc.)</li>
+                        <li>Ensure file is in CSV format (comma-separated)</li>
+                        <li>Try with a smaller file first</li>
+                        <li>Check browser console for additional error details</li>
+                    </ul>
+                `;
+                console.error('Upload error:', err);
+            }
+        }
+
+        // Allow drag and drop
+        const fileInput = document.getElementById('fileInput');
+        
+        fileInput.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileInput.style.borderColor = '#0070f3';
+            fileInput.style.background = '#f0f8ff';
+        });
+        
+        fileInput.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            fileInput.style.borderColor = '#ccc';
+            fileInput.style.background = '#fafafa';
+        });
+        
+        fileInput.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.style.borderColor = '#ccc';
+            fileInput.style.background = '#fafafa';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+            }
+        });
+    </script>
+</body>
+</html>

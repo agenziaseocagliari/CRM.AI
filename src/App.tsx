@@ -20,7 +20,7 @@ import { PublicPricingPage } from './components/PublicPricingPage';
 import { GoogleAuthCallback } from './components/Settings';
 
 // CRM Components - Riattivati
-import CalendarPage from './app/calendar/page';
+import { Calendar } from './components/Calendar';
 import { Automations } from './components/Automations';
 import { Contacts } from './components/Contacts';
 import ContactDetailView from './components/contacts/ContactDetailView';
@@ -284,7 +284,7 @@ const App: React.FC = () => {
           <Route path="opportunities" element={<Opportunities />} />
           <Route path="contacts" element={<Contacts />} />
           <Route path="contacts/:id" element={<ContactDetailView />} />
-          <Route path="calendar" element={<CalendarPage />} />
+          <Route path="calendar" element={<Calendar />} />
 
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />

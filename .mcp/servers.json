@@ -1,0 +1,6 @@
+{
+  "filesystem": "npx -y @modelcontextprotocol/server-filesystem /workspaces/CRM.AI",
+  "supabase": "node ./scripts/mcp-supabase-server.js",
+  "postgres": "node ./scripts/mcp-postgres-server.js", 
+  "git": "node ./scripts/mcp-git-server.js"
+}

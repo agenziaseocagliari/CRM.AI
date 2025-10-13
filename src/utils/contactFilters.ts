@@ -1,5 +1,5 @@
-import { Contact } from '../types';
 import { FilterState } from '../components/contacts/ContactSearch';
+import { Contact } from '../types';
 
 export function filterContacts(
     contacts: Contact[], 

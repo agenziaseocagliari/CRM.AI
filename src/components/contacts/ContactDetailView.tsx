@@ -9,7 +9,7 @@ import {
     Phone,
     Trash2
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -38,13 +38,7 @@ export default function ContactDetailView() {
     const [editedContact, setEditedContact] = useState<Contact | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        if (id) {
-            fetchContact(id);
-        }
-    }, [id]);
-
-    const fetchContact = async (contactId: string) => {
+    const fetchContact = useCallback(async (contactId: string) => {
         try {
             const { data, error } = await supabase
                 .from('contacts')
@@ -62,7 +56,13 @@ export default function ContactDetailView() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        if (id) {
+            fetchContact(id);
+        }
+    }, [id, fetchContact]);
 
     const handleSave = async () => {
         if (!editedContact || !id) return;

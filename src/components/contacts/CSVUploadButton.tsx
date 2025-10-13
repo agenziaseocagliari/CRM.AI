@@ -289,10 +289,30 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
         <DuplicateResolutionModal
           isOpen={true}
           onClose={() => setIsOpen(false)}
-          duplicateResults={duplicateResults.results?.map((result: any) => ({
+          duplicateResults={duplicateResults.results?.map((result: {
+            index: number;
+            contact: Record<string, string>;
+            duplicates: Array<{
+              contact_id: string;
+              match_type: string;
+              confidence: number;
+              recommended_action: string;
+              email?: string;
+              phone?: string;
+              name?: string;
+              created_at?: string;
+            }>;
+            has_duplicates: boolean;
+          }) => ({
             index: result.index,
-            contact: result.contact,
-            duplicates: result.duplicates?.map((dup: any) => ({
+            contact: {
+              name: result.contact.name || '',
+              email: result.contact.email,
+              phone: result.contact.phone,
+              company: result.contact.company,
+              ...result.contact
+            },
+            duplicates: result.duplicates?.map((dup) => ({
               contact_id: dup.contact_id,
               match_type: dup.match_type as 'email' | 'phone' | 'name',
               confidence: dup.confidence,

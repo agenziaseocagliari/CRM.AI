@@ -1,7 +1,7 @@
-﻿import React, { useCallback, useState, useMemo } from 'react';
+﻿import React, { useCallback, useMemo, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { toast } from 'react-hot-toast';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
@@ -9,14 +9,14 @@ import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
 import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
-import ContactsTable from './contacts/ContactsTable';
 import ContactSearch, { FilterState } from './contacts/ContactSearch';
+import ContactsTable from './contacts/ContactsTable';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
+import { filterContacts } from '../utils/contactFilters';
 import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
 import { CreateEventModal } from './CreateEventModal';
-import { filterContacts } from '../utils/contactFilters';
 import { SparklesIcon, WhatsAppIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 
@@ -382,9 +382,9 @@ export const Contacts: React.FC = () => {
                 onEditContact={handleOpenEditModal}
                 onDeleteContact={handleOpenDeleteModal}
                 onEmailContact={handleOpenEmailModal}
-                onWhatsAppContact={handleOpenWhatsAppModal}
+                _onWhatsAppContact={handleOpenWhatsAppModal}
                 onCreateEvent={handleOpenCreateEventModal}
-                onViewEvents={handleOpenViewEventsModal}
+                _onViewEvents={handleOpenViewEventsModal}
                 onAddContact={handleOpenAddModal}
                 onUploadSuccess={refetch}
                 onBulkOperationComplete={refetch}

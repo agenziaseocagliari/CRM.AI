@@ -16,7 +16,13 @@ interface DuplicateMatch {
 
 interface DuplicateResult {
   index: number;
-  contact: any;
+  contact: {
+    name: string;
+    email?: string;
+    phone?: string;
+    company?: string;
+    [key: string]: unknown;
+  };
   duplicates: DuplicateMatch[];
   has_duplicates: boolean;
   recommended_action: string;

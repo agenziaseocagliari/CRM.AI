@@ -1,9 +1,9 @@
 'use client';
 
+import { Download, FileText, Filter, Users } from 'lucide-react';
 import { useState } from 'react';
-import { Download, FileText, Users, Filter } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { ExportService, ExportOptions } from '../../services/exportService';
+import { ExportOptions, ExportService } from '../../services/exportService';
 import { FilterState } from './ContactSearch';
 
 interface ExportButtonProps {
@@ -81,11 +81,11 @@ export default function ExportButton({
     const loadExportSummary = async () => {
         try {
             const options: ExportOptions = {};
-            
+
             if (selectedIds.length > 0) {
                 options.contactIds = selectedIds;
             }
-            
+
             if (filters) {
                 options.filters = filters;
             }
@@ -210,8 +210,8 @@ export default function ExportButton({
 
                 {/* Click outside to close */}
                 {showSummary && (
-                    <div 
-                        className="fixed inset-0 z-40" 
+                    <div
+                        className="fixed inset-0 z-40"
                         onClick={() => setShowSummary(false)}
                     />
                 )}

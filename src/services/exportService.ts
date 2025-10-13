@@ -1,6 +1,6 @@
+import { FilterState } from '../components/contacts/ContactSearch';
 import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
-import { FilterState } from '../components/contacts/ContactSearch';
 
 export interface ExportOptions {
     contactIds?: number[];

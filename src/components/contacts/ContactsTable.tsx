@@ -18,8 +18,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Contact } from '../../types';
 import { LeadScoreBadge } from '../ui/LeadScoreBadge';
-import CSVUploadButton from './CSVUploadButton';
 import BulkActionsBar from './BulkActionsBar';
+import { FilterState } from './ContactSearch';
+import CSVUploadButton from './CSVUploadButton';
 import ExportButton from './ExportButton';
 
 interface ContactsTableProps {
@@ -27,13 +28,13 @@ interface ContactsTableProps {
     onEditContact: (contact: Contact) => void;
     onDeleteContact: (contact: Contact) => void;
     onEmailContact: (contact: Contact) => void;
-    onWhatsAppContact: (contact: Contact) => void;
+    _onWhatsAppContact: (contact: Contact) => void;
     onCreateEvent: (contact: Contact) => void;
-    onViewEvents: (contact: Contact) => void;
+    _onViewEvents: (contact: Contact) => void;
     onAddContact: () => void;
     onUploadSuccess: () => void;
     onBulkOperationComplete?: () => void;
-    currentFilters?: any;
+    currentFilters?: FilterState & { searchQuery?: string };
 }
 
 type SortField = 'name' | 'email' | 'phone' | 'company' | 'created_at' | 'lead_score';
@@ -44,9 +45,9 @@ export default function ContactsTable({
     onEditContact,
     onDeleteContact,
     onEmailContact,
-    onWhatsAppContact,
+    _onWhatsAppContact,
     onCreateEvent,
-    onViewEvents,
+    _onViewEvents,
     onAddContact,
     onUploadSuccess,
     onBulkOperationComplete,
@@ -65,8 +66,8 @@ export default function ContactsTable({
     // Sorting logic
     const sortedContacts = useMemo(() => {
         const sorted = [...contacts].sort((a, b) => {
-            let aValue: any = a[sortField];
-            let bValue: any = b[sortField];
+            let aValue: string | number | Date | null | undefined = a[sortField];
+            let bValue: string | number | Date | null | undefined = b[sortField];
 
             // Handle different data types
             if (sortField === 'created_at') {
@@ -137,7 +138,7 @@ export default function ContactsTable({
     const currentPageIds = paginatedContacts.map(c => c.id);
     const isAllSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedIds.includes(id));
     const isPartiallySelected = currentPageIds.some(id => selectedIds.includes(id)) && !isAllSelected;
-    
+
     // Get selected contacts for bulk operations
     const selectedContacts = useMemo(() => {
         return contacts.filter(contact => selectedIds.includes(contact.id));
@@ -156,7 +157,7 @@ export default function ContactsTable({
                 </div>
 
                 <div className="flex gap-3">
-                    <ExportButton 
+                    <ExportButton
                         selectedIds={selectedIds}
                         filters={currentFilters}
                         variant="header"
@@ -461,8 +462,8 @@ export default function ContactsTable({
                                             key={page}
                                             onClick={() => handlePageChange(page)}
                                             className={`px-3 py-1 border rounded transition-colors ${currentPage === page
-                                                    ? 'bg-blue-600 text-white border-blue-600'
-                                                    : 'border-gray-300 hover:bg-gray-100'
+                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                : 'border-gray-300 hover:bg-gray-100'
                                                 }`}
                                         >
                                             {page}

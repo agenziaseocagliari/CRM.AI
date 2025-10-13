@@ -14,10 +14,23 @@ CREATE TABLE IF NOT EXISTS api_rate_limits (
     request_count INTEGER NOT NULL DEFAULT 1,
     window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     window_duration_minutes INTEGER NOT NULL DEFAULT 60,
-    window_end TIMESTAMPTZ GENERATED ALWAYS AS (window_start + (window_duration_minutes || ' minutes')::INTERVAL) STORED,
+    window_end TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Trigger to calculate window_end
+CREATE OR REPLACE FUNCTION calculate_window_end()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.window_end := NEW.window_start + (NEW.window_duration_minutes || ' minutes')::INTERVAL;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_window_end
+    BEFORE INSERT OR UPDATE ON api_rate_limits
+    FOR EACH ROW EXECUTE FUNCTION calculate_window_end();
 
 -- Indexes for fast lookups
 CREATE INDEX IF NOT EXISTS idx_api_rate_limits_org_endpoint ON api_rate_limits(organization_id, endpoint, window_start);

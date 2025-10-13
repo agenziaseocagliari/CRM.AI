@@ -1,7 +1,7 @@
 'use client';
 
+import { AlertTriangle, RotateCcw, Tag, Trash2, UserPlus, X } from 'lucide-react';
 import { useState } from 'react';
-import { Trash2, Tag, UserPlus, X, AlertTriangle, RotateCcw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { BulkOperationsService } from '../../services/bulkOperations';
 import { Contact } from '../../types';
@@ -30,28 +30,26 @@ export default function BulkActionsBar({
     const handleAction = async (action: string, needsConfirm: boolean = false) => {
         if (needsConfirm) {
             setConfirmAction(action);
-            
+
             switch (action) {
                 case 'delete':
                     setConfirmTitle('Conferma Eliminazione');
                     setConfirmMessage(
-                        `Sei sicuro di voler eliminare ${selectedCount} ${
-                            selectedCount === 1 ? 'contatto' : 'contatti'
+                        `Sei sicuro di voler eliminare ${selectedCount} ${selectedCount === 1 ? 'contatto' : 'contatti'
                         }? Questa azione può essere annullata.`
                     );
                     break;
                 case 'hard_delete':
                     setConfirmTitle('Eliminazione Permanente');
                     setConfirmMessage(
-                        `ATTENZIONE: Stai per eliminare PERMANENTEMENTE ${selectedCount} ${
-                            selectedCount === 1 ? 'contatto' : 'contatti'
+                        `ATTENZIONE: Stai per eliminare PERMANENTEMENTE ${selectedCount} ${selectedCount === 1 ? 'contatto' : 'contatti'
                         }. Questa azione NON può essere annullata!`
                     );
                     break;
                 default:
                     return;
             }
-            
+
             setShowConfirm(true);
             return;
         }
@@ -77,7 +75,7 @@ export default function BulkActionsBar({
                             `${result.affected} ${result.affected === 1 ? 'contatto eliminato' : 'contatti eliminati'}`,
                             { id: toastId }
                         );
-                        
+
                         // Show undo toast
                         setTimeout(() => {
                             toast((t) => (
@@ -134,7 +132,7 @@ export default function BulkActionsBar({
 
             onClearSelection();
             onBulkComplete();
-            
+
         } catch (error) {
             console.error('Bulk action error:', error);
             toast.error(
@@ -195,9 +193,9 @@ export default function BulkActionsBar({
                                 Elimina
                             </button>
 
-                            <ExportButton 
-                                selectedIds={selectedContacts.map(c => c.id)} 
-                                variant="bulk" 
+                            <ExportButton
+                                selectedIds={selectedContacts.map(c => c.id)}
+                                variant="bulk"
                             />
 
                             <button
@@ -257,12 +255,10 @@ export default function BulkActionsBar({
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-in zoom-in-90 duration-200">
                         <div className="flex items-start gap-4 mb-4">
-                            <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                                confirmAction === 'hard_delete' ? 'bg-red-100' : 'bg-orange-100'
-                            }`}>
-                                <AlertTriangle className={`w-6 h-6 ${
-                                    confirmAction === 'hard_delete' ? 'text-red-600' : 'text-orange-600'
-                                }`} />
+                            <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${confirmAction === 'hard_delete' ? 'bg-red-100' : 'bg-orange-100'
+                                }`}>
+                                <AlertTriangle className={`w-6 h-6 ${confirmAction === 'hard_delete' ? 'text-red-600' : 'text-orange-600'
+                                    }`} />
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -286,11 +282,10 @@ export default function BulkActionsBar({
                             </button>
                             <button
                                 onClick={confirmAndExecute}
-                                className={`px-4 py-2 rounded-lg text-white transition-colors ${
-                                    confirmAction === 'hard_delete'
+                                className={`px-4 py-2 rounded-lg text-white transition-colors ${confirmAction === 'hard_delete'
                                         ? 'bg-red-600 hover:bg-red-700'
                                         : 'bg-orange-600 hover:bg-orange-700'
-                                }`}
+                                    }`}
                             >
                                 {confirmAction === 'hard_delete' ? 'Elimina Permanentemente' : 'Conferma'}
                             </button>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Filter, Search, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
 import ContactFilters from './ContactFilters';
 
@@ -47,10 +47,10 @@ export default function ContactSearch({
         if (filters.hasCompany) urlParams.set('hasCompany', 'true');
         if (filters.recent) urlParams.set('recent', 'true');
 
-        const newURL = urlParams.toString() 
+        const newURL = urlParams.toString()
             ? `${window.location.pathname}?${urlParams.toString()}`
             : window.location.pathname;
-        
+
         window.history.replaceState({}, '', newURL);
     }, [debouncedSearch, filters]);
 
@@ -85,8 +85,8 @@ export default function ContactSearch({
                         className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                     {searchTerm && (
-                        <button 
-                            onClick={handleClear} 
+                        <button
+                            onClick={handleClear}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                         >
                             <X className="w-5 h-5" />
@@ -96,11 +96,10 @@ export default function ContactSearch({
 
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
-                        showFilters || hasActiveFilters
+                    className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${showFilters || hasActiveFilters
                             ? 'bg-blue-50 border-blue-500 text-blue-700'
                             : 'border-gray-300 hover:bg-gray-50'
-                    }`}
+                        }`}
                 >
                     <Filter className="w-5 h-5" />
                     Filtri

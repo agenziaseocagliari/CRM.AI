@@ -388,6 +388,7 @@ export const Contacts: React.FC = () => {
                 onViewEvents={handleOpenViewEventsModal}
                 onAddContact={handleOpenAddModal}
                 onUploadSuccess={refetch}
+                onBulkOperationComplete={refetch}
             />
 
             {/* Modal Aggiungi/Modifica Contatto */}

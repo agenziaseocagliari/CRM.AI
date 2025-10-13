@@ -1,14 +1,25 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-    ChevronUp, ChevronDown, MoreVertical, Edit, Trash2,
-    Mail, Phone, Eye, Plus, Upload, Calendar, Sparkles
+    Calendar,
+    ChevronDown,
+    ChevronUp,
+    Edit,
+    Eye,
+    Mail,
+    MoreVertical,
+    Phone,
+    Plus,
+    Sparkles,
+    Trash2,
+    Upload
 } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Contact } from '../../types';
 import { LeadScoreBadge } from '../ui/LeadScoreBadge';
 import CSVUploadButton from './CSVUploadButton';
+import BulkActionsBar from './BulkActionsBar';
 
 interface ContactsTableProps {
     contacts: Contact[];
@@ -20,6 +31,7 @@ interface ContactsTableProps {
     onViewEvents: (contact: Contact) => void;
     onAddContact: () => void;
     onUploadSuccess: () => void;
+    onBulkOperationComplete?: () => void;
 }
 
 type SortField = 'name' | 'email' | 'phone' | 'company' | 'created_at' | 'lead_score';
@@ -34,10 +46,11 @@ export default function ContactsTable({
     onCreateEvent,
     onViewEvents,
     onAddContact,
-    onUploadSuccess
+    onUploadSuccess,
+    onBulkOperationComplete
 }: ContactsTableProps) {
     const navigate = useNavigate();
-    
+
     // Table state
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showActions, setShowActions] = useState<number | null>(null);
@@ -101,7 +114,7 @@ export default function ContactsTable({
     const toggleSelectAll = useCallback(() => {
         const currentPageIds = paginatedContacts.map(c => c.id);
         const allSelected = currentPageIds.every(id => selectedIds.includes(id));
-        
+
         if (allSelected) {
             // Deselect all on current page
             setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)));
@@ -110,14 +123,6 @@ export default function ContactsTable({
             setSelectedIds(prev => [...new Set([...prev, ...currentPageIds])]);
         }
     }, [paginatedContacts, selectedIds]);
-
-    const handleBulkDelete = useCallback(() => {
-        if (selectedIds.length > 0 && window.confirm(`Sei sicuro di voler eliminare ${selectedIds.length} contatti?`)) {
-            // Handle bulk delete - would call API for each selected contact
-            console.log('Bulk delete:', selectedIds);
-            setSelectedIds([]);
-        }
-    }, [selectedIds]);
 
     const SortIcon = ({ field }: { field: SortField }) => {
         if (sortField !== field) return <ChevronUp className="w-4 h-4 text-gray-400" />;
@@ -129,6 +134,11 @@ export default function ContactsTable({
     const currentPageIds = paginatedContacts.map(c => c.id);
     const isAllSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedIds.includes(id));
     const isPartiallySelected = currentPageIds.some(id => selectedIds.includes(id)) && !isAllSelected;
+    
+    // Get selected contacts for bulk operations
+    const selectedContacts = useMemo(() => {
+        return contacts.filter(contact => selectedIds.includes(contact.id));
+    }, [contacts, selectedIds]);
 
     return (
         <div className="max-w-7xl mx-auto">
@@ -154,30 +164,17 @@ export default function ContactsTable({
                 </div>
             </div>
 
-            {/* Selection Actions Bar */}
+            {/* Bulk Actions Bar */}
             {selectedIds.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
-                    <span className="text-blue-900 font-medium">
-                        {selectedIds.length} contatti selezionati
-                    </span>
-                    <div className="flex gap-2">
-                        <button 
-                            onClick={handleBulkDelete}
-                            className="px-3 py-1 text-sm bg-white border border-red-300 text-red-700 rounded hover:bg-red-50 transition-colors"
-                        >
-                            Elimina
-                        </button>
-                        <button className="px-3 py-1 text-sm bg-white border border-blue-300 rounded hover:bg-blue-50 transition-colors">
-                            Esporta
-                        </button>
-                        <button
-                            onClick={() => setSelectedIds([])}
-                            className="px-3 py-1 text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                        >
-                            Deseleziona tutto
-                        </button>
-                    </div>
-                </div>
+                <BulkActionsBar
+                    selectedCount={selectedIds.length}
+                    selectedContacts={selectedContacts}
+                    onClearSelection={() => setSelectedIds([])}
+                    onBulkComplete={() => {
+                        setSelectedIds([]);
+                        onBulkOperationComplete?.();
+                    }}
+                />
             )}
 
             {/* Table */}
@@ -341,10 +338,10 @@ export default function ContactsTable({
                                             <span className="truncate max-w-32 block">{contact.company || '-'}</span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <LeadScoreBadge 
-                                                score={contact.lead_score} 
-                                                category={contact.lead_category} 
-                                                reasoning={contact.lead_score_reasoning} 
+                                            <LeadScoreBadge
+                                                score={contact.lead_score}
+                                                category={contact.lead_category}
+                                                reasoning={contact.lead_score_reasoning}
                                             />
                                         </td>
                                         <td className="px-4 py-3 text-gray-600 text-sm">
@@ -361,9 +358,9 @@ export default function ContactsTable({
                                                 >
                                                     <MoreVertical className="w-5 h-5 text-gray-400" />
                                                 </button>
-                                                
+
                                                 {showActions === contact.id && (
-                                                    <div 
+                                                    <div
                                                         className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
@@ -435,7 +432,7 @@ export default function ContactsTable({
                         <div className="text-sm text-gray-700">
                             Pagina {currentPage} di {totalPages}
                         </div>
-                        
+
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handlePageChange(currentPage - 1)}
@@ -444,28 +441,27 @@ export default function ContactsTable({
                             >
                                 Precedente
                             </button>
-                            
+
                             <div className="flex gap-1">
                                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                     const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
                                     if (page > totalPages) return null;
-                                    
+
                                     return (
                                         <button
                                             key={page}
                                             onClick={() => handlePageChange(page)}
-                                            className={`px-3 py-1 border rounded transition-colors ${
-                                                currentPage === page
+                                            className={`px-3 py-1 border rounded transition-colors ${currentPage === page
                                                     ? 'bg-blue-600 text-white border-blue-600'
                                                     : 'border-gray-300 hover:bg-gray-100'
-                                            }`}
+                                                }`}
                                         >
                                             {page}
                                         </button>
                                     );
                                 })}
                             </div>
-                            
+
                             <button
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage === totalPages}
@@ -480,8 +476,8 @@ export default function ContactsTable({
 
             {/* Click outside to close actions menu */}
             {showActions && (
-                <div 
-                    className="fixed inset-0 z-0" 
+                <div
+                    className="fixed inset-0 z-0"
                     onClick={() => setShowActions(null)}
                 />
             )}

@@ -13,8 +13,8 @@
  * - Real-time progress reporting
  */
 
-import https from 'https';
 import fs from 'fs';
+import https from 'https';
 
 // Load credentials from protected file
 const credentialsContent = fs.readFileSync('.credentials_protected', 'utf8');

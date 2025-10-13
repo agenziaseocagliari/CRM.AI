@@ -180,10 +180,10 @@ export default function DuplicateResolutionModal({
                         <div className="ml-3">
                           <span
                             className={`text-xs font-medium px-2 py-1 rounded ${dup.confidence >= 0.95
-                                ? 'bg-red-100 text-red-800'
-                                : dup.confidence >= 0.85
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-blue-100 text-blue-800'
+                              ? 'bg-red-100 text-red-800'
+                              : dup.confidence >= 0.85
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-blue-100 text-blue-800'
                               }`}
                           >
                             {Math.round(dup.confidence * 100)}% {dup.match_type}
@@ -203,8 +203,8 @@ export default function DuplicateResolutionModal({
                     <button
                       onClick={() => handleActionChange(result.index, 'skip')}
                       className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'skip'
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                     >
                       ⏭️ Salta (Già Esiste)
@@ -212,8 +212,8 @@ export default function DuplicateResolutionModal({
                     <button
                       onClick={() => handleActionChange(result.index, 'merge')}
                       className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'merge'
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                     >
                       🔗 Unisci Dati
@@ -221,8 +221,8 @@ export default function DuplicateResolutionModal({
                     <button
                       onClick={() => handleActionChange(result.index, 'replace')}
                       className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'replace'
-                          ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                     >
                       🔄 Sostituisci
@@ -230,8 +230,8 @@ export default function DuplicateResolutionModal({
                     <button
                       onClick={() => handleActionChange(result.index, 'keep_both')}
                       className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'keep_both'
-                          ? 'border-purple-500 bg-purple-50 text-purple-700'
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                     >
                       ➕ Mantieni Entrambi

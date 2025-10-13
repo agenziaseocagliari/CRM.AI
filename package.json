@@ -26,6 +26,11 @@
         "performance:test": "npm run build && npm run build:analyze"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.19",
+        "@fullcalendar/daygrid": "^6.1.19",
+        "@fullcalendar/interaction": "^6.1.19",
+        "@fullcalendar/react": "^6.1.19",
+        "@fullcalendar/timegrid": "^6.1.19",
         "@google/genai": "^1.17.0",
         "@headlessui/react": "^2.2.9",
         "@heroicons/react": "^2.2.0",

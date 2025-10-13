@@ -1,8 +1,8 @@
 // Calendar Events Service
 // Service layer for calendar operations in Vite/React architecture
 
-import { supabase } from '../lib/supabaseClient';
 import { VideoMeetingService } from '../lib/integrations/video-links';
+import { supabase } from '../lib/supabaseClient';
 
 export interface CalendarEvent {
   id: string;

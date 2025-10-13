@@ -1,29 +1,39 @@
 {
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspaces/CRM.AI"],
-      "env": {}
-    },
-    "supabase": {
-      "command": "node",
-      "args": ["./scripts/mcp-supabase-server.js"],
-      "env": {
-        "SUPABASE_URL": "${SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
-      }
-    },
-    "postgres": {
-      "command": "node", 
-      "args": ["./scripts/mcp-postgres-server.js"],
-      "env": {
-        "DATABASE_URL": "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.qjtaqrlpronohgpfdxsi.supabase.co:5432/postgres"
-      }
-    },
-    "git": {
-      "command": "node",
-      "args": ["./scripts/mcp-git-server.js"],
-      "env": {}
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/workspaces/CRM.AI"
+            ],
+            "env": {}
+        },
+        "supabase": {
+            "command": "node",
+            "args": [
+                "./scripts/mcp-supabase-server.js"
+            ],
+            "env": {
+                "SUPABASE_URL": "${SUPABASE_URL}",
+                "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+            }
+        },
+        "postgres": {
+            "command": "node",
+            "args": [
+                "./scripts/mcp-postgres-server.js"
+            ],
+            "env": {
+                "DATABASE_URL": "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.qjtaqrlpronohgpfdxsi.supabase.co:5432/postgres"
+            }
+        },
+        "git": {
+            "command": "node",
+            "args": [
+                "./scripts/mcp-git-server.js"
+            ],
+            "env": {}
+        }
     }
-  }
 }

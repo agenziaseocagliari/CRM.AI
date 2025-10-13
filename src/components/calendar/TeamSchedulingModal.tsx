@@ -30,12 +30,34 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                 {/* Content - Scrollable */}
                 <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                     <div className="space-y-6">
-                        {/* Description */}
+                        {/* Main Description */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Users className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-blue-900 mb-2">Team Scheduling</h3>
+                                    <p className="text-blue-800 mb-3">
+                                        <strong>Cosa fa:</strong> Questo strumento coordina gli appuntamenti con più persone del tuo team automaticamente.
+                                    </p>
+                                    <div className="text-sm text-blue-700">
+                                        <p><strong>Modalità Collettiva:</strong> Trova orari quando tutti i membri sono liberi contemporaneamente</p>
+                                        <p><strong>Modalità Round Robin:</strong> Distribuisce gli appuntamenti equamente tra i membri disponibili</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Description */}
                         <div className="bg-blue-50 rounded-lg p-4">
                             <Users className="w-10 h-10 text-blue-600 mb-3" />
-                            <h3 className="font-semibold text-lg mb-2">Riunioni di Team</h3>
+                            <h3 className="font-semibold text-lg mb-2">Come Funziona</h3>
                             <p className="text-gray-600 text-sm">
-                                Coordina gli orari del tuo team per trovare il momento perfetto per riunioni di gruppo.
+                                1. Scegli la modalità (Collettiva o Round Robin)<br/>
+                                2. Aggiungi i membri del team<br/>
+                                3. Il sistema verificherà automaticamente le disponibilità<br/>
+                                4. I clienti vedranno solo gli orari quando il team è disponibile
                             </p>
                         </div>
 

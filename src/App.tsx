@@ -16,6 +16,7 @@ import { MainLayout } from './components/MainLayout';
 // import { PrivacyPolicy } from './components/PrivacyPolicy'; // Moved to .bak
 import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
+import PublicBookingPage from './components/PublicBookingPage';
 // import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
 
@@ -266,6 +267,9 @@ const App: React.FC = () => {
 
         <Route path="/form/:formId" element={<PublicForm />} />
         <Route path="/pricing" element={<PublicPricingPage />} />
+        
+        {/* Public Booking Page */}
+        <Route path="/book/:username" element={<PublicBookingPage />} />
 
         {/* Vertical Landing Pages */}
         <Route path="/verticals/insurance-agency" element={<InsuranceAgencyLanding />} />

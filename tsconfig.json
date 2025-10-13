@@ -45,7 +45,9 @@
     "**/*.test.tsx",
     "**/__tests__/**",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "supabase/**/*",
+    "minimal-csv-test.ts"
   ],
   "references": [
     {

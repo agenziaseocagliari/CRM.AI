@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import { toast } from 'react-hot-toast';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
@@ -80,6 +80,7 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
 
 export const Contacts: React.FC = () => {
     console.log('👥 Contacts component is rendering');
+    const navigate = useNavigate();
     const { contacts, organization, crmEvents, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
     console.log('👥 Contacts data:', { contacts, organization, crmEvents, isCalendarLinked });
 
@@ -376,7 +377,12 @@ export const Contacts: React.FC = () => {
                         {contacts.map((contact) => (
                             <tr key={contact.id}>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                                    <button
+                                        onClick={() => navigate(`/contacts/${contact.id}`)}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+                                    >
+                                        {contact.name}
+                                    </button>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm text-gray-500">{contact.company}</div>

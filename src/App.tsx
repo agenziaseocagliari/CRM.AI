@@ -23,6 +23,7 @@ import { GoogleAuthCallback } from './components/Settings';
 import { Automations } from './components/Automations';
 import { CalendarView } from './components/CalendarView';
 import { Contacts } from './components/Contacts';
+import ContactDetailView from './components/contacts/ContactDetailView';
 import { Dashboard } from './components/Dashboard';
 import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
@@ -282,6 +283,7 @@ const App: React.FC = () => {
           <Route index element={<Dashboard />} />
           <Route path="opportunities" element={<Opportunities />} />
           <Route path="contacts" element={<Contacts />} />
+          <Route path="contacts/:id" element={<ContactDetailView />} />
           <Route path="calendar" element={<CalendarView />} />
 
           <Route path="forms" element={<Forms />} />

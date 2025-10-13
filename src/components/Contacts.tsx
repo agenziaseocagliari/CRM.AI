@@ -9,6 +9,7 @@ import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
 import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
+import CSVUploadButton from './contacts/CSVUploadButton';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
@@ -351,10 +352,13 @@ export const Contacts: React.FC = () => {
         <>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-text-primary">Contatti</h1>
-                <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
-                    <PlusIcon className="w-5 h-5" />
-                    <span>Aggiungi Contatto</span>
-                </button>
+                <div className="flex items-center space-x-3">
+                    <CSVUploadButton onUploadSuccess={refetch} />
+                    <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
+                        <PlusIcon className="w-5 h-5" />
+                        <span>Aggiungi Contatto</span>
+                    </button>
+                </div>
             </div>
             
             <div className="bg-white shadow-md rounded-lg overflow-hidden">

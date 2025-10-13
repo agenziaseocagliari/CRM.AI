@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 
 interface CalendarEvent {
     id: string;
@@ -35,12 +35,12 @@ export default function CalendarView({
     currentView = 'week'
 }: CalendarViewProps) {
     const calendarRef = useRef<FullCalendar>(null);
-    
+
     // Map view names to FullCalendar view names
     const getFullCalendarView = (view: string) => {
-        switch(view) {
+        switch (view) {
             case 'month': return 'dayGridMonth';
-            case 'week': return 'timeGridWeek'; 
+            case 'week': return 'timeGridWeek';
             case 'day': return 'timeGridDay';
             default: return 'timeGridWeek';
         }

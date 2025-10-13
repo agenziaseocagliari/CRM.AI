@@ -6,6 +6,10 @@ import { CalendarOptimizer } from '../../lib/calendar/performance-optimizations'
 import { CalendarService, type FullCalendarEvent } from '../../services/calendarService';
 import CalendarView from './CalendarView';
 import EventModal from './EventModal';
+import MyEventsModal from './MyEventsModal';
+import BookingLinkModal from './BookingLinkModal';
+import TeamSchedulingModal from './TeamSchedulingModal';
+import AnalyticsModal from './AnalyticsModal';
 
 export default function CalendarContainer() {
     const [events, setEvents] = useState<FullCalendarEvent[]>([]);
@@ -14,6 +18,12 @@ export default function CalendarContainer() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentView, setCurrentView] = useState('week');
+    
+    // Modal states for all quick actions
+    const [showMyEvents, setShowMyEvents] = useState(false);
+    const [showBookingLink, setShowBookingLink] = useState(false);
+    const [showTeamScheduling, setShowTeamScheduling] = useState(false);
+    const [showAnalytics, setShowAnalytics] = useState(false);
 
     useEffect(() => {
         // Performance optimization: preload data
@@ -159,25 +169,22 @@ export default function CalendarContainer() {
                     <div className="flex items-center gap-2 bg-white rounded-lg shadow p-1">
                         <button
                             onClick={() => setCurrentView('month')}
-                            className={`px-4 py-2 rounded ${
-                                currentView === 'month' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-                            }`}
+                            className={`px-4 py-2 rounded ${currentView === 'month' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                                }`}
                         >
                             Mese
                         </button>
                         <button
                             onClick={() => setCurrentView('week')}
-                            className={`px-4 py-2 rounded ${
-                                currentView === 'week' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-                            }`}
+                            className={`px-4 py-2 rounded ${currentView === 'week' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                                }`}
                         >
                             Settimana
                         </button>
                         <button
                             onClick={() => setCurrentView('day')}
-                            className={`px-4 py-2 rounded ${
-                                currentView === 'day' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-                            }`}
+                            className={`px-4 py-2 rounded ${currentView === 'day' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                                }`}
                         >
                             Giorno
                         </button>
@@ -199,26 +206,38 @@ export default function CalendarContainer() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-4 gap-4 mb-6">
-                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
-                    <div className="text-2xl mb-2">📅</div>
+                <button 
+                    onClick={() => setShowMyEvents(true)}
+                    className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
+                >
+                    <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📅</div>
                     <div className="font-semibold">I Miei Eventi</div>
                     <div className="text-sm text-gray-500">Visualizza tutti</div>
                 </button>
-                
-                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
-                    <div className="text-2xl mb-2">🔗</div>
+
+                <button 
+                    onClick={() => setShowBookingLink(true)}
+                    className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
+                >
+                    <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">🔗</div>
                     <div className="font-semibold">Link Prenotazione</div>
                     <div className="text-sm text-gray-500">Condividi calendario</div>
                 </button>
-                
-                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
-                    <div className="text-2xl mb-2">👥</div>
+
+                <button 
+                    onClick={() => setShowTeamScheduling(true)}
+                    className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
+                >
+                    <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">👥</div>
                     <div className="font-semibold">Team Scheduling</div>
                     <div className="text-sm text-gray-500">Riunioni di gruppo</div>
                 </button>
-                
-                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
-                    <div className="text-2xl mb-2">📊</div>
+
+                <button 
+                    onClick={() => setShowAnalytics(true)}
+                    className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
+                >
+                    <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📊</div>
                     <div className="font-semibold">Analytics</div>
                     <div className="text-sm text-gray-500">Statistiche eventi</div>
                 </button>
@@ -269,6 +288,33 @@ export default function CalendarContainer() {
                 onSave={handleSaveEvent}
                 initialData={selectedEvent}
                 selectedDate={selectedDate || undefined}
+            />
+
+            {/* My Events Modal */}
+            <MyEventsModal
+                isOpen={showMyEvents}
+                onClose={() => setShowMyEvents(false)}
+                events={events}
+            />
+
+            {/* Booking Link Modal */}
+            <BookingLinkModal
+                isOpen={showBookingLink}
+                onClose={() => setShowBookingLink(false)}
+                userId="current-user-id"
+            />
+
+            {/* Team Scheduling Modal */}
+            <TeamSchedulingModal
+                isOpen={showTeamScheduling}
+                onClose={() => setShowTeamScheduling(false)}
+            />
+
+            {/* Analytics Modal */}
+            <AnalyticsModal
+                isOpen={showAnalytics}
+                onClose={() => setShowAnalytics(false)}
+                events={events}
             />
         </div>
     );

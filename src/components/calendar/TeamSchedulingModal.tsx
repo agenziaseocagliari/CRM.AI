@@ -1,441 +1,199 @@
 'use client';
 
-import { AlertTriangle, Crown, Star, User, Users, X } from 'lucide-react';
+import { X, Users, Target, RotateCcw, Calendar, Clock, Settings } from 'lucide-react';
 import { useState } from 'react';
-
-interface TeamMember {
-    id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-    role?: string;
-    availability?: 'available' | 'busy' | 'away';
-    timezone?: string;
-}
 
 interface TeamSchedulingModalProps {
     isOpen: boolean;
     onClose: () => void;
-    teamMembers: TeamMember[];
-    onSchedule: (data: any) => void;
 }
 
-const SCHEDULING_MODES = [
-    {
-        id: 'collective',
-        name: 'Riunione Collettiva',
-        icon: '👥',
-        description: 'Tutti i membri devono essere disponibili contemporaneamente',
-        pros: ['Decisioni condivise', 'Massima collaborazione', 'Allineamento totale'],
-        cons: ['Più difficile trovare slot', 'Coordinamento complesso'],
-        bestFor: 'Decisioni strategiche, brainstorming, all-hands',
-        color: 'blue'
-    },
-    {
-        id: 'round-robin',
-        name: 'Round Robin',
-        icon: '🔄',
-        description: 'Assegna automaticamente al primo membro disponibile',
-        pros: ['Massima flessibilità', 'Carico distribuito', 'Risposta rapida'],
-        cons: ['Meno coordinamento', 'Info frammentate'],
-        bestFor: 'Support, sales calls, consulenze individuali',
-        color: 'green'
-    },
-    {
-        id: 'sequential',
-        name: 'Sequenziale',
-        icon: '📋',
-        description: 'Gli invitati scelgono in ordine di priorità predefinito',
-        pros: ['Controllo gerarchico', 'Processo strutturato', 'Escalation chiara'],
-        cons: ['Meno flessibile', 'Possibili ritardi'],
-        bestFor: 'Approvazioni, review process, escalation',
-        color: 'purple'
-    }
-];
-
-export default function TeamSchedulingModal({
-    isOpen,
-    onClose,
-    teamMembers,
-    onSchedule
-}: TeamSchedulingModalProps) {
-    const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-    const [schedulingMode, setSchedulingMode] = useState<'collective' | 'round-robin' | 'sequential'>('collective');
-    const [priority, setPriority] = useState<'high' | 'medium' | 'low'>('medium');
-    const [duration, setDuration] = useState(30);
-    const [buffer, setBuffer] = useState(15);
-
+export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingModalProps) {
+    const [selectedMode, setSelectedMode] = useState<'collective' | 'round-robin' | null>(null);
+    
     if (!isOpen) return null;
 
-    const selectedMemberObjects = teamMembers.filter(member =>
-        selectedMembers.includes(member.id)
-    );
-
-    const getAvailableMembers = () => {
-        return teamMembers.filter(member =>
-            member.availability === 'available' || !member.availability
-        );
-    };
-
-    const estimateComplexity = () => {
-        const memberCount = selectedMembers.length;
-        const modeMultiplier = {
-            'collective': memberCount * 1.5,
-            'round-robin': memberCount * 0.5,
-            'sequential': memberCount * 1.2
-        };
-
-        const complexity = modeMultiplier[schedulingMode];
-
-        if (complexity < 3) return { level: 'Facile', color: 'green', time: '< 5 min' };
-        if (complexity < 6) return { level: 'Medio', color: 'yellow', time: '5-15 min' };
-        return { level: 'Complesso', color: 'red', time: '> 15 min' };
-    };
-
-    const complexity = estimateComplexity();
-
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                            <Users className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                Team Scheduling
-                            </h2>
-                            <p className="text-gray-600">Coordina riunioni con più persone</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                    >
-                        <X className="w-5 h-5" />
+                <div className="px-6 py-4 border-b flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50">
+                    <h2 className="text-2xl font-bold text-gray-900">👥 Team Scheduling</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <div className="p-6 space-y-8">
-
-                    {/* Scheduling Mode Selection */}
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">
-                            Modalità di Scheduling
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {SCHEDULING_MODES.map(mode => (
-                                <button
-                                    key={mode.id}
-                                    onClick={() => setSchedulingMode(mode.id as any)}
-                                    className={`p-6 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-lg ${schedulingMode === mode.id
-                                            ? `border-${mode.color}-500 bg-${mode.color}-50 shadow-md`
-                                            : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="text-2xl">{mode.icon}</div>
-                                        <div>
-                                            <div className={`font-bold text-sm ${schedulingMode === mode.id ? `text-${mode.color}-700` : 'text-gray-900'}`}>
-                                                {mode.name}
-                                            </div>
-                                            {mode.id === 'collective' && (
-                                                <div className="flex items-center gap-1 mt-1">
-                                                    <Crown className="w-3 h-3 text-yellow-500" />
-                                                    <span className="text-xs text-yellow-600 font-medium">ENTERPRISE</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <p className="text-xs text-gray-600 mb-3 leading-relaxed">
-                                        {mode.description}
-                                    </p>
-
-                                    <div className="space-y-2">
-                                        <div>
-                                            <div className="text-xs font-semibold text-green-700 mb-1">✓ Vantaggi:</div>
-                                            <ul className="text-xs text-gray-600 space-y-0.5">
-                                                {mode.pros.slice(0, 2).map((pro, i) => (
-                                                    <li key={i}>• {pro}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        <div className="pt-2 border-t border-gray-100">
-                                            <div className="text-xs font-medium text-gray-500">
-                                                Ideale per: {mode.bestFor}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Team Members Selection */}
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-gray-900">
-                                Seleziona Partecipanti
-                            </h3>
-                            <div className="text-sm text-gray-600">
-                                {selectedMembers.length} di {teamMembers.length} membri
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
-                                {teamMembers.map(member => {
-                                    const isSelected = selectedMembers.includes(member.id);
-                                    const isAvailable = member.availability !== 'busy';
-
-                                    return (
-                                        <label
-                                            key={member.id}
-                                            className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : isAvailable
-                                                        ? 'border-gray-200 bg-white hover:border-gray-300'
-                                                        : 'border-red-200 bg-red-50 opacity-75'
-                                                }`}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={isSelected}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedMembers([...selectedMembers, member.id]);
-                                                    } else {
-                                                        setSelectedMembers(selectedMembers.filter(id => id !== member.id));
-                                                    }
-                                                }}
-                                                disabled={!isAvailable}
-                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                            />
-
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                {member.avatar ? (
-                                                    <img
-                                                        src={member.avatar}
-                                                        alt={member.name}
-                                                        className="w-10 h-10 rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                                                        <User className="w-5 h-5 text-white" />
-                                                    </div>
-                                                )}
-
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-semibold text-sm text-gray-900 truncate">
-                                                        {member.name}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 truncate">
-                                                        {member.email}
-                                                    </div>
-                                                    {member.role && (
-                                                        <div className="text-xs text-blue-600 font-medium">
-                                                            {member.role}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="flex-shrink-0">
-                                                    {member.availability === 'available' && (
-                                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                                    )}
-                                                    {member.availability === 'busy' && (
-                                                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                                    )}
-                                                    {member.availability === 'away' && (
-                                                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Advanced Options */}
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
-                        <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">
-                            <Star className="w-5 h-5" />
-                            Opzioni Avanzate
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                            {/* Priority */}
-                            <div>
-                                <label className="block text-sm font-semibold text-purple-700 mb-2">
-                                    Priorità Riunione
-                                </label>
-                                <select
-                                    value={priority}
-                                    onChange={(e) => setPriority(e.target.value as any)}
-                                    className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    <option value="low">🟢 Bassa - Flessibile</option>
-                                    <option value="medium">🟡 Media - Standard</option>
-                                    <option value="high">🔴 Alta - Urgente</option>
-                                </select>
-                            </div>
-
-                            {/* Duration */}
-                            <div>
-                                <label className="block text-sm font-semibold text-purple-700 mb-2">
-                                    Durata (minuti)
-                                </label>
-                                <select
-                                    value={duration}
-                                    onChange={(e) => setDuration(parseInt(e.target.value))}
-                                    className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    <option value={15}>15 min - Quick sync</option>
-                                    <option value={30}>30 min - Standard</option>
-                                    <option value={45}>45 min - Approfondita</option>
-                                    <option value={60}>60 min - Workshop</option>
-                                    <option value={90}>90 min - Strategica</option>
-                                </select>
-                            </div>
-
-                            {/* Buffer */}
-                            <div>
-                                <label className="block text-sm font-semibold text-purple-700 mb-2">
-                                    Buffer tra riunioni
-                                </label>
-                                <select
-                                    value={buffer}
-                                    onChange={(e) => setBuffer(parseInt(e.target.value))}
-                                    className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    <option value={0}>Nessun buffer</option>
-                                    <option value={5}>5 min</option>
-                                    <option value={15}>15 min - Standard</option>
-                                    <option value={30}>30 min - Rilassato</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Scheduling Complexity Indicator */}
-                    {selectedMembers.length > 0 && (
-                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
-                            <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <AlertTriangle className={`w-5 h-5 text-${complexity.color}-600`} />
-                                Analisi Complessità
-                            </h4>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="text-center">
-                                    <div className={`text-2xl font-bold text-${complexity.color}-600`}>
-                                        {complexity.level}
-                                    </div>
-                                    <div className="text-sm text-gray-600">Difficoltà</div>
-                                </div>
-
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-blue-600">
-                                        {complexity.time}
-                                    </div>
-                                    <div className="text-sm text-gray-600">Tempo stimato</div>
-                                </div>
-
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-purple-600">
-                                        {selectedMembers.length}
-                                    </div>
-                                    <div className="text-sm text-gray-600">Partecipanti</div>
-                                </div>
-                            </div>
-
-                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                                <div className="text-sm font-semibold text-gray-700 mb-2">
-                                    Raccomandazioni AI:
-                                </div>
-                                <ul className="text-sm text-gray-600 space-y-1">
-                                    {schedulingMode === 'collective' && selectedMembers.length > 5 && (
-                                        <li>• Considera di dividere in gruppi più piccoli per maggiore efficienza</li>
-                                    )}
-                                    {priority === 'high' && (
-                                        <li>• Priorità alta: proporremo slot anche al di fuori degli orari preferiti</li>
-                                    )}
-                                    {duration > 60 && (
-                                        <li>• Riunioni lunghe: suggeriremo pause automatiche ogni 45 minuti</li>
-                                    )}
-                                </ul>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-4 pt-4 border-t border-gray-200">
-                        <button
-                            onClick={onClose}
-                            className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-                        >
-                            Annulla
-                        </button>
-                        <button
-                            onClick={() => {
-                                onSchedule({
-                                    mode: schedulingMode,
-                                    members: selectedMembers,
-                                    priority,
-                                    duration,
-                                    buffer,
-                                    complexity: complexity.level
-                                });
-                                onClose();
-                            }}
-                            disabled={selectedMembers.length === 0}
-                            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
-                        >
-                            {selectedMembers.length === 0
-                                ? 'Seleziona Membri'
-                                : `Continua con ${selectedMembers.length} ${selectedMembers.length === 1 ? 'Persona' : 'Persone'}`
-                            }
-                        </button>
-                    </div>
-
-                    {/* Enterprise Upsell */}
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6">
+                <div className="p-6 space-y-6">
+                    {/* Introduction */}
+                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6">
                         <div className="flex items-center gap-3 mb-3">
-                            <Crown className="w-6 h-6 text-yellow-600" />
-                            <div>
-                                <div className="font-bold text-yellow-900">Team Scheduling Pro</div>
-                                <div className="text-sm text-yellow-700">Funzionalità Enterprise Avanzate</div>
-                            </div>
+                            <Users className="w-8 h-8 text-purple-600" />
+                            <h3 className="font-semibold text-xl text-gray-900">Coordinamento Team</h3>
                         </div>
+                        <p className="text-gray-600">
+                            Gestisci le riunioni del tuo team con modalità di scheduling avanzate. 
+                            Coordina automaticamente gli orari disponibili di tutti i membri.
+                        </p>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div className="space-y-2">
-                                <div className="font-semibold text-yellow-800">✨ Incluso:</div>
-                                <ul className="space-y-1 text-yellow-700">
-                                    <li>• Team illimitati</li>
-                                    <li>• AI scheduling optimization</li>
-                                    <li>• Recurring team meetings</li>
-                                    <li>• Advanced analytics</li>
-                                </ul>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="font-semibold text-yellow-800">🚀 Plus:</div>
-                                <ul className="space-y-1 text-yellow-700">
-                                    <li>• Integrazione Slack/Teams</li>
-                                    <li>• Room booking automation</li>
-                                    <li>• Custom workflows</li>
-                                    <li>• Priority support</li>
-                                </ul>
-                            </div>
+                    {/* Scheduling Modes */}
+                    <div>
+                        <h3 className="font-semibold text-lg mb-4 text-gray-900">Seleziona Modalità di Scheduling</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Collective Mode */}
+                            <button
+                                onClick={() => setSelectedMode('collective')}
+                                className={`p-6 border-2 rounded-xl transition-all text-left ${
+                                    selectedMode === 'collective'
+                                        ? 'border-purple-500 bg-purple-50 shadow-lg'
+                                        : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3 mb-3">
+                                    <Target className="w-8 h-8 text-purple-600" />
+                                    <h4 className="font-semibold text-lg">Riunione Collettiva</h4>
+                                </div>
+                                <p className="text-gray-600 mb-4">
+                                    Tutti i membri del team devono essere disponibili contemporaneamente
+                                </p>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span>Trova slot comuni per tutti</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span>Perfetto per meeting team</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span>Sincronizzazione calendari</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            {/* Round Robin Mode */}
+                            <button
+                                onClick={() => setSelectedMode('round-robin')}
+                                className={`p-6 border-2 rounded-xl transition-all text-left ${
+                                    selectedMode === 'round-robin'
+                                        ? 'border-blue-500 bg-blue-50 shadow-lg'
+                                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3 mb-3">
+                                    <RotateCcw className="w-8 h-8 text-blue-600" />
+                                    <h4 className="font-semibold text-lg">Round Robin</h4>
+                                </div>
+                                <p className="text-gray-600 mb-4">
+                                    Assegna automaticamente al primo membro disponibile
+                                </p>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span>Distribuzione equa del carico</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span>Assegnazione automatica</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span>Ideale per consulenze individuali</span>
+                                    </div>
+                                </div>
+                            </button>
                         </div>
                     </div>
+
+                    {/* Team Members Section */}
+                    <div>
+                        <h3 className="font-semibold text-lg mb-4 text-gray-900">Membri del Team</h3>
+                        <div className="bg-gray-50 rounded-xl p-6">
+                            <div className="space-y-4">
+                                {/* Demo team members */}
+                                {[
+                                    { name: 'Mario Rossi', role: 'Team Lead', available: true },
+                                    { name: 'Giulia Bianchi', role: 'Designer', available: true },
+                                    { name: 'Luca Verdi', role: 'Developer', available: false },
+                                ].map((member, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                                                <span className="font-semibold text-gray-600">{member.name.charAt(0)}</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold">{member.name}</p>
+                                                <p className="text-sm text-gray-600">{member.role}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-3 h-3 rounded-full ${member.available ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                            <span className="text-sm text-gray-600">
+                                                {member.available ? 'Disponibile' : 'Occupato'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <button className="w-full mt-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:bg-gray-100 transition-colors">
+                                + Aggiungi Membro del Team
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center">
+                            <Calendar className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                            <div className="text-xl font-bold text-green-700">0</div>
+                            <div className="text-sm text-green-600">Meeting Programmati</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center">
+                            <Clock className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                            <div className="text-xl font-bold text-blue-700">0</div>
+                            <div className="text-sm text-blue-600">Ore Totali</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 text-center">
+                            <Users className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                            <div className="text-xl font-bold text-purple-700">3</div>
+                            <div className="text-sm text-purple-600">Membri Attivi</div>
+                        </div>
+                    </div>
+
+                    {/* Coming Soon Notice */}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Settings className="w-6 h-6 text-yellow-600" />
+                            <h4 className="font-semibold text-yellow-800">Funzionalità in Sviluppo</h4>
+                        </div>
+                        <p className="text-yellow-700 text-sm">
+                            <strong>Coming Soon:</strong> Configurazione completa del team scheduling con integrazione calendari,
+                            notifiche automatiche e gestione delle disponibilità in tempo reale.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                        Chiudi
+                    </button>
+                    <button
+                        disabled={!selectedMode}
+                        className={`px-6 py-2 rounded-lg transition-colors ${
+                            selectedMode
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                    >
+                        Configura Scheduling
+                    </button>
                 </div>
             </div>
         </div>

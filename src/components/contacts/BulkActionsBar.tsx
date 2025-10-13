@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, Download, Tag, UserPlus, X, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Trash2, Tag, UserPlus, X, AlertTriangle, RotateCcw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { BulkOperationsService } from '../../services/bulkOperations';
 import { Contact } from '../../types';
@@ -170,7 +170,7 @@ export default function BulkActionsBar({
             } else {
                 toast.error(result.error || 'Errore durante il ripristino', { id: toastId });
             }
-        } catch (error) {
+        } catch {
             toast.error('Errore durante il ripristino', { id: toastId });
         }
     };

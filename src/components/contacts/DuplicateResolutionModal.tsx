@@ -1,7 +1,7 @@
 'use client';
 
+import { AlertTriangle, Check, Users, X } from 'lucide-react';
 import { useState } from 'react';
-import { AlertTriangle, X, Users, Check } from 'lucide-react';
 
 interface DuplicateMatch {
   contact_id: string;
@@ -173,13 +173,12 @@ export default function DuplicateResolutionModal({
                         </div>
                         <div className="ml-3">
                           <span
-                            className={`text-xs font-medium px-2 py-1 rounded ${
-                              dup.confidence >= 0.95
+                            className={`text-xs font-medium px-2 py-1 rounded ${dup.confidence >= 0.95
                                 ? 'bg-red-100 text-red-800'
                                 : dup.confidence >= 0.85
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}
                           >
                             {Math.round(dup.confidence * 100)}% {dup.match_type}
                           </span>
@@ -197,41 +196,37 @@ export default function DuplicateResolutionModal({
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleActionChange(result.index, 'skip')}
-                      className={`p-2 rounded border text-sm font-medium transition-colors ${
-                        resolutions[result.index] === 'skip'
+                      className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'skip'
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       ⏭️ Salta (Già Esiste)
                     </button>
                     <button
                       onClick={() => handleActionChange(result.index, 'merge')}
-                      className={`p-2 rounded border text-sm font-medium transition-colors ${
-                        resolutions[result.index] === 'merge'
+                      className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'merge'
                           ? 'border-green-500 bg-green-50 text-green-700'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       🔗 Unisci Dati
                     </button>
                     <button
                       onClick={() => handleActionChange(result.index, 'replace')}
-                      className={`p-2 rounded border text-sm font-medium transition-colors ${
-                        resolutions[result.index] === 'replace'
+                      className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'replace'
                           ? 'border-orange-500 bg-orange-50 text-orange-700'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       🔄 Sostituisci
                     </button>
                     <button
                       onClick={() => handleActionChange(result.index, 'keep_both')}
-                      className={`p-2 rounded border text-sm font-medium transition-colors ${
-                        resolutions[result.index] === 'keep_both'
+                      className={`p-2 rounded border text-sm font-medium transition-colors ${resolutions[result.index] === 'keep_both'
                           ? 'border-purple-500 bg-purple-50 text-purple-700'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       ➕ Mantieni Entrambi
                     </button>

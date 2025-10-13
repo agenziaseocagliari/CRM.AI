@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import FieldMappingModal, { type FieldMapping as FieldMappingType } from './FieldMappingModal';
+import { useState } from 'react';
 import DuplicateResolutionModal from './DuplicateResolutionModal';
+import FieldMappingModal, { type FieldMapping as FieldMappingType } from './FieldMappingModal';
 
 // Simple icon components to avoid external dependencies
 const UploadIcon = () => (
@@ -78,7 +78,7 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   // Step data
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [mappingResult, setMappingResult] = useState<FieldMappingType[] | null>(null);
@@ -88,7 +88,7 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
   // Step 1: Upload CSV
   const handleUpload = async () => {
     if (!file) return;
-    
+
     setLoading(true);
     setCurrentStep('upload');
 
@@ -102,14 +102,15 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
       );
 
       const data = await response.json();
-      
+
       if (!data.success) throw new Error(data.error || 'Upload failed');
-      
+
       setUploadResult(data);
       setCurrentStep('mapping');
-      
-    } catch (err: any) {
-      alert(`Upload error: ${err.message}`);
+
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      alert(`Upload error: ${errorMessage}`);
       setCurrentStep('upload');
     } finally {
       setLoading(false);
@@ -119,13 +120,13 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
   // Step 2: Save field mappings and proceed to duplicate check
   const handleMappingSave = async (mappings: FieldMappingType[]) => {
     if (!uploadResult) return;
-    
+
     setLoading(true);
     setCurrentStep('duplicates');
-    
+
     try {
       setMappingResult(mappings);
-      
+
       // Prepare contacts from CSV with mappings applied
       const contacts = uploadResult.preview_contacts?.map((row: Record<string, string>) => {
         const contact: Record<string, string> = {};
@@ -152,13 +153,14 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
       );
 
       const dupData = await dupResponse.json();
-      
+
       if (!dupData.success) throw new Error('Duplicate check failed');
-      
+
       setDuplicateResults(dupData);
-      
-    } catch (err: any) {
-      alert(`Duplicate check error: ${err.message}`);
+
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Duplicate check failed';
+      alert(`Duplicate check error: ${errorMessage}`);
       setCurrentStep('mapping');
     } finally {
       setLoading(false);
@@ -168,10 +170,10 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
   // Step 3: Resolve duplicates and import
   const handleDuplicateResolve = async (resolutions: Record<number, string>) => {
     if (!uploadResult || !mappingResult) return;
-    
+
     setLoading(true);
     setCurrentStep('importing');
-    
+
     try {
       // Prepare final import with resolutions
       const importData = {
@@ -192,19 +194,20 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
       );
 
       const importData2 = await importResponse.json();
-      
+
       if (!importData2.success) throw new Error('Import failed');
-      
+
       setImportResult(importData2);
       setCurrentStep('complete');
-      
+
       // Refresh page after 2 seconds
       setTimeout(() => {
         window.location.reload();
       }, 2000);
-      
-    } catch (err: any) {
-      alert(`Import error: ${err.message}`);
+
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Import failed';
+      alert(`Import error: ${errorMessage}`);
       setCurrentStep('duplicates');
     } finally {
       setLoading(false);
@@ -244,14 +247,14 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
                 <XIcon />
               </button>
             </div>
-            
+
             <input
               type="file"
               accept=".csv"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="mb-4 w-full"
             />
-            
+
             <button
               onClick={handleUpload}
               disabled={!file || loading}
@@ -295,7 +298,7 @@ export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: C
               confidence: dup.confidence,
               email: dup.email || '',
               phone: dup.phone || '',
-              name: dup.name || 'Unknown',
+              name: dup.name || '',
               created_at: dup.created_at || new Date().toISOString(),
               recommended_action: dup.recommended_action as 'skip' | 'merge' | 'replace' | 'keep_both'
             })) || [],

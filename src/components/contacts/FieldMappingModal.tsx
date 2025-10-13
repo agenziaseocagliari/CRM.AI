@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Simple icon components
 const XIcon = () => (
@@ -164,13 +164,12 @@ export default function FieldMappingModal({
                   {/* Confidence Badge */}
                   <div className="w-full sm:w-24 text-center">
                     {mapping.dbField ? (
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                        mapping.confidence >= 90
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${mapping.confidence >= 90
                           ? 'bg-green-100 text-green-800'
                           : mapping.confidence >= 70
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
                         <CheckIcon />
                         {mapping.confidence}%
                       </span>
@@ -190,7 +189,7 @@ export default function FieldMappingModal({
               <div className="text-sm text-blue-800">
                 <p className="font-medium mb-1">💡 Suggerimento Intelligente</p>
                 <p>
-                  Le mappature sono state rilevate automaticamente dall'AI con alta confidenza. 
+                  Le mappature sono state rilevate automaticamente dall'AI con alta confidenza.
                   Puoi modificarle o aggiungere nuove mappature dai menu a tendina sopra.
                 </p>
               </div>
@@ -230,10 +229,9 @@ export default function FieldMappingModal({
                             >
                               <div className="flex items-center gap-1">
                                 {DB_FIELDS.find(f => f.value === mapping.dbField)?.label}
-                                <span className={`inline-block w-2 h-2 rounded-full ${
-                                  mapping.confidence >= 90 ? 'bg-green-400' : 
-                                  mapping.confidence >= 70 ? 'bg-yellow-400' : 'bg-blue-400'
-                                }`}></span>
+                                <span className={`inline-block w-2 h-2 rounded-full ${mapping.confidence >= 90 ? 'bg-green-400' :
+                                    mapping.confidence >= 70 ? 'bg-yellow-400' : 'bg-blue-400'
+                                  }`}></span>
                               </div>
                               <div className="text-xs font-normal text-gray-500 mt-1">
                                 Da: "{mapping.csvColumn}"
@@ -288,7 +286,7 @@ export default function FieldMappingModal({
           >
             🔄 Ripristina Auto-rilevamento
           </button>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
@@ -299,11 +297,10 @@ export default function FieldMappingModal({
             <button
               onClick={handleSave}
               disabled={mappedCount === 0}
-              className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${
-                mappedCount === 0
+              className={`px-6 py-2 rounded-lg font-medium text-white transition-colors ${mappedCount === 0
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+                }`}
             >
               ✅ Salva Mappature ({mappedCount})
             </button>

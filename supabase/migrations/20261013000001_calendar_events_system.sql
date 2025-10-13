@@ -172,7 +172,7 @@ CREATE INDEX IF NOT EXISTS idx_events_date ON events(DATE(start_time AT TIME ZON
     WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_events_upcoming ON events(start_time)
-    WHERE start_time >= NOW() AND deleted_at IS NULL;
+    WHERE deleted_at IS NULL;
 
 -- Participant indexes
 CREATE INDEX IF NOT EXISTS idx_participants_event ON event_participants(event_id);

@@ -2,10 +2,41 @@
 
 import { useState } from 'react';
 
+interface FieldMapping {
+  original_header: string;
+  mapped_field: string;
+  confidence_score: number;
+}
+
+interface ValidationSummary {
+  email_issues: number;
+  phone_issues: number;
+  missing_required: number;
+  duplicate_emails: number;
+}
+
+interface UploadSummary {
+  filename: string;
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  contacts_created: number;
+  processing_time_ms: number;
+}
+
+interface UploadResult {
+  success: boolean;
+  import_id: string;
+  summary: UploadSummary;
+  field_mappings: FieldMapping[];
+  validation_summary: ValidationSummary;
+  preview_contacts: Record<string, string>[];
+}
+
 export default function CSVTestPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async () => {
@@ -35,8 +66,9 @@ export default function CSVTestPage() {
       if (!response.ok) throw new Error(data.error || 'Upload failed');
       
       setResult(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -111,7 +143,7 @@ export default function CSVTestPage() {
                   <div>
                     <span className="font-medium">Fields Detected:</span> {result.field_mappings.length}
                     <div className="mt-2 space-y-1">
-                      {result.field_mappings.slice(0, 4).map((mapping: any, index: number) => (
+                      {result.field_mappings.slice(0, 4).map((mapping: FieldMapping, index: number) => (
                         <div key={index} className="text-xs">
                           {mapping.original_header} → {mapping.mapped_field} ({(mapping.confidence_score * 100).toFixed(0)}%)
                         </div>

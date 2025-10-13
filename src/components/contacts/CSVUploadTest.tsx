@@ -2,10 +2,41 @@
 
 import { useState } from 'react';
 
+interface FieldMapping {
+  original_header: string;
+  mapped_field: string;
+  confidence_score: number;
+}
+
+interface ValidationSummary {
+  email_issues: number;
+  phone_issues: number;
+  missing_required: number;
+  duplicate_emails: number;
+}
+
+interface UploadSummary {
+  filename: string;
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  contacts_created: number;
+  processing_time_ms: number;
+}
+
+interface UploadResult {
+  success: boolean;
+  import_id: string;
+  summary: UploadSummary;
+  field_mappings: FieldMapping[];
+  validation_summary: ValidationSummary;
+  preview_contacts: Record<string, string>[];
+}
+
 export default function CSVUploadTest() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,8 +84,9 @@ export default function CSVUploadTest() {
 
       setResult(data);
       console.log('✅ Upload successful:', data);
-    } catch (err: any) {
-      setError(err.message || 'Upload failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setError(message);
       console.error('❌ Upload error:', err);
     } finally {
       setLoading(false);
@@ -161,7 +193,7 @@ export default function CSVUploadTest() {
                   <p className="font-medium mb-2">Field Mappings:</p>
                   <div className="bg-white p-3 rounded border overflow-x-auto">
                     <div className="grid grid-cols-1 gap-2">
-                      {result.field_mappings.map((mapping: any, index: number) => (
+                      {result.field_mappings.map((mapping: FieldMapping, index: number) => (
                         <div key={index} className="flex justify-between items-center text-xs">
                           <span className="font-medium">{mapping.original_header}</span>
                           <span className="text-gray-500">→</span>

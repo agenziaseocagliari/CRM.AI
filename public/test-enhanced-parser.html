@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Parser Testing - Enhanced Version</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .upload-area:hover { border-color: #007cba; }
+        .upload-area.dragover { border-color: #007cba; background: #f0f8ff; }
+        
+        .result { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+        }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        
+        pre { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 5px; 
+            overflow-x: auto; 
+            font-size: 12px;
+        }
+        
+        .test-files {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .test-file {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 15px;
+            background: #007cba;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .test-file:hover { background: #005a8b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 CSV Parser Testing - Enhanced Version</h1>
+        <p>Test the enhanced CSV parser that handles:</p>
+        <ul>
+            <li>✅ Markdown emails: <code>[email@test.com](mailto:email@test.com)</code></li>
+            <li>✅ Special characters: <code>â€"</code>, <code>Ã¨</code></li>
+            <li>✅ Complex headers with underscores</li>
+            <li>✅ UTF-8 BOM removal</li>
+            <li>✅ Comprehensive error handling</li>
+        </ul>
+
+        <div class="test-files">
+            <h3>📋 Quick Test Files:</h3>
+            <a href="#" onclick="testCleanCSV()" class="test-file">Clean CSV (5 contacts)</a>
+            <a href="#" onclick="testProblematicCSV()" class="test-file">Problematic CSV (markdown + special chars)</a>
+            <a href="#" onclick="testInvalidCSV()" class="test-file">Invalid CSV (should fail gracefully)</a>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <p><strong>Drop CSV file here</strong> or click to select</p>
+            <p>Maximum file size: 10MB</p>
+            <input type="file" id="fileInput" accept=".csv" style="display: none;">
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const result = document.getElementById('result');
+
+        // Production Supabase URL (replace with your actual URL)
+        const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co/functions/v1/parse-csv-upload';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2NzA2NTIsImV4cCI6MjA1MTI0NjY1Mn0.ah4Ef_Tx82lt9ev_lAUU-IXI8kazkR3VI23TLVJGrFU';
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) processFile(files[0]);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) processFile(files[0]);
+        }
+
+        async function processFile(file) {
+            showResult('info', `Processing ${file.name}... (${(file.size / 1024).toFixed(1)} KB)`);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showResult('success', 
+                        `✅ <strong>SUCCESS!</strong> Enhanced parser worked perfectly!<br><br>` +
+                        `<strong>Import ID:</strong> ${data.import_id}<br>` +
+                        `<strong>Summary:</strong><br>` +
+                        `• Total rows: ${data.summary.total_rows}<br>` +
+                        `• Valid rows: ${data.summary.valid_rows}<br>` +
+                        `• Invalid rows: ${data.summary.invalid_rows}<br>` +
+                        `• Contacts created: ${data.summary.contacts_created}<br>` +
+                        `• Processing time: ${data.summary.processing_time_ms}ms<br><br>` +
+                        `<strong>Field Mappings:</strong><br>` +
+                        data.field_mappings.map(f => `• ${f.csv_field} → ${f.db_field} (${f.confidence}% confidence)`).join('<br>') +
+                        `<br><br><strong>Validation Summary:</strong><br>` +
+                        `• Email issues: ${data.validation_summary.email_issues}<br>` +
+                        `• Phone issues: ${data.validation_summary.phone_issues}<br>` +
+                        `• Missing required: ${data.validation_summary.missing_required}<br>` +
+                        `• Duplicate emails: ${data.validation_summary.duplicate_emails}`
+                    );
+                } else {
+                    showResult('error', 
+                        `❌ <strong>Upload Failed</strong><br><br>` +
+                        `<strong>Error:</strong> ${data.message || 'Unknown error'}<br>` +
+                        (data.details ? `<strong>Details:</strong> ${data.details}<br>` : '') +
+                        (data.hint ? `<strong>Hint:</strong> ${data.hint}<br>` : '') +
+                        `<br><strong>Full Response:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`
+                    );
+                }
+            } catch (error) {
+                showResult('error', 
+                    `❌ <strong>Network Error</strong><br><br>` +
+                    `${error.message}<br><br>` +
+                    `This might be a CORS issue or the function might be down.`
+                );
+            }
+        }
+
+        function showResult(type, message) {
+            result.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        // Quick test functions
+        function testCleanCSV() {
+            const csvContent = `Name,Email,Phone,Company
+John Smith,john@company.com,555-1234,Acme Corp
+Jane Doe,jane@business.org,(555) 567-8900,Tech Inc
+Bob Johnson,bob@email.com,555-9876,Global Industries
+Alice Brown,alice@test.net,+1-555-555-5555,Testing Corp
+Mike Wilson,mike@sample.org,1-800-123-4567,Sample Company`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const file = new File([blob], 'clean-test.csv', { type: 'text/csv' });
+            processFile(file);
+        }
+
+        function testProblematicCSV() {
+            const csvContent = `Full_Name,Email_Address,Phone_Number,Company_Name,Street_Address
+John Smith,[john.smith@company.com](mailto:john.smith@company.com),555-1234,Acme Corp â€" Best Services,123 Main Street
+Jane Doe,[jane@business.org](mailto:jane@business.org),(555) 567-8900,Tech Inc Ã¨ Solutions,456 Oak Avenue
+Bob Johnson,[bob.johnson@email.com](mailto:bob.johnson@email.com),555-9876,Global â€" Industries Ltd,789 Pine Road`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const file = new File([blob], 'problematic-test.csv', { type: 'text/csv' });
+            processFile(file);
+        }
+
+        function testInvalidCSV() {
+            const csvContent = `Invalid"CSV"File"With"Issues
+This,is,not,proper,CSV,format
+"Unclosed quote,missing comma
+Empty,,,,
+`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const file = new File([blob], 'invalid-test.csv', { type: 'text/csv' });
+            processFile(file);
+        }
+    </script>
+</body>
+</html>

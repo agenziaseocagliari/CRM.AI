@@ -1,7 +1,8 @@
 'use client';
 
-import { Briefcase, Calendar, Clock, Link as LinkIcon, Save, User } from 'lucide-react';
+import { ArrowLeft, Briefcase, Calendar, Clock, Link as LinkIcon, Save, User } from 'lucide-react';
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
 interface BookingSettingsFormProps {
@@ -68,6 +69,15 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
 
     return (
         <div className="space-y-8">
+
+            {/* Back Button */}
+            <Link 
+                to="/dashboard/calendar" 
+                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
+            >
+                <ArrowLeft className="w-4 h-4" />
+                Torna al Calendario
+            </Link>
 
             {/* Preview Link */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
@@ -286,20 +296,29 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
             </div>
 
             {/* Save Button */}
-            <div className="flex items-center justify-end gap-4">
-                {saved && (
-                    <span className="text-green-600 font-medium">
-                        ✓ Salvato con successo!
-                    </span>
-                )}
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
+            <div className="flex items-center justify-between gap-4">
+                <Link
+                    to="/dashboard/calendar"
+                    className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold"
                 >
-                    <Save className="w-5 h-5" />
-                    {saving ? 'Salvataggio...' : 'Salva Impostazioni'}
-                </button>
+                    Annulla
+                </Link>
+                
+                <div className="flex items-center gap-4">
+                    {saved && (
+                        <span className="text-green-600 font-medium">
+                            ✓ Salvato con successo!
+                        </span>
+                    )}
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
+                    >
+                        <Save className="w-5 h-5" />
+                        {saving ? 'Salvataggio...' : 'Salva Impostazioni'}
+                    </button>
+                </div>
             </div>
         </div>
     );

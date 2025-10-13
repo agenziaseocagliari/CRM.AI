@@ -1,8 +1,9 @@
 'use client';
 
-import { X, Copy, Check, ExternalLink, Settings, User, Briefcase, FileText, Mail, MessageCircle, Share2 } from 'lucide-react';
+import { X, Copy, Check, ExternalLink, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 
 interface BookingLinkModalProps {
     isOpen: boolean;
@@ -17,25 +18,43 @@ export default function BookingLinkModal({ isOpen, onClose, userId }: BookingLin
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (isOpen && userId) {
+        if (isOpen) {
             fetchProfile();
         }
-    }, [isOpen, userId]);
+    }, [isOpen]);
 
     const fetchProfile = async () => {
         try {
-            // TODO: Fetch from Supabase API
-            // For now use mock data
-            setProfile({
-                full_name: 'Nome Non Impostato',
-                job_title: null,
-                company: null,
-                bio: null,
-                username: userId ? userId.substring(0, 8) : 'user-' + Date.now().toString(36),
-            });
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session?.user?.id) {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (profile && !error) {
+                    setProfile(profile);
+                } else {
+                    // Fallback to basic profile
+                    setProfile({
+                        full_name: 'Nome Non Impostato',
+                        username: session.user.id.substring(0, 8),
+                        bio: null,
+                        job_title: null
+                    });
+                }
+            }
             setLoading(false);
         } catch (error) {
             console.error('Profile fetch error:', error);
+            setProfile({
+                full_name: 'Nome Non Impostato',
+                username: 'user-' + Date.now().toString(36),
+                bio: null,
+                job_title: null
+            });
             setLoading(false);
         }
     };
@@ -54,15 +73,20 @@ export default function BookingLinkModal({ isOpen, onClose, userId }: BookingLin
         profile?.bio &&
         profile?.job_title;
 
-    const handleShareEmail = () => {
-        const subject = encodeURIComponent('Prenota un appuntamento con me');
-        const body = encodeURIComponent(`Ciao!\n\nPuoi prenotare un appuntamento con me usando questo link:\n\n${bookingUrl}\n\nGrazie!`);
-        window.open(`mailto:?subject=${subject}&body=${body}`);
-    };
+    const handleShare = (method: 'email' | 'whatsapp' | 'linkedin') => {
+        const text = `Prenota un appuntamento con me: ${bookingUrl}`;
 
-    const handleShareWhatsApp = () => {
-        const text = encodeURIComponent(`Prenota un appuntamento con me: ${bookingUrl}`);
-        window.open(`https://wa.me/?text=${text}`, '_blank');
+        switch (method) {
+            case 'email':
+                window.location.href = `mailto:?subject=Prenota un appuntamento&body=${encodeURIComponent(text)}`;
+                break;
+            case 'whatsapp':
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                break;
+            case 'linkedin':
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(bookingUrl)}`, '_blank');
+                break;
+        }
     };
 
     return (
@@ -81,156 +105,111 @@ export default function BookingLinkModal({ isOpen, onClose, userId }: BookingLin
                     
                     {/* Warning if profile incomplete */}
                     {!isProfileComplete && (
-                        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-5">
                             <div className="flex items-start gap-3">
-                                <div className="text-2xl">⚠️</div>
+                                <div className="text-3xl">⚠️</div>
                                 <div className="flex-1">
-                                    <h3 className="font-semibold text-yellow-900 mb-1">
+                                    <h3 className="font-semibold text-yellow-900 mb-2 text-lg">
                                         Completa il Tuo Profilo
                                     </h3>
-                                    <p className="text-sm text-yellow-800 mb-3">
-                                        La tua pagina di prenotazione non è ancora configurata. Completa le informazioni 
-                                        per rendere la tua pagina professionale e accattivante.
+                                    <p className="text-sm text-yellow-800 mb-4">
+                                        La tua pagina di prenotazione non è ancora configurata. 
+                                        Aggiungi nome, ruolo, azienda e descrizione per renderla professionale.
                                     </p>
                                     <button
                                         onClick={() => {
                                             onClose();
                                             navigate('/dashboard/settings/booking');
                                         }}
-                                        className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium text-sm"
+                                        className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-semibold"
                                     >
                                         <Settings className="w-4 h-4" />
-                                        Vai alle Impostazioni
+                                        Configura Ora
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Current Profile Preview */}
-                    <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            Anteprima Profilo
-                        </h3>
-                        
+                    {/* Link Section */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5">
+                        <h3 className="font-semibold mb-3 text-lg">Il Tuo Link Pubblico</h3>
                         {loading ? (
                             <div className="text-center py-4 text-gray-500">Caricamento...</div>
                         ) : (
-                            <div className="space-y-2 text-sm">
-                                <div className="flex items-start gap-2">
-                                    <User className="w-4 h-4 text-gray-500 mt-0.5" />
-                                    <div>
-                                        <span className="text-gray-600">Nome:</span>{' '}
-                                        <span className={`font-medium ${!profile?.full_name ? 'text-red-600' : ''}`}>
-                                            {profile?.full_name || 'Non impostato'}
-                                        </span>
-                                    </div>
+                            <>
+                                <div className="flex gap-2 mb-3">
+                                    <input
+                                        type="text"
+                                        value={bookingUrl}
+                                        readOnly
+                                        className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg text-sm font-mono"
+                                    />
+                                    <button
+                                        onClick={handleCopy}
+                                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap font-semibold"
+                                    >
+                                        {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                        {copied ? 'Copiato!' : 'Copia'}
+                                    </button>
                                 </div>
-                                
-                                <div className="flex items-start gap-2">
-                                    <Briefcase className="w-4 h-4 text-gray-500 mt-0.5" />
-                                    <div>
-                                        <span className="text-gray-600">Ruolo:</span>{' '}
-                                        <span className={`font-medium ${!profile?.job_title ? 'text-gray-400' : ''}`}>
-                                            {profile?.job_title || 'Non impostato'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-2">
-                                    <Briefcase className="w-4 h-4 text-gray-500 mt-0.5" />
-                                    <div>
-                                        <span className="text-gray-600">Azienda:</span>{' '}
-                                        <span className={`font-medium ${!profile?.company ? 'text-gray-400' : ''}`}>
-                                            {profile?.company || 'Non impostato'}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-start gap-2">
-                                    <FileText className="w-4 h-4 text-gray-500 mt-0.5" />
-                                    <div className="flex-1">
-                                        <span className="text-gray-600">Bio:</span>{' '}
-                                        <span className={`font-medium ${!profile?.bio ? 'text-gray-400' : ''}`}>
-                                            {profile?.bio ? (
-                                                <span className="text-xs block mt-1">{profile.bio.substring(0, 100)}...</span>
-                                            ) : (
-                                                'Non impostata'
-                                            )}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                                <p className="text-xs text-gray-600">
+                                    Condividi questo link per permettere alle persone di prenotare appuntamenti
+                                </p>
+                            </>
                         )}
-
-                        <button
-                            onClick={() => {
-                                onClose();
-                                navigate('/dashboard/settings/booking');
-                            }}
-                            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 font-medium text-sm transition-colors"
-                        >
-                            <Settings className="w-4 h-4" />
-                            Modifica Informazioni Profilo
-                        </button>
-                    </div>
-
-                    {/* Link Section */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-5">
-                        <h3 className="font-semibold mb-3">Il Tuo Link Pubblico</h3>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={bookingUrl}
-                                readOnly
-                                className="flex-1 px-4 py-3 bg-white border rounded-lg text-sm font-mono"
-                            />
-                            <button
-                                onClick={handleCopy}
-                                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap"
-                            >
-                                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                                {copied ? 'Copiato!' : 'Copia'}
-                            </button>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-2">
-                            Condividi questo link per permettere alle persone di prenotare appuntamenti con te
-                        </p>
                     </div>
 
                     {/* Share Options */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
-                            <div className="text-3xl mb-2">📧</div>
-                            <h4 className="font-semibold mb-1">Email</h4>
-                            <p className="text-sm text-gray-600">Invia il link via email ai tuoi contatti</p>
-                        </div>
-                        <div className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
-                            <div className="text-3xl mb-2">💬</div>
-                            <h4 className="font-semibold mb-1">Social</h4>
-                            <p className="text-sm text-gray-600">Condividi su WhatsApp, LinkedIn</p>
+                    <div>
+                        <h3 className="font-semibold mb-3">Condividi su:</h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            <button
+                                onClick={() => handleShare('email')}
+                                className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
+                            >
+                                <div className="text-3xl mb-2">📧</div>
+                                <div className="text-sm font-semibold">Email</div>
+                            </button>
+                            
+                            <button
+                                onClick={() => handleShare('whatsapp')}
+                                className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all"
+                            >
+                                <div className="text-3xl mb-2">💬</div>
+                                <div className="text-sm font-semibold">WhatsApp</div>
+                            </button>
+                            
+                            <button
+                                onClick={() => handleShare('linkedin')}
+                                className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
+                            >
+                                <div className="text-3xl mb-2">💼</div>
+                                <div className="text-sm font-semibold">LinkedIn</div>
+                            </button>
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => {
-                                onClose();
-                                navigate('/dashboard/settings/booking');
-                            }}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
-                        >
-                            <Settings className="w-5 h-5" />
-                            Personalizza Pagina
-                        </button>
+                    <div className="flex gap-3 pt-4 border-t">
+                        {isProfileComplete && (
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    navigate('/dashboard/settings/booking');
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                            >
+                                <Settings className="w-5 h-5" />
+                                Modifica Impostazioni
+                            </button>
+                        )}
                         
                         <a
                             href={bookingUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg"
+                            className={`${isProfileComplete ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg`}
                         >
                             <ExternalLink className="w-5 h-5" />
                             Apri Pagina

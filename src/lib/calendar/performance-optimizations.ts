@@ -1,8 +1,25 @@
 // Calendar performance optimization utilities
 // Provides caching, prefetching, and query optimization
 
+interface CalendarEventData {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  event_type?: string;
+  status?: string;
+  priority?: string;
+  location?: string;
+  description?: string;
+  notes?: string;
+  color?: string;
+  reminder_minutes?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface CacheEntry {
-  data: any;
+  data: CalendarEventData[] | CalendarEventData;
   timestamp: number;
   expiry: number;
 }
@@ -64,7 +81,7 @@ export class CalendarOptimizer {
   // Intelligent query optimization with proper indexing
   static buildOptimizedQuery(filters: EventFilters): {
     query: string;
-    params: any[];
+    params: (string | number | boolean)[];
     optimizations: string[];
   } {
     let query = `
@@ -86,7 +103,7 @@ export class CalendarOptimizer {
     `;
     
     const conditions: string[] = [];
-    const params: any[] = [];
+    const params: (string | number | boolean)[] = [];
     const optimizations: string[] = [];
     let paramIndex = 1;
 
@@ -152,7 +169,7 @@ export class CalendarOptimizer {
   }
 
   // Smart caching system
-  static getCachedEvents(cacheKey: string): any | null {
+  static getCachedEvents(cacheKey: string): CalendarEventData[] | CalendarEventData | null {
     const entry = this.eventCache.get(cacheKey);
     
     if (!entry) {
@@ -168,7 +185,7 @@ export class CalendarOptimizer {
     return entry.data;
   }
 
-  static setCacheEntry(key: string, data: any): void {
+  static setCacheEntry(key: string, data: CalendarEventData[] | CalendarEventData): void {
     // Manage cache size
     if (this.eventCache.size >= this.MAX_CACHE_SIZE) {
       this.evictOldestEntries();
@@ -208,12 +225,13 @@ export class CalendarOptimizer {
       
       // Sync recent changes
       const lastSyncKey = `last_sync_${userId}`;
-      const lastSync = localStorage.getItem(lastSyncKey);
-      const syncFrom = lastSync ? new Date(lastSync) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // TODO: Use lastSync for delta sync implementation
+      // const lastSync = localStorage.getItem(lastSyncKey);
+      // const syncFrom = lastSync ? new Date(lastSync) : new Date(Date.now() - 24 * 60 * 60 * 1000);
       
       // TODO: Implement delta sync with Supabase
       // This should:
-      // 1. Fetch only changed events since last sync
+      // 1. Fetch only changed events since syncFrom
       // 2. Update local cache
       // 3. Handle conflicts (server wins for now)
       
@@ -230,12 +248,12 @@ export class CalendarOptimizer {
     end: () => { duration: number; memory: number };
   } {
     const startTime = performance.now();
-    const startMemory = (performance as any).memory?.usedJSHeapSize || 0;
+    const startMemory = (performance as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0;
 
     return {
       end: () => {
         const duration = performance.now() - startTime;
-        const endMemory = (performance as any).memory?.usedJSHeapSize || 0;
+        const endMemory = (performance as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0;
         const memoryDelta = endMemory - startMemory;
 
         console.log('📊 Performance metrics:', {
@@ -251,7 +269,7 @@ export class CalendarOptimizer {
   // Batch operations for efficiency
   static async batchUpdateEvents(updates: Array<{
     id: string;
-    changes: Partial<any>;
+    changes: Partial<CalendarEventData>;
   }>): Promise<{ successful: number; failed: number }> {
     const monitor = this.startPerformanceMonitoring();
     
@@ -284,7 +302,7 @@ export class CalendarOptimizer {
     // Find and remove cache entries that might contain these events
     const keysToRemove: string[] = [];
     
-    for (const [key, entry] of this.eventCache.entries()) {
+    for (const key of this.eventCache.keys()) {
       // This is a simple approach - in production, you'd want more sophisticated invalidation
       if (key.includes('events') || key.includes('upcoming') || key.includes('calendar')) {
         keysToRemove.push(key);

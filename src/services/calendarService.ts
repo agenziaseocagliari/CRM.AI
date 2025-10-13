@@ -39,6 +39,16 @@ export interface CalendarEventCreate {
   contact_id?: string;
 }
 
+interface CalendarEventExtendedProps {
+  description?: string;
+  event_type?: string;
+  status?: string;
+  priority?: string;
+  location?: string;
+  notes?: string;
+  reminder_minutes?: number;
+}
+
 export interface FullCalendarEvent {
   id: string;
   title: string;
@@ -46,7 +56,7 @@ export interface FullCalendarEvent {
   end: string;
   backgroundColor?: string;
   borderColor?: string;
-  extendedProps?: any;
+  extendedProps?: CalendarEventExtendedProps;
 }
 
 export class CalendarService {

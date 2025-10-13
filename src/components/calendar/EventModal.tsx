@@ -1,13 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, Clock, MapPin, Users, Video, Bell, Repeat, Tag } from 'lucide-react';
+import { X, Clock, MapPin, Video, Bell, Repeat, Tag } from 'lucide-react';
+
+interface EventData {
+    title: string;
+    description: string;
+    event_type: string;
+    priority: string;
+    start_time: string;
+    end_time: string;
+    location: string;
+    location_type: string;
+    meeting_url: string;
+    is_recurring: boolean;
+    recurrence_frequency: string;
+    reminder_minutes: number[];
+    notes: string;
+}
 
 interface EventModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (event: any) => Promise<void>;
-    initialData?: any;
+    onSave: (event: Partial<EventData>) => Promise<void>;
+    initialData?: Partial<EventData>;
     selectedDate?: Date;
 }
 

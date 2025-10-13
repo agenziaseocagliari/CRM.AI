@@ -4,12 +4,12 @@ import { Calendar as CalendarIcon, Clock, Plus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CalendarOptimizer } from '../../lib/calendar/performance-optimizations';
 import { CalendarService, type FullCalendarEvent } from '../../services/calendarService';
+import AnalyticsModal from './AnalyticsModal';
+import BookingLinkModal from './BookingLinkModal';
 import CalendarView from './CalendarView';
 import EventModal from './EventModal';
 import MyEventsModal from './MyEventsModal';
-import BookingLinkModal from './BookingLinkModal';
 import TeamSchedulingModal from './TeamSchedulingModal';
-import AnalyticsModal from './AnalyticsModal';
 
 export default function CalendarContainer() {
     const [events, setEvents] = useState<FullCalendarEvent[]>([]);
@@ -18,7 +18,7 @@ export default function CalendarContainer() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentView, setCurrentView] = useState('week');
-    
+
     // Modal states for all quick actions
     const [showMyEvents, setShowMyEvents] = useState(false);
     const [showBookingLink, setShowBookingLink] = useState(false);
@@ -93,12 +93,12 @@ export default function CalendarContainer() {
         setShowModal(true);
     };
 
-    const handleEventClick = (event: any) => {
+    const handleEventClick = (event: FullCalendarEvent) => {
         setSelectedEvent(event);
         setShowModal(true);
     };
 
-    const handleSaveEvent = async (eventData: any) => {
+    const handleSaveEvent = async (eventData: Partial<FullCalendarEvent>) => {
         try {
             const newEvent = await CalendarService.createEvent(eventData);
             setEvents(prev => [...prev, newEvent]);
@@ -108,7 +108,7 @@ export default function CalendarContainer() {
         }
     };
 
-    const handleUpdateEvent = async (eventData: any) => {
+    const handleUpdateEvent = async (eventData: { eventId: string; start: Date; end: Date }) => {
         try {
             await CalendarService.updateEventTiming(eventData.eventId, eventData.start, eventData.end);
 
@@ -206,7 +206,7 @@ export default function CalendarContainer() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-4 gap-4 mb-6">
-                <button 
+                <button
                     onClick={() => setShowMyEvents(true)}
                     className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
                 >
@@ -215,7 +215,7 @@ export default function CalendarContainer() {
                     <div className="text-sm text-gray-500">Visualizza tutti</div>
                 </button>
 
-                <button 
+                <button
                     onClick={() => setShowBookingLink(true)}
                     className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
                 >
@@ -224,7 +224,7 @@ export default function CalendarContainer() {
                     <div className="text-sm text-gray-500">Condividi calendario</div>
                 </button>
 
-                <button 
+                <button
                     onClick={() => setShowTeamScheduling(true)}
                     className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
                 >
@@ -233,7 +233,7 @@ export default function CalendarContainer() {
                     <div className="text-sm text-gray-500">Riunioni di gruppo</div>
                 </button>
 
-                <button 
+                <button
                     onClick={() => setShowAnalytics(true)}
                     className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-all text-left group"
                 >

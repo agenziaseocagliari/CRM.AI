@@ -304,7 +304,6 @@ export class EmailNotificationService {
 
   // Build reminder email template
   private static buildReminderEmail(data: ReminderEmailData): string {
-    const urgencyClass = data.minutes_before <= 15 ? 'urgent' : data.minutes_before <= 60 ? 'soon' : 'upcoming';
     const urgencyColor = data.minutes_before <= 15 ? '#dc2626' : data.minutes_before <= 60 ? '#f59e0b' : '#3b82f6';
     const urgencyBg = data.minutes_before <= 15 ? '#fef2f2' : data.minutes_before <= 60 ? '#fffbeb' : '#eff6ff';
     

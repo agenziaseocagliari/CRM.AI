@@ -376,6 +376,17 @@ export default function CalendarAnalytics() {
 
 // Reusable Components
 
+interface StatCardProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string | number;
+    trend?: string;
+    trendUp?: boolean;
+    percentage?: string;
+    subtext?: string;
+    bgColor?: string;
+}
+
 function StatCard({
     icon,
     label,
@@ -385,7 +396,7 @@ function StatCard({
     percentage,
     subtext,
     bgColor = "bg-gray-50"
-}: any) {
+}: StatCardProps) {
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -470,7 +481,15 @@ function InsightCard({ type, icon, title, message }: {
     );
 }
 
-function BenchmarkRow({ metric, yourValue, industry, unit, inverse = false }: any) {
+interface BenchmarkRowProps {
+    metric: string;
+    yourValue: number;
+    industry: number;
+    unit: string;
+    inverse?: boolean;
+}
+
+function BenchmarkRow({ metric, yourValue, industry, unit, inverse = false }: BenchmarkRowProps) {
     const isGood = inverse ? yourValue < industry : yourValue > industry;
     const difference = Math.abs(yourValue - industry);
 

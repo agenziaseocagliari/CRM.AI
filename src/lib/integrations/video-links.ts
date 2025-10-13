@@ -90,7 +90,7 @@ export class VideoMeetingService {
   }
 
   // Future: Zoom integration with OAuth
-  static async generateZoomMeeting(eventData: EventData): Promise<VideoMeetingResult> {
+  static async generateZoomMeeting(_eventData: EventData): Promise<VideoMeetingResult> {
     // TODO: Implement Zoom OAuth + API integration
     // This will require:
     // 1. Zoom OAuth app setup
@@ -102,7 +102,7 @@ export class VideoMeetingService {
   }
 
   // Future: Microsoft Teams integration
-  static async generateTeamsMeeting(eventData: EventData): Promise<VideoMeetingResult> {
+  static async generateTeamsMeeting(_eventData: EventData): Promise<VideoMeetingResult> {
     // TODO: Implement Microsoft Graph API integration
     throw new Error('Teams integration coming soon - Enterprise feature');
   }

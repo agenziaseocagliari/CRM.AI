@@ -20,8 +20,8 @@ import { PublicPricingPage } from './components/PublicPricingPage';
 import { GoogleAuthCallback } from './components/Settings';
 
 // CRM Components - Riattivati
-import { Calendar } from './components/Calendar';
 import { Automations } from './components/Automations';
+import { Calendar } from './components/Calendar';
 import { Contacts } from './components/Contacts';
 import ContactDetailView from './components/contacts/ContactDetailView';
 import { Dashboard } from './components/Dashboard';

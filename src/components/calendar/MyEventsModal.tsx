@@ -1,18 +1,31 @@
 'use client';
 
-import { X, Calendar, Clock, MapPin, Users } from 'lucide-react';
+import { X, Calendar, Clock, MapPin } from 'lucide-react';
 import { useState } from 'react';
+
+interface CalendarEvent {
+    id?: string;
+    title: string;
+    start: string;
+    end?: string;
+    extendedProps?: {
+        event_type?: string;
+        priority?: string;
+        location?: string;
+        description?: string;
+    };
+}
 
 interface MyEventsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    events: any[];
+    events: CalendarEvent[];
 }
 
 export default function MyEventsModal({ isOpen, onClose, events }: MyEventsModalProps) {
-    if (!isOpen) return null;
-
     const [filter, setFilter] = useState('all');
+
+    if (!isOpen) return null;
 
     // Sort events by date
     const sortedEvents = [...events].sort((a, b) =>

@@ -1,11 +1,22 @@
 'use client';
 
-import { X, Calendar, TrendingUp, Clock, Users, Target, BarChart3, PieChart } from 'lucide-react';
+import { X, Calendar, TrendingUp, Clock, Target, BarChart3, PieChart } from 'lucide-react';
+
+interface CalendarEvent {
+    id?: string;
+    title: string;
+    start: string;
+    end?: string;
+    extendedProps?: {
+        event_type?: string;
+        priority?: string;
+    };
+}
 
 interface AnalyticsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    events: any[];
+    events: CalendarEvent[];
 }
 
 export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsModalProps) {
@@ -130,7 +141,7 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                                 Distribuzione Tipologie
                             </h3>
                             <div className="space-y-3">
-                                {eventTypeData.length > 0 ? eventTypeData.map(({ type, count, percentage }, idx) => (
+                                {eventTypeData.length > 0 ? eventTypeData.map(({ type, count, percentage }) => (
                                     <div key={type} className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-3 h-3 rounded-full ${

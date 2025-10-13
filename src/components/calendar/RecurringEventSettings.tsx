@@ -134,10 +134,10 @@ export default function RecurringEventSettings({
                             ].map(freq => (
                                 <button
                                     key={freq.value}
-                                    onClick={() => updateSettings({ frequency: freq.value as any })}
+                                    onClick={() => updateSettings({ frequency: freq.value as 'daily' | 'weekly' | 'monthly' })}
                                     className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${settings.frequency === freq.value
-                                            ? 'border-blue-500 bg-blue-50 shadow-md'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <div className="text-2xl mb-1">{freq.icon}</div>
@@ -193,8 +193,8 @@ export default function RecurringEventSettings({
                                                 updateSettings({ daysOfWeek: updated });
                                             }}
                                             className={`h-12 rounded-xl font-semibold text-sm transition-all duration-200 ${isSelected
-                                                    ? 'bg-blue-600 text-white shadow-md'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                ? 'bg-blue-600 text-white shadow-md'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                 }`}
                                         >
                                             {day.label}

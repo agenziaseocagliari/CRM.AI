@@ -16,10 +16,19 @@ interface Profile {
     };
 }
 
+interface Availability {
+    [key: string]: unknown;
+}
+
+interface BookedSlot {
+    date: string;
+    time: string;
+}
+
 interface PublicBookingPageProps {
     profile: Profile;
-    availability: any;
-    bookedSlots: any[];
+    availability: Availability;
+    bookedSlots: BookedSlot[];
     eventType?: string | null;
 }
 
@@ -32,9 +41,9 @@ interface BookingData {
 
 export default function PublicBookingPage({
     profile,
-    availability,
-    bookedSlots,
-    eventType
+    availability: _availability,
+    bookedSlots: _bookedSlots,
+    eventType: _eventType
 }: PublicBookingPageProps) {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -47,7 +56,7 @@ export default function PublicBookingPage({
     });
 
     // Generate available time slots for selected date
-    const getAvailableSlots = (date: Date): string[] => {
+    const getAvailableSlots = (_date: Date): string[] => {
         // Professional business hours: 9 AM to 6 PM, 30 min slots
         // TODO: Integrate with user's availability settings and exclude booked slots
         const slots: string[] = [];

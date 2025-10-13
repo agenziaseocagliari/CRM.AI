@@ -14,15 +14,25 @@ interface CalendarEvent {
     end: string;
     backgroundColor?: string;
     borderColor?: string;
-    extendedProps?: any;
+    extendedProps?: {
+        event_type?: string;
+        priority?: string;
+        [key: string]: unknown;
+    };
+}
+
+interface EventDropInfo {
+    eventId: string;
+    start: Date;
+    end: Date;
 }
 
 interface CalendarViewProps {
     events: CalendarEvent[];
-    onEventClick?: (event: any) => void;
+    onEventClick?: (event: CalendarEvent) => void;
     onDateClick?: (date: Date) => void;
-    onEventDrop?: (event: any) => void;
-    onEventResize?: (event: any) => void;
+    onEventDrop?: (event: EventDropInfo) => void;
+    onEventResize?: (event: EventDropInfo) => void;
     currentView?: string;
 }
 
@@ -46,19 +56,19 @@ export default function CalendarView({
         }
     };
 
-    const handleEventClick = (clickInfo: any) => {
+    const handleEventClick = (clickInfo: { event: CalendarEvent }) => {
         if (onEventClick) {
             onEventClick(clickInfo.event);
         }
     };
 
-    const handleDateClick = (dateInfo: any) => {
+    const handleDateClick = (dateInfo: { dateStr: string }) => {
         if (onDateClick) {
             onDateClick(new Date(dateInfo.dateStr));
         }
     };
 
-    const handleEventDrop = (dropInfo: any) => {
+    const handleEventDrop = (dropInfo: { event: { id: string; start: Date; end: Date } }) => {
         if (onEventDrop) {
             onEventDrop({
                 eventId: dropInfo.event.id,
@@ -68,7 +78,7 @@ export default function CalendarView({
         }
     };
 
-    const handleEventResize = (resizeInfo: any) => {
+    const handleEventResize = (resizeInfo: { event: { id: string; start: Date; end: Date } }) => {
         if (onEventResize) {
             onEventResize({
                 eventId: resizeInfo.event.id,

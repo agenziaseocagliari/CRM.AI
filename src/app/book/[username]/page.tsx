@@ -26,7 +26,7 @@ export default function BookingPageContainer() {
 
     const [profile, setProfile] = useState<Profile | null>(null);
     const [availability, setAvailability] = useState(null);
-    const [bookedSlots, setBookedSlots] = useState<any[]>([]);
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 

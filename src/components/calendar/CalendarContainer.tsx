@@ -13,6 +13,7 @@ export default function CalendarContainer() {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [currentView, setCurrentView] = useState('week');
 
     useEffect(() => {
         // Performance optimization: preload data
@@ -153,16 +154,73 @@ export default function CalendarContainer() {
                     <p className="text-gray-600 mt-1">Gestisci i tuoi appuntamenti e attività</p>
                 </div>
 
-                <button
-                    onClick={() => {
-                        setSelectedDate(new Date());
-                        setSelectedEvent(null);
-                        setShowModal(true);
-                    }}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
-                >
-                    <Plus className="w-5 h-5" />
-                    Nuovo Evento
+                <div className="flex items-center gap-4">
+                    {/* View Toggles */}
+                    <div className="flex items-center gap-2 bg-white rounded-lg shadow p-1">
+                        <button
+                            onClick={() => setCurrentView('month')}
+                            className={`px-4 py-2 rounded ${
+                                currentView === 'month' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            Mese
+                        </button>
+                        <button
+                            onClick={() => setCurrentView('week')}
+                            className={`px-4 py-2 rounded ${
+                                currentView === 'week' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            Settimana
+                        </button>
+                        <button
+                            onClick={() => setCurrentView('day')}
+                            className={`px-4 py-2 rounded ${
+                                currentView === 'day' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            Giorno
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            setSelectedDate(new Date());
+                            setSelectedEvent(null);
+                            setShowModal(true);
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Nuovo Evento
+                    </button>
+                </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
+                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
+                    <div className="text-2xl mb-2">📅</div>
+                    <div className="font-semibold">I Miei Eventi</div>
+                    <div className="text-sm text-gray-500">Visualizza tutti</div>
+                </button>
+                
+                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
+                    <div className="text-2xl mb-2">🔗</div>
+                    <div className="font-semibold">Link Prenotazione</div>
+                    <div className="text-sm text-gray-500">Condividi calendario</div>
+                </button>
+                
+                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
+                    <div className="text-2xl mb-2">👥</div>
+                    <div className="font-semibold">Team Scheduling</div>
+                    <div className="text-sm text-gray-500">Riunioni di gruppo</div>
+                </button>
+                
+                <button className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-left">
+                    <div className="text-2xl mb-2">📊</div>
+                    <div className="font-semibold">Analytics</div>
+                    <div className="text-sm text-gray-500">Statistiche eventi</div>
                 </button>
             </div>
 
@@ -196,6 +254,7 @@ export default function CalendarContainer() {
                     onEventClick={handleEventClick}
                     onEventDrop={handleUpdateEvent}
                     onEventResize={handleUpdateEvent}
+                    currentView={currentView}
                 />
             )}
 
@@ -208,8 +267,8 @@ export default function CalendarContainer() {
                     setSelectedDate(null);
                 }}
                 onSave={handleSaveEvent}
-                initialDate={selectedDate || undefined}
-                event={selectedEvent}
+                initialData={selectedEvent}
+                selectedDate={selectedDate || undefined}
             />
         </div>
     );

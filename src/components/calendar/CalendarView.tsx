@@ -23,6 +23,7 @@ interface CalendarViewProps {
     onDateClick?: (date: Date) => void;
     onEventDrop?: (event: any) => void;
     onEventResize?: (event: any) => void;
+    currentView?: string;
 }
 
 export default function CalendarView({
@@ -30,10 +31,20 @@ export default function CalendarView({
     onEventClick,
     onDateClick,
     onEventDrop,
-    onEventResize
+    onEventResize,
+    currentView = 'week'
 }: CalendarViewProps) {
     const calendarRef = useRef<FullCalendar>(null);
-    const [currentView, setCurrentView] = useState('timeGridWeek');
+    
+    // Map view names to FullCalendar view names
+    const getFullCalendarView = (view: string) => {
+        switch(view) {
+            case 'month': return 'dayGridMonth';
+            case 'week': return 'timeGridWeek'; 
+            case 'day': return 'timeGridDay';
+            default: return 'timeGridWeek';
+        }
+    };
 
     const handleEventClick = (clickInfo: any) => {
         if (onEventClick) {
@@ -72,11 +83,12 @@ export default function CalendarView({
             <FullCalendar
                 ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView={currentView}
+                initialView={getFullCalendarView(currentView)}
+                key={currentView} // Force re-render when view changes
                 headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: '' // Remove built-in view switcher since we have custom one
                 }}
                 events={events}
                 editable={true}

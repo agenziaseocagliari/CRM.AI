@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, Briefcase, Calendar, Clock, Link as LinkIcon, Save, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -27,45 +27,130 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
 
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchCurrentProfile();
+    }, []);
+
+    const fetchCurrentProfile = async () => {
+        try {
+            console.log('Fetching current profile...');
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session?.user?.id) {
+                console.log('No user session found');
+                setLoading(false);
+                return;
+            }
+
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 = row not found
+                console.error('Error fetching profile:', error);
+            }
+
+            if (profile) {
+                console.log('Profile found:', profile);
+                setFormData({
+                    full_name: profile.full_name || '',
+                    job_title: profile.job_title || '',
+                    company: profile.company || '',
+                    bio: profile.bio || '',
+                    booking_url: profile.username || userId?.substring(0, 8) || '',
+                    default_duration: profile.default_duration || 30,
+                    buffer_before: profile.buffer_before || 0,
+                    buffer_after: profile.buffer_after || 0,
+                    days_ahead: profile.days_ahead || 30,
+                    event_type: profile.event_type || 'Consulenza Strategica',
+                    meeting_type: profile.meeting_type || 'Video chiamata',
+                });
+            } else {
+                console.log('No profile found, using defaults');
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSave = async () => {
         setSaving(true);
         try {
+            console.log('Starting profile save with data:', formData);
+            
             // Save profile to Supabase
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.user?.id) throw new Error('Utente non autenticato');
 
-            const { error } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: session.user.id,
-                    full_name: formData.full_name,
-                    job_title: formData.job_title,
-                    company: formData.company,
-                    bio: formData.bio,
-                    username: formData.booking_url,
-                    default_duration: formData.default_duration,
-                    buffer_before: formData.buffer_before,
-                    buffer_after: formData.buffer_after,
-                    days_ahead: formData.days_ahead,
-                    event_type: formData.event_type,
-                    meeting_type: formData.meeting_type,
-                    updated_at: new Date().toISOString(),
-                });
+            console.log('User session found:', session.user.id);
 
-            if (error) throw error;
+            // Prepare the data for upsert
+            const profileData = {
+                id: session.user.id,
+                full_name: formData.full_name,
+                job_title: formData.job_title,
+                company: formData.company,
+                bio: formData.bio,
+                username: formData.booking_url,
+                updated_at: new Date().toISOString(),
+            };
+
+            console.log('Upserting profile data:', profileData);
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .upsert(profileData, {
+                    onConflict: 'id'
+                })
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Supabase error details:', error);
+                throw new Error(`Database error: ${error.message} (Code: ${error.code})`);
+            }
+
+            console.log('Profile saved successfully:', data);
 
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Save error:', error);
-            alert('Errore durante il salvataggio');
+            
+            // Show detailed error to user
+            let errorMessage = 'Errore durante il salvataggio';
+            if (error.message) {
+                errorMessage += `:\n${error.message}`;
+            }
+            if (error.code) {
+                errorMessage += `\nCodice errore: ${error.code}`;
+            }
+            errorMessage += '\n\nControlla la console per maggiori dettagli.';
+            
+            alert(errorMessage);
         } finally {
             setSaving(false);
         }
     };
 
     const bookingUrl = `${window.location.origin}/book/${formData.booking_url}`;
+
+    if (loading) {
+        return (
+            <div className="space-y-8">
+                <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-2">Caricamento profilo...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">

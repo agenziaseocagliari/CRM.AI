@@ -177,7 +177,4 @@ WHERE email IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_contacts_org_created 
 ON contacts (organization_id, created_at DESC);
 
--- Grant permissions
-GRANT EXECUTE ON FUNCTION normalize_phone(TEXT) TO authenticated;
-GRANT EXECUTE ON FUNCTION name_similarity(TEXT, TEXT) TO authenticated;
-GRANT EXECUTE ON FUNCTION find_duplicates(TEXT, TEXT, TEXT, UUID, UUID) TO authenticated;
+-- Functions are accessible via service role

@@ -21,19 +21,69 @@ interface CSVUploadButtonProps {
   onUploadSuccess?: () => void;
 }
 
+interface UploadResult {
+  success: boolean;
+  import_id?: string;
+  field_mappings?: Array<{
+    csv_field: string;
+    detected_type: string;
+    confidence: number;
+    db_field: string | null;
+  }>;
+  preview_contacts?: Record<string, string>[];
+  error?: string;
+}
+
+interface DuplicateApiResponse {
+  results: Array<{
+    index: number;
+    contact: Record<string, string>;
+    duplicates: Array<{
+      contact_id: string;
+      match_type: string;
+      confidence: number;
+      recommended_action: string;
+      email?: string;
+      phone?: string;
+      name?: string;
+      created_at?: string;
+    }>;
+    has_duplicates: boolean;
+  }>;
+  stats: {
+    total_checked: number;
+    duplicates_found: number;
+    exact_matches: number;
+    fuzzy_matches: number;
+    unique_contacts: number;
+  };
+}
+
+interface ImportResult {
+  success: boolean;
+  imported_count: number;
+  results?: {
+    imported: number;
+    skipped: number;
+    merged: number;
+    replaced: number;
+    errors: number;
+  };
+}
+
 type WorkflowStep = 'upload' | 'mapping' | 'duplicates' | 'importing' | 'complete';
 
-export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProps) {
+export default function CSVUploadButton({ onUploadSuccess: _onUploadSuccess }: CSVUploadButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   
   // Step data
-  const [uploadResult, setUploadResult] = useState<any>(null);
-  const [mappingResult, setMappingResult] = useState<any>(null);
-  const [duplicateResults, setDuplicateResults] = useState<any>(null);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [mappingResult, setMappingResult] = useState<FieldMappingType[] | null>(null);
+  const [duplicateResults, setDuplicateResults] = useState<DuplicateApiResponse | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   // Step 1: Upload CSV
   const handleUpload = async () => {
@@ -67,7 +117,9 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
   };
 
   // Step 2: Save field mappings and proceed to duplicate check
-  const handleMappingSave = async (mappings: any[]) => {
+  const handleMappingSave = async (mappings: FieldMappingType[]) => {
+    if (!uploadResult) return;
+    
     setLoading(true);
     setCurrentStep('duplicates');
     
@@ -75,11 +127,11 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
       setMappingResult(mappings);
       
       // Prepare contacts from CSV with mappings applied
-      const contacts = uploadResult.preview_contacts?.map((row: any) => {
-        const contact: any = {};
-        mappings.forEach((mapping: any) => {
+      const contacts = uploadResult.preview_contacts?.map((row: Record<string, string>) => {
+        const contact: Record<string, string> = {};
+        mappings.forEach((mapping: FieldMappingType) => {
           if (mapping.dbField) {
-            contact[mapping.dbField] = row[mapping.csvColumn] || null;
+            contact[mapping.dbField] = row[mapping.csvColumn] || '';
           }
         });
         return contact;
@@ -115,6 +167,8 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
 
   // Step 3: Resolve duplicates and import
   const handleDuplicateResolve = async (resolutions: Record<number, string>) => {
+    if (!uploadResult || !mappingResult) return;
+    
     setLoading(true);
     setCurrentStep('importing');
     
@@ -214,9 +268,15 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
         <FieldMappingModal
           isOpen={true}
           onClose={() => setIsOpen(false)}
-          csvHeaders={uploadResult.field_mappings?.map((fm: any) => fm.csv_field) || []}
+          csvHeaders={uploadResult.field_mappings?.map((fm) => fm.csv_field) || []}
           previewData={uploadResult.preview_contacts || []}
-          detectedMappings={uploadResult.field_mappings || []}
+          detectedMappings={uploadResult.field_mappings?.map((fm) => ({
+            csvColumn: fm.csv_field,
+            dbField: fm.db_field,
+            confidence: fm.confidence,
+            sample: [],
+            validation: { valid: true, errors: [], warnings: [] }
+          })) || []}
           onSave={handleMappingSave}
         />
       )}
@@ -226,8 +286,23 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
         <DuplicateResolutionModal
           isOpen={true}
           onClose={() => setIsOpen(false)}
-          duplicateResults={duplicateResults.results || []}
-          stats={duplicateResults.stats || {}}
+          duplicateResults={duplicateResults.results?.map((result: any) => ({
+            index: result.index,
+            contact: result.contact,
+            duplicates: result.duplicates?.map((dup: any) => ({
+              contact_id: dup.contact_id,
+              match_type: dup.match_type as 'email' | 'phone' | 'name',
+              confidence: dup.confidence,
+              email: dup.email || '',
+              phone: dup.phone || '',
+              name: dup.name || 'Unknown',
+              created_at: dup.created_at || new Date().toISOString(),
+              recommended_action: dup.recommended_action as 'skip' | 'merge' | 'replace' | 'keep_both'
+            })) || [],
+            has_duplicates: result.has_duplicates,
+            recommended_action: result.duplicates?.length > 0 ? 'merge' : 'import'
+          })) || []}
+          stats={duplicateResults.stats || { total_checked: 0, duplicates_found: 0, exact_matches: 0, fuzzy_matches: 0, unique_contacts: 0 }}
           onResolve={handleDuplicateResolve}
         />
       )}

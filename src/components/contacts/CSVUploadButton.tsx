@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import FieldMappingModal, { type FieldMapping as FieldMappingType } from './FieldMappingModal';
 
 // Simple icon components to avoid external dependencies
 const UploadIcon = () => (
@@ -64,6 +65,8 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CSVUploadResult | null>(null);
+  const [showFieldMapping, setShowFieldMapping] = useState(false);
+  const [uploadResult, setUploadResult] = useState<CSVUploadResult | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -93,16 +96,10 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
       setResult(data);
 
       if (data.success) {
-        // Call success callback if provided
-        if (onUploadSuccess) {
-          onUploadSuccess();
-        }
-        
-        // Auto-close modal and refresh after success
-        setTimeout(() => {
-          setIsOpen(false);
-          window.location.reload();
-        }, 3000);
+        // Store upload result and show field mapping
+        setUploadResult(data);
+        setShowFieldMapping(true);
+        // Don't auto-refresh yet - wait for field mapping completion
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Upload failed';
@@ -119,11 +116,33 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
     setFile(null);
     setResult(null);
     setLoading(false);
+    setUploadResult(null);
+    setShowFieldMapping(false);
   };
 
   const handleClose = () => {
     setIsOpen(false);
     resetModal();
+  };
+
+  const handleMappingSave = async (mappings: FieldMappingType[]) => {
+    try {
+      // For now, we'll just proceed with the success flow
+      // In a full implementation, you would send mappings to a backend endpoint
+      console.log('Field mappings saved:', mappings);
+      
+      // Call success callback if provided
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+      
+      // Close everything and refresh
+      setShowFieldMapping(false);
+      setIsOpen(false);
+      window.location.reload();
+    } catch (error) {
+      console.error('Field mapping save error:', error);
+    }
   };
 
   return (
@@ -326,14 +345,12 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
 
                   <div className="text-center">
                     <p className="text-sm text-gray-600 mb-2">
-                      🔄 La pagina verrà ricaricata automaticamente tra 3 secondi...
+                      🎯 Procediamo alla mappatura dei campi per ottimizzare l'importazione...
                     </p>
-                    <button
-                      onClick={handleClose}
-                      className="text-sm text-blue-600 hover:text-blue-700 underline"
-                    >
-                      Chiudi ora
-                    </button>
+                    <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
+                      <span className="animate-pulse">⏳</span>
+                      Caricamento interfaccia di mappatura
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -379,6 +396,30 @@ export default function CSVUploadButton({ onUploadSuccess }: CSVUploadButtonProp
             </div>
           </div>
         </div>
+      )}
+
+      {/* Field Mapping Modal */}
+      {showFieldMapping && uploadResult && (
+        <FieldMappingModal
+          isOpen={showFieldMapping}
+          onClose={() => {
+            setShowFieldMapping(false);
+            setIsOpen(false);
+          }}
+          csvHeaders={uploadResult.field_mappings?.map(fm => fm.csv_field) || []}
+          previewData={uploadResult.preview_contacts || []}
+          detectedMappings={uploadResult.field_mappings?.map((mapping: FieldMapping) => ({
+            csvColumn: mapping.csv_field,
+            dbField: mapping.db_field,
+            confidence: mapping.confidence,
+            sample: uploadResult.preview_contacts
+              ?.slice(0, 3)
+              .map((row: any) => row[mapping.csv_field])
+              .filter(Boolean) || [],
+            validation: { valid: true, errors: [], warnings: [] }
+          })) || []}
+          onSave={handleMappingSave}
+        />
       )}
     </>
   );

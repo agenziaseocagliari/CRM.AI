@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Clock, Plus, RotateCcw, Settings, Target, Users, X } from 'lucide-react';
+import { Plus, Users, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface TeamSchedulingModalProps {
@@ -54,9 +54,9 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                             <Users className="w-10 h-10 text-blue-600 mb-3" />
                             <h3 className="font-semibold text-lg mb-2">Come Funziona</h3>
                             <p className="text-gray-600 text-sm">
-                                1. Scegli la modalità (Collettiva o Round Robin)<br/>
-                                2. Aggiungi i membri del team<br/>
-                                3. Il sistema verificherà automaticamente le disponibilità<br/>
+                                1. Scegli la modalità (Collettiva o Round Robin)<br />
+                                2. Aggiungi i membri del team<br />
+                                3. Il sistema verificherà automaticamente le disponibilità<br />
                                 4. I clienti vedranno solo gli orari quando il team è disponibile
                             </p>
                         </div>
@@ -65,26 +65,24 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                         <div>
                             <label className="block font-semibold mb-3">Seleziona Modalità</label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <button 
+                                <button
                                     onClick={() => setSelectedMode('collective')}
-                                    className={`p-4 border-2 rounded-lg hover:border-blue-500 transition-all text-left ${
-                                        selectedMode === 'collective' 
-                                            ? 'border-blue-500 bg-blue-50' 
+                                    className={`p-4 border-2 rounded-lg hover:border-blue-500 transition-all text-left ${selectedMode === 'collective'
+                                            ? 'border-blue-500 bg-blue-50'
                                             : 'border-gray-200'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="text-3xl mb-3">🎯</div>
                                     <h4 className="font-semibold mb-2">Collettiva</h4>
                                     <p className="text-sm text-gray-600">Tutti i membri devono essere disponibili contemporaneamente</p>
                                 </button>
 
-                                <button 
+                                <button
                                     onClick={() => setSelectedMode('round-robin')}
-                                    className={`p-4 border-2 rounded-lg hover:border-blue-500 transition-all text-left ${
-                                        selectedMode === 'round-robin' 
-                                            ? 'border-blue-500 bg-blue-50' 
+                                    className={`p-4 border-2 rounded-lg hover:border-blue-500 transition-all text-left ${selectedMode === 'round-robin'
+                                            ? 'border-blue-500 bg-blue-50'
                                             : 'border-gray-200'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="text-3xl mb-3">🔄</div>
                                     <h4 className="font-semibold mb-2">Round Robin</h4>

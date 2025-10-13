@@ -145,10 +145,10 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                                     <div key={type} className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-3 h-3 rounded-full ${type === 'meeting' ? 'bg-blue-500' :
-                                                    type === 'call' ? 'bg-green-500' :
-                                                        type === 'task' ? 'bg-purple-500' :
-                                                            type === 'appointment' ? 'bg-orange-500' :
-                                                                'bg-gray-500'
+                                                type === 'call' ? 'bg-green-500' :
+                                                    type === 'task' ? 'bg-purple-500' :
+                                                        type === 'appointment' ? 'bg-orange-500' :
+                                                            'bg-gray-500'
                                                 }`}></div>
                                             <span className="text-gray-700 capitalize">
                                                 {type === 'meeting' ? 'Riunioni' :
@@ -176,21 +176,21 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                         <div className="grid grid-cols-4 gap-4">
                             {Object.entries(priorities).map(([priority, count]) => (
                                 <div key={priority} className={`p-4 rounded-lg ${priority === 'urgent' ? 'bg-red-50 border border-red-200' :
-                                        priority === 'high' ? 'bg-orange-50 border border-orange-200' :
-                                            priority === 'medium' ? 'bg-blue-50 border border-blue-200' :
-                                                'bg-gray-50 border border-gray-200'
+                                    priority === 'high' ? 'bg-orange-50 border border-orange-200' :
+                                        priority === 'medium' ? 'bg-blue-50 border border-blue-200' :
+                                            'bg-gray-50 border border-gray-200'
                                     }`}>
                                     <div className={`text-2xl font-bold ${priority === 'urgent' ? 'text-red-600' :
-                                            priority === 'high' ? 'text-orange-600' :
-                                                priority === 'medium' ? 'text-blue-600' :
-                                                    'text-gray-600'
+                                        priority === 'high' ? 'text-orange-600' :
+                                            priority === 'medium' ? 'text-blue-600' :
+                                                'text-gray-600'
                                         }`}>
                                         {count as number}
                                     </div>
                                     <div className={`text-sm ${priority === 'urgent' ? 'text-red-600' :
-                                            priority === 'high' ? 'text-orange-600' :
-                                                priority === 'medium' ? 'text-blue-600' :
-                                                    'text-gray-600'
+                                        priority === 'high' ? 'text-orange-600' :
+                                            priority === 'medium' ? 'text-blue-600' :
+                                                'text-gray-600'
                                         }`}>
                                         {priority === 'urgent' ? 'Urgenti' :
                                             priority === 'high' ? 'Alta' :

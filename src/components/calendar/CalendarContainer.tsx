@@ -114,7 +114,7 @@ export default function CalendarContainer() {
                 notes: eventData.notes,
                 reminder_minutes: eventData.reminder_minutes
             };
-            
+
             const newEvent = await CalendarService.createEvent(createData);
             setEvents(prev => [...prev, newEvent]);
         } catch (error) {

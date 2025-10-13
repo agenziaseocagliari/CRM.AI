@@ -14,9 +14,9 @@ import { HomePage } from './components/HomePage';
 import { Login } from './components/Login';
 import { MainLayout } from './components/MainLayout';
 // import { PrivacyPolicy } from './components/PrivacyPolicy'; // Moved to .bak
+import PublicBookingPage from './components/PublicBookingPage';
 import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
-import PublicBookingPage from './components/PublicBookingPage';
 // import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
 
@@ -30,6 +30,7 @@ import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
 import { Opportunities } from './components/Opportunities';
 import { Settings } from './components/Settings';
+import BookingSettings from './components/settings/BookingSettings';
 import { TestComponent } from './components/TestComponent';
 import { UniversalCreditDashboard } from './components/universal/UniversalCreditDashboard';
 import WhatsAppModule from './components/WhatsAppModule';
@@ -267,7 +268,7 @@ const App: React.FC = () => {
 
         <Route path="/form/:formId" element={<PublicForm />} />
         <Route path="/pricing" element={<PublicPricingPage />} />
-        
+
         {/* Public Booking Page */}
         <Route path="/book/:username" element={<PublicBookingPage />} />
 
@@ -301,6 +302,7 @@ const App: React.FC = () => {
           <Route path="universal-credits" element={<UniversalCreditDashboard />} />
           <Route path="store" element={<ExtraCreditsStore />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="settings/booking" element={<BookingSettings />} />
         </Route>
 
         {/* Super Admin Routes - RIATTIVATE */}

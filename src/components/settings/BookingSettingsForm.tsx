@@ -105,9 +105,17 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.user?.id) throw new Error('Utente non autenticato');
 
+            // Defensive check - ensure user has email in session (from auth system)
+            const userEmail = session.user.email;
             console.log('User session found:', session.user.id);
+            console.log('User email from auth:', userEmail);
+            
+            if (!userEmail) {
+                console.warn('WARNING: User email not found in session');
+                throw new Error('User email not found in session - authentication incomplete');
+            }
 
-            // Prepare the data for upsert
+            // Prepare the data for upsert (NEVER include email - it's managed by auth system)
             const profileData = {
                 id: session.user.id,
                 full_name: formData.full_name,
@@ -115,6 +123,12 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
                 company: formData.company,
                 bio: formData.bio,
                 username: formData.booking_url,
+                default_duration: formData.default_duration,
+                buffer_before: formData.buffer_before,
+                buffer_after: formData.buffer_after,
+                days_ahead: formData.days_ahead,
+                event_type: formData.event_type,
+                meeting_type: formData.meeting_type,
                 updated_at: new Date().toISOString(),
             };
 

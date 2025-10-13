@@ -22,7 +22,7 @@ interface BookingLinkModalProps {
     userId?: string;
 }
 
-export default function BookingLinkModal({ isOpen, onClose, _userId }: BookingLinkModalProps) {
+export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalProps) {
     const navigate = useNavigate();
     const [copied, setCopied] = useState(false);
     const [profile, setProfile] = useState<Profile | null>(null);

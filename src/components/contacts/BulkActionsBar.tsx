@@ -5,6 +5,7 @@ import { Trash2, Download, Tag, UserPlus, X, AlertTriangle, RotateCcw } from 'lu
 import { toast } from 'react-hot-toast';
 import { BulkOperationsService } from '../../services/bulkOperations';
 import { Contact } from '../../types';
+import ExportButton from './ExportButton';
 
 interface BulkActionsBarProps {
     selectedCount: number;
@@ -112,11 +113,8 @@ export default function BulkActionsBar({
                     break;
 
                 case 'export':
-                    await BulkOperationsService.exportContacts(selectedContacts);
-                    toast.success(
-                        `Esportati ${selectedCount} ${selectedCount === 1 ? 'contatto' : 'contatti'}`,
-                        { id: toastId }
-                    );
+                    // Export handled by ExportButton component
+                    toast.success('Funzione di esportazione spostata nel pulsante dedicato', { id: toastId });
                     break;
 
                 case 'assign':
@@ -197,13 +195,10 @@ export default function BulkActionsBar({
                                 Elimina
                             </button>
 
-                            <button
-                                onClick={() => handleAction('export')}
-                                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-blue-300 text-blue-700 rounded hover:bg-blue-50 transition-colors"
-                            >
-                                <Download className="w-4 h-4" />
-                                Esporta CSV
-                            </button>
+                            <ExportButton 
+                                selectedIds={selectedContacts.map(c => c.id)} 
+                                variant="bulk" 
+                            />
 
                             <button
                                 onClick={() => handleAction('tag')}

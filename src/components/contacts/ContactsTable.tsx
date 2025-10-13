@@ -20,6 +20,7 @@ import { Contact } from '../../types';
 import { LeadScoreBadge } from '../ui/LeadScoreBadge';
 import CSVUploadButton from './CSVUploadButton';
 import BulkActionsBar from './BulkActionsBar';
+import ExportButton from './ExportButton';
 
 interface ContactsTableProps {
     contacts: Contact[];
@@ -32,6 +33,7 @@ interface ContactsTableProps {
     onAddContact: () => void;
     onUploadSuccess: () => void;
     onBulkOperationComplete?: () => void;
+    currentFilters?: any;
 }
 
 type SortField = 'name' | 'email' | 'phone' | 'company' | 'created_at' | 'lead_score';
@@ -47,7 +49,8 @@ export default function ContactsTable({
     onViewEvents,
     onAddContact,
     onUploadSuccess,
-    onBulkOperationComplete
+    onBulkOperationComplete,
+    currentFilters
 }: ContactsTableProps) {
     const navigate = useNavigate();
 
@@ -153,6 +156,12 @@ export default function ContactsTable({
                 </div>
 
                 <div className="flex gap-3">
+                    <ExportButton 
+                        selectedIds={selectedIds}
+                        filters={currentFilters}
+                        variant="header"
+                        contactCount={sortedContacts.length}
+                    />
                     <button
                         onClick={onAddContact}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

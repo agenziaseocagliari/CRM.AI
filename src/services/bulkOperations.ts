@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
+import { ExportService } from './exportService';
 
 export interface BulkOperationResult {
     success: boolean;
@@ -81,38 +82,12 @@ export class BulkOperationsService {
     }
 
     /**
-     * Export selected contacts to CSV format
+     * Export selected contacts to CSV format using the enhanced ExportService
      */
     static async exportContacts(contacts: Contact[]): Promise<void> {
         try {
-            // Prepare CSV data
-            const headers = ['Nome', 'Email', 'Telefono', 'Azienda', 'Lead Score', 'Data Creazione'];
-            const csvContent = [
-                headers.join(','),
-                ...contacts.map(contact => [
-                    `"${contact.name || ''}"`,
-                    `"${contact.email || ''}"`,
-                    `"${contact.phone || ''}"`,
-                    `"${contact.company || ''}"`,
-                    contact.lead_score || 0,
-                    contact.created_at ? new Date(contact.created_at).toLocaleDateString('it-IT') : ''
-                ].join(','))
-            ].join('\n');
-
-            // Create and download file
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `contatti_export_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            URL.revokeObjectURL(url);
+            const contactIds = contacts.map(c => c.id);
+            await ExportService.exportSelectedContacts(contactIds);
         } catch (error) {
             throw new Error('Errore durante l\'esportazione: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
         }

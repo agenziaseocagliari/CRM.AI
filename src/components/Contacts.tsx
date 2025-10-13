@@ -389,6 +389,7 @@ export const Contacts: React.FC = () => {
                 onAddContact={handleOpenAddModal}
                 onUploadSuccess={refetch}
                 onBulkOperationComplete={refetch}
+                currentFilters={{ ...filters, searchQuery: searchTerm }}
             />
 
             {/* Modal Aggiungi/Modifica Contatto */}

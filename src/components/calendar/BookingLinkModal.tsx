@@ -52,8 +52,8 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
                     setProfile({
                         full_name: 'Nome Non Impostato',
                         username: session.user.id.substring(0, 8),
-                        bio: null,
-                        job_title: null
+                        bio: undefined,
+                        job_title: undefined
                     });
                 }
             }
@@ -63,8 +63,8 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
             setProfile({
                 full_name: 'Nome Non Impostato',
                 username: 'user-' + Date.now().toString(36),
-                bio: null,
-                job_title: null
+                bio: undefined,
+                job_title: undefined
             });
             setLoading(false);
         }

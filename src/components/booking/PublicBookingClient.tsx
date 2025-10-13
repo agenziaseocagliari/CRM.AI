@@ -16,6 +16,7 @@ interface Profile {
   event_type?: string;
   meeting_type?: string;
   default_duration?: number;
+  event_duration?: number;
 }
 
 interface PublicBookingClientProps {
@@ -113,14 +114,14 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
         <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {profile.full_name?.charAt(0) || 'U'}
+              {profile?.full_name?.charAt(0) || 'U'}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {profile.full_name}
+                {profile?.full_name || 'Profilo utente'}
               </h1>
               <p className="text-gray-600">
-                {profile.job_title} {profile.company && `@ ${profile.company}`}
+                {profile?.job_title} {profile?.company && `@ ${profile.company}`}
               </p>
             </div>
           </div>
@@ -135,25 +136,25 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                {profile.event_type}
+                {profile?.event_type || 'Consulenza'}
               </h2>
               
               <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-3 text-gray-700">
                   <Clock className="w-5 h-5 text-blue-600" />
-                  <span>{profile.event_duration} minuti</span>
+                  <span>{profile?.event_duration || profile?.default_duration || 30} minuti</span>
                 </div>
                 
                 <div className="flex items-center gap-3 text-gray-700">
                   <Video className="w-5 h-5 text-blue-600" />
-                  <span>{profile.meeting_type}</span>
+                  <span>{profile?.meeting_type || 'Video chiamata'}</span>
                 </div>
               </div>
 
               <div className="border-t pt-4">
                 <h3 className="font-semibold text-gray-900 mb-2">Cosa Aspettarsi</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  {profile.bio}
+                  {profile?.bio || 'Consulenza professionale personalizzata.'}
                 </p>
               </div>
 
@@ -413,7 +414,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-gray-500" />
-                          <span>Con: <strong>{profile.full_name}</strong></span>
+                          <span>Con: <strong>{profile?.full_name || 'Profilo utente'}</strong></span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-500" />

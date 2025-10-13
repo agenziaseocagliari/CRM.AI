@@ -68,12 +68,12 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                 <div className="max-w-4xl mx-auto px-6 py-8">
                     <div className="text-center">
                         <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-                            {profile.full_name?.charAt(0) || 'U'}
+                            {profile?.full_name?.charAt(0) || 'U'}
                         </div>
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                            {profile.full_name}
+                            {profile?.full_name || 'Profilo utente'}
                         </h1>
-                        <p className="text-gray-600">{profile.bio}</p>
+                        <p className="text-gray-600">{profile?.bio || 'Consulenza professionale'}</p>
                     </div>
                 </div>
             </div>
@@ -284,7 +284,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                                     <div className="space-y-2 text-sm">
                                         <div className="flex items-center gap-2">
                                             <User className="w-4 h-4 text-gray-500" />
-                                            <span>Con: <strong>{profile.full_name}</strong></span>
+                                            <span>Con: <strong>{profile?.full_name || 'Profilo utente'}</strong></span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Calendar className="w-4 h-4 text-gray-500" />

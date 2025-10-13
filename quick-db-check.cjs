@@ -1,4 +1,7 @@
 // quick-db-check.cjs
+/* eslint-env node */
+/* eslint-disable no-undef */
+/* eslint-disable no-console */
 const fetch = require('node-fetch');
 
 async function checkDatabase() {

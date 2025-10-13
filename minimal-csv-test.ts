@@ -2,9 +2,6 @@
  * Minimal CSV Upload Test Function
  */
 
-// Import Supabase client for database integration
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 // CORS Headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

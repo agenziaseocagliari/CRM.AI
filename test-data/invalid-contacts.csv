@@ -1,0 +1,7 @@
+Email,Name,Phone
+invalid-email,Bob,123
+not-an-email,Alice,
+@example.com,Charlie,555-0000
+valid@test.com,,short
+,Valid Name,555-1234567
+badformat@,Invalid User,abc-def-ghij

@@ -1,0 +1,5 @@
+Email,Name,Phone,Company,Notes
+test@example.com,"Smith, John",555-1234,"Company, Inc","Has, commas"
+user@domain.org,Jane O'Brien,+1-555-9876,Tech Corp,Special char's
+"quoted@email.com","Last, First",(555) 123-4567,"Quoted ""Company""","Notes with ""quotes"""
+normal@test.com,Regular Name,555.987.6543,Normal Company,Regular notes

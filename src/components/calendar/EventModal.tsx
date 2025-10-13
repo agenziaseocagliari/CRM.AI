@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, Calendar, Clock, MapPin, Users, Link as LinkIcon, Bell } from 'lucide-react';
+import RecurringEventSettings from './RecurringEventSettings';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -56,6 +57,20 @@ export default function EventModal({
     color: event?.color || '#3b82f6'
   });
 
+  // Recurring event settings
+  const [isRecurring, setIsRecurring] = useState(event?.is_recurring || false);
+  const [recurringSettings, setRecurringSettings] = useState<{
+    frequency: 'daily' | 'weekly' | 'monthly';
+    interval: number;
+    daysOfWeek: number[];
+    endDate?: string;
+  }>({
+    frequency: (event?.recurring_frequency as 'daily' | 'weekly' | 'monthly') || 'weekly',
+    interval: event?.recurring_interval || 1,
+    daysOfWeek: event?.recurring_days_of_week || [],
+    endDate: event?.recurring_end_date || undefined
+  });
+
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +78,16 @@ export default function EventModal({
     setIsSaving(true);
 
     try {
-      await onSave(formData);
+      const eventData = {
+        ...formData,
+        is_recurring: isRecurring,
+        recurring_frequency: isRecurring ? recurringSettings.frequency : null,
+        recurring_interval: isRecurring ? recurringSettings.interval : null,
+        recurring_days_of_week: isRecurring ? recurringSettings.daysOfWeek : null,
+        recurring_end_date: isRecurring ? recurringSettings.endDate : null
+      };
+      
+      await onSave(eventData);
       onClose();
     } catch (error) {
       console.error('Save error:', error);
@@ -282,6 +306,17 @@ export default function EventModal({
               placeholder="Note visibili solo a te..."
             />
           </div>
+
+          {/* Recurring Event Settings */}
+          <RecurringEventSettings
+            isRecurring={isRecurring}
+            onToggle={setIsRecurring}
+            settings={recurringSettings}
+            onSettingsChange={(settings) => setRecurringSettings({
+              ...settings,
+              daysOfWeek: settings.daysOfWeek || []
+            })}
+          />
 
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">

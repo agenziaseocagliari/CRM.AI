@@ -80,7 +80,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    let content = cleanText(await file.text());
+    let content = await file.text();
+    
+    // 🐛 FIX: Don't use cleanText on full CSV content - it removes line breaks!
+    // Only clean individual cells, not the entire file
     
     if (content.charCodeAt(0) === 0xFEFF) {
       content = content.substring(1);
@@ -93,7 +96,11 @@ Deno.serve(async (req) => {
         strip: true,
         lazyQuotes: true
       });
+      
+      console.log('✅ CSV parsed successfully:', rows.length, 'rows');
+      
     } catch (error) {
+      console.log('⚠️ Fallback parsing for malformed CSV');
       const lines = content.split(/\r?\n/).filter(line => line.trim());
       rows = lines.map(line => {
         const cells: string[] = [];
@@ -115,10 +122,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    console.log('CSV parsing started - file:', file.name, 'size:', file.size);
+
     if (rows.length < 2) {
+      console.log('❌ REJECTED: Less than 2 rows total');
       return new Response(JSON.stringify({
         success: false,
-        error: 'Insufficient data'
+        error: 'No valid data rows found',
+        details: {
+          totalRows: rows.length,
+          headers: rows[0] || null,
+          reason: 'CSV needs at least header + 1 data row'
+        },
+        debug: {
+          rawContentLength: content.length,
+          contentPreview: content.substring(0, 100)
+        }
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -126,9 +145,44 @@ Deno.serve(async (req) => {
     }
 
     const headers = rows[0];
-    const dataRows = rows.slice(1).filter(row => 
-      row.some(cell => cleanText(cell).length > 0)
-    );
+    
+    // More permissive filtering with debug info
+    const dataRows = rows.slice(1).filter(row => {
+      const hasContent = row.some(cell => {
+        const cleaned = cleanText(cell);
+        return cleaned.length > 0;
+      });
+      return hasContent;
+    });
+
+    console.log('Data validation:', {
+      totalRows: rows.length,
+      dataRows: dataRows.length,
+      emptyRowsFiltered: (rows.length - 1) - dataRows.length
+    });
+
+    // Better error if no data after filtering
+    if (dataRows.length === 0) {
+      console.log('❌ REJECTED: No data rows after filtering');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'All data rows appear empty',
+        details: {
+          totalRows: rows.length,
+          headers: headers,
+          dataRowsParsed: rows.length - 1,
+          dataRowsValid: dataRows.length,
+          reason: 'All data rows were filtered out as empty'
+        },
+        hint: 'Check that your CSV has non-empty data below the header row',
+        debug: {
+          firstFewRows: rows.slice(0, 3)
+        }
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     const fieldMappings = headers.map(header => {
       const detection = detectFieldType(header);
@@ -184,6 +238,8 @@ Deno.serve(async (req) => {
       .single();
 
     const processingTime = Date.now() - startTime;
+
+    console.log('✅ CSV processing complete:', processedRows.length, 'contacts processed in', processingTime + 'ms');
 
     return new Response(JSON.stringify({
       success: true,

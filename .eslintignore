@@ -54,3 +54,16 @@ coverage/
 # Temporary files
 .tmp/
 temp/
+
+# Test and debug files (excluded from linting)
+test-*.cjs
+test-*.js
+debug-*.cjs
+debug-*.js
+simple-*.cjs
+
+# Specific debug and test files
+debug-503-error.cjs
+debug-503-error.js
+simple-csv-test.cjs
+test-csv-upload-real.cjs

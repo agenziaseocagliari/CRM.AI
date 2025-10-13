@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* global fetch, console */
 // Complete test of CSV parser with field detection and validation
 const fs = require('fs');
 const FormData = require('form-data');

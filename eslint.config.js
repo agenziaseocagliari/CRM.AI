@@ -24,7 +24,11 @@ export default [
       '**/LEVEL5_*.{js,cjs}',
       '**/execute-*.{js,cjs}',
       'test-auth-connection.js',
-      '**/*generate-form-fields*.ts'
+      '**/*generate-form-fields*.ts',
+      // Test and debug files
+      'test-*.{js,cjs}',
+      'debug-*.{js,cjs}', 
+      'simple-*.{js,cjs}'
     ]
   },
   // JavaScript files configuration

@@ -1,0 +1,6 @@
+Email,Full Name,Phone Number,Company Name,Notes
+john.smith@example.com,John Smith,+1-555-0101,Acme Corp,Interested in premium plan
+jane.doe@company.org,Jane Doe,(555) 123-4567,TechStart Inc,Trial user - follow up
+bob.jones@email.com,Bob Jones,5551234567,,Requested callback
+alice.wonder@business.net,Alice Wonder,555-999-8888,Wonder Co,VIP client
+invalid-email,Test User,123,,Short phone number

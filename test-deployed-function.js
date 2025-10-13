@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* global FormData, Blob */
 // Test the deployed Edge Function
 const FUNCTION_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co/functions/v1/parse-csv-upload';
 

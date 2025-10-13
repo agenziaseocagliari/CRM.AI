@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Copy, ExternalLink, Mail, MessageCircle, Share2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface BookingLinkModalProps {
     isOpen: boolean;
@@ -9,12 +9,33 @@ interface BookingLinkModalProps {
     userId?: string;
 }
 
-export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }: BookingLinkModalProps) {
+export default function BookingLinkModal({ isOpen, onClose, userId }: BookingLinkModalProps) {
     const [copied, setCopied] = useState(false);
+    const [username, setUsername] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchUserProfile();
+        }
+    }, [isOpen]);
+
+    const fetchUserProfile = async () => {
+        try {
+            const response = await fetch('/api/user/profile');
+            const data = await response.json();
+            setUsername(data.username || `user-${Date.now().toString(36)}`);
+            setLoading(false);
+        } catch (error) {
+            // Fallback to timestamp-based username
+            setUsername(`user-${Date.now().toString(36)}`);
+            setLoading(false);
+        }
+    };
 
     if (!isOpen) return null;
 
-    const bookingUrl = `${window.location.origin}/book/${userId}`;
+    const bookingUrl = `${window.location.origin}/book/${username}`;
 
     const handleCopy = async () => {
         try {
@@ -49,29 +70,36 @@ export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* URL Section */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
-                        <h3 className="font-semibold text-lg mb-3 text-gray-900">Il Tuo Link Pubblico</h3>
-                        <p className="text-gray-600 text-sm mb-4">
-                            Condividi questo link per permettere ai tuoi contatti di prenotare appuntamenti direttamente nel tuo calendario.
-                        </p>
-
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={bookingUrl}
-                                readOnly
-                                className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-lg font-mono text-sm"
-                            />
-                            <button
-                                onClick={handleCopy}
-                                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
-                            >
-                                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                                {copied ? 'Copiato!' : 'Copia'}
-                            </button>
+                    {loading ? (
+                        <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                            <p className="text-gray-600 mt-2">Generazione link...</p>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            {/* URL Section */}
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+                                <h3 className="font-semibold text-lg mb-3 text-gray-900">Il Tuo Link Pubblico</h3>
+                                <p className="text-gray-600 text-sm mb-4">
+                                    Condividi questo link per permettere ai tuoi contatti di prenotare appuntamenti direttamente nel tuo calendario.
+                                </p>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={bookingUrl}
+                                        readOnly
+                                        className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-lg font-mono text-sm"
+                                    />
+                                    <button
+                                        onClick={handleCopy}
+                                        className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
+                                    >
+                                        {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                        {copied ? 'Copiato!' : 'Copia'}
+                                    </button>
+                                </div>
+                            </div>
 
                     {/* Sharing Options */}
                     <div>
@@ -154,6 +182,9 @@ export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }
                             <div className="text-sm text-gray-600">Totale Visite</div>
                         </div>
                     </div>
+                </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Footer */}

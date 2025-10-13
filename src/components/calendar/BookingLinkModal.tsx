@@ -5,16 +5,27 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
+interface Profile {
+    id?: string;
+    full_name?: string;
+    job_title?: string;
+    company?: string;
+    bio?: string;
+    username?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
 interface BookingLinkModalProps {
     isOpen: boolean;
     onClose: () => void;
     userId?: string;
 }
 
-export default function BookingLinkModal({ isOpen, onClose, userId }: BookingLinkModalProps) {
+export default function BookingLinkModal({ isOpen, onClose, _userId }: BookingLinkModalProps) {
     const navigate = useNavigate();
     const [copied, setCopied] = useState(false);
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

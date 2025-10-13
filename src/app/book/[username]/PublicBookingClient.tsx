@@ -3,13 +3,25 @@
 import { Calendar, CheckCircle, Clock, Mail, MessageSquare, Phone, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+interface Profile {
+    id?: string;
+    full_name?: string;
+    job_title?: string;
+    company?: string;
+    bio?: string;
+    username?: string;
+    event_type?: string;
+    meeting_type?: string;
+    default_duration?: number;
+}
+
 interface PublicBookingClientProps {
     username: string;
 }
 
 export default function PublicBookingClient({ username }: PublicBookingClientProps) {
     const [loading, setLoading] = useState(true);
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [step, setStep] = useState<'date' | 'time' | 'details' | 'confirm'>('date');
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);

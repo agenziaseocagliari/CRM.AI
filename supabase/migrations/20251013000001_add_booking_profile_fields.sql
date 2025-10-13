@@ -50,26 +50,26 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 -- Policy for users to select their own profile
 CREATE POLICY IF NOT EXISTS "Users can view their own profile"
 ON profiles FOR SELECT
-TO authenticated
+TO public
 USING (auth.uid() = id);
 
 -- Policy for users to insert their own profile
 CREATE POLICY IF NOT EXISTS "Users can insert their own profile"
 ON profiles FOR INSERT
-TO authenticated
+TO public
 WITH CHECK (auth.uid() = id);
 
 -- Policy for users to update their own profile
 CREATE POLICY IF NOT EXISTS "Users can update their own profile"
 ON profiles FOR UPDATE
-TO authenticated
+TO public
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
 -- Policy for users to delete their own profile
 CREATE POLICY IF NOT EXISTS "Users can delete their own profile"
 ON profiles FOR DELETE
-TO authenticated
+TO public
 USING (auth.uid() = id);
 
 -- Create unique constraint on username if it doesn't exist

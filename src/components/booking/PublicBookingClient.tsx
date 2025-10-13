@@ -1,10 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Calendar, Clock, User, Mail, Phone, MessageSquare,
   CheckCircle, ChevronLeft, ChevronRight, Video
 } from 'lucide-react';
+
+interface Profile {
+  id?: string;
+  full_name?: string;
+  job_title?: string;
+  company?: string;
+  bio?: string;
+  username?: string;
+  event_type?: string;
+  meeting_type?: string;
+  default_duration?: number;
+}
 
 interface PublicBookingClientProps {
   username: string;
@@ -12,7 +24,7 @@ interface PublicBookingClientProps {
 
 export default function PublicBookingClient({ username }: PublicBookingClientProps) {
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [step, setStep] = useState<'date' | 'time' | 'details' | 'confirm'>('date');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -24,11 +36,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
     notes: '',
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, [username]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setProfile({
         full_name: 'Mario Rossi',
@@ -45,7 +53,11 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
       console.error('Profile fetch error:', error);
       setLoading(false);
     }
-  };
+  }, [username]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();

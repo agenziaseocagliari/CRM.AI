@@ -23,12 +23,6 @@ interface CalendarEvent {
     };
 }
 
-interface EventDropInfo {
-    eventId: string;
-    start: Date;
-    end: Date;
-}
-
 interface CalendarViewProps {
     events: CalendarEvent[];
     onEventClick?: (event: CalendarEvent) => void;

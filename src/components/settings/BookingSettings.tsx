@@ -1,20 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import BookingSettingsForm from '../settings/BookingSettingsForm';
 
+interface Profile {
+    id?: string;
+    full_name?: string;
+    job_title?: string;
+    company?: string;
+    bio?: string;
+    username?: string;
+    default_duration?: number;
+    buffer_before?: number;
+    buffer_after?: number;
+    days_ahead?: number;
+    event_type?: string;
+    meeting_type?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
 const BookingSettings = () => {
     const { session } = useAuth();
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (session?.user?.id) {
-            fetchProfile();
-        }
-    }, [session]);
-
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         if (!session?.user?.id) return;
 
         try {
@@ -34,7 +45,13 @@ const BookingSettings = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [session?.user?.id]);
+
+    useEffect(() => {
+        if (session?.user?.id) {
+            fetchProfile();
+        }
+    }, [session?.user?.id, fetchProfile]);
 
     if (loading) {
         return (

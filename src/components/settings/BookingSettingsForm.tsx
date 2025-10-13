@@ -2,11 +2,28 @@
 
 import { ArrowLeft, Briefcase, Calendar, Clock, Link as LinkIcon, Save, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
+interface Profile {
+    id?: string;
+    full_name?: string;
+    job_title?: string;
+    company?: string;
+    bio?: string;
+    username?: string;
+    default_duration?: number;
+    buffer_before?: number;
+    buffer_after?: number;
+    days_ahead?: number;
+    event_type?: string;
+    meeting_type?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
 interface BookingSettingsFormProps {
-    profile: any;
+    profile: Profile | null;
     userId: string;
 }
 

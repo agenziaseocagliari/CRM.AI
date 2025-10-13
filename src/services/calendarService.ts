@@ -2,6 +2,7 @@
 // Service layer for calendar operations in Vite/React architecture
 
 import { supabase } from '../lib/supabaseClient';
+import { VideoMeetingService } from '../lib/integrations/video-links';
 
 export interface CalendarEvent {
   id: string;
@@ -152,6 +153,25 @@ export class CalendarService {
         organization_id: null, // Will be set based on user's organization if needed
         contact_id: eventData.contact_id || null
       };
+
+      // Auto-generate video meeting link for virtual events
+      if (eventData.location === 'virtual' || eventData.event_type === 'meeting') {
+        try {
+          const videoMeeting = await VideoMeetingService.generateMeetingLink({
+            title: eventData.title,
+            start_time: eventData.start_time,
+            end_time: eventData.end_time,
+            organizer_email: user.email || '',
+            attendee_emails: [] // TODO: Extract from participants when implemented
+          });
+          
+          // Add meeting URL to event data
+          newEventData.location = `${newEventData.location || 'Video Call'} - ${videoMeeting.url}`;
+          console.log('✅ Auto-generated video link:', videoMeeting.url);
+        } catch (videoError) {
+          console.warn('Video link generation failed, continuing without:', videoError);
+        }
+      }
 
       const { data, error } = await supabase
         .from('events')

@@ -5,6 +5,7 @@ import { Plus, Calendar as CalendarIcon, Users, Clock } from 'lucide-react';
 import CalendarView from './CalendarView';
 import EventModal from './EventModal';
 import { CalendarService, type FullCalendarEvent } from '../../services/calendarService';
+import { CalendarOptimizer } from '../../lib/calendar/performance-optimizations';
 
 export default function CalendarContainer() {
   const [events, setEvents] = useState<FullCalendarEvent[]>([]);
@@ -14,7 +15,32 @@ export default function CalendarContainer() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchEvents();
+    // Performance optimization: preload data
+    const initializeCalendar = async () => {
+      try {
+        // TODO: Get actual user ID from auth context
+        const userId = 'current-user-id';
+        
+        // Preload critical calendar data for optimal UX
+        await CalendarOptimizer.preloadCalendarData(userId);
+        
+        // Enable mobile optimizations if needed
+        CalendarOptimizer.enableMobileOptimizations();
+        
+        // Fetch events with performance monitoring
+        const monitor = CalendarOptimizer.startPerformanceMonitoring();
+        await fetchEvents();
+        
+        const metrics = monitor.end();
+        console.log('📊 Calendar initialization performance:', metrics);
+        
+      } catch (error) {
+        console.error('Calendar initialization failed:', error);
+        fetchEvents(); // Fallback to basic fetch
+      }
+    };
+
+    initializeCalendar();
   }, []);
 
   const fetchEvents = async () => {

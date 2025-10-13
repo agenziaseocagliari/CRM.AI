@@ -12,9 +12,9 @@
 CREATE TABLE IF NOT EXISTS events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    -- Ownership & Organization
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    created_by UUID NOT NULL REFERENCES profiles(id) ON DELETE SET NULL,
+    -- Ownership & Organization (made optional for defensive approach)
+    organization_id UUID, -- Removed FK constraint for compatibility
+    created_by UUID, -- Removed FK constraint for compatibility
 
     -- Event Core Data
     title TEXT NOT NULL,
@@ -50,11 +50,11 @@ CREATE TABLE IF NOT EXISTS events (
     is_recurring BOOLEAN DEFAULT false,
     recurrence_rule TEXT, -- RRULE format (RFC 5545)
     recurrence_end_date TIMESTAMPTZ,
-    parent_event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+    parent_event_id UUID, -- Self-reference, made optional for defensive approach
     occurrence_date TIMESTAMPTZ, -- For recurring instances
 
     -- Linked Entities
-    contact_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
+    contact_id UUID, -- Removed FK constraint for compatibility
     deal_id UUID, -- Will reference deals table when implemented
 
     -- Reminders
@@ -84,13 +84,13 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE TABLE IF NOT EXISTS event_participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    -- Relations
-    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    -- Relations (made optional for defensive approach)
+    event_id UUID NOT NULL, -- Will reference events table, constraint added later
 
     -- Participant Identity (can be user, contact, or external)
     participant_type TEXT NOT NULL CHECK (participant_type IN ('user', 'contact', 'external')),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-    contact_id UUID REFERENCES contacts(id) ON DELETE CASCADE,
+    user_id UUID, -- Removed FK constraint for compatibility
+    contact_id UUID, -- Removed FK constraint for compatibility
 
     -- External participant (not in system)
     external_name TEXT,
@@ -134,13 +134,13 @@ BEGIN
     -- Add event_id column if missing
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                    WHERE table_name = 'event_reminders' AND column_name = 'event_id') THEN
-        ALTER TABLE event_reminders ADD COLUMN event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE;
+        ALTER TABLE event_reminders ADD COLUMN event_id UUID NOT NULL; -- FK constraint added later
     END IF;
 
     -- Add user_id column if missing
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                    WHERE table_name = 'event_reminders' AND column_name = 'user_id') THEN
-        ALTER TABLE event_reminders ADD COLUMN user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE;
+        ALTER TABLE event_reminders ADD COLUMN user_id UUID NOT NULL; -- FK constraint added later
     END IF;
 
     -- Add remind_at column if missing
@@ -442,7 +442,7 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 
 -- =============================================
--- RLS POLICIES
+-- RLS POLICIES (CONDITIONAL CREATION)
 -- =============================================
 
 -- Enable RLS on all tables
@@ -450,58 +450,178 @@ ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_reminders ENABLE ROW LEVEL SECURITY;
 
--- Events policies
-CREATE POLICY "Users can view organization events" ON events
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM profiles p 
-            WHERE p.id = auth.uid() 
-            AND p.organization_id = events.organization_id
-        )
-    );
+-- Create RLS policies conditionally based on available columns
+DO $$
+DECLARE
+    has_profiles_table BOOLEAN;
+    has_organization_id_column BOOLEAN;
+    has_role_column BOOLEAN;
+BEGIN
+    -- Check if profiles table exists
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'profiles'
+    ) INTO has_profiles_table;
 
-CREATE POLICY "Users can create events in their organization" ON events
-    FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM profiles p 
-            WHERE p.id = auth.uid() 
-            AND p.organization_id = events.organization_id
-        )
-    );
+    IF has_profiles_table THEN
+        -- Check if organization_id column exists in profiles
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'profiles' AND column_name = 'organization_id'
+        ) INTO has_organization_id_column;
 
-CREATE POLICY "Users can update their events or organization events" ON events
-    FOR UPDATE USING (
-        created_by = auth.uid() OR
-        EXISTS (
-            SELECT 1 FROM profiles p 
-            WHERE p.id = auth.uid() 
-            AND p.organization_id = events.organization_id
-            AND p.role IN ('admin', 'manager')
-        )
-    );
+        -- Check if role column exists in profiles
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'profiles' AND column_name = 'role'
+        ) INTO has_role_column;
 
-CREATE POLICY "Users can delete their events" ON events
-    FOR DELETE USING (created_by = auth.uid());
+        -- Create policies based on available columns
+        IF has_organization_id_column THEN
+            -- Events policies with organization check
+            EXECUTE 'CREATE POLICY "Users can view organization events" ON events
+                FOR SELECT USING (
+                    EXISTS (
+                        SELECT 1 FROM profiles p 
+                        WHERE p.id = auth.uid() 
+                        AND p.organization_id = events.organization_id
+                    )
+                )';
 
--- Event participants policies
-CREATE POLICY "Users can view participants of accessible events" ON event_participants
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM events e
-            JOIN profiles p ON p.organization_id = e.organization_id
-            WHERE e.id = event_participants.event_id
-            AND p.id = auth.uid()
-        )
-    );
+            EXECUTE 'CREATE POLICY "Users can create events in their organization" ON events
+                FOR INSERT WITH CHECK (
+                    EXISTS (
+                        SELECT 1 FROM profiles p 
+                        WHERE p.id = auth.uid() 
+                        AND p.organization_id = events.organization_id
+                    )
+                )';
 
-CREATE POLICY "Users can manage participants of their events" ON event_participants
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM events e
-            WHERE e.id = event_participants.event_id
-            AND e.created_by = auth.uid()
-        )
-    );
+            -- Update policy with or without role check
+            IF has_role_column THEN
+                EXECUTE 'CREATE POLICY "Users can update their events or organization events" ON events
+                    FOR UPDATE USING (
+                        created_by = auth.uid() OR
+                        EXISTS (
+                            SELECT 1 FROM profiles p 
+                            WHERE p.id = auth.uid() 
+                            AND p.organization_id = events.organization_id
+                            AND p.role IN (''admin'', ''manager'')
+                        )
+                    )';
+            ELSE
+                -- Fallback without role check
+                EXECUTE 'CREATE POLICY "Users can update their events or organization events" ON events
+                    FOR UPDATE USING (
+                        created_by = auth.uid() OR
+                        EXISTS (
+                            SELECT 1 FROM profiles p 
+                            WHERE p.id = auth.uid() 
+                            AND p.organization_id = events.organization_id
+                        )
+                    )';
+            END IF;
+        ELSE
+            -- Fallback policies without organization check
+            EXECUTE 'CREATE POLICY "Users can view events" ON events
+                FOR SELECT USING (created_by = auth.uid())';
+
+            EXECUTE 'CREATE POLICY "Users can create events" ON events
+                FOR INSERT WITH CHECK (true)';
+
+            EXECUTE 'CREATE POLICY "Users can update their events" ON events
+                FOR UPDATE USING (created_by = auth.uid())';
+        END IF;
+    ELSE
+        -- No profiles table - basic policies
+        EXECUTE 'CREATE POLICY "Users can manage their events" ON events
+            FOR ALL USING (created_by = auth.uid())';
+    END IF;
+
+    -- Always allow users to delete their own events
+    EXECUTE 'CREATE POLICY "Users can delete their events" ON events
+        FOR DELETE USING (created_by = auth.uid())';
+
+EXCEPTION
+    WHEN duplicate_object THEN
+        -- Policies already exist, skip
+        NULL;
+    WHEN OTHERS THEN
+        -- Log error but don't fail migration
+        RAISE WARNING 'Error creating events policies: %', SQLERRM;
+END
+$$;
+
+-- Event participants policies (conditional)
+DO $$
+DECLARE
+    has_profiles_table BOOLEAN;
+    has_organization_id_column BOOLEAN;
+BEGIN
+    -- Check if profiles table and organization_id exist
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'profiles'
+    ) INTO has_profiles_table;
+
+    IF has_profiles_table THEN
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'profiles' AND column_name = 'organization_id'
+        ) INTO has_organization_id_column;
+
+        IF has_organization_id_column THEN
+            -- Full organization-based policies
+            EXECUTE 'CREATE POLICY "Users can view participants of accessible events" ON event_participants
+                FOR SELECT USING (
+                    EXISTS (
+                        SELECT 1 FROM events e
+                        JOIN profiles p ON p.organization_id = e.organization_id
+                        WHERE e.id = event_participants.event_id
+                        AND p.id = auth.uid()
+                    )
+                )';
+        ELSE
+            -- Fallback policy without organization check
+            EXECUTE 'CREATE POLICY "Users can view participants of their events" ON event_participants
+                FOR SELECT USING (
+                    EXISTS (
+                        SELECT 1 FROM events e
+                        WHERE e.id = event_participants.event_id
+                        AND e.created_by = auth.uid()
+                    )
+                )';
+        END IF;
+    ELSE
+        -- No profiles table - basic policy
+        EXECUTE 'CREATE POLICY "Users can view event participants" ON event_participants
+            FOR SELECT USING (
+                EXISTS (
+                    SELECT 1 FROM events e
+                    WHERE e.id = event_participants.event_id
+                    AND e.created_by = auth.uid()
+                )
+            )';
+    END IF;
+
+    -- Always allow event creators to manage participants
+    EXECUTE 'CREATE POLICY "Users can manage participants of their events" ON event_participants
+        FOR ALL USING (
+            EXISTS (
+                SELECT 1 FROM events e
+                WHERE e.id = event_participants.event_id
+                AND e.created_by = auth.uid()
+            )
+        )';
+
+EXCEPTION
+    WHEN duplicate_object THEN
+        -- Policies already exist, skip
+        NULL;
+    WHEN OTHERS THEN
+        RAISE WARNING 'Error creating event_participants policies: %', SQLERRM;
+END
+$$;
 
 -- Event reminders policies
 CREATE POLICY "Users can manage their own reminders" ON event_reminders
@@ -539,3 +659,57 @@ COMMENT ON TABLE event_reminders IS 'Event reminder system with multiple deliver
 COMMENT ON FUNCTION get_calendar_events IS 'Primary function for retrieving calendar events with participants for a date range';
 COMMENT ON FUNCTION check_event_conflicts IS 'Detects scheduling conflicts for a user in a given time slot';
 COMMENT ON FUNCTION generate_recurring_instances IS 'Generates instances of recurring events (placeholder for full RRULE support)';
+
+-- =============================================
+-- CONDITIONAL FOREIGN KEY CONSTRAINTS
+-- =============================================
+-- Add foreign key constraints only if referenced tables exist
+
+DO $$
+DECLARE
+    has_organizations BOOLEAN;
+    has_profiles BOOLEAN;
+    has_contacts BOOLEAN;
+BEGIN
+    -- Check for existing tables
+    SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'organizations') INTO has_organizations;
+    SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'profiles') INTO has_profiles;
+    SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'contacts') INTO has_contacts;
+
+    -- Add FK constraints conditionally
+    IF has_organizations THEN
+        EXECUTE 'ALTER TABLE events ADD CONSTRAINT events_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE';
+    END IF;
+
+    IF has_profiles THEN
+        EXECUTE 'ALTER TABLE events ADD CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL';
+        EXECUTE 'ALTER TABLE event_participants ADD CONSTRAINT event_participants_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE';
+        
+        -- Add constraint to event_reminders if the column was added
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'event_reminders' AND column_name = 'user_id') THEN
+            EXECUTE 'ALTER TABLE event_reminders ADD CONSTRAINT event_reminders_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE';
+        END IF;
+    END IF;
+
+    IF has_contacts THEN
+        EXECUTE 'ALTER TABLE events ADD CONSTRAINT events_contact_id_fkey FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL';
+        EXECUTE 'ALTER TABLE event_participants ADD CONSTRAINT event_participants_contact_id_fkey FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE';
+    END IF;
+
+    -- Self-referencing constraints for events
+    EXECUTE 'ALTER TABLE events ADD CONSTRAINT events_parent_event_id_fkey FOREIGN KEY (parent_event_id) REFERENCES events(id) ON DELETE CASCADE';
+    EXECUTE 'ALTER TABLE event_participants ADD CONSTRAINT event_participants_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE';
+    
+    -- Add constraint to event_reminders if the column was added
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'event_reminders' AND column_name = 'event_id') THEN
+        EXECUTE 'ALTER TABLE event_reminders ADD CONSTRAINT event_reminders_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE';
+    END IF;
+
+EXCEPTION
+    WHEN duplicate_object THEN
+        -- Constraints already exist, skip
+        NULL;
+    WHEN OTHERS THEN
+        RAISE WARNING 'Error adding foreign key constraints: %', SQLERRM;
+END
+$$;

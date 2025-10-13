@@ -1,7 +1,7 @@
 'use client';
 
+import { Bell, Clock, MapPin, Repeat, Tag, Video, X } from 'lucide-react';
 import { useState } from 'react';
-import { X, Clock, MapPin, Video, Bell, Repeat, Tag } from 'lucide-react';
 
 interface EventData {
     title: string;
@@ -82,7 +82,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-                    
+
                     {/* Title */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -92,7 +92,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                             type="text"
                             required
                             value={formData.title}
-                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="es. Riunione con cliente"
                         />
@@ -109,12 +109,11 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                 <button
                                     key={type.value}
                                     type="button"
-                                    onClick={() => setFormData({...formData, event_type: type.value})}
-                                    className={`p-4 border-2 rounded-lg text-center transition-all hover:scale-105 ${
-                                        formData.event_type === type.value
+                                    onClick={() => setFormData({ ...formData, event_type: type.value })}
+                                    className={`p-4 border-2 rounded-lg text-center transition-all hover:scale-105 ${formData.event_type === type.value
                                             ? `border-${type.color}-500 bg-${type.color}-50 shadow-md`
                                             : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="text-3xl mb-1">{type.icon}</div>
                                     <div className="text-xs font-medium">{type.label}</div>
@@ -134,7 +133,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                 type="datetime-local"
                                 required
                                 value={formData.start_time}
-                                onChange={(e) => setFormData({...formData, start_time: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
@@ -147,7 +146,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                 type="datetime-local"
                                 required
                                 value={formData.end_time}
-                                onChange={(e) => setFormData({...formData, end_time: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
@@ -163,12 +162,11 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                 <button
                                     key={priority.value}
                                     type="button"
-                                    onClick={() => setFormData({...formData, priority: priority.value})}
-                                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                                        formData.priority === priority.value
+                                    onClick={() => setFormData({ ...formData, priority: priority.value })}
+                                    className={`px-4 py-2 rounded-lg font-medium transition-all ${formData.priority === priority.value
                                             ? priority.color + ' ring-2 ring-offset-2 ring-blue-500'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                        }`}
                                 >
                                     {priority.label}
                                 </button>
@@ -185,7 +183,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                         <div className="space-y-2">
                             <select
                                 value={formData.location_type}
-                                onChange={(e) => setFormData({...formData, location_type: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, location_type: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="physical">📍 Luogo Fisico</option>
@@ -197,7 +195,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                 <input
                                     type="text"
                                     value={formData.location}
-                                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                     placeholder="Via Roma 123, Milano"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                                 />
@@ -208,7 +206,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                     <input
                                         type="url"
                                         value={formData.meeting_url}
-                                        onChange={(e) => setFormData({...formData, meeting_url: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, meeting_url: e.target.value })}
                                         placeholder="https://meet.google.com/..."
                                         className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                                     />
@@ -216,7 +214,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                         type="button"
                                         onClick={() => {
                                             const meetId = Math.random().toString(36).substring(2, 15);
-                                            setFormData({...formData, meeting_url: `https://meet.google.com/${meetId}`});
+                                            setFormData({ ...formData, meeting_url: `https://meet.google.com/${meetId}` });
                                         }}
                                         className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
                                     >
@@ -233,7 +231,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                             <input
                                 type="checkbox"
                                 checked={formData.is_recurring}
-                                onChange={(e) => setFormData({...formData, is_recurring: e.target.checked})}
+                                onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
                                 className="rounded"
                             />
                             <div className="flex items-center gap-2">
@@ -246,7 +244,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                             <div className="mt-4 ml-7 space-y-3">
                                 <select
                                     value={formData.recurrence_frequency}
-                                    onChange={(e) => setFormData({...formData, recurrence_frequency: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, recurrence_frequency: e.target.value })}
                                     className="px-4 py-2 border rounded-lg"
                                 >
                                     <option value="daily">Ogni giorno</option>
@@ -277,7 +275,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                             const updated = e.target.checked
                                                 ? [...formData.reminder_minutes, reminder.value]
                                                 : formData.reminder_minutes.filter((v: number) => v !== reminder.value);
-                                            setFormData({...formData, reminder_minutes: updated});
+                                            setFormData({ ...formData, reminder_minutes: updated });
                                         }}
                                         className="rounded"
                                     />
@@ -294,7 +292,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                         </label>
                         <textarea
                             value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             placeholder="Aggiungi dettagli sull'evento..."
@@ -308,7 +306,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                         </label>
                         <textarea
                             value={formData.notes}
-                            onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             rows={2}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             placeholder="Note visibili solo a te..."

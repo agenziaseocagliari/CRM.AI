@@ -61,17 +61,17 @@ export class CalendarOptimizer {
       });
 
       // Simulate API call and cache result
-      const mockData = {
-        events: [],
-        metadata: {
-          total: 0,
-          prefetched_at: new Date().toISOString(),
-          user_id: userId,
-          date_range: { start: startDate, end: endDate }
-        }
-      };
+      const mockEvents: CalendarEventData[] = [];
+      
+      // TODO: In real implementation, add metadata to a separate cache entry
+      // const metadata = {
+      //   total: 0,
+      //   prefetched_at: new Date().toISOString(),
+      //   user_id: userId,
+      //   date_range: { start: startDate, end: endDate }
+      // };
 
-      this.setCacheEntry(cacheKey, mockData);
+      this.setCacheEntry(cacheKey, mockEvents);
       
     } catch (error) {
       console.error('Prefetch failed:', error);

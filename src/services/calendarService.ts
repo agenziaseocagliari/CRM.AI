@@ -46,7 +46,8 @@ interface CalendarEventExtendedProps {
   priority?: string;
   location?: string;
   notes?: string;
-  reminder_minutes?: number;
+  reminder_minutes?: number[];
+  [key: string]: unknown;
 }
 
 export interface FullCalendarEvent {

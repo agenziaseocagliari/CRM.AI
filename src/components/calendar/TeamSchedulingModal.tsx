@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Users, Target, RotateCcw, Calendar, Clock, Settings } from 'lucide-react';
+import { Calendar, Clock, RotateCcw, Settings, Target, Users, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface TeamSchedulingModalProps {
@@ -10,7 +10,7 @@ interface TeamSchedulingModalProps {
 
 export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingModalProps) {
     const [selectedMode, setSelectedMode] = useState<'collective' | 'round-robin' | null>(null);
-    
+
     if (!isOpen) return null;
 
     return (
@@ -32,7 +32,7 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                             <h3 className="font-semibold text-xl text-gray-900">Coordinamento Team</h3>
                         </div>
                         <p className="text-gray-600">
-                            Gestisci le riunioni del tuo team con modalità di scheduling avanzate. 
+                            Gestisci le riunioni del tuo team con modalità di scheduling avanzate.
                             Coordina automaticamente gli orari disponibili di tutti i membri.
                         </p>
                     </div>
@@ -44,11 +44,10 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                             {/* Collective Mode */}
                             <button
                                 onClick={() => setSelectedMode('collective')}
-                                className={`p-6 border-2 rounded-xl transition-all text-left ${
-                                    selectedMode === 'collective'
+                                className={`p-6 border-2 rounded-xl transition-all text-left ${selectedMode === 'collective'
                                         ? 'border-purple-500 bg-purple-50 shadow-lg'
                                         : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     <Target className="w-8 h-8 text-purple-600" />
@@ -76,11 +75,10 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                             {/* Round Robin Mode */}
                             <button
                                 onClick={() => setSelectedMode('round-robin')}
-                                className={`p-6 border-2 rounded-xl transition-all text-left ${
-                                    selectedMode === 'round-robin'
+                                className={`p-6 border-2 rounded-xl transition-all text-left ${selectedMode === 'round-robin'
                                         ? 'border-blue-500 bg-blue-50 shadow-lg'
                                         : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     <RotateCcw className="w-8 h-8 text-blue-600" />
@@ -137,7 +135,7 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                                     </div>
                                 ))}
                             </div>
-                            
+
                             <button className="w-full mt-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:bg-gray-100 transition-colors">
                                 + Aggiungi Membro del Team
                             </button>
@@ -186,11 +184,10 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                     </button>
                     <button
                         disabled={!selectedMode}
-                        className={`px-6 py-2 rounded-lg transition-colors ${
-                            selectedMode
+                        className={`px-6 py-2 rounded-lg transition-colors ${selectedMode
                                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
+                            }`}
                     >
                         Configura Scheduling
                     </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Copy, Check, ExternalLink, Share2, Mail, MessageCircle } from 'lucide-react';
+import { Check, Copy, ExternalLink, Mail, MessageCircle, Share2, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface BookingLinkModalProps {
@@ -11,7 +11,7 @@ interface BookingLinkModalProps {
 
 export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }: BookingLinkModalProps) {
     const [copied, setCopied] = useState(false);
-    
+
     if (!isOpen) return null;
 
     const bookingUrl = `${window.location.origin}/book/${userId}`;
@@ -55,7 +55,7 @@ export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }
                         <p className="text-gray-600 text-sm mb-4">
                             Condividi questo link per permettere ai tuoi contatti di prenotare appuntamenti direttamente nel tuo calendario.
                         </p>
-                        
+
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -85,7 +85,7 @@ export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }
                                 <h4 className="font-semibold text-gray-900">Email</h4>
                                 <p className="text-sm text-gray-600">Invia via email</p>
                             </button>
-                            
+
                             <button
                                 onClick={handleShareWhatsApp}
                                 className="p-4 bg-white border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all text-center group"
@@ -94,7 +94,7 @@ export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }
                                 <h4 className="font-semibold text-gray-900">WhatsApp</h4>
                                 <p className="text-sm text-gray-600">Condividi su WhatsApp</p>
                             </button>
-                            
+
                             <button
                                 onClick={() => {
                                     if (navigator.share) {
@@ -127,7 +127,7 @@ export default function BookingLinkModal({ isOpen, onClose, userId = 'user123' }
                                 <p className="text-gray-600 text-sm">Seleziona un orario per il nostro appuntamento</p>
                             </div>
                         </div>
-                        
+
                         <a
                             href={bookingUrl}
                             target="_blank"

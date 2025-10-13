@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Calendar, TrendingUp, Clock, Target, BarChart3, PieChart } from 'lucide-react';
+import { BarChart3, Calendar, Clock, PieChart, Target, TrendingUp, X } from 'lucide-react';
 
 interface CalendarEvent {
     id?: string;
@@ -40,7 +40,7 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
     }).length;
 
     // Event type distribution
-    const eventTypes = events.reduce((acc, event) => {
+    const eventTypes = events.reduce((acc: Record<string, number>, event) => {
         const type = event.extendedProps?.event_type || 'other';
         acc[type] = (acc[type] || 0) + 1;
         return acc;
@@ -53,7 +53,7 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
     }));
 
     // Priority distribution  
-    const priorities = events.reduce((acc, event) => {
+    const priorities = events.reduce((acc: Record<string, number>, event) => {
         const priority = event.extendedProps?.priority || 'medium';
         acc[priority] = (acc[priority] || 0) + 1;
         return acc;
@@ -115,19 +115,19 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                                     <span className="font-semibold text-lg">{thisWeekEvents}</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div 
-                                        className="bg-blue-600 h-2 rounded-full" 
+                                    <div
+                                        className="bg-blue-600 h-2 rounded-full"
                                         style={{ width: `${totalEvents > 0 ? (thisWeekEvents / totalEvents) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                
+
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-600">Questo Mese</span>
                                     <span className="font-semibold text-lg">{thisMonthEvents}</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div 
-                                        className="bg-green-600 h-2 rounded-full" 
+                                    <div
+                                        className="bg-green-600 h-2 rounded-full"
                                         style={{ width: `${totalEvents > 0 ? (thisMonthEvents / totalEvents) * 100 : 0}%` }}
                                     ></div>
                                 </div>
@@ -144,19 +144,18 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                                 {eventTypeData.length > 0 ? eventTypeData.map(({ type, count, percentage }) => (
                                     <div key={type} className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-3 h-3 rounded-full ${
-                                                type === 'meeting' ? 'bg-blue-500' :
-                                                type === 'call' ? 'bg-green-500' :
-                                                type === 'task' ? 'bg-purple-500' :
-                                                type === 'appointment' ? 'bg-orange-500' :
-                                                'bg-gray-500'
-                                            }`}></div>
+                                            <div className={`w-3 h-3 rounded-full ${type === 'meeting' ? 'bg-blue-500' :
+                                                    type === 'call' ? 'bg-green-500' :
+                                                        type === 'task' ? 'bg-purple-500' :
+                                                            type === 'appointment' ? 'bg-orange-500' :
+                                                                'bg-gray-500'
+                                                }`}></div>
                                             <span className="text-gray-700 capitalize">
                                                 {type === 'meeting' ? 'Riunioni' :
-                                                 type === 'call' ? 'Chiamate' :
-                                                 type === 'task' ? 'Attività' :
-                                                 type === 'appointment' ? 'Appuntamenti' :
-                                                 'Altri'}
+                                                    type === 'call' ? 'Chiamate' :
+                                                        type === 'task' ? 'Attività' :
+                                                            type === 'appointment' ? 'Appuntamenti' :
+                                                                'Altri'}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -176,30 +175,27 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                         <h3 className="font-semibold text-lg mb-4 text-gray-900">Analisi Priorità</h3>
                         <div className="grid grid-cols-4 gap-4">
                             {Object.entries(priorities).map(([priority, count]) => (
-                                <div key={priority} className={`p-4 rounded-lg ${
-                                    priority === 'urgent' ? 'bg-red-50 border border-red-200' :
-                                    priority === 'high' ? 'bg-orange-50 border border-orange-200' :
-                                    priority === 'medium' ? 'bg-blue-50 border border-blue-200' :
-                                    'bg-gray-50 border border-gray-200'
-                                }`}>
-                                    <div className={`text-2xl font-bold ${
-                                        priority === 'urgent' ? 'text-red-600' :
-                                        priority === 'high' ? 'text-orange-600' :
-                                        priority === 'medium' ? 'text-blue-600' :
-                                        'text-gray-600'
+                                <div key={priority} className={`p-4 rounded-lg ${priority === 'urgent' ? 'bg-red-50 border border-red-200' :
+                                        priority === 'high' ? 'bg-orange-50 border border-orange-200' :
+                                            priority === 'medium' ? 'bg-blue-50 border border-blue-200' :
+                                                'bg-gray-50 border border-gray-200'
                                     }`}>
+                                    <div className={`text-2xl font-bold ${priority === 'urgent' ? 'text-red-600' :
+                                            priority === 'high' ? 'text-orange-600' :
+                                                priority === 'medium' ? 'text-blue-600' :
+                                                    'text-gray-600'
+                                        }`}>
                                         {count as number}
                                     </div>
-                                    <div className={`text-sm ${
-                                        priority === 'urgent' ? 'text-red-600' :
-                                        priority === 'high' ? 'text-orange-600' :
-                                        priority === 'medium' ? 'text-blue-600' :
-                                        'text-gray-600'
-                                    }`}>
+                                    <div className={`text-sm ${priority === 'urgent' ? 'text-red-600' :
+                                            priority === 'high' ? 'text-orange-600' :
+                                                priority === 'medium' ? 'text-blue-600' :
+                                                    'text-gray-600'
+                                        }`}>
                                         {priority === 'urgent' ? 'Urgenti' :
-                                         priority === 'high' ? 'Alta' :
-                                         priority === 'medium' ? 'Media' :
-                                         'Bassa'}
+                                            priority === 'high' ? 'Alta' :
+                                                priority === 'medium' ? 'Media' :
+                                                    'Bassa'}
                                     </div>
                                 </div>
                             ))}
@@ -216,7 +212,7 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                                     <div>
                                         <p className="font-medium text-gray-900">Gestione del Tempo</p>
                                         <p className="text-sm text-gray-600">
-                                            {totalEvents > 0 
+                                            {totalEvents > 0
                                                 ? `Hai programmato ${totalEvents} eventi. Ottima organizzazione!`
                                                 : 'Inizia a programmare i tuoi eventi per una migliore organizzazione.'
                                             }
@@ -242,7 +238,7 @@ export default function AnalyticsModal({ isOpen, onClose, events }: AnalyticsMod
                                     <div>
                                         <p className="font-medium text-gray-900">Produttività</p>
                                         <p className="text-sm text-gray-600">
-                                            Media di {avgEventsPerWeek} eventi per settimana. 
+                                            Media di {avgEventsPerWeek} eventi per settimana.
                                             {parseFloat(avgEventsPerWeek) > 5 ? ' Ritmo sostenuto!' : ' Considera di aumentare la frequenza.'}
                                         </p>
                                     </div>

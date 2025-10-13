@@ -1,6 +1,8 @@
 'use client';
 
 import itLocale from '@fullcalendar/core/locales/it';
+import type { EventClickArg, EventDropArg } from '@fullcalendar/core';
+import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
@@ -31,8 +33,8 @@ interface CalendarViewProps {
     events: CalendarEvent[];
     onEventClick?: (event: CalendarEvent) => void;
     onDateClick?: (date: Date) => void;
-    onEventDrop?: (event: EventDropInfo) => void;
-    onEventResize?: (event: EventDropInfo) => void;
+    onEventDrop?: (info: EventDropArg) => void;
+    onEventResize?: (info: EventResizeDoneArg) => void;
     currentView?: string;
 }
 
@@ -56,9 +58,19 @@ export default function CalendarView({
         }
     };
 
-    const handleEventClick = (clickInfo: { event: CalendarEvent }) => {
+    const handleEventClick = (clickInfo: EventClickArg) => {
         if (onEventClick) {
-            onEventClick(clickInfo.event);
+            // Convert FullCalendar event to our CalendarEvent format
+            const event: CalendarEvent = {
+                id: clickInfo.event.id,
+                title: clickInfo.event.title,
+                start: clickInfo.event.startStr,
+                end: clickInfo.event.endStr || '',
+                backgroundColor: clickInfo.event.backgroundColor || '',
+                borderColor: clickInfo.event.borderColor || '',
+                extendedProps: clickInfo.event.extendedProps
+            };
+            onEventClick(event);
         }
     };
 
@@ -68,23 +80,15 @@ export default function CalendarView({
         }
     };
 
-    const handleEventDrop = (dropInfo: { event: { id: string; start: Date; end: Date } }) => {
+    const handleEventDrop = (dropInfo: EventDropArg) => {
         if (onEventDrop) {
-            onEventDrop({
-                eventId: dropInfo.event.id,
-                start: dropInfo.event.start,
-                end: dropInfo.event.end
-            });
+            onEventDrop(dropInfo);
         }
     };
 
-    const handleEventResize = (resizeInfo: { event: { id: string; start: Date; end: Date } }) => {
+    const handleEventResize = (resizeInfo: EventResizeDoneArg) => {
         if (onEventResize) {
-            onEventResize({
-                eventId: resizeInfo.event.id,
-                start: resizeInfo.event.start,
-                end: resizeInfo.event.end
-            });
+            onEventResize(resizeInfo);
         }
     };
 

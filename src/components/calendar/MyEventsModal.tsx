@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Calendar, Clock, MapPin } from 'lucide-react';
+import { Calendar, Clock, MapPin, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface CalendarEvent {
@@ -41,7 +41,7 @@ export default function MyEventsModal({ isOpen, onClose, events }: MyEventsModal
     });
 
     const getEventTypeColor = (type: string) => {
-        switch(type) {
+        switch (type) {
             case 'meeting': return 'bg-blue-100 text-blue-700';
             case 'call': return 'bg-green-100 text-green-700';
             case 'task': return 'bg-purple-100 text-purple-700';
@@ -74,11 +74,10 @@ export default function MyEventsModal({ isOpen, onClose, events }: MyEventsModal
                             <button
                                 key={filterOption.value}
                                 onClick={() => setFilter(filterOption.value)}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    filter === filterOption.value
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === filterOption.value
                                         ? 'bg-blue-100 text-blue-700'
                                         : 'bg-white text-gray-600 hover:bg-gray-100'
-                                }`}
+                                    }`}
                             >
                                 {filterOption.label} ({filterOption.count})
                             </button>
@@ -108,7 +107,7 @@ export default function MyEventsModal({ isOpen, onClose, events }: MyEventsModal
                                                     {event.extendedProps?.event_type || 'Evento'}
                                                 </span>
                                             </div>
-                                            
+
                                             <div className="flex items-center gap-6 text-sm text-gray-600 mb-3">
                                                 <span className="flex items-center gap-2">
                                                     <Calendar className="w-4 h-4" />
@@ -121,8 +120,8 @@ export default function MyEventsModal({ isOpen, onClose, events }: MyEventsModal
                                                 </span>
                                                 <span className="flex items-center gap-2">
                                                     <Clock className="w-4 h-4" />
-                                                    {new Date(event.start).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'})}
-                                                    {event.end && ` - ${new Date(event.end).toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'})}`}
+                                                    {new Date(event.start).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                                                    {event.end && ` - ${new Date(event.end).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`}
                                                 </span>
                                             </div>
 
@@ -140,13 +139,12 @@ export default function MyEventsModal({ isOpen, onClose, events }: MyEventsModal
 
                                         <div className="flex items-center gap-2 ml-4">
                                             {event.extendedProps?.priority && (
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                    event.extendedProps.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                                    event.extendedProps.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-green-100 text-green-700'
-                                                }`}>
-                                                    {event.extendedProps.priority === 'high' ? 'Alta' : 
-                                                     event.extendedProps.priority === 'medium' ? 'Media' : 'Bassa'}
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${event.extendedProps.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                                        event.extendedProps.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                            'bg-green-100 text-green-700'
+                                                    }`}>
+                                                    {event.extendedProps.priority === 'high' ? 'Alta' :
+                                                        event.extendedProps.priority === 'medium' ? 'Media' : 'Bassa'}
                                                 </span>
                                             )}
                                         </div>

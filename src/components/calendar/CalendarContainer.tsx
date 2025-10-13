@@ -1,5 +1,7 @@
 'use client';
 
+import type { EventDropArg } from '@fullcalendar/core';
+import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import { Calendar as CalendarIcon, Clock, Plus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CalendarOptimizer } from '../../lib/calendar/performance-optimizations';
@@ -15,7 +17,7 @@ export default function CalendarContainer() {
     const [events, setEvents] = useState<FullCalendarEvent[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [selectedEvent, setSelectedEvent] = useState<FullCalendarEvent | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentView, setCurrentView] = useState('week');
 
@@ -98,9 +100,22 @@ export default function CalendarContainer() {
         setShowModal(true);
     };
 
-    const handleSaveEvent = async (eventData: Partial<FullCalendarEvent>) => {
+    const handleSaveEvent = async (eventData: Partial<{ title: string; description: string; event_type: string; priority: string; start_time: string; end_time: string; location: string; notes: string; reminder_minutes: number[]; }>) => {
         try {
-            const newEvent = await CalendarService.createEvent(eventData);
+            // Convert EventData format to CalendarEventCreate format  
+            const createData = {
+                title: eventData.title || '',
+                start_time: eventData.start_time || '',
+                end_time: eventData.end_time || '',
+                description: eventData.description,
+                event_type: eventData.event_type,
+                priority: eventData.priority,
+                location: eventData.location,
+                notes: eventData.notes,
+                reminder_minutes: eventData.reminder_minutes
+            };
+            
+            const newEvent = await CalendarService.createEvent(createData);
             setEvents(prev => [...prev, newEvent]);
         } catch (error) {
             console.error('Save event error:', error);
@@ -108,23 +123,30 @@ export default function CalendarContainer() {
         }
     };
 
-    const handleUpdateEvent = async (eventData: { eventId: string; start: Date; end: Date }) => {
+    const handleUpdateEvent = async (dropInfo: EventDropArg | EventResizeDoneArg) => {
         try {
-            await CalendarService.updateEventTiming(eventData.eventId, eventData.start, eventData.end);
+            if (!dropInfo.event.start || !dropInfo.event.end) {
+                console.error('Invalid event dates');
+                return;
+            }
+
+            await CalendarService.updateEventTiming(dropInfo.event.id, dropInfo.event.start, dropInfo.event.end);
 
             setEvents(prev => prev.map(event =>
-                event.id === eventData.eventId
-                    ? { ...event, start: eventData.start.toISOString(), end: eventData.end.toISOString() }
+                event.id === dropInfo.event.id
+                    ? { ...event, start: dropInfo.event.start!.toISOString(), end: dropInfo.event.end!.toISOString() }
                     : event
             ));
         } catch (error) {
             console.error('Update event error:', error);
             // Update local state anyway for better UX
-            setEvents(prev => prev.map(event =>
-                event.id === eventData.eventId
-                    ? { ...event, start: eventData.start.toISOString(), end: eventData.end.toISOString() }
-                    : event
-            ));
+            if (dropInfo.event.start && dropInfo.event.end) {
+                setEvents(prev => prev.map(event =>
+                    event.id === dropInfo.event.id
+                        ? { ...event, start: dropInfo.event.start!.toISOString(), end: dropInfo.event.end!.toISOString() }
+                        : event
+                ));
+            }
         }
     };
 
@@ -286,7 +308,17 @@ export default function CalendarContainer() {
                     setSelectedDate(null);
                 }}
                 onSave={handleSaveEvent}
-                initialData={selectedEvent}
+                initialData={selectedEvent ? {
+                    title: selectedEvent.title,
+                    description: selectedEvent.extendedProps?.description || '',
+                    event_type: selectedEvent.extendedProps?.event_type || '',
+                    priority: selectedEvent.extendedProps?.priority || '',
+                    start_time: selectedEvent.start,
+                    end_time: selectedEvent.end,
+                    location: selectedEvent.extendedProps?.location || '',
+                    notes: selectedEvent.extendedProps?.notes || '',
+                    reminder_minutes: selectedEvent.extendedProps?.reminder_minutes || []
+                } : undefined}
                 selectedDate={selectedDate || undefined}
             />
 

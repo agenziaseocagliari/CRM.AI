@@ -47,28 +47,32 @@ CREATE TRIGGER update_profiles_updated_at
 -- Enable RLS if not already enabled
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Create policies for profiles table
+-- Create policies for profiles table (drop and recreate for idempotency)
 -- Policy for users to select their own profile
-CREATE POLICY IF NOT EXISTS "Users can view their own profile"
+DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
+CREATE POLICY "Users can view their own profile"
 ON profiles FOR SELECT
 TO public
 USING (auth.uid() = id);
 
 -- Policy for users to insert their own profile
-CREATE POLICY IF NOT EXISTS "Users can insert their own profile"
+DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
+CREATE POLICY "Users can insert their own profile"
 ON profiles FOR INSERT
 TO public
 WITH CHECK (auth.uid() = id);
 
 -- Policy for users to update their own profile
-CREATE POLICY IF NOT EXISTS "Users can update their own profile"
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+CREATE POLICY "Users can update their own profile"
 ON profiles FOR UPDATE
 TO public
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
 -- Policy for users to delete their own profile
-CREATE POLICY IF NOT EXISTS "Users can delete their own profile"
+DROP POLICY IF EXISTS "Users can delete their own profile" ON profiles;
+CREATE POLICY "Users can delete their own profile"
 ON profiles FOR DELETE
 TO public
 USING (auth.uid() = id);

@@ -1,0 +1,490 @@
+'use client';
+
+import React, { useState, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+    ChevronUp, ChevronDown, MoreVertical, Edit, Trash2,
+    Mail, Phone, Eye, Plus, Upload, Calendar, Sparkles
+} from 'lucide-react';
+import { Contact } from '../../types';
+import { LeadScoreBadge } from '../ui/LeadScoreBadge';
+import CSVUploadButton from './CSVUploadButton';
+
+interface ContactsTableProps {
+    contacts: Contact[];
+    onEditContact: (contact: Contact) => void;
+    onDeleteContact: (contact: Contact) => void;
+    onEmailContact: (contact: Contact) => void;
+    onWhatsAppContact: (contact: Contact) => void;
+    onCreateEvent: (contact: Contact) => void;
+    onViewEvents: (contact: Contact) => void;
+    onAddContact: () => void;
+    onUploadSuccess: () => void;
+}
+
+type SortField = 'name' | 'email' | 'phone' | 'company' | 'created_at' | 'lead_score';
+type SortOrder = 'asc' | 'desc';
+
+export default function ContactsTable({
+    contacts,
+    onEditContact,
+    onDeleteContact,
+    onEmailContact,
+    onWhatsAppContact,
+    onCreateEvent,
+    onViewEvents,
+    onAddContact,
+    onUploadSuccess
+}: ContactsTableProps) {
+    const navigate = useNavigate();
+    
+    // Table state
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [showActions, setShowActions] = useState<number | null>(null);
+    const [sortField, setSortField] = useState<SortField>('created_at');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
+
+    // Sorting logic
+    const sortedContacts = useMemo(() => {
+        const sorted = [...contacts].sort((a, b) => {
+            let aValue: any = a[sortField];
+            let bValue: any = b[sortField];
+
+            // Handle different data types
+            if (sortField === 'created_at') {
+                aValue = new Date(aValue || 0);
+                bValue = new Date(bValue || 0);
+            } else if (sortField === 'lead_score') {
+                aValue = aValue || 0;
+                bValue = bValue || 0;
+            } else {
+                aValue = (aValue || '').toString().toLowerCase();
+                bValue = (bValue || '').toString().toLowerCase();
+            }
+
+            if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return sorted;
+    }, [contacts, sortField, sortOrder]);
+
+    // Pagination logic
+    const totalPages = Math.ceil(sortedContacts.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedContacts = sortedContacts.slice(startIndex, startIndex + pageSize);
+
+    // Handlers
+    const handleSort = useCallback((field: SortField) => {
+        if (sortField === field) {
+            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortOrder('asc');
+        }
+        setCurrentPage(1); // Reset to first page when sorting
+    }, [sortField]);
+
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page);
+        setSelectedIds([]); // Clear selections when changing pages
+    }, []);
+
+    const toggleSelection = useCallback((id: number) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    }, []);
+
+    const toggleSelectAll = useCallback(() => {
+        const currentPageIds = paginatedContacts.map(c => c.id);
+        const allSelected = currentPageIds.every(id => selectedIds.includes(id));
+        
+        if (allSelected) {
+            // Deselect all on current page
+            setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)));
+        } else {
+            // Select all on current page
+            setSelectedIds(prev => [...new Set([...prev, ...currentPageIds])]);
+        }
+    }, [paginatedContacts, selectedIds]);
+
+    const handleBulkDelete = useCallback(() => {
+        if (selectedIds.length > 0 && window.confirm(`Sei sicuro di voler eliminare ${selectedIds.length} contatti?`)) {
+            // Handle bulk delete - would call API for each selected contact
+            console.log('Bulk delete:', selectedIds);
+            setSelectedIds([]);
+        }
+    }, [selectedIds]);
+
+    const SortIcon = ({ field }: { field: SortField }) => {
+        if (sortField !== field) return <ChevronUp className="w-4 h-4 text-gray-400" />;
+        return sortOrder === 'asc'
+            ? <ChevronUp className="w-4 h-4 text-blue-600" />
+            : <ChevronDown className="w-4 h-4 text-blue-600" />;
+    };
+
+    const currentPageIds = paginatedContacts.map(c => c.id);
+    const isAllSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedIds.includes(id));
+    const isPartiallySelected = currentPageIds.some(id => selectedIds.includes(id)) && !isAllSelected;
+
+    return (
+        <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Contatti</h1>
+                    <p className="text-gray-600 mt-1">
+                        {sortedContacts.length} contatti totali
+                        {selectedIds.length > 0 && ` • ${selectedIds.length} selezionati`}
+                    </p>
+                </div>
+
+                <div className="flex gap-3">
+                    <button
+                        onClick={onAddContact}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Nuovo Contatto
+                    </button>
+                    <CSVUploadButton onUploadSuccess={onUploadSuccess} />
+                </div>
+            </div>
+
+            {/* Selection Actions Bar */}
+            {selectedIds.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+                    <span className="text-blue-900 font-medium">
+                        {selectedIds.length} contatti selezionati
+                    </span>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={handleBulkDelete}
+                            className="px-3 py-1 text-sm bg-white border border-red-300 text-red-700 rounded hover:bg-red-50 transition-colors"
+                        >
+                            Elimina
+                        </button>
+                        <button className="px-3 py-1 text-sm bg-white border border-blue-300 rounded hover:bg-blue-50 transition-colors">
+                            Esporta
+                        </button>
+                        <button
+                            onClick={() => setSelectedIds([])}
+                            className="px-3 py-1 text-sm text-blue-700 hover:text-blue-900 transition-colors"
+                        >
+                            Deseleziona tutto
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                {/* Page Size Selector */}
+                <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                        Mostrando {startIndex + 1}-{Math.min(startIndex + pageSize, sortedContacts.length)} di {sortedContacts.length}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-700">Elementi per pagina:</span>
+                        <select
+                            value={pageSize}
+                            onChange={(e) => {
+                                setPageSize(Number(e.target.value));
+                                setCurrentPage(1);
+                            }}
+                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                        >
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th className="w-12 px-4 py-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAllSelected}
+                                        ref={input => {
+                                            if (input) input.indeterminate = isPartiallySelected;
+                                        }}
+                                        onChange={toggleSelectAll}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                </th>
+                                <th className="px-4 py-3 text-left">
+                                    <button
+                                        onClick={() => handleSort('name')}
+                                        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+                                    >
+                                        Nome
+                                        <SortIcon field="name" />
+                                    </button>
+                                </th>
+                                <th className="px-4 py-3 text-left">
+                                    <button
+                                        onClick={() => handleSort('email')}
+                                        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+                                    >
+                                        Email
+                                        <SortIcon field="email" />
+                                    </button>
+                                </th>
+                                <th className="px-4 py-3 text-left">
+                                    <button
+                                        onClick={() => handleSort('phone')}
+                                        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+                                    >
+                                        Telefono
+                                        <SortIcon field="phone" />
+                                    </button>
+                                </th>
+                                <th className="px-4 py-3 text-left">
+                                    <button
+                                        onClick={() => handleSort('company')}
+                                        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+                                    >
+                                        Azienda
+                                        <SortIcon field="company" />
+                                    </button>
+                                </th>
+                                <th className="px-4 py-3 text-left">
+                                    <button
+                                        onClick={() => handleSort('lead_score')}
+                                        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+                                    >
+                                        Lead Score
+                                        <SortIcon field="lead_score" />
+                                    </button>
+                                </th>
+                                <th className="px-4 py-3 text-left">
+                                    <button
+                                        onClick={() => handleSort('created_at')}
+                                        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+                                    >
+                                        Creato
+                                        <SortIcon field="created_at" />
+                                    </button>
+                                </th>
+                                <th className="w-20 px-4 py-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {paginatedContacts.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="px-4 py-12 text-center">
+                                        <div className="text-gray-400 mb-4">
+                                            <Upload className="w-12 h-12 mx-auto mb-2" />
+                                        </div>
+                                        <p className="text-gray-600 font-medium">Nessun contatto trovato</p>
+                                        <p className="text-gray-500 text-sm mt-1">
+                                            Inizia importando contatti da CSV o creane uno nuovo
+                                        </p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                paginatedContacts.map((contact) => (
+                                    <tr
+                                        key={contact.id}
+                                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                                        onClick={(e) => {
+                                            if ((e.target as HTMLElement).closest('input, button, [role="button"]')) return;
+                                            navigate(`/contacts/${contact.id}`);
+                                        }}
+                                    >
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(contact.id)}
+                                                onChange={() => toggleSelection(contact.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
+                                                {contact.name}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2 text-gray-600">
+                                                {contact.email ? (
+                                                    <>
+                                                        <Mail className="w-4 h-4 text-gray-400" />
+                                                        <span className="truncate max-w-48">{contact.email}</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2 text-gray-600">
+                                                {contact.phone ? (
+                                                    <>
+                                                        <Phone className="w-4 h-4 text-gray-400" />
+                                                        {contact.phone}
+                                                    </>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600">
+                                            <span className="truncate max-w-32 block">{contact.company || '-'}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <LeadScoreBadge 
+                                                score={contact.lead_score} 
+                                                category={contact.lead_category} 
+                                                reasoning={contact.lead_score_reasoning} 
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600 text-sm">
+                                            {contact.created_at ? new Date(contact.created_at).toLocaleDateString('it-IT') : '-'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="relative">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowActions(showActions === contact.id ? null : contact.id);
+                                                    }}
+                                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                >
+                                                    <MoreVertical className="w-5 h-5 text-gray-400" />
+                                                </button>
+                                                
+                                                {showActions === contact.id && (
+                                                    <div 
+                                                        className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <button
+                                                            onClick={() => {
+                                                                navigate(`/contacts/${contact.id}`);
+                                                                setShowActions(null);
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                            Visualizza
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                onEditContact(contact);
+                                                                setShowActions(null);
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                            Modifica
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                onEmailContact(contact);
+                                                                setShowActions(null);
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
+                                                        >
+                                                            <Sparkles className="w-4 h-4" />
+                                                            Email AI
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                onCreateEvent(contact);
+                                                                setShowActions(null);
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
+                                                        >
+                                                            <Calendar className="w-4 h-4" />
+                                                            Crea Evento
+                                                        </button>
+                                                        <hr className="my-1" />
+                                                        <button
+                                                            onClick={() => {
+                                                                onDeleteContact(contact);
+                                                                setShowActions(null);
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-red-600 w-full text-left transition-colors"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                            Elimina
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+                        <div className="text-sm text-gray-700">
+                            Pagina {currentPage} di {totalPages}
+                        </div>
+                        
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Precedente
+                            </button>
+                            
+                            <div className="flex gap-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                                    if (page > totalPages) return null;
+                                    
+                                    return (
+                                        <button
+                                            key={page}
+                                            onClick={() => handlePageChange(page)}
+                                            className={`px-3 py-1 border rounded transition-colors ${
+                                                currentPage === page
+                                                    ? 'bg-blue-600 text-white border-blue-600'
+                                                    : 'border-gray-300 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Successiva
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Click outside to close actions menu */}
+            {showActions && (
+                <div 
+                    className="fixed inset-0 z-0" 
+                    onClick={() => setShowActions(null)}
+                />
+            )}
+        </div>
+    );
+}

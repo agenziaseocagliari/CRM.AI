@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 import CSVUploadButton from './contacts/CSVUploadButton';
+import ContactsTable from './contacts/ContactsTable';
 
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
@@ -351,77 +352,17 @@ export const Contacts: React.FC = () => {
 
     return (
         <>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-text-primary">Contatti</h1>
-                <div className="flex items-center space-x-3">
-                    <CSVUploadButton onUploadSuccess={refetch} />
-                    <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
-                        <PlusIcon className="w-5 h-5" />
-                        <span>Aggiungi Contatto</span>
-                    </button>
-                </div>
-            </div>
-            
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Azienda</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email & Telefono</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead Score</th>
-                            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Azioni</span></th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {contacts.map((contact) => (
-                            <tr key={contact.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <button
-                                        onClick={() => navigate(`/contacts/${contact.id}`)}
-                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
-                                    >
-                                        {contact.name}
-                                    </button>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-gray-500">{contact.company}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-gray-900">{contact.email}</div>
-                                    <div className="text-sm text-gray-500">{contact.phone}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <LeadScoreBadge score={contact.lead_score} category={contact.lead_category} reasoning={contact.lead_score_reasoning} />
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex items-center justify-end space-x-2">
-                                        <button onClick={() => handleOpenViewEventsModal(contact)} title="Vedi Eventi" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
-                                            <CalendarIcon className="w-5 h-5" />
-                                        </button>
-                                        <button onClick={() => handleOpenCreateEventModal(contact)} title="Crea Evento" className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md">
-                                            <PlusIcon className="w-5 h-5" />
-                                        </button>
-                                        <button onClick={() => handleOpenEmailModal(contact)} title="Scrivi Email con AI" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
-                                            <SparklesIcon className="w-5 h-5" />
-                                        </button>
-                                         <button onClick={() => handleOpenWhatsAppModal(contact)} title="Invia WhatsApp con AI" className="p-2 text-green-600 hover:bg-green-50 rounded-md">
-                                            <WhatsAppIcon className="w-5 h-5" />
-                                        </button>
-                                        <button onClick={() => handleOpenEditModal(contact)} title="Modifica" className="p-2 text-gray-500 hover:bg-gray-100 rounded-md">
-                                            <EditIcon className="w-5 h-5" />
-                                        </button>
-                                        <button onClick={() => handleOpenDeleteModal(contact)} title="Elimina" className="p-2 text-red-500 hover:bg-red-50 rounded-md">
-                                            <TrashIcon className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                 {contacts.length === 0 && <p className="text-center text-gray-500 py-8">Nessun contatto trovato. Inizia aggiungendone uno!</p>}
-            </div>
+            <ContactsTable
+                contacts={contacts}
+                onEditContact={handleOpenEditModal}
+                onDeleteContact={handleOpenDeleteModal}
+                onEmailContact={handleOpenEmailModal}
+                onWhatsAppContact={handleOpenWhatsAppModal}
+                onCreateEvent={handleOpenCreateEventModal}
+                onViewEvents={handleOpenViewEventsModal}
+                onAddContact={handleOpenAddModal}
+                onUploadSuccess={refetch}
+            />
 
             {/* Modal Aggiungi/Modifica Contatto */}
             <Modal isOpen={isModalOpen} onClose={handleCloseModals} title={modalMode === 'add' ? 'Crea Nuovo Contatto' : 'Modifica Contatto'}>

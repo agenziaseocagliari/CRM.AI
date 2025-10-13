@@ -6,7 +6,7 @@
 
 **In Supabase Dashboard:**
 1. Go to SQL Editor
-2. Run the migration file: `supabase/migrations/20251013000001_add_booking_profile_fields.sql`
+2. Run the migration file: `supabase/migrations/20261014000001_add_booking_profile_fields_fixed.sql`
 3. Or copy-paste this SQL:
 
 ```sql

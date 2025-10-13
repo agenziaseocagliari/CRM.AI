@@ -120,28 +120,68 @@ CREATE TABLE IF NOT EXISTS event_participants (
 -- EVENT REMINDERS TABLE
 -- =============================================
 
+-- Create event_reminders table or add missing columns if it exists
 CREATE TABLE IF NOT EXISTS event_reminders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    -- Relations
-    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-
-    -- Reminder Timing
-    remind_at TIMESTAMPTZ NOT NULL,
-    minutes_before INTEGER NOT NULL, -- Minutes before event
-
-    -- Delivery Method
-    delivery_method TEXT NOT NULL CHECK (delivery_method IN ('email', 'push', 'sms', 'in_app')),
-
-    -- Status
-    status TEXT DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'sent', 'failed', 'cancelled')),
-    sent_at TIMESTAMPTZ,
-    error_message TEXT,
-
-    -- Audit
+    event_id UUID,
+    user_id UUID,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add columns if they don't exist
+DO $$
+BEGIN
+    -- Add event_id column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'event_id') THEN
+        ALTER TABLE event_reminders ADD COLUMN event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE;
+    END IF;
+
+    -- Add user_id column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'user_id') THEN
+        ALTER TABLE event_reminders ADD COLUMN user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE;
+    END IF;
+
+    -- Add remind_at column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'remind_at') THEN
+        ALTER TABLE event_reminders ADD COLUMN remind_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+    END IF;
+
+    -- Add minutes_before column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'minutes_before') THEN
+        ALTER TABLE event_reminders ADD COLUMN minutes_before INTEGER NOT NULL DEFAULT 15;
+    END IF;
+
+    -- Add delivery_method column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'delivery_method') THEN
+        ALTER TABLE event_reminders ADD COLUMN delivery_method TEXT NOT NULL DEFAULT 'in_app' 
+            CHECK (delivery_method IN ('email', 'push', 'sms', 'in_app'));
+    END IF;
+
+    -- Add status column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'status') THEN
+        ALTER TABLE event_reminders ADD COLUMN status TEXT DEFAULT 'scheduled' 
+            CHECK (status IN ('scheduled', 'sent', 'failed', 'cancelled'));
+    END IF;
+
+    -- Add sent_at column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'sent_at') THEN
+        ALTER TABLE event_reminders ADD COLUMN sent_at TIMESTAMPTZ;
+    END IF;
+
+    -- Add error_message column if missing
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'event_reminders' AND column_name = 'error_message') THEN
+        ALTER TABLE event_reminders ADD COLUMN error_message TEXT;
+    END IF;
+END
+$$;
 
 -- =============================================
 -- PERFORMANCE INDEXES
@@ -182,11 +222,27 @@ CREATE INDEX IF NOT EXISTS idx_participants_contact ON event_participants(contac
     WHERE contact_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_participants_status ON event_participants(event_id, status);
 
--- Reminder indexes
-CREATE INDEX IF NOT EXISTS idx_reminders_pending ON event_reminders(remind_at, status)
-    WHERE status = 'scheduled';
-CREATE INDEX IF NOT EXISTS idx_reminders_event ON event_reminders(event_id);
-CREATE INDEX IF NOT EXISTS idx_reminders_user ON event_reminders(user_id);
+-- Reminder indexes (conditional creation)
+DO $$
+BEGIN
+    -- Create indexes only if columns exist
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name = 'event_reminders' AND column_name = 'remind_at') THEN
+        CREATE INDEX IF NOT EXISTS idx_reminders_pending ON event_reminders(remind_at, status)
+            WHERE status = 'scheduled';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name = 'event_reminders' AND column_name = 'event_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_reminders_event ON event_reminders(event_id);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name = 'event_reminders' AND column_name = 'user_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_reminders_user ON event_reminders(user_id);
+    END IF;
+END
+$$;
 
 -- Full-text search
 CREATE INDEX IF NOT EXISTS idx_events_search ON events USING gin(

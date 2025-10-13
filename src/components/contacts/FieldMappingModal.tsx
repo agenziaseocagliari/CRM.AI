@@ -117,7 +117,7 @@ export default function FieldMappingModal({
           <div className="space-y-6">
             {/* Mapping Configuration */}
             <div className="grid gap-4">
-              {mappings.map((mapping, index) => (
+              {mappings.map((mapping, _index) => (
                 <div
                   key={mapping.csvColumn}
                   className="bg-gray-50 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-gray-100 transition-colors"

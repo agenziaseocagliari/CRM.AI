@@ -21,7 +21,13 @@ export default function ExportButton({
 }: ExportButtonProps) {
     const [isExporting, setIsExporting] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
-    const [exportSummary, setExportSummary] = useState<any>(null);
+    const [exportSummary, setExportSummary] = useState<{
+        totalContacts: number;
+        hasEmail: number;
+        hasPhone: number;
+        hasCompany: number;
+        recentContacts: number;
+    } | null>(null);
 
     const handleExport = async (exportType: 'all' | 'selected' | 'filtered' = 'all') => {
         if (isExporting) return;
@@ -93,7 +99,7 @@ export default function ExportButton({
             const summary = await ExportService.getExportSummary(options);
             setExportSummary(summary);
             setShowSummary(true);
-        } catch (error) {
+        } catch {
             toast.error('Errore nel calcolare il riassunto esportazione');
         }
     };

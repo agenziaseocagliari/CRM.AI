@@ -15,3 +15,140 @@
   }
 }
 /* stylelint-enable at-rule-no-unknown */
+
+/* FullCalendar Custom Styling - Calendly Level Quality */
+.fc {
+  font-family: inherit;
+}
+
+.fc-event {
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.fc-event:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.fc-event-main {
+  color: white;
+}
+
+.fc-daygrid-day-number {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 8px;
+  color: #374151;
+}
+
+.fc-col-header-cell {
+  background-color: #f8fafc;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 12px 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.fc-col-header-cell-cushion {
+  color: #6b7280;
+}
+
+.fc-button {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  text-transform: capitalize !important;
+  font-weight: 500 !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.fc-button:hover:not(:disabled) {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  transform: translateY(-1px);
+}
+
+.fc-button:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.fc-button-active {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.fc-today-button:disabled {
+  background-color: #9ca3af !important;
+  border-color: #9ca3af !important;
+  opacity: 0.5;
+}
+
+.fc-daygrid-day.fc-day-today {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.fc-timegrid-slot {
+  border-color: #f3f4f6;
+}
+
+.fc-timegrid-slot-minor {
+  border-color: #f9fafb;
+}
+
+.fc-timegrid-axis-cushion {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.fc-scrollgrid {
+  border-color: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fc-theme-standard td, 
+.fc-theme-standard th {
+  border-color: #f3f4f6;
+}
+
+.fc-daygrid-day:hover {
+  background-color: rgba(59, 130, 246, 0.02);
+}
+
+/* Event creation highlight */
+.fc-highlight {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .fc-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .fc-toolbar-chunk {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .fc-button {
+    padding: 6px 12px !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .fc-event {
+    font-size: 0.75rem;
+    padding: 1px 4px;
+  }
+}

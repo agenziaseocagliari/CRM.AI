@@ -182,7 +182,6 @@ export default function BookingLinkModal({ isOpen, onClose, userId }: BookingLin
                             <div className="text-sm text-gray-600">Totale Visite</div>
                         </div>
                     </div>
-                </div>
                         </>
                     )}
                 </div>

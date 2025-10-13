@@ -1,21 +1,17 @@
-import { notFound } from 'next/navigation';
+// This is a Vite React component, not Next.js
+// Will be integrated with React Router when booking system is complete
 
-export default async function PublicBookingPage({
-  params
-}: {
-  params: { username: string }
-}) {
-  // Mock profile data for now - in real implementation would fetch from database
+export default function PublicBookingPagePlaceholder() {
+  // For now, this is a placeholder component
+  // In real implementation, this would be handled by React Router
+  const username = "demo-user"; // Will be dynamic with router
+  
   const profile = {
     id: 'user-123',
-    full_name: `User ${params.username}`,
-    username: params.username,
+    full_name: `User ${username}`,
+    username: username,
     bio: 'Prenota un appuntamento con me'
   };
-
-  if (!params.username) {
-    notFound();
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">

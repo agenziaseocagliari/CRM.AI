@@ -50,8 +50,7 @@ export default function TeamSchedulingModal({ isOpen, onClose }: TeamSchedulingM
                                             ? 'border-blue-500 bg-blue-50' 
                                             : 'border-gray-200'
                                     }`}
-                            >
-                                                                >
+                                >
                                     <div className="text-3xl mb-3">🎯</div>
                                     <h4 className="font-semibold mb-2">Collettiva</h4>
                                     <p className="text-sm text-gray-600">Tutti i membri devono essere disponibili contemporaneamente</p>

@@ -45,19 +45,59 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
 
   const fetchProfile = useCallback(async () => {
     try {
+      console.log('🔍 Fetching real profile data for username:', username);
+      
+      // Import supabase client
+      const { supabase } = await import('../../lib/supabaseClient');
+      
+      // Fetch real profile data from database
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Fallback to default values if profile not found
+        setProfile({
+          full_name: 'Profilo Utente',
+          job_title: 'Consulente',
+          company: '',
+          bio: 'Consulenza professionale personalizzata.',
+          username: username,
+          event_duration: 30,
+          event_type: 'Consulenza Strategica',
+          meeting_type: 'Video chiamata',
+        });
+      } else {
+        console.log('✅ Profile data loaded:', profileData);
+        // Use real data from database
+        setProfile({
+          full_name: profileData.full_name || 'Profilo Utente',
+          job_title: profileData.job_title || 'Consulente',
+          company: profileData.company || '',
+          bio: profileData.bio || 'Consulenza professionale personalizzata.',
+          username: profileData.username || username,
+          event_duration: profileData.default_duration || 30,
+          event_type: profileData.event_type || 'Consulenza Strategica',
+          meeting_type: profileData.meeting_type || 'Video chiamata',
+        });
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      // Fallback on any error
       setProfile({
-        full_name: 'Mario Rossi',
-        job_title: 'Consulente Marketing Digitale',
-        company: 'Agenzia SEO Cagliari',
-        bio: 'Esperto in strategie SEO e marketing digitale con oltre 10 anni di esperienza. Offro consulenze personalizzate per aiutare le aziende a crescere online.',
+        full_name: 'Profilo Utente',
+        job_title: 'Consulente',
+        company: '',
+        bio: 'Consulenza professionale personalizzata.',
         username: username,
         event_duration: 30,
         event_type: 'Consulenza Strategica',
         meeting_type: 'Video chiamata',
       });
-      setLoading(false);
-    } catch (error) {
-      console.error('Profile fetch error:', error);
       setLoading(false);
     }
   }, [username]);

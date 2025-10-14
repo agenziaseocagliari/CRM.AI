@@ -33,13 +33,56 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
     });
 
     useEffect(() => {
-        // For now, use mock profile
-        setProfile({
-            full_name: username.replace('user-', 'Utente ').toUpperCase(),
-            bio: 'Esperto consulente disponibile per appuntamenti',
-            username: username
-        });
-        setLoading(false);
+        const fetchProfile = async () => {
+            try {
+                console.log('🔍 Fetching real profile data for username:', username);
+                
+                // Import supabase client
+                const { supabase } = await import('../../../lib/supabaseClient');
+                
+                // Fetch real profile data from database
+                const { data: profileData, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('username', username)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching profile:', error);
+                    // Fallback to basic profile
+                    setProfile({
+                        full_name: username.replace('user-', 'Utente ').toUpperCase(),
+                        bio: 'Esperto consulente disponibile per appuntamenti',
+                        username: username
+                    });
+                } else {
+                    console.log('✅ Profile data loaded:', profileData);
+                    // Use real data from database
+                    setProfile({
+                        full_name: profileData.full_name || 'Profilo Utente',
+                        job_title: profileData.job_title || '',
+                        company: profileData.company || '',
+                        bio: profileData.bio || 'Consulenza professionale personalizzata.',
+                        username: profileData.username || username,
+                        event_type: profileData.event_type || 'Consulenza',
+                        meeting_type: profileData.meeting_type || 'Video chiamata',
+                        default_duration: profileData.default_duration || 30,
+                    });
+                }
+                setLoading(false);
+            } catch (error) {
+                console.error('Profile fetch error:', error);
+                // Fallback on any error
+                setProfile({
+                    full_name: username.replace('user-', 'Utente ').toUpperCase(),
+                    bio: 'Esperto consulente disponibile per appuntamenti',
+                    username: username
+                });
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
     }, [username]);
 
     const availableTimeSlots = [

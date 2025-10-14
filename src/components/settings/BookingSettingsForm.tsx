@@ -99,7 +99,12 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
     const handleSave = async () => {
         setSaving(true);
         try {
-            console.log('Starting profile save with data:', formData);
+            console.log('🔍 Form data being sent:', formData);
+            console.log('📋 All form fields:', Object.keys(formData));
+            console.log('🔍 Individual field values:');
+            Object.entries(formData).forEach(([key, value]) => {
+                console.log(`  ${key}: "${value}"`);
+            });
 
             // Save profile to Supabase
             const { data: { session } } = await supabase.auth.getSession();
@@ -132,7 +137,11 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
                 updated_at: new Date().toISOString(),
             };
 
-            console.log('Upserting profile data:', profileData);
+            console.log('📝 Profile data object being sent to database:', profileData);
+            console.log('🔍 Database fields being updated:');
+            Object.entries(profileData).forEach(([key, value]) => {
+                console.log(`  DB.${key}: "${value}"`);
+            });
 
             const { data, error } = await supabase
                 .from('profiles')

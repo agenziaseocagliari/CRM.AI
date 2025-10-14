@@ -1,13 +1,13 @@
 import React, { memo } from 'react';
-import { 
-  UsersIcon, 
-  DollarSignIcon, 
-  CalendarIcon, 
-  ClipboardListIcon,
-  LoaderIcon,
-  ClockIcon
-} from '../ui/icons';
 import { RecentActivity } from '../../services/dashboardService';
+import {
+    CalendarIcon,
+    ClipboardListIcon,
+    ClockIcon,
+    DollarSignIcon,
+    LoaderIcon,
+    UsersIcon
+} from '../ui/icons';
 
 interface RecentActivityFeedProps {
   activities: RecentActivity[];

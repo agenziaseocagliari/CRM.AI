@@ -1,7 +1,7 @@
 'use client'
 
+import { Calendar, FileText, Kanban, Mail, TrendingUp, UserPlus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { UserPlus, TrendingUp, Calendar, FileText, Mail, Kanban } from 'lucide-react'
 
 export default function QuickActions() {
   const navigate = useNavigate()

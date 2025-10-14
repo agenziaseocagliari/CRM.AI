@@ -1,23 +1,23 @@
-﻿import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useCrmData } from '../hooks/useCrmData';
+import { DashboardService, DashboardStats, RecentActivity } from '../services/dashboardService';
 import { Opportunity, PipelineStage } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
-import { SessionHealthIndicator } from './SessionHealthIndicator';
 import { EnhancedStatCard } from './dashboard/EnhancedStatCard';
-import { RecentActivityFeed } from './dashboard/RecentActivityFeed';
 import QuickActions from './dashboard/QuickActions';
-import { DashboardService, DashboardStats, RecentActivity } from '../services/dashboardService';
-import { 
-  CheckCircleIcon, 
-  DollarSignIcon, 
-  TrendingUpIcon, 
-  UsersIcon, 
-  CalendarIcon,
-  ClipboardDataIcon,
-  ClockIcon,
-  ChartBarIcon
+import { RecentActivityFeed } from './dashboard/RecentActivityFeed';
+import { SessionHealthIndicator } from './SessionHealthIndicator';
+import {
+    CalendarIcon,
+    ChartBarIcon,
+    CheckCircleIcon,
+    ClipboardDataIcon,
+    ClockIcon,
+    DollarSignIcon,
+    TrendingUpIcon,
+    UsersIcon
 } from './ui/icons';
 
 

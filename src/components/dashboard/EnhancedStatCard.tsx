@@ -1,9 +1,9 @@
 import React, { memo, useCallback } from 'react';
-import { 
-  TrendingUpIcon, 
-  TrendingDownIcon, 
-  ChevronRightIcon,
-  LoaderIcon 
+import {
+    ChevronRightIcon,
+    LoaderIcon,
+    TrendingDownIcon,
+    TrendingUpIcon
 } from '../ui/icons';
 
 export interface StatCardProps {

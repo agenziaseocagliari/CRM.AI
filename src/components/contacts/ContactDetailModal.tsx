@@ -1,17 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabaseClient'
-import {
-  X, Edit2, Mail, Phone, Calendar, TrendingUp,
-  MessageSquare, FileText, Activity, Award, Clock,
-  MapPin, Building, Link as LinkIcon, Tag, Eye,
-  User
-} from 'lucide-react'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
-import { useNavigate } from 'react-router-dom'
+import {
+    Activity, Award,
+    Building,
+    Calendar,
+    Clock,
+    FileText,
+    Mail,
+    MapPin,
+    Phone,
+    TrendingUp,
+    X
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient'
 
 interface ContactDetailModalProps {
   isOpen: boolean
@@ -37,6 +43,7 @@ export default function ContactDetailModal({
   const [newNote, setNewNote] = useState('')
   const [loading, setLoading] = useState(true)
   const [isAddingNote, setIsAddingNote] = useState(false)
+  const [isCreatingDeal, setIsCreatingDeal] = useState(false)
 
   useEffect(() => {
     if (contact && isOpen) {
@@ -47,61 +54,26 @@ export default function ContactDetailModal({
   async function loadContactData() {
     setLoading(true)
     try {
-      // Load notes - try contact_notes table first, fallback to contact.notes field
-      let notesData = []
-      try {
-        const { data, error } = await supabase
-          .from('contact_notes')
-          .select('*')
-          .eq('contact_id', contact.id)
-          .order('created_at', { ascending: false })
-        
-        if (error && error.code === '42P01') {
-          // Table doesn't exist, use notes from contact record
-          if (contact.notes) {
-            const noteLines = contact.notes.split('\n').filter((line: string) => line.trim())
-            notesData = noteLines.map((line: string, index: number) => ({
-              id: `fallback-${index}`,
-              note: line.replace(/^\[.*?\]\s*/, ''), // Remove date prefix if exists
-              created_at: new Date().toISOString()
-            }))
-          }
-        } else if (!error) {
-          notesData = data || []
-        }
-      } catch (err) {
-        console.warn('Error loading notes:', err)
-        // Use fallback empty array
-        notesData = []
+      // Load notes from contact_notes table
+      const { data: notesData, error: notesError } = await supabase
+        .from('contact_notes')
+        .select('*')
+        .eq('contact_id', contact.id)
+        .order('created_at', { ascending: false })
+
+      if (notesError) {
+        console.error('Error loading contact notes:', notesError)
       }
 
-      // Load related deals/opportunities
-      let dealsData = []
-      try {
-        // Try opportunities table first (main table)
-        const { data, error } = await supabase
-          .from('opportunities')
-          .select('*, pipeline_stages(name, color)')
-          .eq('contact_id', contact.id)
-          .order('created_at', { ascending: false })
-        
-        if (error && error.code === '42P01') {
-          // If opportunities doesn't exist, try deals table
-          const { data: dealsBackup, error: dealsError } = await supabase
-            .from('deals')
-            .select('*, pipeline_stages(name, color)')
-            .eq('contact_id', contact.id)
-            .order('created_at', { ascending: false })
-          
-          if (!dealsError) {
-            dealsData = dealsBackup || []
-          }
-        } else if (!error) {
-          dealsData = data || []
-        }
-      } catch (err) {
-        console.warn('Error loading deals/opportunities:', err)
-        dealsData = []
+      // Load related opportunities (deals)
+      const { data: dealsData, error: dealsError } = await supabase
+        .from('opportunities')
+        .select('*, pipeline_stages(name, color)')
+        .eq('contact_id', contact.id)
+        .order('created_at', { ascending: false })
+
+      if (dealsError) {
+        console.error('Error loading opportunities:', dealsError)
       }
 
       // Load related events
@@ -145,77 +117,43 @@ export default function ContactDetailModal({
         return
       }
 
-      // Try to insert into contact_notes table first
+      // Insert into contact_notes table
       const { data, error } = await supabase
         .from('contact_notes')
         .insert({
           contact_id: contact.id,
           note: newNote.trim(),
-          created_by: user.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_by: user.id
         })
         .select()
         .single()
 
       if (error) {
-        console.error('contact_notes table error:', error)
-        
-        // If table doesn't exist, use contacts table with notes field as fallback
-        if (error.code === '42P01') { // Table doesn't exist
-          const currentNotes = contact.notes || ''
-          const newNoteEntry = `[${new Date().toLocaleDateString('it-IT')}] ${newNote.trim()}`
-          const updatedNotes = currentNotes ? `${currentNotes}\n${newNoteEntry}` : newNoteEntry
-          
-          const { error: updateError } = await supabase
-            .from('contacts')
-            .update({ notes: updatedNotes })
-            .eq('id', contact.id)
-
-          if (updateError) throw updateError
-
-          // Create mock note for UI
-          const mockNote = {
-            id: Date.now(),
-            note: newNote.trim(),
-            created_at: new Date().toISOString()
-          }
-          setNotes([mockNote, ...notes])
-          
+        console.error('Error saving note:', error)
+        if (error.code === '42P01') {
+          toast.error('Tabella contact_notes non trovata. Contatta l\'amministratore.')
         } else {
-          throw error
+          toast.error('Errore nel salvataggio della nota')
         }
-      } else {
-        // Success with contact_notes table
-        setNotes([data, ...notes])
+        return
       }
 
+      // Success - update UI
+      setNotes([data, ...notes])
       setNewNote('')
-      toast.success('Nota aggiunta con successo!')
+      toast.success('Nota salvata con successo!')
       
     } catch (error: any) {
-      console.error('Error adding note:', error)
-      const errorMsg = error.message || 'Errore sconosciuto'
-      toast.error(`Errore: ${errorMsg}`)
+      console.error('Failed to add note:', error)
+      toast.error('Errore nel salvataggio della nota')
     } finally {
       setIsAddingNote(false)
     }
   }
 
   async function handleCreateDeal() {
+    setIsCreatingDeal(true)
     try {
-      // Get "New Lead" stage
-      const { data: newLeadStage } = await supabase
-        .from('pipeline_stages')
-        .select('id')
-        .eq('name', 'New Lead')
-        .single()
-
-      if (!newLeadStage) {
-        toast.error('Pipeline stage "New Lead" not found')
-        return
-      }
-
       // Get current user and organization
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -223,35 +161,53 @@ export default function ContactDetailModal({
         return
       }
 
-      // Create opportunity using opportunities table (standard)
+      // Get user's organization from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+      const organizationId = profile?.organization_id || user.user_metadata?.organization_id
+
+      if (!organizationId) {
+        toast.error('Organizzazione non trovata')
+        return
+      }
+
+      // Create opportunity with correct field names
       const { data: newDeal, error } = await supabase
         .from('opportunities')
         .insert({
-          name: `Opportunità - ${contact.name}`,
+          contact_name: contact.name,
           contact_id: contact.id,
-          stage_id: newLeadStage.id,
           value: 0,
-          probability: 30,
-          status: 'open',
-          source: 'manual',
-          created_by: user.id,
-          assigned_to: user.id,
-          organization_id: user.user_metadata?.organization_id || 'default-org',
-          created_at: new Date().toISOString()
+          stage: 'New Lead', // Use enum value directly
+          assigned_to: user.email || 'System',
+          close_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+          organization_id: organizationId
         })
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Deal creation error:', error)
+        throw error
+      }
 
-      toast.success('Opportunità creata!')
+      toast.success('Opportunità creata con successo!')
       loadContactData() // Reload to show new deal
 
-      // Redirect to deals page
-      navigate(`/dashboard/opportunities?highlight=${newDeal.id}`)
-    } catch (error) {
-      console.error('Error creating deal:', error)
+      // Navigate to opportunities page
+      setTimeout(() => {
+        navigate('/dashboard/opportunities')
+      }, 1000)
+      
+    } catch (error: any) {
+      console.error('Failed to create deal:', error)
       toast.error('Errore nella creazione dell\'opportunità')
+    } finally {
+      setIsCreatingDeal(false)
     }
   }
 
@@ -323,10 +279,20 @@ export default function ContactDetailModal({
           
           <button
             onClick={handleCreateDeal}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+            disabled={isCreatingDeal}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition text-sm font-medium"
           >
-            <TrendingUp className="w-4 h-4" />
-            Crea Opportunità
+            {isCreatingDeal ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Creando...
+              </>
+            ) : (
+              <>
+                <TrendingUp className="w-4 h-4" />
+                Crea Opportunità
+              </>
+            )}
           </button>
         </div>
 
@@ -573,9 +539,17 @@ export default function ContactDetailModal({
                   <p className="text-gray-500 mb-4">Nessuna opportunità collegata</p>
                   <button
                     onClick={handleCreateDeal}
-                    className="px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                    disabled={isCreatingDeal}
+                    className="px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2 mx-auto"
                   >
-                    Crea Prima Opportunità
+                    {isCreatingDeal ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Creando...
+                      </>
+                    ) : (
+                      'Crea Prima Opportunità'
+                    )}
                   </button>
                 </div>
               ) : (

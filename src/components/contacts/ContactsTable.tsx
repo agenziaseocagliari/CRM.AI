@@ -10,7 +10,6 @@ import {
     MoreVertical,
     Phone,
     Plus,
-    Sparkles,
     Trash2,
     TrendingUp,
     Upload

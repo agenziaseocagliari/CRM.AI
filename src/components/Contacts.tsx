@@ -1,8 +1,7 @@
-﻿import React, { useCallback, useMemo, useState, useEffect } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
-import { Calendar, Edit, Mail, Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useOutletContext, useLocation } from 'react-router-dom';
+import { useLocation, useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
@@ -17,8 +16,8 @@ import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 import { filterContacts } from '../utils/contactFilters';
 import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
-import { CreateEventModal } from './CreateEventModal';
 import ContactDetailModal from './contacts/ContactDetailModal';
+import { CreateEventModal } from './CreateEventModal';
 import { SparklesIcon, WhatsAppIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 

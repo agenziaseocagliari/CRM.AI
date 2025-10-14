@@ -143,7 +143,22 @@ export const useCrmData = () => {
         invokeSupabaseFunction('get-all-crm-events', { organization_id }),
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
-        supabase.from('opportunities').select('*').eq('organization_id', organization_id),
+        (async () => {
+          console.log('🟢 PHASE2: Loading opportunities for organization:', organization_id)
+          const result = await supabase.from('opportunities').select('*').eq('organization_id', organization_id)
+          console.log('✅ Opportunities query result:', { 
+            error: result.error, 
+            count: result.data?.length || 0,
+            data: result.data 
+          })
+          if (result.error) {
+            console.error('❌ Opportunities loading error:', result.error)
+            if (result.error.code === '42P01') {
+              console.error('⚠️ opportunities table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
+            }
+          }
+          return result
+        })(),
         supabase.from('forms').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         supabase.from('automations').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         supabase.from('organization_settings').select('*').eq('organization_id', organization_id).maybeSingle<OrganizationSettings>(),

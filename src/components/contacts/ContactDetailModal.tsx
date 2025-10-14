@@ -55,6 +55,7 @@ export default function ContactDetailModal({
     setLoading(true)
     try {
       // Load notes from contact_notes table
+      console.log('📚 Loading notes for contact:', contact.id)
       const { data: notesData, error: notesError } = await supabase
         .from('contact_notes')
         .select('*')
@@ -62,18 +63,33 @@ export default function ContactDetailModal({
         .order('created_at', { ascending: false })
 
       if (notesError) {
-        console.error('Error loading contact notes:', notesError)
+        console.error('❌ Error loading contact notes:', notesError)
+        console.error('❌ Notes error code:', notesError.code)
+        if (notesError.code === '42P01') {
+          console.error('⚠️ contact_notes table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
+        }
+      } else {
+        console.log('✅ Notes loaded successfully:', { count: notesData?.length || 0, data: notesData })
       }
 
       // Load related opportunities (deals)
+      console.log('💼 Loading opportunities for contact:', contact.id)
       const { data: dealsData, error: dealsError } = await supabase
         .from('opportunities')
-        .select('*, pipeline_stages(name, color)')
+        .select(`
+          *
+        `)
         .eq('contact_id', contact.id)
         .order('created_at', { ascending: false })
 
       if (dealsError) {
-        console.error('Error loading opportunities:', dealsError)
+        console.error('❌ Error loading opportunities:', dealsError)
+        console.error('❌ Deals error code:', dealsError.code)
+        if (dealsError.code === '42P01') {
+          console.error('⚠️ opportunities table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
+        }
+      } else {
+        console.log('✅ Opportunities loaded successfully:', { count: dealsData?.length || 0, data: dealsData })
       }
 
       // Load related events
@@ -103,111 +119,177 @@ export default function ContactDetailModal({
   }
 
   async function handleAddNote() {
+    console.log('🔵 PHASE2: handleAddNote started', { newNote: newNote.trim(), contactId: contact.id })
+    
     if (!newNote.trim()) {
-      toast.error('La nota non può essere vuota')
+      console.log('❌ Empty note detected')
+      toast.error('Nota vuota')
       return
     }
 
     setIsAddingNote(true)
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        toast.error('Devi essere autenticato per aggiungere note')
+      // Step 1: Get user (simple check)
+      console.log('🔍 Step 1: Getting authenticated user...')
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError || !user) {
+        console.error('❌ Auth error:', authError)
+        toast.error('Devi essere autenticato')
         return
       }
+      console.log('✅ User authenticated:', { userId: user.id, email: user.email })
 
-      // Insert into contact_notes table
+      // Step 2: Simple insert - ONLY required fields
+      const noteData = {
+        contact_id: contact.id,
+        note: newNote.trim(),
+        created_by: user.id
+      }
+      console.log('📝 Step 2: Inserting note with data:', noteData)
+
       const { data, error } = await supabase
         .from('contact_notes')
-        .insert({
-          contact_id: contact.id,
-          note: newNote.trim(),
-          created_by: user.id
-        })
+        .insert(noteData)
         .select()
         .single()
 
       if (error) {
-        console.error('Error saving note:', error)
+        console.error('❌ Insert error details:', error)
+        console.error('❌ Error code:', error.code)
+        console.error('❌ Error message:', error.message)
+        
         if (error.code === '42P01') {
-          toast.error('Tabella contact_notes non trovata. Contatta l\'amministratore.')
+          toast.error('⚠️ Tabella contact_notes non trovata! Esegui PHASE1_DATABASE_SCRIPTS.sql')
+        } else if (error.code === '23503') {
+          toast.error('⚠️ Riferimento contatto non valido')
         } else {
-          toast.error('Errore nel salvataggio della nota')
+          toast.error(`❌ Errore DB: ${error.message}`)
         }
         return
       }
 
-      // Success - update UI
+      console.log('✅ Note saved successfully:', data)
+
+      // Step 3: Update UI
       setNotes([data, ...notes])
       setNewNote('')
-      toast.success('Nota salvata con successo!')
+      toast.success('✅ Nota salvata con successo!')
       
     } catch (error: any) {
-      console.error('Failed to add note:', error)
-      toast.error('Errore nel salvataggio della nota')
+      console.error('💥 Complete error:', error)
+      const errorMsg = error.message || error.toString()
+      toast.error(`💥 Errore: ${errorMsg}`)
     } finally {
       setIsAddingNote(false)
+      console.log('🔵 handleAddNote completed')
     }
   }
 
   async function handleCreateDeal() {
+    console.log('🟢 PHASE2: handleCreateDeal started', { contactId: contact.id, contactName: contact.name })
+    
     setIsCreatingDeal(true)
     try {
-      // Get current user and organization
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        toast.error('Devi essere autenticato')
+      // Step 1: Auth check
+      console.log('🔍 Step 1: Getting authenticated user...')
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError || !user) {
+        console.error('❌ Auth error:', authError)
+        toast.error('Non autenticato')
         return
       }
+      console.log('✅ User authenticated:', { userId: user.id, email: user.email })
 
-      // Get user's organization from profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single()
-
-      const organizationId = profile?.organization_id || user.user_metadata?.organization_id
+      // Step 2: Get organization (try multiple sources)
+      console.log('🏢 Step 2: Getting organization...')
+      let organizationId = user.user_metadata?.organization_id
 
       if (!organizationId) {
-        toast.error('Organizzazione non trovata')
+        // Try profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .single()
+        
+        if (profileError) {
+          console.log('⚠️ Profile lookup failed:', profileError)
+        } else {
+          organizationId = profile?.organization_id
+          console.log('✅ Organization from profile:', organizationId)
+        }
+      } else {
+        console.log('✅ Organization from user metadata:', organizationId)
+      }
+
+      // Fallback organization ID if none found
+      if (!organizationId) {
+        organizationId = 'default-org'
+        console.log('⚠️ Using fallback organization ID:', organizationId)
+      }
+
+      // Step 3: Create opportunity - SIMPLE data structure
+      const opportunityData = {
+        contact_name: contact.name,
+        contact_id: contact.id,
+        value: 0,
+        stage: 'New Lead', // Direct string - matches enum
+        assigned_to: user.email || user.id,
+        close_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        organization_id: organizationId,
+        status: 'open',
+        source: 'manual',
+        created_by: user.id
+      }
+      console.log('💼 Step 3: Creating opportunity with data:', opportunityData)
+
+      const { data: newOpp, error: createError } = await supabase
+        .from('opportunities')
+        .insert(opportunityData)
+        .select(`
+          *
+        `)
+        .single()
+
+      if (createError) {
+        console.error('❌ Create error details:', createError)
+        console.error('❌ Error code:', createError.code)
+        console.error('❌ Error message:', createError.message)
+        
+        if (createError.code === '42P01') {
+          toast.error('⚠️ Tabella opportunities non trovata! Esegui PHASE1_DATABASE_SCRIPTS.sql')
+        } else if (createError.code === '23503') {
+          toast.error('⚠️ Riferimenti tabella non validi (contatto/organizzazione)')
+        } else {
+          toast.error(`❌ Errore DB: ${createError.message}`)
+        }
         return
       }
 
-      // Create opportunity with correct field names
-      const { data: newDeal, error } = await supabase
-        .from('opportunities')
-        .insert({
-          contact_name: contact.name,
-          contact_id: contact.id,
-          value: 0,
-          stage: 'New Lead', // Use enum value directly
-          assigned_to: user.email || 'System',
-          close_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
-          organization_id: organizationId
-        })
-        .select()
-        .single()
+      console.log('✅ Opportunity created successfully:', newOpp)
 
-      if (error) {
-        console.error('Deal creation error:', error)
-        throw error
-      }
-
-      toast.success('Opportunità creata con successo!')
-      loadContactData() // Reload to show new deal
-
-      // Navigate to opportunities page
-      setTimeout(() => {
-        navigate('/dashboard/opportunities')
-      }, 1000)
+      // Step 4: Success
+      toast.success('✅ Opportunità creata con successo!')
       
+      // Reload to show new deal
+      console.log('🔄 Reloading contact data...')
+      await loadContactData()
+
+      // Navigate after brief delay
+      setTimeout(() => {
+        console.log('🧭 Navigating to opportunities page...')
+        navigate('/dashboard/opportunities')
+      }, 1500)
+
     } catch (error: any) {
-      console.error('Failed to create deal:', error)
-      toast.error('Errore nella creazione dell\'opportunità')
+      console.error('💥 Complete error:', error)
+      const errorMsg = error.message || error.toString()
+      toast.error(`💥 Errore: ${errorMsg}`)
     } finally {
       setIsCreatingDeal(false)
+      console.log('🟢 handleCreateDeal completed')
     }
   }
 

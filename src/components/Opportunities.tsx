@@ -240,12 +240,36 @@ export const Opportunities: React.FC = () => {
             if (error) {throw error;}
             successMessage = 'Opportunità  aggiornata con successo!';
         } else {
-             if (!organization) {
-                throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'Opportunità .");
+            console.log('🟢 PHASE2: Creating new opportunity in Opportunities component')
+            if (!organization) {
+                console.error('❌ No organization available')
+                throw new Error("Informazioni sull'organizzazione non disponibili. Impossibile creare l'Opportunità.");
             }
-            const { error } = await supabase.rpc('create_opportunity', formData);
-            if (error) {throw error;}
-            successMessage = 'Opportunità  creata con successo!';
+            
+            // Get current user for created_by field
+            const { data: { user } } = await supabase.auth.getUser()
+            
+            const opportunityData = {
+                ...formData,
+                organization_id: organization.id,
+                created_by: user?.id,
+                status: 'open',
+                source: 'manual'
+            }
+            
+            console.log('💼 Creating opportunity with data:', opportunityData)
+            
+            // Use direct INSERT instead of RPC
+            const { error } = await supabase
+                .from('opportunities')
+                .insert(opportunityData)
+            
+            if (error) {
+                console.error('❌ Opportunity creation error:', error)
+                throw error;
+            }
+            console.log('✅ Opportunity created successfully')
+            successMessage = 'Opportunità creata con successo!';
         }
         refetchData();
         handleCloseModals();

@@ -1,7 +1,7 @@
 'use client';
 
-import { X, Copy, Check, ExternalLink, Settings } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Check, Copy, ExternalLink, Settings, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -37,7 +37,7 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
     const fetchProfile = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            
+
             if (session?.user?.id) {
                 const { data: profile, error } = await supabase
                     .from('profiles')
@@ -113,7 +113,7 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
                 </div>
 
                 <div className="p-6 space-y-6">
-                    
+
                     {/* Warning if profile incomplete */}
                     {!isProfileComplete && (
                         <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-5">
@@ -124,7 +124,7 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
                                         Completa il Tuo Profilo
                                     </h3>
                                     <p className="text-sm text-yellow-800 mb-4">
-                                        La tua pagina di prenotazione non è ancora configurata. 
+                                        La tua pagina di prenotazione non è ancora configurata.
                                         Aggiungi nome, ruolo, azienda e descrizione per renderla professionale.
                                     </p>
                                     <button
@@ -182,7 +182,7 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
                                 <div className="text-3xl mb-2">📧</div>
                                 <div className="text-sm font-semibold">Email</div>
                             </button>
-                            
+
                             <button
                                 onClick={() => handleShare('whatsapp')}
                                 className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all"
@@ -190,7 +190,7 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
                                 <div className="text-3xl mb-2">💬</div>
                                 <div className="text-sm font-semibold">WhatsApp</div>
                             </button>
-                            
+
                             <button
                                 onClick={() => handleShare('linkedin')}
                                 className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
@@ -215,7 +215,7 @@ export default function BookingLinkModal({ isOpen, onClose }: BookingLinkModalPr
                                 Modifica Impostazioni
                             </button>
                         )}
-                        
+
                         <a
                             href={bookingUrl}
                             target="_blank"

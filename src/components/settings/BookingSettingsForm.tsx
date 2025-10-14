@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, Briefcase, Calendar, Clock, Link as LinkIcon, Save, User } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -50,7 +50,7 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
         try {
             console.log('Fetching current profile...');
             const { data: { session } } = await supabase.auth.getSession();
-            
+
             if (!session?.user?.id) {
                 console.log('No user session found');
                 setLoading(false);
@@ -100,7 +100,7 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
         setSaving(true);
         try {
             console.log('Starting profile save with data:', formData);
-            
+
             // Save profile to Supabase
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.user?.id) throw new Error('Utente non autenticato');
@@ -109,7 +109,7 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
             const userEmail = session.user.email;
             console.log('User session found:', session.user.id);
             console.log('User email from auth:', userEmail);
-            
+
             if (!userEmail) {
                 console.warn('WARNING: User email not found in session');
                 throw new Error('User email not found in session - authentication incomplete');
@@ -153,7 +153,7 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
             setTimeout(() => setSaved(false), 3000);
         } catch (error: unknown) {
             console.error('Save error:', error);
-            
+
             // Show detailed error to user
             let errorMessage = 'Errore durante il salvataggio';
             if (error instanceof Error && error.message) {
@@ -163,7 +163,7 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
                 errorMessage += `\nCodice errore: ${(error as { code: string }).code}`;
             }
             errorMessage += '\n\nControlla la console per maggiori dettagli.';
-            
+
             alert(errorMessage);
         } finally {
             setSaving(false);
@@ -187,8 +187,8 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
         <div className="space-y-8">
 
             {/* Back Button */}
-            <Link 
-                to="/dashboard/calendar" 
+            <Link
+                to="/dashboard/calendar"
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
             >
                 <ArrowLeft className="w-4 h-4" />
@@ -419,7 +419,7 @@ export default function BookingSettingsForm({ profile, userId }: BookingSettings
                 >
                     Annulla
                 </Link>
-                
+
                 <div className="flex items-center gap-4">
                     {saved && (
                         <span className="text-green-600 font-medium">

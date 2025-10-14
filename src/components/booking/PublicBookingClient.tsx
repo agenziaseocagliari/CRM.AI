@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import {
-  Calendar, Clock, User, Mail, Phone, MessageSquare,
-  CheckCircle, ChevronLeft, ChevronRight, Video
+  Calendar,
+  CheckCircle, ChevronLeft, ChevronRight,
+  Clock,
+  Mail,
+  MessageSquare,
+  Phone,
+  User,
+  Video
 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Profile {
   id?: string;
@@ -41,7 +47,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
     try {
       setProfile({
         full_name: 'Mario Rossi',
-        job_title: 'Consulente Marketing Digitale', 
+        job_title: 'Consulente Marketing Digitale',
         company: 'Agenzia SEO Cagliari',
         bio: 'Esperto in strategie SEO e marketing digitale con oltre 10 anni di esperienza. Offro consulenze personalizzate per aiutare le aziende a crescere online.',
         username: username,
@@ -131,20 +137,20 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Left Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 {profile?.event_type || 'Consulenza'}
               </h2>
-              
+
               <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-3 text-gray-700">
                   <Clock className="w-5 h-5 text-blue-600" />
                   <span>{profile?.event_duration || profile?.default_duration || 30} minuti</span>
                 </div>
-                
+
                 <div className="flex items-center gap-3 text-gray-700">
                   <Video className="w-5 h-5 text-blue-600" />
                   <span>{profile?.meeting_type || 'Video chiamata'}</span>
@@ -166,7 +172,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                       <Calendar className="w-4 h-4" />
                       {selectedDate.toLocaleDateString('it-IT', {
                         weekday: 'long',
-                        day: 'numeric', 
+                        day: 'numeric',
                         month: 'long'
                       })}
                     </div>
@@ -183,7 +189,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
           {/* Right Content */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              
+
               {/* Progress */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
                 <div className="flex items-center justify-between max-w-md mx-auto">
@@ -196,22 +202,19 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                     const Icon = s.icon;
                     const isActive = step === s.key;
                     const isCompleted = ['date', 'time', 'details', 'confirm'].indexOf(step) > idx;
-                    
+
                     return (
-                      <div key={s.key} className={`flex items-center ${
-                        isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
-                      }`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          isActive ? 'bg-blue-600 text-white' : 
-                          isCompleted ? 'bg-green-600 text-white' : 
-                          'bg-gray-200'
+                      <div key={s.key} className={`flex items-center ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
                         }`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive ? 'bg-blue-600 text-white' :
+                            isCompleted ? 'bg-green-600 text-white' :
+                              'bg-gray-200'
+                          }`}>
                           <Icon className="w-4 h-4" />
                         </div>
                         {idx < 3 && (
-                          <div className={`w-8 h-0.5 ${
-                            isCompleted ? 'bg-green-600' : 'bg-gray-300'
-                          }`} />
+                          <div className={`w-8 h-0.5 ${isCompleted ? 'bg-green-600' : 'bg-gray-300'
+                            }`} />
                         )}
                       </div>
                     );
@@ -221,12 +224,12 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
 
               {/* Content */}
               <div className="p-8">
-                
+
                 {/* Date Selection */}
                 {step === 'date' && (
                   <div>
                     <h2 className="text-2xl font-bold text-center mb-6">Seleziona una Data</h2>
-                    
+
                     <div className="flex items-center justify-between mb-4">
                       <button
                         onClick={() => {
@@ -259,7 +262,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                           {day}
                         </div>
                       ))}
-                      
+
                       {days.map((date, idx) => {
                         const available = isDateAvailable(date);
                         return (
@@ -272,11 +275,10 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                               }
                             }}
                             disabled={!available}
-                            className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
-                              available
+                            className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-all ${available
                                 ? 'hover:bg-blue-100 hover:text-blue-700 cursor-pointer border border-gray-200'
                                 : 'text-gray-300 cursor-not-allowed'
-                            } ${!date ? 'invisible' : ''}`}
+                              } ${!date ? 'invisible' : ''}`}
                           >
                             {date?.getDate()}
                           </button>
@@ -300,7 +302,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                       })}
                     </h2>
                     <p className="text-center text-gray-600 mb-6">Seleziona un orario disponibile</p>
-                    
+
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
                       {availableTimeSlots.map(slot => (
                         <button
@@ -325,7 +327,7 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                       ← Cambia orario
                     </button>
                     <h2 className="text-2xl font-bold text-center mb-6">I Tuoi Dettagli</h2>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">

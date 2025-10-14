@@ -100,8 +100,8 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                                         <div className={`flex items-center gap-2 ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
                                             }`}>
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isActive ? 'bg-blue-600 text-white' :
-                                                    isCompleted ? 'bg-green-600 text-white' :
-                                                        'bg-gray-200'
+                                                isCompleted ? 'bg-green-600 text-white' :
+                                                    'bg-gray-200'
                                                 }`}>
                                                 <Icon className="w-5 h-5" />
                                             </div>

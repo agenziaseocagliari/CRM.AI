@@ -19,6 +19,7 @@ interface CalendarEvent {
     extendedProps?: {
         event_type?: string;
         priority?: string;
+        is_recurring?: boolean;
         [key: string]: unknown;
     };
 }
@@ -86,6 +87,21 @@ export default function CalendarView({
         }
     };
 
+    const renderEventContent = (eventInfo: any) => {
+        const isRecurring = eventInfo.event.extendedProps?.is_recurring;
+
+        return (
+            <div className="flex items-center gap-1 p-1">
+                {isRecurring && (
+                    <span className="text-xs">🔄</span>
+                )}
+                <span className="text-xs font-medium truncate">
+                    {eventInfo.event.title}
+                </span>
+            </div>
+        );
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-lg p-4">
             <FullCalendar
@@ -131,6 +147,7 @@ export default function CalendarView({
                     day: 'Giorno'
                 }}
                 eventColor='#3b82f6'
+                eventContent={renderEventContent}
             />
         </div>
     );

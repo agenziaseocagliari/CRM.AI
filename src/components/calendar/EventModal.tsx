@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Calendar, Clock, Link2, MapPin, Palette, Repeat, Save, Tag, Trash2, Users, Video, X } from 'lucide-react';
+import { Bell, Calendar, Clock, MapPin, Palette, Repeat, Save, Tag, Trash2, Users, Video, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface EventData {
@@ -117,14 +117,14 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
         const part1 = random().substring(0, 3); // 3 chars
         const part2 = random().substring(0, 4); // 4 chars  
         const part3 = random().substring(0, 3); // 3 chars
-        
+
         return `https://meet.google.com/${part1}-${part2}-${part3}`;
     };
 
     // URL validation for meeting platforms
     const isValidMeetingUrl = (url: string): boolean => {
         if (!url) return true; // Empty is OK
-        
+
         try {
             const urlObj = new URL(url);
             // Accept common meeting platforms
@@ -135,9 +135,9 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                 'whereby.com',
                 'webex.com'
             ];
-            
-            return validDomains.some(domain => urlObj.hostname.includes(domain)) || 
-                   urlObj.protocol.startsWith('http');
+
+            return validDomains.some(domain => urlObj.hostname.includes(domain)) ||
+                urlObj.protocol.startsWith('http');
         } catch {
             return false;
         }
@@ -200,9 +200,9 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
         if (formData.location_type === 'virtual' && !formData.meeting_url.trim()) {
             newErrors.meeting_url = 'URL meeting richiesto per eventi virtuali';
         }
-        
-        if (formData.location_type === 'virtual' && 
-            formData.meeting_url && 
+
+        if (formData.location_type === 'virtual' &&
+            formData.meeting_url &&
             !isValidMeetingUrl(formData.meeting_url)) {
             newErrors.meeting_url = 'URL meeting non valido';
         }
@@ -327,8 +327,8 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                     type="button"
                                     onClick={() => handleFieldChange('event_type', type.value)}
                                     className={`p-4 rounded-lg border-2 transition-all hover:scale-105 ${formData.event_type === type.value
-                                            ? `border-${type.color}-500 bg-${type.color}-50 text-${type.color}-700`
-                                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                                        ? `border-${type.color}-500 bg-${type.color}-50 text-${type.color}-700`
+                                        : 'border-gray-200 hover:border-gray-300 bg-white'
                                         }`}
                                 >
                                     <div className="text-2xl mb-2">{type.icon}</div>
@@ -453,8 +453,8 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                     type="button"
                                     onClick={() => handleFieldChange('location_type', value)}
                                     className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${formData.location_type === value
-                                            ? 'border-blue-500 text-blue-600 bg-blue-50'
-                                            : 'border-transparent text-gray-600 hover:text-gray-900'
+                                        ? 'border-blue-500 text-blue-600 bg-blue-50'
+                                        : 'border-transparent text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -486,9 +486,8 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                             value={formData.meeting_url}
                                             onChange={(e) => handleFieldChange('meeting_url', e.target.value)}
                                             placeholder="https://meet.google.com/... o incolla il tuo link"
-                                            className={`flex-1 px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                                                errors.meeting_url ? 'border-red-300' : 'border-gray-300'
-                                            }`}
+                                            className={`flex-1 px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${errors.meeting_url ? 'border-red-300' : 'border-gray-300'
+                                                }`}
                                         />
                                         {formData.meeting_url && (
                                             <button
@@ -516,13 +515,13 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                         <Video className="w-4 h-4" />
                                         Genera Google Meet
                                     </button>
-                                    
+
                                     <span className="text-sm text-gray-500">oppure incolla il tuo link</span>
                                 </div>
 
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                     <p className="text-xs text-blue-800">
-                                        <strong>💡 Consiglio Pro:</strong> Per meeting importanti con controlli host (mute, remove, recording), 
+                                        <strong>💡 Consiglio Pro:</strong> Per meeting importanti con controlli host (mute, remove, recording),
                                         crea il meeting manualmente su{' '}
                                         <a href="https://meet.google.com" target="_blank" rel="noopener" className="underline hover:text-blue-900">
                                             meet.google.com
@@ -536,9 +535,9 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                         <span className="text-green-600 mt-0.5">✓</span>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm text-green-800 font-medium">Meeting URL configurato</p>
-                                            <a 
-                                                href={formData.meeting_url} 
-                                                target="_blank" 
+                                            <a
+                                                href={formData.meeting_url}
+                                                target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-xs text-green-600 hover:underline break-all block mt-1"
                                             >
@@ -637,8 +636,8 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                                             type="button"
                                                             onClick={() => toggleRecurrenceDay(day.value)}
                                                             className={`w-10 h-10 rounded-full border-2 text-sm font-medium transition-all ${formData.recurrence_days.includes(day.value)
-                                                                    ? 'border-blue-500 bg-blue-500 text-white'
-                                                                    : 'border-gray-300 hover:border-gray-400 bg-white text-gray-700'
+                                                                ? 'border-blue-500 bg-blue-500 text-white'
+                                                                : 'border-gray-300 hover:border-gray-400 bg-white text-gray-700'
                                                                 }`}
                                                             title={day.fullName}
                                                         >

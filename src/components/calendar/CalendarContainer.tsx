@@ -11,6 +11,7 @@ import BookingLinkModal from './BookingLinkModal';
 import CalendarView from './CalendarView';
 import EventModal from './EventModal';
 import MyEventsModal from './MyEventsModal';
+import RecurringEditModal from './RecurringEditModal';
 import TeamSchedulingModal from './TeamSchedulingModal';
 
 export default function CalendarContainer() {
@@ -26,6 +27,11 @@ export default function CalendarContainer() {
     const [showBookingLink, setShowBookingLink] = useState(false);
     const [showTeamScheduling, setShowTeamScheduling] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
+
+    // Recurring event handling
+    const [showRecurringModal, setShowRecurringModal] = useState(false);
+    const [recurringAction, setRecurringAction] = useState<'edit' | 'delete'>('edit');
+    const [pendingRecurringEvent, setPendingRecurringEvent] = useState<FullCalendarEvent | null>(null);
 
     useEffect(() => {
         // Performance optimization: preload data
@@ -58,7 +64,15 @@ export default function CalendarContainer() {
 
     const fetchEvents = async () => {
         try {
-            const fetchedEvents = await CalendarService.fetchEvents();
+            // Get current calendar view range for recurring events
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const monthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0); // 2 months for better UX
+
+            const fetchedEvents = await CalendarService.fetchAllEvents(
+                monthStart.toISOString(),
+                monthEnd.toISOString()
+            );
             setEvents(fetchedEvents);
             setIsLoading(false);
         } catch (error) {
@@ -96,11 +110,40 @@ export default function CalendarContainer() {
     };
 
     const handleEventClick = (event: FullCalendarEvent) => {
-        setSelectedEvent(event);
-        setShowModal(true);
+        // Check if this is a recurring event
+        if (event.extendedProps?.is_recurring) {
+            setPendingRecurringEvent(event);
+            setRecurringAction('edit');
+            setShowRecurringModal(true);
+        } else {
+            setSelectedEvent(event);
+            setShowModal(true);
+        }
     };
 
-    const handleSaveEvent = async (eventData: Partial<{ title: string; description: string; event_type: string; priority: string; start_time: string; end_time: string; location: string; notes: string; reminder_minutes: number[]; }>) => {
+    const handleRecurringChoice = (choice: 'this' | 'series') => {
+        setShowRecurringModal(false);
+
+        if (pendingRecurringEvent) {
+            setSelectedEvent(pendingRecurringEvent);
+            // Store choice for handleSaveEvent to use
+            // In a full implementation, you'd pass this to EventModal
+            setShowModal(true);
+        }
+
+        setPendingRecurringEvent(null);
+    };
+
+    const handleDeleteRecurringEvent = async (eventId: string, choice: 'this' | 'series') => {
+        try {
+            await CalendarService.deleteRecurringEvent(eventId, choice);
+            await fetchEvents(); // Refresh to show changes
+        } catch (error) {
+            console.error('Delete recurring event error:', error);
+        }
+    };
+
+    const handleSaveEvent = async (eventData: any) => {
         try {
             // Convert EventData format to CalendarEventCreate format  
             const createData = {
@@ -112,11 +155,22 @@ export default function CalendarContainer() {
                 priority: eventData.priority,
                 location: eventData.location,
                 notes: eventData.notes,
-                reminder_minutes: eventData.reminder_minutes
+                reminder_minutes: eventData.reminder_minutes,
+                // Recurring fields
+                is_recurring: eventData.is_recurring,
+                recurrence_frequency: eventData.recurrence_frequency,
+                recurrence_interval: eventData.recurrence_interval,
+                recurrence_days: eventData.recurrence_days,
+                recurrence_end_date: eventData.recurrence_end_date,
             };
 
-            const newEvent = await CalendarService.createEvent(createData);
-            setEvents(prev => [...prev, newEvent]);
+            // Use appropriate service method for recurring vs regular events
+            const newEvent = eventData.is_recurring
+                ? await CalendarService.createRecurringEvent(createData)
+                : await CalendarService.createEvent(createData);
+
+            // Refresh events to show all instances
+            await fetchEvents();
         } catch (error) {
             console.error('Save event error:', error);
             throw error;
@@ -347,6 +401,18 @@ export default function CalendarContainer() {
                 isOpen={showAnalytics}
                 onClose={() => setShowAnalytics(false)}
                 events={events}
+            />
+
+            {/* Recurring Edit Modal */}
+            <RecurringEditModal
+                isOpen={showRecurringModal}
+                onClose={() => {
+                    setShowRecurringModal(false);
+                    setPendingRecurringEvent(null);
+                }}
+                onChoice={handleRecurringChoice}
+                eventTitle={pendingRecurringEvent?.title}
+                action={recurringAction}
             />
         </div>
     );

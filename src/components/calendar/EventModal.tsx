@@ -112,10 +112,15 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
 
     // Auto-generate meeting URL for virtual meetings
     const generateMeetingUrl = () => {
-        const meetingId = Math.random().toString(36).substring(2, 10).toUpperCase();
+        // Google Meet uses format: xxx-yyyy-zzz (3-4-3 characters)
+        const random = () => Math.random().toString(36).substring(2, 15);
+        const part1 = random().substring(0, 3); // 3 chars
+        const part2 = random().substring(0, 4); // 4 chars  
+        const part3 = random().substring(0, 3); // 3 chars
+        
         setFormData(prev => ({
             ...prev,
-            meeting_url: `https://meet.company.com/room/${meetingId}`
+            meeting_url: `https://meet.google.com/${part1}-${part2}-${part3}`
         }));
     };
 

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Diagnostic</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .diagnostic {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+        }
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+        }
+        .loading {
+            background: #fef9e7;
+            border: 1px solid #fed7aa;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Production Diagnostic Tool</h1>
+    
+    <div id="status" class="diagnostic loading">
+        <h3>⏳ Running diagnostics...</h3>
+    </div>
+
+    <div class="diagnostic">
+        <h3>📊 Environment Check</h3>
+        <div id="env-check">Loading...</div>
+    </div>
+
+    <div class="diagnostic">
+        <h3>🌐 Network Test</h3>
+        <div id="network-test">Loading...</div>
+    </div>
+
+    <div class="diagnostic">
+        <h3>📄 App Load Test</h3>
+        <div id="app-test">Loading...</div>
+    </div>
+
+    <div class="diagnostic">
+        <h3>🔧 Console Logs</h3>
+        <div id="console-logs">
+            <pre id="logs-output">Capturing logs...</pre>
+        </div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        let logs = [];
+
+        console.log = function(...args) {
+            logs.push({type: 'log', message: args.join(' '), timestamp: new Date().toISOString()});
+            originalLog.apply(console, args);
+            updateLogs();
+        };
+
+        console.error = function(...args) {
+            logs.push({type: 'error', message: args.join(' '), timestamp: new Date().toISOString()});
+            originalError.apply(console, args);
+            updateLogs();
+        };
+
+        console.warn = function(...args) {
+            logs.push({type: 'warn', message: args.join(' '), timestamp: new Date().toISOString()});
+            originalWarn.apply(console, args);
+            updateLogs();
+        };
+
+        function updateLogs() {
+            const logsOutput = document.getElementById('logs-output');
+            logsOutput.innerHTML = logs.map(log => 
+                `[${log.timestamp}] ${log.type.toUpperCase()}: ${log.message}`
+            ).join('\n');
+        }
+
+        // Environment check
+        function checkEnvironment() {
+            const envCheck = document.getElementById('env-check');
+            const result = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                platform: navigator.platform,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                url: window.location.href,
+                referrer: document.referrer
+            };
+            
+            envCheck.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        }
+
+        // Network test
+        async function testNetwork() {
+            const networkTest = document.getElementById('network-test');
+            const tests = [];
+
+            // Test main domain
+            try {
+                const response = await fetch('https://crm-ai-steel.vercel.app/', {method: 'HEAD'});
+                tests.push({
+                    test: 'Main domain',
+                    status: response.status,
+                    result: response.ok ? '✅ OK' : '❌ Failed'
+                });
+            } catch (error) {
+                tests.push({
+                    test: 'Main domain',
+                    status: 'Error',
+                    result: '❌ ' + error.message
+                });
+            }
+
+            // Test static assets
+            try {
+                const response = await fetch('https://crm-ai-steel.vercel.app/js/', {method: 'HEAD'});
+                tests.push({
+                    test: 'Static assets',
+                    status: response.status,
+                    result: response.ok ? '✅ OK' : '❌ Failed'
+                });
+            } catch (error) {
+                tests.push({
+                    test: 'Static assets',
+                    status: 'Error',
+                    result: '❌ ' + error.message
+                });
+            }
+
+            networkTest.innerHTML = `<pre>${JSON.stringify(tests, null, 2)}</pre>`;
+        }
+
+        // App load test
+        function testAppLoad() {
+            const appTest = document.getElementById('app-test');
+            
+            // Create iframe to test app loading
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://crm-ai-steel.vercel.app/';
+            iframe.style.display = 'none';
+            
+            let loadTimeout;
+            
+            iframe.onload = function() {
+                clearTimeout(loadTimeout);
+                appTest.innerHTML = '✅ App loaded successfully in iframe';
+                appTest.className = 'success';
+            };
+
+            iframe.onerror = function() {
+                clearTimeout(loadTimeout);
+                appTest.innerHTML = '❌ App failed to load in iframe';
+                appTest.className = 'error';
+            };
+
+            loadTimeout = setTimeout(() => {
+                appTest.innerHTML = '⏰ App load timeout (30s)';
+                appTest.className = 'error';
+            }, 30000);
+
+            document.body.appendChild(iframe);
+        }
+
+        // Run all diagnostics
+        async function runDiagnostics() {
+            try {
+                checkEnvironment();
+                await testNetwork();
+                testAppLoad();
+                
+                // Update status
+                setTimeout(() => {
+                    const status = document.getElementById('status');
+                    status.innerHTML = '<h3>✅ Diagnostics complete</h3>';
+                    status.className = 'diagnostic success';
+                }, 2000);
+            } catch (error) {
+                const status = document.getElementById('status');
+                status.innerHTML = `<h3>❌ Diagnostics failed</h3><p>${error.message}</p>`;
+                status.className = 'diagnostic error';
+            }
+        }
+
+        // Start diagnostics when page loads
+        window.addEventListener('load', runDiagnostics);
+    </script>
+</body>
+</html>

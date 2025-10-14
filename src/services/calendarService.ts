@@ -365,7 +365,7 @@ export class CalendarService {
   }
 
   // Convert database event to FullCalendar format
-  static convertToFullCalendarEvent(event: any): FullCalendarEvent {
+  static convertToFullCalendarEvent(event: CalendarEvent): FullCalendarEvent {
     return {
       id: event.id,
       title: event.title,
@@ -425,7 +425,15 @@ export class CalendarService {
       // Generate RRULE if recurring
       let rrule = null;
       if (eventData.is_recurring) {
-        rrule = generateRRuleFromEventData(eventData);
+        const formData = {
+          is_recurring: eventData.is_recurring,
+          recurrence_frequency: (eventData.recurrence_frequency as 'daily' | 'weekly' | 'monthly') || 'weekly',
+          recurrence_interval: eventData.recurrence_interval || 1,
+          recurrence_days: eventData.recurrence_days || [],
+          recurrence_end_date: eventData.recurrence_end_date || null,
+          start_time: eventData.start_time
+        };
+        rrule = generateRRuleFromEventData(formData);
       }
 
       const newEvent = {

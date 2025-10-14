@@ -1,4 +1,50 @@
-import { RRule, rrulestr } from 'rrule';
+import { RRule, rrulestr, type ByWeekday } from 'rrule';
+
+// Database event interface for recurring events
+interface DatabaseEvent {
+  id: string;
+  title: string;
+  description?: string;
+  event_type: string;
+  start_time: string;
+  end_time: string;
+  all_day: boolean;
+  status: string;
+  priority: string;
+  location?: string;
+  color?: string;
+  notes?: string;
+  reminder_minutes: number[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  is_recurring?: boolean;
+  rrule?: string;
+  recurrence_id?: string;
+  original_start_time?: string;
+  is_exception?: boolean;
+}
+
+// EventData interface for form data
+interface EventDataForm {
+  is_recurring: boolean;
+  recurrence_frequency: 'daily' | 'weekly' | 'monthly';
+  recurrence_interval: number;
+  recurrence_days: number[];
+  recurrence_end_date: string | null;
+  start_time: string;
+  [key: string]: unknown;
+}
+
+// RRule options interface  
+interface RRuleOptions {
+  freq: number;
+  interval: number;
+  dtstart: Date;
+  byweekday?: ByWeekday[];
+  until?: Date;
+  count?: number;
+}
 
 export interface RecurrenceSettings {
   frequency: 'daily' | 'weekly' | 'monthly';
@@ -19,7 +65,7 @@ export function createRRule(
     monthly: RRule.MONTHLY,
   }[settings.frequency];
 
-  const options: any = {
+  const options: RRuleOptions = {
     freq,
     interval: settings.interval,
     dtstart: startDate,
@@ -47,11 +93,11 @@ export function createRRule(
 
 // Generate recurring instances for display
 export function generateRecurringInstances(
-  baseEvent: any,
+  baseEvent: DatabaseEvent,
   rrule: RRule,
   rangeStart: Date,
   rangeEnd: Date
-): any[] {
+): DatabaseEvent[] {
   const occurrences = rrule.between(rangeStart, rangeEnd, true);
 
   return occurrences.map((date, index) => ({
@@ -103,7 +149,7 @@ export function rruleToText(rrule: RRule): string {
 }
 
 // Convert EventModal form data to RecurrenceSettings
-export function eventDataToRecurrenceSettings(eventData: any): RecurrenceSettings | null {
+export function eventDataToRecurrenceSettings(eventData: EventDataForm): RecurrenceSettings | null {
   if (!eventData.is_recurring) return null;
 
   return {
@@ -116,7 +162,7 @@ export function eventDataToRecurrenceSettings(eventData: any): RecurrenceSetting
 }
 
 // Generate RRULE string from event data (for database storage)
-export function generateRRuleFromEventData(eventData: any): string | null {
+export function generateRRuleFromEventData(eventData: EventDataForm): string | null {
   const settings = eventDataToRecurrenceSettings(eventData);
   if (!settings) return null;
 

@@ -1,6 +1,6 @@
 -- Organizations Table Creation (Missing Dependency Fix)
 -- This table is referenced by other migrations but was never created
--- Date: 2025-10-14
+-- Date: 2026-10-16 (Future timestamp to apply after existing migrations)
 
 -- Create organizations table if it doesn't exist
 CREATE TABLE IF NOT EXISTS organizations (
@@ -19,7 +19,8 @@ CREATE INDEX IF NOT EXISTS idx_organizations_created_at ON organizations(created
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 
 -- Basic policy for now (can be refined later)
-CREATE POLICY IF NOT EXISTS "Organizations are readable by all users" 
+DROP POLICY IF EXISTS "Organizations are readable by all users" ON organizations;
+CREATE POLICY "Organizations are readable by all users" 
 ON organizations FOR SELECT 
 TO public
 USING (true);

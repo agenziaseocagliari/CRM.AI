@@ -36,6 +36,7 @@ export default function ContactDetailModal({
   const [activities, setActivities] = useState<any[]>([])
   const [newNote, setNewNote] = useState('')
   const [loading, setLoading] = useState(true)
+  const [isAddingNote, setIsAddingNote] = useState(false)
 
   useEffect(() => {
     if (contact && isOpen) {
@@ -46,19 +47,62 @@ export default function ContactDetailModal({
   async function loadContactData() {
     setLoading(true)
     try {
-      // Load notes
-      const { data: notesData } = await supabase
-        .from('contact_notes')
-        .select('*')
-        .eq('contact_id', contact.id)
-        .order('created_at', { ascending: false })
+      // Load notes - try contact_notes table first, fallback to contact.notes field
+      let notesData = []
+      try {
+        const { data, error } = await supabase
+          .from('contact_notes')
+          .select('*')
+          .eq('contact_id', contact.id)
+          .order('created_at', { ascending: false })
+        
+        if (error && error.code === '42P01') {
+          // Table doesn't exist, use notes from contact record
+          if (contact.notes) {
+            const noteLines = contact.notes.split('\n').filter((line: string) => line.trim())
+            notesData = noteLines.map((line: string, index: number) => ({
+              id: `fallback-${index}`,
+              note: line.replace(/^\[.*?\]\s*/, ''), // Remove date prefix if exists
+              created_at: new Date().toISOString()
+            }))
+          }
+        } else if (!error) {
+          notesData = data || []
+        }
+      } catch (err) {
+        console.warn('Error loading notes:', err)
+        // Use fallback empty array
+        notesData = []
+      }
 
-      // Load related deals
-      const { data: dealsData } = await supabase
-        .from('deals')
-        .select('*, pipeline_stages(name, color)')
-        .eq('contact_id', contact.id)
-        .order('created_at', { ascending: false })
+      // Load related deals/opportunities
+      let dealsData = []
+      try {
+        // Try opportunities table first (main table)
+        const { data, error } = await supabase
+          .from('opportunities')
+          .select('*, pipeline_stages(name, color)')
+          .eq('contact_id', contact.id)
+          .order('created_at', { ascending: false })
+        
+        if (error && error.code === '42P01') {
+          // If opportunities doesn't exist, try deals table
+          const { data: dealsBackup, error: dealsError } = await supabase
+            .from('deals')
+            .select('*, pipeline_stages(name, color)')
+            .eq('contact_id', contact.id)
+            .order('created_at', { ascending: false })
+          
+          if (!dealsError) {
+            dealsData = dealsBackup || []
+          }
+        } else if (!error) {
+          dealsData = data || []
+        }
+      } catch (err) {
+        console.warn('Error loading deals/opportunities:', err)
+        dealsData = []
+      }
 
       // Load related events
       const { data: eventsData } = await supabase
@@ -70,7 +114,7 @@ export default function ContactDetailModal({
 
       // Combine all activities for timeline
       const allActivities = [
-        ...(notesData?.map(n => ({ type: 'note', ...n })) || []),
+        ...(notesData?.map((n: any) => ({ type: 'note', ...n })) || []),
         ...(dealsData?.map(d => ({ type: 'deal', ...d })) || []),
         ...(eventsData?.map(e => ({ type: 'event', ...e })) || [])
       ].sort((a, b) => new Date(b.created_at || b.start_time).getTime() - new Date(a.created_at || a.start_time).getTime())
@@ -87,28 +131,74 @@ export default function ContactDetailModal({
   }
 
   async function handleAddNote() {
-    if (!newNote.trim()) return
+    if (!newNote.trim()) {
+      toast.error('La nota non può essere vuota')
+      return
+    }
 
+    setIsAddingNote(true)
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Devi essere autenticato per aggiungere note')
+        return
+      }
+
+      // Try to insert into contact_notes table first
       const { data, error } = await supabase
         .from('contact_notes')
         .insert({
           contact_id: contact.id,
-          note: newNote,
-          created_at: new Date().toISOString()
+          note: newNote.trim(),
+          created_by: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('contact_notes table error:', error)
+        
+        // If table doesn't exist, use contacts table with notes field as fallback
+        if (error.code === '42P01') { // Table doesn't exist
+          const currentNotes = contact.notes || ''
+          const newNoteEntry = `[${new Date().toLocaleDateString('it-IT')}] ${newNote.trim()}`
+          const updatedNotes = currentNotes ? `${currentNotes}\n${newNoteEntry}` : newNoteEntry
+          
+          const { error: updateError } = await supabase
+            .from('contacts')
+            .update({ notes: updatedNotes })
+            .eq('id', contact.id)
 
-      setNotes([data, ...notes])
+          if (updateError) throw updateError
+
+          // Create mock note for UI
+          const mockNote = {
+            id: Date.now(),
+            note: newNote.trim(),
+            created_at: new Date().toISOString()
+          }
+          setNotes([mockNote, ...notes])
+          
+        } else {
+          throw error
+        }
+      } else {
+        // Success with contact_notes table
+        setNotes([data, ...notes])
+      }
+
       setNewNote('')
-      toast.success('Nota aggiunta')
-      loadContactData() // Reload to update activity timeline
-    } catch (error) {
+      toast.success('Nota aggiunta con successo!')
+      
+    } catch (error: any) {
       console.error('Error adding note:', error)
-      toast.error('Errore nell\'aggiunta della nota')
+      const errorMsg = error.message || 'Errore sconosciuto'
+      toast.error(`Errore: ${errorMsg}`)
+    } finally {
+      setIsAddingNote(false)
     }
   }
 
@@ -126,17 +216,27 @@ export default function ContactDetailModal({
         return
       }
 
-      // Create deal
+      // Get current user and organization
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Devi essere autenticato')
+        return
+      }
+
+      // Create opportunity using opportunities table (standard)
       const { data: newDeal, error } = await supabase
-        .from('deals')
+        .from('opportunities')
         .insert({
-          title: `Opportunità - ${contact.name}`,
+          name: `Opportunità - ${contact.name}`,
           contact_id: contact.id,
           stage_id: newLeadStage.id,
           value: 0,
           probability: 30,
           status: 'open',
           source: 'manual',
+          created_by: user.id,
+          assigned_to: user.id,
+          organization_id: user.user_metadata?.organization_id || 'default-org',
           created_at: new Date().toISOString()
         })
         .select()
@@ -305,10 +405,17 @@ export default function ContactDetailModal({
                     />
                     <button
                       onClick={handleAddNote}
-                      disabled={!newNote.trim()}
-                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      disabled={!newNote.trim() || isAddingNote}
+                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
                     >
-                      Aggiungi Nota
+                      {isAddingNote ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        'Aggiungi Nota'
+                      )}
                     </button>
                   </div>
 

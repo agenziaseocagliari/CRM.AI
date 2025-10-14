@@ -430,10 +430,83 @@ export const Contacts: React.FC = () => {
         
         setIsSaving(true);
         try {
-            const { error } = await supabase.rpc('create_opportunity', {
-                ...dealFormData,
-                organization_id: organization.id
-            });
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                toast.error('Devi essere autenticato');
+                return;
+            }
+
+            // Find the pipeline stage ID based on the selected stage
+            // First try to find existing stage, otherwise create a default "New Lead" stage
+            let stageData;
+            const { data: existingStage, error: stageError } = await supabase
+                .from('pipeline_stages')
+                .select('id, name')
+                .eq('name', dealFormData.stage)
+                .single();
+
+            if (stageError || !existingStage) {
+                // Stage doesn't exist, create it or use default
+                const { data: newLeadStage, error: newLeadError } = await supabase
+                    .from('pipeline_stages')
+                    .select('id, name')
+                    .eq('name', 'New Lead')
+                    .single();
+                
+                if (newLeadError || !newLeadStage) {
+                    // Create basic stages if none exist
+                    const { error: createError } = await supabase
+                        .from('pipeline_stages')
+                        .insert([
+                            { name: 'New Lead', color: '#3B82F6', order_index: 0 },
+                            { name: 'Contacted', color: '#F59E0B', order_index: 1 },
+                            { name: 'Proposal Sent', color: '#6366F1', order_index: 2 },
+                            { name: 'Won', color: '#10B981', order_index: 3 },
+                            { name: 'Lost', color: '#EF4444', order_index: 4 }
+                        ]);
+
+                    if (createError) {
+                        console.warn('Could not create pipeline stages:', createError);
+                    }
+
+                    // Get the newly created "New Lead" stage
+                    const { data: createdStage } = await supabase
+                        .from('pipeline_stages')
+                        .select('id')
+                        .eq('name', 'New Lead')
+                        .single();
+                    
+                    stageData = createdStage;
+                } else {
+                    stageData = newLeadStage;
+                }
+            } else {
+                stageData = existingStage;
+            }
+
+            if (stageError || !stageData) {
+                toast.error('Stadio pipeline non trovato');
+                return;
+            }
+
+            // Create opportunity with proper organization context
+            const { error } = await supabase
+                .from('opportunities')
+                .insert({
+                    name: dealFormData.contact_name,
+                    contact_id: selectedContact?.id,
+                    value: dealFormData.value,
+                    stage_id: stageData.id,
+                    assigned_to: user.id,
+                    created_by: user.id,
+                    organization_id: organization.id,
+                    close_date: dealFormData.close_date,
+                    status: 'open',
+                    source: 'manual',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
             
             if (error) throw error;
             

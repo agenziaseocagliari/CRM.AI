@@ -19,9 +19,9 @@ CREATE INDEX IF NOT EXISTS idx_organizations_created_at ON organizations(created
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 
 -- Basic policy for now (can be refined later)
-CREATE POLICY IF NOT EXISTS "Organizations are readable by authenticated users" 
+CREATE POLICY IF NOT EXISTS "Organizations are readable by all users" 
 ON organizations FOR SELECT 
-TO authenticated
+TO public
 USING (true);
 
 -- Add comment

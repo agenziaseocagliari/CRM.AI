@@ -7,6 +7,7 @@ import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
 import { OpportunitiesData, Opportunity, PipelineStage } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
+import { PipelineDiagnostic } from './PipelineDiagnostic';
 
 import { EditIcon, PlusIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
@@ -314,6 +315,8 @@ export const Opportunities: React.FC = () => {
 
   return (
     <>
+      <PipelineDiagnostic />
+      
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-text-primary">Pipeline Opportunità </h1>
         <button onClick={handleOpenAddModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">

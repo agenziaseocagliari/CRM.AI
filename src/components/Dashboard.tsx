@@ -106,19 +106,19 @@ export const Dashboard: React.FC = () => {
   const handleQuickAction = useCallback((action: string) => {
     switch (action) {
       case 'add-contact':
-        navigate('/contacts');
+        navigate('/contacts', { state: { openAddModal: true } });
         break;
       case 'create-deal':
-        navigate('/pipeline');
+        navigate('/pipeline', { state: { openAddModal: true } });
         break;
       case 'schedule-event':
-        navigate('/calendar');
+        navigate('/calendar', { state: { openAddModal: true } });
         break;
       case 'create-form':
-        navigate('/forms');
+        navigate('/forms', { state: { openAddModal: true } });
         break;
       case 'send-email':
-        navigate('/email-marketing');
+        navigate('/contacts', { state: { openEmailModal: true } });
         break;
       case 'view-pipeline':
         navigate('/pipeline');
@@ -275,27 +275,39 @@ export const Dashboard: React.FC = () => {
             {/* Lead Sources Chart */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Fonti dei Lead</h2>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie
                     data={leadSourceData}
-                    cx="50%"
+                    cx="40%"
                     cy="50%"
-                    labelLine={false}
-                    outerRadius={100}
+                    labelLine={true}
+                    outerRadius={85}
                     fill="#8884d8"
                     dataKey="value"
-                    label={(props: unknown) => {
-                      const entry = props as { name: string, percent: number };
-                      return `${entry.name} ${(entry.percent * 100).toFixed(0)}%`;
+                    label={(props: any) => {
+                      // Only show labels for slices that are large enough (>8%)
+                      return props.percent > 0.08 ? `${(props.percent * 100).toFixed(0)}%` : '';
                     }}
                   >
                     {leadSourceData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [`${value}`, name]}
+                    labelFormatter={() => ''}
+                  />
+                  <Legend 
+                    verticalAlign="middle" 
+                    align="right"
+                    layout="vertical"
+                    iconSize={12}
+                    wrapperStyle={{
+                      paddingLeft: "20px",
+                      fontSize: "14px"
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>

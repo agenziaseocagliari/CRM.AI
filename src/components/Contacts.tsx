@@ -1,13 +1,14 @@
-﻿import React, { useCallback, useMemo, useState } from 'react';
+﻿import React, { useCallback, useMemo, useState, useEffect } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
+import { Calendar, Edit, Mail, Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { invokeSupabaseFunction } from '../lib/api';
 import { countryCodes } from '../lib/countryCodes'; // Importiamo la lista
 import { supabase } from '../lib/supabaseClient';
-import { Contact } from '../types';
+import { Contact, PipelineStage } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
 import ContactSearch, { FilterState } from './contacts/ContactSearch';
 import ContactsTable from './contacts/ContactsTable';
@@ -49,6 +50,23 @@ const initialFormState: ContactFormData = {
     phoneNumber: '',
 };
 
+// Tipo per il form deal creation 
+type DealFormData = {
+    contact_name: string;
+    value: number;
+    assigned_to: string;
+    close_date: string;
+    stage: PipelineStage;
+};
+
+const initialDealFormState: DealFormData = {
+    contact_name: '',
+    value: 0,
+    assigned_to: '',
+    close_date: new Date().toISOString().split('T')[0],
+    stage: PipelineStage.NewLead,
+};
+
 // Funzione helper per dividere un numero di telefono completo
 const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string } => {
     if (!fullPhone) {
@@ -82,6 +100,7 @@ const splitPhoneNumber = (fullPhone: string): { prefix: string; number: string }
 export const Contacts: React.FC = () => {
     console.log('👥 Contacts component is rendering');
     const { contacts, organization, crmEvents, refetch, isCalendarLinked } = useOutletContext<ReturnType<typeof useCrmData>>();
+    const location = useLocation();
     console.log('👥 Contacts data:', { contacts, organization, crmEvents, isCalendarLinked });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,10 +109,13 @@ export const Contacts: React.FC = () => {
     const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
     const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
     const [isViewEventsModalOpen, setIsViewEventsModalOpen] = useState(false);
+    const [isViewContactModalOpen, setIsViewContactModalOpen] = useState(false);
+    const [isCreateDealModalOpen, setIsCreateDealModalOpen] = useState(false);
 
 
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [formData, setFormData] = useState<ContactFormData>(initialFormState);
+    const [dealFormData, setDealFormData] = useState<DealFormData>(initialDealFormState);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -173,6 +195,20 @@ export const Contacts: React.FC = () => {
         setIsViewEventsModalOpen(true);
     }, []);
 
+    const handleOpenViewContactModal = useCallback((contact: Contact) => {
+        setSelectedContact(contact);
+        setIsViewContactModalOpen(true);
+    }, []);
+
+    const handleOpenCreateDealModal = useCallback((contact: Contact) => {
+        setSelectedContact(contact);
+        setDealFormData({
+            ...initialDealFormState,
+            contact_name: contact.name,
+        });
+        setIsCreateDealModalOpen(true);
+    }, []);
+
     // Performance: Stats computation removed to eliminate unused variable warning
 
     // Sorted contacts logic removed to eliminate unused variable warning
@@ -184,6 +220,8 @@ export const Contacts: React.FC = () => {
         setIsWhatsAppModalOpen(false);
         setIsCreateEventModalOpen(false);
         setIsViewEventsModalOpen(false);
+        setIsViewContactModalOpen(false);
+        setIsCreateDealModalOpen(false);
         setSelectedContact(null);
     }, []);
 
@@ -382,6 +420,59 @@ export const Contacts: React.FC = () => {
         }
     };
 
+    const handleCreateDeal = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!organization) {
+            toast.error('Organizzazione non disponibile');
+            return;
+        }
+        
+        setIsSaving(true);
+        try {
+            const { error } = await supabase.rpc('create_opportunity', {
+                ...dealFormData,
+                organization_id: organization.id
+            });
+            
+            if (error) throw error;
+            
+            toast.success('Deal creato con successo!');
+            refetch(); // Refresh data
+            handleCloseModals();
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(`Errore nella creazione del deal: ${error.message}`);
+            diagnosticLogger.error('api', 'Errore creazione deal:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDealFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setDealFormData(prev => ({ 
+            ...prev, 
+            [name]: name === 'value' ? parseFloat(value) || 0 : value 
+        }));
+    };
+
+    // Handle navigation state from dashboard quick actions
+    useEffect(() => {
+        const state = location.state as { openAddModal?: boolean; openEmailModal?: boolean } | null;
+        
+        if (state?.openAddModal) {
+            handleOpenAddModal();
+            // Clear the state to prevent reopening on re-renders
+            window.history.replaceState({}, '', location.pathname);
+        }
+        
+        if (state?.openEmailModal && filteredContacts.length > 0) {
+            // Open email modal for the first contact, or could show a selection
+            handleOpenEmailModal(filteredContacts[0]);
+            window.history.replaceState({}, '', location.pathname);
+        }
+    }, [location.state, filteredContacts, handleOpenAddModal, handleOpenEmailModal]);
+
     return (
         <>
             <ContactSearch
@@ -398,6 +489,7 @@ export const Contacts: React.FC = () => {
                 _onWhatsAppContact={handleOpenWhatsAppModal}
                 onCreateEvent={handleOpenCreateEventModal}
                 _onViewEvents={handleOpenViewEventsModal}
+                onViewContact={handleOpenViewContactModal}
                 onAddContact={handleOpenAddModal}
                 onUploadSuccess={refetch}
                 onBulkOperationComplete={refetch}
@@ -521,6 +613,170 @@ export const Contacts: React.FC = () => {
                     events={crmEvents}
                     onActionSuccess={refetch}
                 />
+            </Modal>
+
+            {/* Contact Details Modal */}
+            <Modal isOpen={isViewContactModalOpen} onClose={handleCloseModals} title={`Dettagli Contatto - ${selectedContact?.name}`}>
+                {selectedContact && (
+                    <div className="space-y-6">
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-3">Informazioni Contatto</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Nome</label>
+                                    <p className="text-gray-800 font-medium">{selectedContact.name}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Azienda</label>
+                                    <p className="text-gray-800">{selectedContact.company || 'Non specificato'}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Email</label>
+                                    <p className="text-gray-800">{selectedContact.email || 'Non specificato'}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Telefono</label>
+                                    <p className="text-gray-800">{selectedContact.phone || 'Non specificato'}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Data Creazione</label>
+                                    <p className="text-gray-800">{selectedContact.created_at ? new Date(selectedContact.created_at).toLocaleDateString('it-IT') : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Lead Score</label>
+                                    <p className="text-gray-800">{selectedContact.lead_score || 0}/100</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-4 border-t">
+                            <button 
+                                onClick={() => {
+                                    handleCloseModals();
+                                    handleOpenEditModal(selectedContact);
+                                }}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                            >
+                                <Edit className="w-4 h-4" />
+                                Modifica
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    handleCloseModals();
+                                    handleOpenEmailModal(selectedContact);
+                                }}
+                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+                            >
+                                <Mail className="w-4 h-4" />
+                                Email AI
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    handleCloseModals();
+                                    handleOpenCreateEventModal(selectedContact);
+                                }}
+                                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                            >
+                                <Calendar className="w-4 h-4" />
+                                Crea Evento
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    handleCloseModals();
+                                    handleOpenCreateDealModal(selectedContact);
+                                }}
+                                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Crea Deal
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Create Deal Modal */}
+            <Modal isOpen={isCreateDealModalOpen} onClose={handleCloseModals} title={`Crea Deal per ${selectedContact?.name}`}>
+                <form onSubmit={handleCreateDeal} className="space-y-4">
+                    <div>
+                        <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700">Nome Contatto *</label>
+                        <input 
+                            type="text" 
+                            id="contact_name" 
+                            name="contact_name" 
+                            value={dealFormData.contact_name} 
+                            onChange={handleDealFormChange} 
+                            required 
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" 
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="value" className="block text-sm font-medium text-gray-700">Valore (€) *</label>
+                        <input 
+                            type="number" 
+                            id="value" 
+                            name="value" 
+                            value={dealFormData.value} 
+                            onChange={handleDealFormChange} 
+                            required 
+                            min="0"
+                            step="0.01"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" 
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="assigned_to" className="block text-sm font-medium text-gray-700">Assegnato a</label>
+                        <input 
+                            type="text" 
+                            id="assigned_to" 
+                            name="assigned_to" 
+                            value={dealFormData.assigned_to} 
+                            onChange={handleDealFormChange} 
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" 
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="close_date" className="block text-sm font-medium text-gray-700">Data Chiusura Prevista *</label>
+                        <input 
+                            type="date" 
+                            id="close_date" 
+                            name="close_date" 
+                            value={dealFormData.close_date} 
+                            onChange={handleDealFormChange} 
+                            required 
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" 
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="stage" className="block text-sm font-medium text-gray-700">Stadio Pipeline *</label>
+                        <select 
+                            id="stage" 
+                            name="stage" 
+                            value={dealFormData.stage} 
+                            onChange={handleDealFormChange} 
+                            required 
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                        >
+                            <option value={PipelineStage.NewLead}>Nuovo Lead</option>
+                            <option value={PipelineStage.Contacted}>Contattato</option>
+                            <option value={PipelineStage.ProposalSent}>Proposta Inviata</option>
+                            <option value={PipelineStage.Won}>Vinto</option>
+                            <option value={PipelineStage.Lost}>Perso</option>
+                        </select>
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                        <button type="button" onClick={handleCloseModals} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 mr-2">
+                            Annulla
+                        </button>
+                        <button 
+                            type="submit" 
+                            disabled={isSaving} 
+                            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:bg-gray-400"
+                        >
+                            {isSaving ? 'Creazione...' : 'Crea Deal'}
+                        </button>
+                    </div>
+                </form>
             </Modal>
 
             {/* Universal AI Chat - Analytics Oracle */}

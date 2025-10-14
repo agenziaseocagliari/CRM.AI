@@ -31,6 +31,7 @@ interface ContactsTableProps {
     _onWhatsAppContact: (contact: Contact) => void;
     onCreateEvent: (contact: Contact) => void;
     _onViewEvents: (contact: Contact) => void;
+    onViewContact: (contact: Contact) => void;
     onAddContact: () => void;
     onUploadSuccess: () => void;
     onBulkOperationComplete?: () => void;
@@ -48,6 +49,7 @@ export default function ContactsTable({
     _onWhatsAppContact,
     onCreateEvent,
     _onViewEvents,
+    onViewContact,
     onAddContact,
     onUploadSuccess,
     onBulkOperationComplete,
@@ -303,7 +305,7 @@ export default function ContactsTable({
                                         className="hover:bg-gray-50 cursor-pointer transition-colors"
                                         onClick={(e) => {
                                             if ((e.target as HTMLElement).closest('input, button, [role="button"]')) return;
-                                            navigate(`/contacts/${contact.id}`);
+                                            onViewContact(contact);
                                         }}
                                     >
                                         <td className="px-4 py-3">
@@ -357,7 +359,7 @@ export default function ContactsTable({
                                         <td className="px-4 py-3 text-gray-600 text-sm">
                                             {contact.created_at ? new Date(contact.created_at).toLocaleDateString('it-IT') : '-'}
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3 relative overflow-visible">
                                             <div className="relative">
                                                 <button
                                                     onClick={(e) => {
@@ -371,12 +373,12 @@ export default function ContactsTable({
 
                                                 {showActions === contact.id && (
                                                     <div
-                                                        className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+                                                        className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[9999]"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <button
                                                             onClick={() => {
-                                                                navigate(`/contacts/${contact.id}`);
+                                                                onViewContact(contact);
                                                                 setShowActions(null);
                                                             }}
                                                             className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"

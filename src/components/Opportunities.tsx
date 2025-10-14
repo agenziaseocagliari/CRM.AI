@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
@@ -123,6 +123,7 @@ export const Opportunities: React.FC = () => {
   // Get context data safely
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
   const { opportunities: initialData, contacts, organization, refetch: refetchData } = contextData || {};
+  const location = useLocation();
   console.log('📊 Opportunities data:', { initialData, contacts, organization });
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData || {});
   
@@ -186,6 +187,17 @@ export const Opportunities: React.FC = () => {
     setIsDeleteModalOpen(false);
     setOpportunityToModify(null);
   };
+
+  // Handle navigation state from dashboard quick actions
+  useEffect(() => {
+    const state = location.state as { openAddModal?: boolean } | null;
+    
+    if (state?.openAddModal) {
+      handleOpenAddModal();
+      // Clear the state to prevent reopening on re-renders
+      window.history.replaceState({}, '', location.pathname);
+    }
+  }, [location.state]);
 
   const onDrop = (targetStage: PipelineStage) => async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();

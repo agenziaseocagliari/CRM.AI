@@ -64,16 +64,19 @@ export default function DealCard({ deal, onClick, onEdit: _onEdit, onDelete: _on
       {...attributes}
       onClick={onClick}
       className={`
-        bg-white rounded-lg border-2 border-gray-200 
-        hover:border-blue-400 hover:shadow-md
-        transition-all duration-200 cursor-pointer
-        p-4 space-y-3
-        ${isDragging ? 'opacity-50 rotate-2 scale-105 shadow-xl border-blue-500' : ''}
+        bg-white rounded-lg border-2 p-3 sm:p-4 space-y-2 sm:space-y-3
+        transition-all duration-200 ease-in-out cursor-grab active:cursor-grabbing
+        hover:shadow-lg hover:border-blue-300 hover:-translate-y-1 hover:scale-[1.02]
+        ${isDragging 
+          ? 'opacity-70 rotate-2 scale-105 shadow-2xl border-blue-500 z-50 ring-2 ring-blue-200' 
+          : 'border-gray-200 hover:border-blue-300'
+        }
+        group relative
       `}
     >
       {/* Header with title and actions */}
       <div className="flex items-start justify-between">
-        <h4 className="font-semibold text-gray-900 leading-tight line-clamp-2 flex-1">
+        <h4 className="font-semibold text-gray-900 leading-tight line-clamp-2 flex-1 text-sm sm:text-base">
           {deal.title}
         </h4>
         
@@ -93,8 +96,8 @@ export default function DealCard({ deal, onClick, onEdit: _onEdit, onDelete: _on
       {/* Deal Value */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <Euro className="w-4 h-4 text-green-600" />
-          <span className="text-xl font-bold text-green-600">
+          <Euro className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+          <span className="text-lg sm:text-xl font-bold text-green-600">
             {formatCurrency(deal.value || 0, deal.currency)}
           </span>
         </div>

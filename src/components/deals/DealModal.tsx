@@ -13,6 +13,8 @@ interface DealFormData {
   assigned_to: string;
   contact_id: string;
   company: string;
+  source: string;
+  notes: string;
   tags: string[];
   custom_fields: Record<string, unknown>;
 }
@@ -46,6 +48,8 @@ export default function DealModal({
     assigned_to: '',
     contact_id: '',
     company: '',
+    source: '',
+    notes: '',
     tags: [],
     custom_fields: {}
   });
@@ -75,6 +79,8 @@ export default function DealModal({
           assigned_to: deal.assigned_to || '',
           contact_id: deal.contact_id || '',
           company: deal.company || '',
+          source: deal.source || '',
+          notes: deal.notes || '',
           tags: deal.tags || [],
           custom_fields: deal.custom_fields || {}
         });
@@ -92,6 +98,8 @@ export default function DealModal({
           assigned_to: '',
           contact_id: '',
           company: '',
+          source: '',
+          notes: '',
           tags: [],
           custom_fields: {}
         });
@@ -166,6 +174,8 @@ export default function DealModal({
         assigned_to: formData.assigned_to || undefined,
         contact_id: formData.contact_id || undefined,
         company: formData.company.trim() || undefined,
+        source: formData.source.trim() || undefined,
+        notes: formData.notes.trim() || undefined,
         tags: formData.tags,
         custom_fields: formData.custom_fields,
         organization_id: organizationId
@@ -217,7 +227,7 @@ export default function DealModal({
         />
 
         {/* Modal */}
-        <div className="inline-block w-full max-w-4xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+        <div className="inline-block w-full max-w-4xl mx-auto my-4 sm:my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg sm:rounded-2xl">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -232,8 +242,8 @@ export default function DealModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="grid grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
                 {/* Basic Info */}
@@ -386,6 +396,29 @@ export default function DealModal({
                         placeholder="Nome dell'azienda"
                       />
                     </div>
+
+                    {/* Source */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Fonte del Deal
+                      </label>
+                      <select
+                        value={formData.source}
+                        onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Seleziona una fonte</option>
+                        <option value="website">Sito Web</option>
+                        <option value="referral">Referral</option>
+                        <option value="cold_call">Cold Call</option>
+                        <option value="email">Email Marketing</option>
+                        <option value="social">Social Media</option>
+                        <option value="event">Evento/Fiera</option>
+                        <option value="advertising">Pubblicità</option>
+                        <option value="partner">Partner</option>
+                        <option value="other">Altro</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -509,6 +542,24 @@ export default function DealModal({
                         ))}
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Note
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Aggiungi note importanti per questo deal..."
+                    maxLength={1000}
+                  />
+                  <div className="mt-1 text-xs text-gray-500 text-right">
+                    {formData.notes.length}/1000 caratteri
                   </div>
                 </div>
               </div>

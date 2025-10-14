@@ -1,2 +1,0 @@
--- This migration is intentionally empty as the credits schema was already created in 20240911000000_credits_schema.sql
--- This file exists to maintain migration numbering consistency

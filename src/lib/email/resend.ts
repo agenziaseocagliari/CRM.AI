@@ -20,9 +20,9 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
   // Always check if we're in a browser environment first
   if (typeof window !== 'undefined') {
     console.warn('Email sending skipped - running in browser environment. Emails should be sent from server-side code only.');
-    return { 
-      success: false, 
-      message: 'Email service unavailable in browser environment' 
+    return {
+      success: false,
+      message: 'Email service unavailable in browser environment'
     };
   }
 
@@ -31,12 +31,12 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
     // Check for Node.js environment variables
     const apiKey = (globalThis as any).process?.env?.RESEND_API_KEY;
     const fromEmail = (globalThis as any).process?.env?.RESEND_FROM_EMAIL;
-    
+
     if (!apiKey) {
       console.warn('Email sending skipped - RESEND_API_KEY not configured');
-      return { 
-        success: false, 
-        message: 'Email service not configured - missing API key' 
+      return {
+        success: false,
+        message: 'Email service not configured - missing API key'
       };
     }
 
@@ -53,23 +53,23 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
 
     if (error) {
       console.error('Resend API error:', error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error,
         message: 'Failed to send email via Resend API'
       };
     }
 
     console.log('Email sent successfully:', data);
-    return { 
-      success: true, 
+    return {
+      success: true,
       data,
       message: 'Email sent successfully'
     };
   } catch (error) {
     console.error('Email service error:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error,
       message: 'Email service encountered an error'
     };

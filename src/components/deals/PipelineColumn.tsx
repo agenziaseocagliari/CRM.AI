@@ -10,6 +10,8 @@ interface PipelineColumnProps {
   onDealClick: (deal: Deal) => void;
   onAddDeal?: (stageId: string) => void;
   onEditStage?: (stage: PipelineStage) => void;
+  isDragOver?: boolean;
+  isAnyDragging?: boolean;
 }
 
 export default function PipelineColumn({ 
@@ -17,7 +19,9 @@ export default function PipelineColumn({
   deals, 
   onDealClick, 
   onAddDeal,
-  onEditStage 
+  onEditStage,
+  isDragOver = false,
+  isAnyDragging = false
 }: PipelineColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
@@ -43,7 +47,16 @@ export default function PipelineColumn({
   };
 
   return (
-    <div className="flex-shrink-0 w-80 bg-gray-50 rounded-xl p-4 h-fit max-h-[calc(100vh-200px)]">
+    <div className={`
+      flex-shrink-0 w-72 sm:w-80 rounded-xl p-3 sm:p-4 h-fit max-h-[calc(100vh-200px)]
+      transition-all duration-200 ease-in-out
+      ${isDragOver 
+        ? 'bg-blue-50 border-2 border-blue-300 shadow-lg scale-[1.02]' 
+        : isAnyDragging 
+          ? 'bg-gray-100 border-2 border-gray-200' 
+          : 'bg-gray-50 border-2 border-transparent'
+      }
+    `}>
       {/* Column Header */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
@@ -92,8 +105,8 @@ export default function PipelineColumn({
         </div>
 
         {/* Column Statistics */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+        <div className="space-y-1 sm:space-y-2">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-gray-600 font-medium">Valore totale:</span>
             <span className="font-bold text-green-600">
               {formatCurrency(totalValue)}
@@ -101,7 +114,7 @@ export default function PipelineColumn({
           </div>
           
           {deals.length > 0 && (
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-xs sm:text-sm">
               <span className="text-gray-600">Probabilità media:</span>
               <span className="font-medium text-blue-600">
                 {Math.round(averageProbability)}%
@@ -116,10 +129,12 @@ export default function PipelineColumn({
         ref={setNodeRef}
         className={`
           min-h-[200px] space-y-3 overflow-y-auto
-          transition-all duration-200 rounded-lg p-2
-          ${isOver 
-            ? 'bg-blue-50 border-2 border-blue-300 border-dashed' 
-            : 'border-2 border-transparent'
+          transition-all duration-300 ease-in-out rounded-lg p-2
+          ${isDragOver || isOver 
+            ? 'bg-blue-100 border-2 border-blue-400 border-dashed shadow-inner' 
+            : isAnyDragging
+              ? 'bg-gray-100 border-2 border-gray-300 border-dashed'
+              : 'border-2 border-transparent'
           }
         `}
       >
@@ -153,10 +168,19 @@ export default function PipelineColumn({
           </div>
         )}
 
-        {/* Drop indicator when dragging */}
-        {isOver && (
-          <div className="flex items-center justify-center py-4">
-            <div className="w-full h-1 bg-blue-400 rounded-full opacity-50" />
+        {/* Enhanced drop indicator */}
+        {(isDragOver || isOver) && (
+          <div className="flex items-center justify-center py-6">
+            <div className="w-full bg-gradient-to-r from-transparent via-blue-400 to-transparent h-1 rounded-full animate-pulse" />
+          </div>
+        )}
+
+        {/* Drag over message */}
+        {isDragOver && deals.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium">
+              Rilascia qui il deal
+            </div>
           </div>
         )}
       </div>

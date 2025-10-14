@@ -4,12 +4,19 @@ import {
   DragOverlay,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   closestCorners,
+  rectIntersection,
+  getFirstCollision,
 } from '@dnd-kit/core';
-import { Plus, Settings, Filter, Search, BarChart3, TrendingUp } from 'lucide-react';
+import {
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { Plus, Settings, Filter, Search, BarChart3, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
 import { Deal, PipelineStage, dealsService } from '../../services/dealsService';
 import PipelineColumn from './PipelineColumn';
 import DealCard from './DealCard';
@@ -45,13 +52,23 @@ export default function PipelineBoard({
     averageProbability: 0,
     expectedRevenue: 0
   });
+  
+  // Enhanced drag & drop state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
+  const [optimisticDeals, setOptimisticDeals] = useState<Deal[]>([]);
+  const [dragError, setDragError] = useState<string | null>(null);
+  const [isUpdatingDeal, setIsUpdatingDeal] = useState(false);
 
-  // Drag and drop sensors
+  // Enhanced drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8, // 8px of movement before drag starts
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
@@ -104,8 +121,11 @@ export default function PipelineBoard({
     updateStatistics();
   }, [updateStatistics]);
 
+  // Use optimistic deals during drag operations, fallback to regular deals
+  const currentDeals = isDragging ? optimisticDeals : deals;
+
   // Filter deals based on search and user
-  const filteredDeals = deals.filter(deal => {
+  const filteredDeals = currentDeals.filter(deal => {
     const matchesSearch = !searchTerm || 
       deal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       deal.contact?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,12 +144,45 @@ export default function PipelineBoard({
 
   const handleDragStart = (event: DragStartEvent) => {
     const deal = deals.find(d => d.id === event.active.id);
-    setActiveDeal(deal || null);
+    if (deal) {
+      setActiveDeal(deal);
+      setIsDragging(true);
+      setOptimisticDeals([...deals]);
+      setDragError(null);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !active) return;
+    
+    const dealId = active.id as string;
+    const newStageId = over.id as string;
+    
+    // Update visual feedback
+    setDragOverStageId(newStageId);
+    
+    // Update optimistic state for smooth preview
+    if (optimisticDeals.length > 0) {
+      const deal = optimisticDeals.find(d => d.id === dealId);
+      if (deal && deal.stage_id !== newStageId) {
+        const updatedDeals = optimisticDeals.map(d => 
+          d.id === dealId ? { ...d, stage_id: newStageId } : d
+        );
+        setOptimisticDeals(updatedDeals);
+      }
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    
+    // Reset drag state
     setActiveDeal(null);
+    setIsDragging(false);
+    setDragOverStageId(null);
+    setOptimisticDeals([]);
 
     if (!over || active.id === over.id) return;
 
@@ -143,22 +196,35 @@ export default function PipelineBoard({
     if (!deal || !newStage || deal.stage_id === newStageId) return;
 
     try {
-      // Optimistically update UI
+      setIsUpdatingDeal(true);
+      setDragError(null);
+
+      // Optimistically update UI immediately for responsiveness
       const updatedDeals = deals.map(d => 
-        d.id === dealId ? { ...d, stage_id: newStageId } : d
+        d.id === dealId ? { 
+          ...d, 
+          stage_id: newStageId,
+          updated_at: new Date().toISOString()
+        } : d
       );
       setDeals(updatedDeals);
 
       // Update in database
       await dealsService.moveDealToStage(dealId, newStageId);
       
-      // Reload data to ensure consistency
-      await loadData();
+      // Show success feedback briefly
+      setTimeout(() => setIsUpdatingDeal(false), 300);
+      
     } catch (error) {
       console.error('Error moving deal:', error);
+      setIsUpdatingDeal(false);
+      
       // Revert optimistic update on error
-      await loadData();
-      setError('Errore nello spostamento del deal. Riprova.');
+      setDeals(deals);
+      setDragError('Errore nello spostamento del deal. Riprova.');
+      
+      // Clear error after 5 seconds
+      setTimeout(() => setDragError(null), 5000);
     }
   };
 
@@ -243,8 +309,8 @@ export default function PipelineBoard({
           </div>
         </div>
 
-        {/* Statistics Row */}
-        <div className="grid grid-cols-4 gap-6 mb-6">
+        {/* Statistics Row - Mobile Responsive */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
           <div className="text-center">
             <div className="flex items-center justify-center mb-2">
               <BarChart3 className="w-5 h-5 text-blue-600 mr-2" />
@@ -284,9 +350,9 @@ export default function PipelineBoard({
           </div>
         </div>
 
-        {/* Filters Row */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
+        {/* Filters Row - Mobile Responsive */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="relative flex-1 sm:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -311,16 +377,42 @@ export default function PipelineBoard({
         </div>
       </div>
 
+      {/* Drag Error Notification */}
+      {dragError && (
+        <div className="mb-4 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-red-800 font-medium">Errore durante lo spostamento</p>
+            <p className="text-xs text-red-600 mt-1">{dragError}</p>
+          </div>
+          <button
+            onClick={() => setDragError(null)}
+            className="text-red-600 hover:text-red-800 text-sm font-medium"
+          >
+            Chiudi
+          </button>
+        </div>
+      )}
+
+      {/* Update Indicator */}
+      {isUpdatingDeal && (
+        <div className="mb-4 flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <RefreshCw className="w-5 h-5 text-blue-600 animate-spin flex-shrink-0" />
+          <p className="text-sm text-blue-800 font-medium">Aggiornamento deal in corso...</p>
+        </div>
+      )}
+
       {/* Pipeline Board */}
       <div className="flex-1 overflow-hidden">
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCorners}
+          collisionDetection={rectIntersection}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <div className="h-full overflow-x-auto">
-            <div className="flex gap-6 pb-6 min-w-fit">
+            <div className="flex gap-4 lg:gap-6 pb-6 min-w-fit">
               {stages.map((stage) => (
                 <PipelineColumn
                   key={stage.id}
@@ -329,6 +421,8 @@ export default function PipelineBoard({
                   onDealClick={onDealClick}
                   onAddDeal={onAddDeal}
                   onEditStage={onEditStage}
+                  isDragOver={dragOverStageId === stage.id}
+                  isAnyDragging={isDragging}
                 />
               ))}
 
@@ -359,11 +453,13 @@ export default function PipelineBoard({
             </div>
           </div>
 
-          {/* Drag Overlay */}
+          {/* Enhanced Drag Overlay */}
           <DragOverlay>
             {activeDeal ? (
-              <div className="rotate-6 shadow-2xl">
-                <DealCard deal={activeDeal} onClick={() => {}} />
+              <div className="rotate-3 shadow-2xl transform scale-110 opacity-95">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-1 rounded-lg">
+                  <DealCard deal={activeDeal} onClick={() => {}} />
+                </div>
               </div>
             ) : null}
           </DragOverlay>

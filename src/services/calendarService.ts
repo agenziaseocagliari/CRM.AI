@@ -3,7 +3,6 @@
 
 // Note: Email functionality removed from client-side service
 // Emails should be sent from server-side API routes only
-import { eventCancellationEmail, eventConfirmationEmail, eventUpdateEmail } from '../lib/email/templates';
 import { VideoMeetingService } from '../lib/integrations/video-links';
 import { supabase } from '../lib/supabaseClient';
 
@@ -197,7 +196,7 @@ export class CalendarService {
             organizer_email: user.email || '',
             attendee_emails: [] // TODO: Extract from participants when implemented
           });
-          
+
           // Add meeting URL to event data
           newEventData.location = `${newEventData.location || 'Video Call'} - ${videoMeeting.url}`;
           console.log('✅ Auto-generated video link:', videoMeeting.url);
@@ -310,7 +309,7 @@ export class CalendarService {
 
       const { error } = await supabase
         .from('events')
-        .update({ 
+        .update({
           deleted_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -355,7 +354,7 @@ export class CalendarService {
     try {
       // Dynamic import to avoid circular dependency
       const { parseRRule, generateRecurringInstances } = await import('../lib/calendar/recurring');
-      
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -430,9 +429,9 @@ export class CalendarService {
     try {
       // Fetch regular events
       const regularEvents = await this.fetchEvents(start, end);
-      
+
       // Fetch recurring instances if date range is provided
-      const recurringInstances = (start && end) ? 
+      const recurringInstances = (start && end) ?
         await this.fetchRecurringInstances(start, end) : [];
 
       // Combine and return
@@ -444,7 +443,7 @@ export class CalendarService {
   }
 
   // Create recurring event with RRULE
-  static async createRecurringEvent(eventData: CalendarEventCreate & { 
+  static async createRecurringEvent(eventData: CalendarEventCreate & {
     is_recurring?: boolean;
     recurrence_frequency?: string;
     recurrence_interval?: number;
@@ -454,7 +453,7 @@ export class CalendarService {
     try {
       // Dynamic import to avoid circular dependency
       const { generateRRuleFromEventData } = await import('../lib/calendar/recurring');
-      
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -502,8 +501,8 @@ export class CalendarService {
 
   // Edit recurring event choice: single occurrence vs entire series
   static async updateRecurringEvent(
-    eventId: string, 
-    updates: Partial<CalendarEventCreate>, 
+    eventId: string,
+    updates: Partial<CalendarEventCreate>,
     editChoice: 'this' | 'series' = 'this'
   ): Promise<CalendarEvent> {
     try {
@@ -551,7 +550,7 @@ export class CalendarService {
 
   // Delete recurring event choice: single occurrence vs entire series  
   static async deleteRecurringEvent(
-    eventId: string, 
+    eventId: string,
     deleteChoice: 'this' | 'series' = 'this'
   ): Promise<void> {
     try {

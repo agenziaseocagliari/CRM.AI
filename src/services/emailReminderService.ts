@@ -3,7 +3,6 @@
 
 // Note: Email functionality removed from client-side service
 // Email reminders should be processed by server-side cron jobs or API routes
-import { eventReminderEmail } from '../lib/email/templates';
 import { supabase } from '../lib/supabaseClient';
 
 export interface ReminderServiceOptions {
@@ -17,7 +16,7 @@ export class EmailReminderService {
    */
   static async processReminders(options: ReminderServiceOptions = {}) {
     const { reminderWindow = 60 } = options; // Default 1 hour window
-    
+
     try {
       const now = new Date();
       const windowEnd = new Date(now.getTime() + reminderWindow * 60 * 1000);
@@ -54,7 +53,7 @@ export class EmailReminderService {
 
         // Find matching reminder times (within 5 minutes tolerance)
         const matchingReminders = event.reminder_minutes.filter(
-          (reminderMinutes: number) => 
+          (reminderMinutes: number) =>
             Math.abs(reminderMinutes - minutesUntilEvent) <= 5
         );
 
@@ -64,9 +63,9 @@ export class EmailReminderService {
 
         // TODO: Send reminder emails via server-side API
         console.log(`TODO: Send ${matchingReminders.length} reminder(s) for event "${event.title}" to ${event.attendee_email}`);
-        
+
         // Simulate successful email promises for now
-        const emailPromises = matchingReminders.map(() => 
+        const emailPromises = matchingReminders.map(() =>
           Promise.resolve({ success: true, message: 'Email would be sent via API route' })
         );
 
@@ -74,13 +73,13 @@ export class EmailReminderService {
       });
 
       const results = await Promise.allSettled(reminderPromises);
-      
-      const successCount = results.filter(result => 
+
+      const successCount = results.filter(result =>
         result.status === 'fulfilled' && result.value !== null
       ).length;
 
       console.log(`✅ Processed ${successCount} reminder emails successfully`);
-      
+
       return {
         success: true,
         processed: successCount,
@@ -123,9 +122,9 @@ export class EmailReminderService {
 
     } catch (error) {
       console.error('Test reminder failed:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }

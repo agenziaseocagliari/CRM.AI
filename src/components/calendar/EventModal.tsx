@@ -111,17 +111,36 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     // Auto-generate meeting URL for virtual meetings
-    const generateMeetingUrl = () => {
+    const generateMeetingUrl = (): string => {
         // Google Meet uses format: xxx-yyyy-zzz (3-4-3 characters)
         const random = () => Math.random().toString(36).substring(2, 15);
         const part1 = random().substring(0, 3); // 3 chars
         const part2 = random().substring(0, 4); // 4 chars  
         const part3 = random().substring(0, 3); // 3 chars
         
-        setFormData(prev => ({
-            ...prev,
-            meeting_url: `https://meet.google.com/${part1}-${part2}-${part3}`
-        }));
+        return `https://meet.google.com/${part1}-${part2}-${part3}`;
+    };
+
+    // URL validation for meeting platforms
+    const isValidMeetingUrl = (url: string): boolean => {
+        if (!url) return true; // Empty is OK
+        
+        try {
+            const urlObj = new URL(url);
+            // Accept common meeting platforms
+            const validDomains = [
+                'meet.google.com',
+                'zoom.us',
+                'teams.microsoft.com',
+                'whereby.com',
+                'webex.com'
+            ];
+            
+            return validDomains.some(domain => urlObj.hostname.includes(domain)) || 
+                   urlObj.protocol.startsWith('http');
+        } catch {
+            return false;
+        }
     };
 
     // Calculate end time automatically (1 hour after start)
@@ -180,6 +199,12 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
 
         if (formData.location_type === 'virtual' && !formData.meeting_url.trim()) {
             newErrors.meeting_url = 'URL meeting richiesto per eventi virtuali';
+        }
+        
+        if (formData.location_type === 'virtual' && 
+            formData.meeting_url && 
+            !isValidMeetingUrl(formData.meeting_url)) {
+            newErrors.meeting_url = 'URL meeting non valido';
         }
 
         if (formData.location_type === 'phone' && !formData.phone_number.trim()) {
@@ -450,26 +475,78 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                         )}
 
                         {formData.location_type === 'virtual' && (
-                            <div className="space-y-3">
-                                <div className="flex gap-3">
-                                    <input
-                                        type="url"
-                                        value={formData.meeting_url}
-                                        onChange={(e) => handleFieldChange('meeting_url', e.target.value)}
-                                        placeholder="https://meet.company.com/room/abc123"
-                                        className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.meeting_url ? 'border-red-300' : 'border-gray-300'
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Meeting URL
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="url"
+                                            value={formData.meeting_url}
+                                            onChange={(e) => handleFieldChange('meeting_url', e.target.value)}
+                                            placeholder="https://meet.google.com/... o incolla il tuo link"
+                                            className={`flex-1 px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                                                errors.meeting_url ? 'border-red-300' : 'border-gray-300'
                                             }`}
-                                    />
+                                        />
+                                        {formData.meeting_url && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleFieldChange('meeting_url', '')}
+                                                className="px-3 py-2 text-gray-500 hover:text-red-600 border-2 border-gray-300 rounded-lg transition-colors"
+                                                title="Cancella URL"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                    {errors.meeting_url && <p className="text-sm text-red-600 mt-1">{errors.meeting_url}</p>}
+                                </div>
+
+                                <div className="flex items-center gap-3">
                                     <button
                                         type="button"
-                                        onClick={generateMeetingUrl}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                        onClick={() => {
+                                            const newUrl = generateMeetingUrl();
+                                            handleFieldChange('meeting_url', newUrl);
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium"
                                     >
-                                        <Link2 className="w-4 h-4" />
-                                        Genera URL
+                                        <Video className="w-4 h-4" />
+                                        Genera Google Meet
                                     </button>
+                                    
+                                    <span className="text-sm text-gray-500">oppure incolla il tuo link</span>
                                 </div>
-                                {errors.meeting_url && <p className="text-sm text-red-600">{errors.meeting_url}</p>}
+
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <p className="text-xs text-blue-800">
+                                        <strong>💡 Consiglio Pro:</strong> Per meeting importanti con controlli host (mute, remove, recording), 
+                                        crea il meeting manualmente su{' '}
+                                        <a href="https://meet.google.com" target="_blank" rel="noopener" className="underline hover:text-blue-900">
+                                            meet.google.com
+                                        </a>
+                                        {' '}e incolla qui il link.
+                                    </p>
+                                </div>
+
+                                {formData.meeting_url && (
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2">
+                                        <span className="text-green-600 mt-0.5">✓</span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-green-800 font-medium">Meeting URL configurato</p>
+                                            <a 
+                                                href={formData.meeting_url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-green-600 hover:underline break-all block mt-1"
+                                            >
+                                                {formData.meeting_url}
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

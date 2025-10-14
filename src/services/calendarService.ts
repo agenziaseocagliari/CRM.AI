@@ -3,6 +3,8 @@
 
 import { VideoMeetingService } from '../lib/integrations/video-links';
 import { supabase } from '../lib/supabaseClient';
+import { sendEmail } from '../lib/email/resend';
+import { eventConfirmationEmail, eventUpdateEmail, eventCancellationEmail } from '../lib/email/templates';
 
 export interface CalendarEvent {
   id: string;
@@ -43,6 +45,11 @@ export interface CalendarEventCreate {
   notes?: string;
   reminder_minutes?: number[];
   contact_id?: string;
+  // Email fields
+  attendee_name?: string;
+  attendee_email?: string;
+  organizer_name?: string;
+  meeting_url?: string;
 }
 
 interface CalendarEventExtendedProps {
@@ -209,6 +216,26 @@ export class CalendarService {
         throw new Error(`Failed to create event: ${error.message}`);
       }
 
+      // Send confirmation email (non-blocking)
+      if (eventData.attendee_email) {
+        sendEmail({
+          to: eventData.attendee_email,
+          subject: `✅ Evento confermato: ${data.title}`,
+          html: eventConfirmationEmail({
+            eventTitle: data.title,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            location: data.location,
+            meetingUrl: eventData.meeting_url,
+            description: data.description,
+            organizerName: eventData.organizer_name || user.email || 'CRM.AI Team',
+            attendeeName: eventData.attendee_name,
+          }),
+        }).catch(emailError => {
+          console.error('Confirmation email failed (non-blocking):', emailError);
+        });
+      }
+
       // Return in FullCalendar format
       return {
         id: data.id,
@@ -259,6 +286,26 @@ export class CalendarService {
         throw new Error(`Failed to update event: ${error.message}`);
       }
 
+      // Send update email (non-blocking)
+      if (updateData.attendee_email) {
+        sendEmail({
+          to: updateData.attendee_email,
+          subject: `🔄 Evento aggiornato: ${data.title}`,
+          html: eventUpdateEmail({
+            eventTitle: data.title,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            location: data.location,
+            meetingUrl: updateData.meeting_url,
+            description: data.description,
+            organizerName: updateData.organizer_name || user.email || 'CRM.AI Team',
+            attendeeName: updateData.attendee_name,
+          }),
+        }).catch(emailError => {
+          console.error('Update email failed (non-blocking):', emailError);
+        });
+      }
+
       return data;
     } catch (error) {
       console.error('Calendar service error:', error);
@@ -267,12 +314,24 @@ export class CalendarService {
   }
 
   // Soft delete an event
-  static async deleteEvent(eventId: string): Promise<void> {
+  static async deleteEvent(eventId: string, attendeeEmail?: string, attendeeName?: string): Promise<void> {
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
+      }
+
+      // Get event details before deletion for email
+      let eventData = null;
+      if (attendeeEmail) {
+        const { data: event } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .eq('created_by', user.id)
+          .single();
+        eventData = event;
       }
 
       const { error } = await supabase
@@ -287,6 +346,24 @@ export class CalendarService {
       if (error) {
         console.error('Supabase error:', error);
         throw new Error(`Failed to delete event: ${error.message}`);
+      }
+
+      // Send cancellation email (non-blocking)
+      if (attendeeEmail && eventData) {
+        sendEmail({
+          to: attendeeEmail,
+          subject: `❌ Evento cancellato: ${eventData.title}`,
+          html: eventCancellationEmail({
+            eventTitle: eventData.title,
+            startTime: eventData.start_time,
+            endTime: eventData.end_time,
+            location: eventData.location,
+            organizerName: user.email || 'CRM.AI Team',
+            attendeeName: attendeeName,
+          }),
+        }).catch(emailError => {
+          console.error('Cancellation email failed (non-blocking):', emailError);
+        });
       }
     } catch (error) {
       console.error('Calendar service error:', error);

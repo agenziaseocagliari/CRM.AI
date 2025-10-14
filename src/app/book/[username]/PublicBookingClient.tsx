@@ -36,10 +36,10 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
         const fetchProfile = async () => {
             try {
                 console.log('🔍 Fetching real profile data for username:', username);
-                
+
                 // Import supabase client
                 const { supabase } = await import('../../../lib/supabaseClient');
-                
+
                 // Fetch real profile data from database
                 const { data: profileData, error } = await supabase
                     .from('profiles')

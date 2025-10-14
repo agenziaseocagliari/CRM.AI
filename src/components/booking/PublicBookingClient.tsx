@@ -46,10 +46,10 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
   const fetchProfile = useCallback(async () => {
     try {
       console.log('🔍 Fetching real profile data for username:', username);
-      
+
       // Import supabase client
       const { supabase } = await import('../../lib/supabaseClient');
-      
+
       // Fetch real profile data from database
       const { data: profileData, error } = await supabase
         .from('profiles')
@@ -247,8 +247,8 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                       <div key={s.key} className={`flex items-center ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
                         }`}>
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive ? 'bg-blue-600 text-white' :
-                            isCompleted ? 'bg-green-600 text-white' :
-                              'bg-gray-200'
+                          isCompleted ? 'bg-green-600 text-white' :
+                            'bg-gray-200'
                           }`}>
                           <Icon className="w-4 h-4" />
                         </div>
@@ -316,8 +316,8 @@ export default function PublicBookingClient({ username }: PublicBookingClientPro
                             }}
                             disabled={!available}
                             className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-all ${available
-                                ? 'hover:bg-blue-100 hover:text-blue-700 cursor-pointer border border-gray-200'
-                                : 'text-gray-300 cursor-not-allowed'
+                              ? 'hover:bg-blue-100 hover:text-blue-700 cursor-pointer border border-gray-200'
+                              : 'text-gray-300 cursor-not-allowed'
                               } ${!date ? 'invisible' : ''}`}
                           >
                             {date?.getDate()}

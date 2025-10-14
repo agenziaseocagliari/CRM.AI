@@ -39,6 +39,9 @@ import WhatsAppModule from './components/WhatsAppModule';
 // import { TermsOfService } from './components/TermsOfService'; // Moved to .bak
 import ExtraCreditsStore from './components/store/ExtraCreditsStore';
 
+// Test Components
+import EventModalTest from './components/calendar/EventModalTest';
+
 // Vertical Landing Pages
 import InsuranceAgencyLanding from './pages/verticals/InsuranceAgencyLanding';
 import MarketingAgencyLanding from './pages/verticals/MarketingAgencyLanding';
@@ -271,6 +274,9 @@ const App: React.FC = () => {
 
         {/* Public Booking Page */}
         <Route path="/book/:username" element={<PublicBookingPage />} />
+
+        {/* Test Routes */}
+        <Route path="/test/event-modal" element={<EventModalTest />} />
 
         {/* Vertical Landing Pages */}
         <Route path="/verticals/insurance-agency" element={<InsuranceAgencyLanding />} />

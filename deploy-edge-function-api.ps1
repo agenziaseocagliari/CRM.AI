@@ -4,7 +4,11 @@
 Write-Host "🚀 DEPLOYING EDGE FUNCTION VIA API - VERSION 12.0" -ForegroundColor Green
 
 $projectRef = "qjtaqrlpronohgpfdxsi"
-$accessToken = "sbp_fff530abe5d66befcd1efb7761f13f06b3f6169f"
+$accessToken = $env:SUPABASE_ACCESS_TOKEN
+if (-not $accessToken) {
+    Write-Host "❌ SECURITY ERROR: SUPABASE_ACCESS_TOKEN environment variable not set" -ForegroundColor Red
+    exit 1
+}
 
 # Read the function content
 $functionContent = Get-Content "supabase\functions\generate-form-fields\index.ts" -Raw
@@ -15,7 +19,7 @@ Write-Host "📁 Function content loaded: $($functionContent.Length) characters"
 $headers = @{
     "Authorization" = "Bearer $accessToken"
     "Content-Type" = "application/json"
-    "apikey" = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg0Njk1NzYsImV4cCI6MjA0NDA0NTU3Nn0.Z2Cv3vfCOBDmtSjXnQP8cKJrD4Uc2BEn7qHj6dcNhUs"
+    "apikey" = $env:SUPABASE_ANON_KEY
 }
 
 $body = @{

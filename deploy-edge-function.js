@@ -10,7 +10,10 @@ const __dirname = path.dirname(__filename);
 
 const SUPABASE_API_URL = 'https://api.supabase.com';
 const PROJECT_REF = 'qjtaqrlpronohgpfdxsi';
-const ACCESS_TOKEN = 'sbp_e07c1443bcf5bd2abc264b6e2740abb92ce411e3';
+const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN || (() => {
+    console.error('❌ SECURITY ERROR: SUPABASE_ACCESS_TOKEN environment variable not set');
+    process.exit(1);
+})();
 
 async function deployEdgeFunction() {
   try {

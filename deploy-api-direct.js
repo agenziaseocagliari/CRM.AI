@@ -3,7 +3,10 @@ const fs = require('fs');
 const https = require('https');
 
 const SUPABASE_PROJECT_REF = 'qjtaqrlpronohgpfdxsi';
-const SUPABASE_ACCESS_TOKEN = 'sbp_fff530abe5d66befcd1efb7761f13f06b3f6169f';
+const SUPABASE_ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN || (() => {
+    console.error('❌ SECURITY ERROR: SUPABASE_ACCESS_TOKEN environment variable not set');
+    process.exit(1);
+})();
 const FUNCTION_NAME = 'generate-form-fields';
 
 console.log('🚀 Engineering Fellow - Direct API Deployment');

@@ -3,7 +3,11 @@
 Write-Host "🚀 FORMMASTER DEPLOYMENT - LEVEL 5" -ForegroundColor Yellow
 
 # Set environment
-$env:SUPABASE_ACCESS_TOKEN = "sbp_fff530abe5d66befcd1efb7761f13f06b3f6169f"
+# Check SUPABASE_ACCESS_TOKEN is set in environment
+if (-not $env:SUPABASE_ACCESS_TOKEN) {
+    Write-Host "❌ SECURITY ERROR: SUPABASE_ACCESS_TOKEN environment variable not set" -ForegroundColor Red
+    exit 1
+}
 
 # Check function file
 $functionFile = "C:\Users\inves\CRM-AI\supabase\functions\generate-form-fields\index.ts"

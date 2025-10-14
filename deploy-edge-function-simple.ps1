@@ -6,7 +6,11 @@ $functionContent = Get-Content "supabase\functions\generate-form-fields\index.ts
 Write-Host "Function content loaded: $($functionContent.Length) characters" -ForegroundColor Yellow
 
 # Try Supabase CLI deployment with token
-$env:SUPABASE_ACCESS_TOKEN = "sbp_fff530abe5d66befcd1efb7761f13f06b3f6169f"
+# Check SUPABASE_ACCESS_TOKEN is set in environment
+if (-not $env:SUPABASE_ACCESS_TOKEN) {
+    Write-Host "❌ SECURITY ERROR: SUPABASE_ACCESS_TOKEN environment variable not set" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "Attempting Supabase CLI deployment..." -ForegroundColor Yellow
 

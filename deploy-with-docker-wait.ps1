@@ -6,8 +6,11 @@ $ErrorActionPreference = "Continue"
 Write-Host "🚀 DEPLOYMENT ALTERNATIVO EDGE FUNCTION" -ForegroundColor Yellow
 Write-Host "=======================================" -ForegroundColor Yellow
 
-# Set environment variables from .env file
-$env:SUPABASE_ACCESS_TOKEN = "sbp_fff530abe5d66befcd1efb7761f13f06b3f6169f"
+# Check environment variables are set
+if (-not $env:SUPABASE_ACCESS_TOKEN) {
+    Write-Host "❌ SECURITY ERROR: SUPABASE_ACCESS_TOKEN environment variable not set" -ForegroundColor Red
+    exit 1
+}
 $env:SUPABASE_PROJECT_REF = "qjtaqrlpronohgpfdxsi"
 
 Write-Host "📋 Environment configured:" -ForegroundColor Cyan
@@ -104,8 +107,12 @@ if ($deploySuccess) {
     Write-Host "`n🧪 Testing deployed function..." -ForegroundColor Yellow
     Start-Sleep 5
     
+    if (-not $env:SUPABASE_ANON_KEY) {
+        Write-Host "❌ SUPABASE_ANON_KEY environment variable not set" -ForegroundColor Red
+        exit 1
+    }
     $testHeaders = @{
-        'Authorization' = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Mzg2NjQsImV4cCI6MjA3MzAxNDY2NH0.kFo4Cj6rrAY4SLcLLwXyTOLi7YhLMHMKSXpqS9RzCmQ'
+        'Authorization' = "Bearer $env:SUPABASE_ANON_KEY"
         'Content-Type' = 'application/json'
     }
     $testBody = '{"prompt":"form contatto per gdpr privacy consent"}'

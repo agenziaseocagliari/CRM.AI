@@ -2,7 +2,10 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 
 const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU2NDIwOTcsImV4cCI6MjA0MTIxODA5N30.nlT_nJ8zG_aP_BgCB_QUdHmgXKWgcc3r-z2xvKQMHEY';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || (() => {
+    console.error('❌ SECURITY ERROR: SUPABASE_ANON_KEY environment variable not set');
+    process.exit(1);
+})();
 
 async function deployMinimalFunction() {
     console.log('📦 Deploying Minimal Test Function');

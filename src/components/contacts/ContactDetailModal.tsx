@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
+import { getUserOrganization } from '../../lib/organizationContext'
 
 interface ContactDetailModalProps {
   isOpen: boolean
@@ -119,7 +120,7 @@ export default function ContactDetailModal({
   }
 
   async function handleAddNote() {
-    console.log('🔵 PHASE2: handleAddNote started', { newNote: newNote.trim(), contactId: contact.id })
+    console.log('🔵 PHASE3: handleAddNote started (multi-tenant)', { newNote: newNote.trim(), contactId: contact.id })
     
     if (!newNote.trim()) {
       console.log('❌ Empty note detected')
@@ -140,13 +141,25 @@ export default function ContactDetailModal({
       }
       console.log('✅ User authenticated:', { userId: user.id, email: user.email })
 
-      // Step 2: Simple insert - ONLY required fields
+      // Step 2: Get organization context (CRITICAL for multi-tenant!)
+      console.log('🏢 Step 2: Getting organization context...')
+      const { organization_id, error: orgError } = await getUserOrganization()
+      
+      if (orgError || !organization_id) {
+        console.error('❌ Organization error:', orgError)
+        toast.error('Organizzazione non trovata. Contatta amministratore.')
+        return
+      }
+      console.log('✅ Organization found:', organization_id)
+
+      // Step 3: Multi-tenant insert with organization_id
       const noteData = {
         contact_id: contact.id,
         note: newNote.trim(),
-        created_by: user.id
+        created_by: user.id,
+        organization_id: organization_id  // MULTI-TENANT KEY!
       }
-      console.log('📝 Step 2: Inserting note with data:', noteData)
+      console.log('📝 Step 3: Inserting note with organization:', noteData)
 
       const { data, error } = await supabase
         .from('contact_notes')
@@ -187,7 +200,7 @@ export default function ContactDetailModal({
   }
 
   async function handleCreateDeal() {
-    console.log('🟢 PHASE2: handleCreateDeal started', { contactId: contact.id, contactName: contact.name })
+    console.log('🟢 PHASE3: handleCreateDeal started (multi-tenant)', { contactId: contact.id, contactName: contact.name })
     
     setIsCreatingDeal(true)
     try {
@@ -202,35 +215,43 @@ export default function ContactDetailModal({
       }
       console.log('✅ User authenticated:', { userId: user.id, email: user.email })
 
-      // Step 2: Get organization (try multiple sources)
-      console.log('🏢 Step 2: Getting organization...')
-      let organizationId = user.user_metadata?.organization_id
+      // Step 2: Get organization context (CRITICAL for multi-tenant!)
+      console.log('🏢 Step 2: Getting organization context...')
+      const { organization_id, error: orgError } = await getUserOrganization()
+      
+      if (orgError || !organization_id) {
+        console.error('❌ Organization error:', orgError)
+        toast.error('Organizzazione non trovata. Contatta amministratore.')
+        return
+      }
+      console.log('✅ Organization found:', organization_id)
 
-      if (!organizationId) {
-        // Try profiles table
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', user.id)
-          .single()
+      // Step 3: Get New Lead stage for THIS organization
+      console.log('📊 Step 3: Finding pipeline stage for organization...')
+      const { data: stages, error: stageError } = await supabase
+        .from('pipeline_stages')
+        .select('id, name')
+        .eq('organization_id', organization_id)  // Filter by org!
+        .ilike('name', '%new%lead%')
+        .limit(1)
+
+      if (stageError || !stages || stages.length === 0) {
+        console.error('❌ Stage lookup error:', stageError)
+        // Try without organization filter as fallback
+        const { data: fallbackStages } = await supabase
+          .from('pipeline_stages')
+          .select('id, name')
+          .ilike('name', '%lead%')
+          .limit(1)
         
-        if (profileError) {
-          console.log('⚠️ Profile lookup failed:', profileError)
-        } else {
-          organizationId = profile?.organization_id
-          console.log('✅ Organization from profile:', organizationId)
+        if (!fallbackStages || fallbackStages.length === 0) {
+          toast.error('Stage "New Lead" non trovato')
+          return
         }
-      } else {
-        console.log('✅ Organization from user metadata:', organizationId)
+        console.log('⚠️ Using fallback stage:', fallbackStages[0])
       }
 
-      // Fallback organization ID if none found
-      if (!organizationId) {
-        organizationId = 'default-org'
-        console.log('⚠️ Using fallback organization ID:', organizationId)
-      }
-
-      // Step 3: Create opportunity - SIMPLE data structure
+      // Step 4: Create opportunity with organization context
       const opportunityData = {
         contact_name: contact.name,
         contact_id: contact.id,
@@ -238,12 +259,12 @@ export default function ContactDetailModal({
         stage: 'New Lead', // Direct string - matches enum
         assigned_to: user.email || user.id,
         close_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        organization_id: organizationId,
+        organization_id: organization_id,  // MULTI-TENANT KEY!
         status: 'open',
         source: 'manual',
         created_by: user.id
       }
-      console.log('💼 Step 3: Creating opportunity with data:', opportunityData)
+      console.log('💼 Step 4: Creating opportunity with organization:', opportunityData)
 
       const { data: newOpp, error: createError } = await supabase
         .from('opportunities')

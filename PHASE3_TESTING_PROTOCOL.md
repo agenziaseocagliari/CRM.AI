@@ -17,6 +17,7 @@
 ## TEST 1: Contact Notes Functionality
 
 ### Pre-Test Setup:
+
 1. Open browser (Chrome/Firefox)
 2. Press F12 to open Developer Console
 3. Go to Console tab
@@ -24,18 +25,21 @@
 5. Login to your account
 
 ### Test Steps:
+
 1. **Open Contact Modal**
    - Go to Contacts page
    - Click on any contact to open detail modal
    - **CHECK CONSOLE**: Look for `📚 Loading notes for contact:`
 
 2. **Expected Console Output (Success)**:
+
    ```
    📚 Loading notes for contact: [uuid]
    ✅ Notes loaded successfully: {count: X, data: [...]}
    ```
 
 3. **Expected Console Output (Table Missing)**:
+
    ```
    ❌ Error loading contact notes: [error]
    ❌ Notes error code: 42P01
@@ -48,6 +52,7 @@
    - **CHECK CONSOLE**: Look for detailed debug logs
 
 5. **Expected Console Output (Success)**:
+
    ```
    🔵 PHASE2: handleAddNote started {newNote: "Phase 3 test...", contactId: [uuid]}
    🔍 Step 1: Getting authenticated user...
@@ -67,11 +72,13 @@
 ## TEST 2: Opportunity Creation Functionality
 
 ### Test Steps:
+
 1. **Create Opportunity**:
    - In same contact modal, click "Crea Opportunità"
    - **CHECK CONSOLE**: Look for detailed debug logs
 
 2. **Expected Console Output (Success)**:
+
    ```
    🟢 PHASE2: handleCreateDeal started {contactId: [uuid], contactName: "[name]"}
    🔍 Step 1: Getting authenticated user...
@@ -89,6 +96,7 @@
    ```
 
 3. **Expected Console Output (Table Missing)**:
+
    ```
    ❌ Create error details: [error]
    ❌ Error code: 42P01
@@ -106,11 +114,13 @@
 ## TEST 3: Pipeline Visibility
 
 ### Test Steps:
+
 1. **Navigate to Opportunities Page**:
    - Go to /dashboard/opportunities
    - **CHECK CONSOLE**: Look for opportunities loading logs
 
 2. **Expected Console Output**:
+
    ```
    🟢 PHASE2: Loading opportunities for organization: [org-id]
    ✅ Opportunities query result: {error: null, count: X, data: [...]}
@@ -126,23 +136,28 @@
 ## TROUBLESHOOTING GUIDE
 
 ### Issue: "contact_notes table does not exist"
+
 **Solution**: Execute PHASE1_DATABASE_SCRIPTS.sql Script 1
 **Verification**: Console should show "✅ Notes loaded successfully"
 
 ### Issue: "opportunities table does not exist"
+
 **Solution**: Execute PHASE1_DATABASE_SCRIPTS.sql Script 2
 **Verification**: Console should show "✅ Opportunities query result"
 
 ### Issue: Notes save but get error "null value violates not-null constraint"
+
 **Check**: Console log showing what data is being sent
 **Solution**: Verify contact_id and created_by are valid UUIDs
 
 ### Issue: Opportunities create but don't show in pipeline
+
 **Check**: Console logs for opportunities loading
 **Look for**: organization_id mismatch between created opportunity and query
 **Solution**: Verify organization context in both creation and loading
 
 ### Issue: "permission denied for table"
+
 **Solution**: Check RLS policies were created correctly
 **Verification**: Re-run the policy sections of PHASE1_DATABASE_SCRIPTS.sql
 
@@ -151,7 +166,7 @@
 ## SUCCESS CRITERIA CHECKLIST
 
 - [ ] ✅ contact_notes table exists in Supabase
-- [ ] ✅ opportunities table exists in Supabase  
+- [ ] ✅ opportunities table exists in Supabase
 - [ ] ✅ pipeline_stages table has "New Lead" stage
 - [ ] ✅ Note saves without error (console shows success path)
 - [ ] ✅ Note appears in contact modal immediately
@@ -173,13 +188,13 @@ After testing, fill out this report:
 
 ### Database Setup:
 - Executed PHASE1_DATABASE_SCRIPTS.sql: YES/NO
-- contact_notes table created: YES/NO  
+- contact_notes table created: YES/NO
 - opportunities table verified: YES/NO
 - NEW_LEAD_ID documented: [paste UUID]
 
 ### Test 1 - Contact Notes:
 - Notes load without error: ✅/❌
-- Note saves successfully: ✅/❌  
+- Note saves successfully: ✅/❌
 - Note appears in UI: ✅/❌
 - Note exists in database: ✅/❌
 - Console logs show success: ✅/❌

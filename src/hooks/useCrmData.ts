@@ -146,10 +146,10 @@ export const useCrmData = () => {
         (async () => {
           console.log('🟢 PHASE2: Loading opportunities for organization:', organization_id)
           const result = await supabase.from('opportunities').select('*').eq('organization_id', organization_id)
-          console.log('✅ Opportunities query result:', { 
-            error: result.error, 
+          console.log('✅ Opportunities query result:', {
+            error: result.error,
             count: result.data?.length || 0,
-            data: result.data 
+            data: result.data
           })
           if (result.error) {
             console.error('❌ Opportunities loading error:', result.error)

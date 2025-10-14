@@ -1,10 +1,10 @@
 // Calendar Events Service
 // Service layer for calendar operations in Vite/React architecture
 
+import { sendEmail } from '../lib/email/resend';
+import { eventCancellationEmail, eventConfirmationEmail, eventUpdateEmail } from '../lib/email/templates';
 import { VideoMeetingService } from '../lib/integrations/video-links';
 import { supabase } from '../lib/supabaseClient';
-import { sendEmail } from '../lib/email/resend';
-import { eventConfirmationEmail, eventUpdateEmail, eventCancellationEmail } from '../lib/email/templates';
 
 export interface CalendarEvent {
   id: string;

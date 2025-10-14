@@ -2,11 +2,11 @@
 // Run this in development to test email functionality
 
 import { sendEmail } from './src/lib/email/resend';
-import { 
-  eventConfirmationEmail, 
-  eventReminderEmail, 
-  eventCancellationEmail,
-  eventUpdateEmail 
+import {
+    eventCancellationEmail,
+    eventConfirmationEmail,
+    eventReminderEmail,
+    eventUpdateEmail
 } from './src/lib/email/templates';
 
 // Test data
@@ -97,7 +97,7 @@ async function sendTestEmail(recipientEmail: string) {
   }
 }
 
-export { testEmailSystem, sendTestEmail };
+export { sendTestEmail, testEmailSystem };
 
 // If running directly
 if (typeof window === 'undefined' && process.argv[1] === __filename) {

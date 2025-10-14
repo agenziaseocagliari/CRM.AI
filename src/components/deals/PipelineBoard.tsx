@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -55,35 +55,7 @@ export default function PipelineBoard({
     })
   );
 
-  // Load data on mount
-  useEffect(() => {
-    loadData();
-  }, [organizationId]);
-
-  // Update statistics when deals change
-  useEffect(() => {
-    updateStatistics();
-  }, [deals]);
-
-  // Filter deals based on search and user
-  const filteredDeals = deals.filter(deal => {
-    const matchesSearch = !searchTerm || 
-      deal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deal.contact?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deal.company?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesUser = !selectedUserId || deal.assigned_to === selectedUserId;
-    
-    return matchesSearch && matchesUser;
-  });
-
-  // Group deals by stage
-  const dealsByStage = stages.reduce((acc, stage) => {
-    acc[stage.id] = filteredDeals.filter(deal => deal.stage_id === stage.id);
-    return acc;
-  }, {} as Record<string, Deal[]>);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -102,9 +74,9 @@ export default function PipelineBoard({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [organizationId]);
 
-  const updateStatistics = () => {
+  const updateStatistics = useCallback(() => {
     const totalValue = deals.reduce((sum, deal) => sum + (deal.value || 0), 0);
     const totalDeals = deals.length;
     const averageProbability = totalDeals > 0 
@@ -120,7 +92,35 @@ export default function PipelineBoard({
       averageProbability,
       expectedRevenue
     });
-  };
+  }, [deals]);
+
+  // Load data on mount
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Update statistics when deals change
+  useEffect(() => {
+    updateStatistics();
+  }, [updateStatistics]);
+
+  // Filter deals based on search and user
+  const filteredDeals = deals.filter(deal => {
+    const matchesSearch = !searchTerm || 
+      deal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      deal.contact?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (deal.company && deal.company.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesUser = !selectedUserId || deal.assigned_to === selectedUserId;
+    
+    return matchesSearch && matchesUser;
+  });
+
+  // Group deals by stage
+  const dealsByStage = stages.reduce((acc, stage) => {
+    acc[stage.id] = filteredDeals.filter(deal => deal.stage_id === stage.id);
+    return acc;
+  }, {} as Record<string, Deal[]>);
 
   const handleDragStart = (event: DragStartEvent) => {
     const deal = deals.find(d => d.id === event.active.id);

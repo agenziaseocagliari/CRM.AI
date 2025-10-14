@@ -10,7 +10,7 @@ interface DealCardProps {
   onDelete?: () => void;
 }
 
-export default function DealCard({ deal, onClick, onEdit, onDelete }: DealCardProps) {
+export default function DealCard({ deal, onClick, onEdit: _onEdit, onDelete: _onDelete }: DealCardProps) {
   const {
     attributes,
     listeners,

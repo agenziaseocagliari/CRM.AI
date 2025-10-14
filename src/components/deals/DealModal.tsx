@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, DollarSign, User, Building2, Percent, FileText, Phone, Mail, MapPin } from 'lucide-react';
-import { Deal, PipelineStage, Contact, dealsService } from '../../services/dealsService';
+import { X, Save, Calendar, DollarSign, User, Building2, Percent, FileText } from 'lucide-react';
+import { Deal, PipelineStage, Contact } from '../../services/dealsService';
+
+interface DealFormData {
+  title: string;
+  description: string;
+  value: string;
+  currency: string;
+  probability: number;
+  stage_id: string;
+  expected_close_date: string;
+  assigned_to: string;
+  contact_id: string;
+  company: string;
+  tags: string[];
+  custom_fields: Record<string, unknown>;
+}
 
 interface DealModalProps {
   isOpen: boolean;
@@ -20,7 +35,7 @@ export default function DealModal({
   organizationId
 }: DealModalProps) {
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<DealFormData>({
     title: '',
     description: '',
     value: '',
@@ -31,14 +46,14 @@ export default function DealModal({
     assigned_to: '',
     contact_id: '',
     company: '',
-    tags: [] as string[],
-    custom_fields: {} as Record<string, any>
+    tags: [],
+    custom_fields: {}
   });
 
   // UI state
   const [isLoading, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [tagInput, setTagInput] = useState('');
 
@@ -142,15 +157,15 @@ export default function DealModal({
       
       const dealData: Partial<Deal> = {
         title: formData.title.trim(),
-        description: formData.description.trim() || null,
+        description: formData.description.trim() || undefined,
         value: parseFloat(formData.value),
         currency: formData.currency,
         probability: formData.probability,
         stage_id: formData.stage_id,
-        expected_close_date: formData.expected_close_date || null,
-        assigned_to: formData.assigned_to || null,
-        contact_id: formData.contact_id || null,
-        company: formData.company.trim() || null,
+        expected_close_date: formData.expected_close_date || undefined,
+        assigned_to: formData.assigned_to || undefined,
+        contact_id: formData.contact_id || undefined,
+        company: formData.company.trim() || undefined,
         tags: formData.tags,
         custom_fields: formData.custom_fields,
         organization_id: organizationId
@@ -188,15 +203,7 @@ export default function DealModal({
     }));
   };
 
-  const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value.replace(/[^\d.-]/g, ''));
-    if (isNaN(numericValue)) return '';
-    
-    return new Intl.NumberFormat('it-IT', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(numericValue);
-  };
+
 
   if (!isOpen) return null;
 
@@ -284,7 +291,6 @@ export default function DealModal({
                             type="text"
                             value={formData.value}
                             onChange={(e) => {
-                              const formatted = formatCurrency(e.target.value);
                               setFormData(prev => ({ ...prev, value: e.target.value }));
                             }}
                             className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${

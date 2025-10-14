@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 export interface Deal {
   id: string;
   title: string;
+  description?: string;
   value: number;
   currency: string;
   stage_id: string;
@@ -16,6 +17,10 @@ export interface Deal {
   notes?: string;
   status: 'open' | 'won' | 'lost';
   source?: string;
+  company?: string;
+  tags?: string[];
+  custom_fields?: Record<string, unknown>;
+  organization_id?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -30,6 +35,7 @@ export interface Deal {
 export interface PipelineStage {
   id: string;
   name: string;
+  order: number;
   order_index: number;
   color: string;
   is_active: boolean;
@@ -350,6 +356,55 @@ export class DealsService {
       throw error;
     }
   }
+
+  // Instance methods that wrap static methods
+  async fetchStages(_organizationId?: string): Promise<PipelineStage[]> {
+    return DealsService.fetchPipelineStages();
+  }
+
+  async fetchDeals(_options?: { organizationId?: string }): Promise<Deal[]> {
+    return DealsService.fetchDeals();
+  }
+
+  async createDeal(dealData: Deal): Promise<Deal> {
+    return DealsService.createDeal(dealData as DealCreate);
+  }
+
+  async updateDeal(dealId: string, updateData: Partial<Deal>): Promise<Deal> {
+    return DealsService.updateDeal(dealId, updateData as DealUpdate);
+  }
+
+  async deleteDeal(dealId: string): Promise<void> {
+    return DealsService.deleteDeal(dealId);
+  }
+
+  async moveDealToStage(dealId: string, newStageId: string): Promise<Deal> {
+    return DealsService.moveDealToStage(dealId, newStageId);
+  }
+
+  async createStage(stageData: { name: string; color: string; order: number; organization_id?: string }): Promise<PipelineStage> {
+    try {
+      const { data, error } = await supabase
+        .from('pipeline_stages')
+        .insert([{
+          name: stageData.name,
+          color: stageData.color,
+          order_index: stageData.order,
+          is_active: true,
+          organization_id: stageData.organization_id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { ...data, order: data.order_index };
+    } catch (error) {
+      console.error('DealsService.createStage error:', error);
+      throw error;
+    }
+  }
 }
 
+// Create and export singleton instance
+export const dealsService = new DealsService();
 export default DealsService;

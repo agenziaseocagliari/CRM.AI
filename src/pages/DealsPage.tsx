@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Deal, PipelineStage, dealsService } from '../../services/dealsService';
-import PipelineBoard from '../../components/deals/PipelineBoard';
-import DealModal from '../../components/deals/DealModal';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Deal, PipelineStage, dealsService } from '../services/dealsService';
+import PipelineBoard from '../components/deals/PipelineBoard';
+import DealModal from '../components/deals/DealModal';
 
 export default function DealsPage() {
   // State
-  const [deals, setDeals] = useState<Deal[]>([]);
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,11 +14,7 @@ export default function DealsPage() {
   // For now we'll use a placeholder - you'll need to integrate this with your auth system
   const organizationId = 'your-organization-id';
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -37,7 +32,11 @@ export default function DealsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [organizationId]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const createDefaultStages = async () => {
     const defaultStages = [
@@ -69,7 +68,7 @@ export default function DealsPage() {
     setIsModalOpen(true);
   };
 
-  const handleAddDeal = (stageId?: string) => {
+  const handleAddDeal = (_stageId?: string) => {
     setSelectedDeal(null);
     setIsModalOpen(true);
   };

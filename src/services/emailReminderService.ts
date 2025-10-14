@@ -1,9 +1,9 @@
 // Email Reminder Service for Calendar Events
 // This would typically run as a cron job or serverless function
 
-import { supabase } from '../lib/supabaseClient';
 import { sendEmail } from '../lib/email/resend';
 import { eventReminderEmail } from '../lib/email/templates';
+import { supabase } from '../lib/supabaseClient';
 
 export interface ReminderServiceOptions {
   reminderWindow?: number; // Minutes to look ahead for upcoming events

@@ -19,6 +19,17 @@ import {
   Profile
 } from '../types';
 
+// ADAPTER: Map database TEXT stages to pipeline stages
+const STAGE_MAPPING: Record<string, PipelineStage> = {
+  'New Lead': PipelineStage.NewLead,
+  'Contacted': PipelineStage.Contacted, 
+  'Proposal Sent': PipelineStage.ProposalSent,
+  'Won': PipelineStage.Won,
+  'Lost': PipelineStage.Lost,
+  // Fallback for unknown stages
+  'default': PipelineStage.NewLead
+};
+
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
   console.log('🗂️ PIPELINE DEBUG: Grouping opportunities by stage, input:', opportunities)
   
@@ -36,14 +47,19 @@ const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesD
   }
 
   const grouped = opportunities.reduce((acc, op) => {
-    console.log(`📌 PIPELINE DEBUG: Processing opportunity "${op.contact_name}" with stage "${op.stage}"`)
+    console.log(`📌 PIPELINE DEBUG: Processing opportunity "${op.contact_name}" with database stage "${op.stage}"`)
     
-    if (acc[op.stage as PipelineStage]) {
-      acc[op.stage as PipelineStage].push(op);
-      console.log(`✅ PIPELINE DEBUG: Added to stage "${op.stage}", now has ${acc[op.stage as PipelineStage].length} opportunities`)
+    // ADAPTER: Map database stage TEXT to PipelineStage enum
+    const mappedStage = STAGE_MAPPING[op.stage] || STAGE_MAPPING['default'];
+    console.log(`🔄 PIPELINE DEBUG: Mapped "${op.stage}" → "${mappedStage}"`)
+    
+    if (acc[mappedStage]) {
+      acc[mappedStage].push(op);
+      console.log(`✅ PIPELINE DEBUG: Added to stage "${mappedStage}", now has ${acc[mappedStage].length} opportunities`)
     } else {
-      console.error(`❌ PIPELINE DEBUG: Unknown stage "${op.stage}" for opportunity "${op.contact_name}"`)
-      console.log('Available stages:', Object.keys(emptyData))
+      console.error(`❌ PIPELINE DEBUG: Mapping failed for stage "${op.stage}" → "${mappedStage}"`)
+      // Fallback to New Lead
+      acc[PipelineStage.NewLead].push(op);
     }
     return acc;
   }, emptyData);
@@ -158,8 +174,14 @@ export const useCrmData = () => {
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         (async () => {
-          console.log('� PIPELINE DEBUG: Loading opportunities for organization:', organization_id)
-          const result = await supabase.from('opportunities').select('*').eq('organization_id', organization_id)
+          console.log('🔍 PIPELINE DEBUG: Loading opportunities for organization:', organization_id)
+          
+          // ADAPTED QUERY: Use actual database schema columns with proper ordering
+          const result = await supabase
+            .from('opportunities')
+            .select('*')
+            .eq('organization_id', organization_id)
+            .order('created_at', { ascending: false })
           console.log('📦 PIPELINE DEBUG: Raw opportunities query result:', {
             error: result.error,
             count: result.data?.length || 0,
@@ -176,6 +198,17 @@ export const useCrmData = () => {
             result.data.forEach((opp, index) => {
               console.log(`  ${index + 1}. ID: ${opp.id}, Contact: ${opp.contact_name}, Stage: "${opp.stage}", Value: €${opp.value}`)
             })
+            
+            // ADAPTER: Transform database format to component expectations  
+            const adaptedData = result.data.map(opp => ({
+              ...opp,
+              title: opp.contact_name,  // Alias for components that expect title
+              stage_name: opp.stage,    // Alias for stage name
+              stage_id: opp.stage       // Use TEXT stage as identifier
+            }))
+            
+            console.log('🔄 PIPELINE DEBUG: Data adapted for components:', adaptedData.length, 'opportunities')
+            result.data = adaptedData
           }
           return result
         })(),

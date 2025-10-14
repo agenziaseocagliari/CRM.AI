@@ -1,7 +1,8 @@
 // Calendar Events Service
 // Service layer for calendar operations in Vite/React architecture
 
-import { sendEmail } from '../lib/email/resend';
+// Note: Email functionality removed from client-side service
+// Emails should be sent from server-side API routes only
 import { eventCancellationEmail, eventConfirmationEmail, eventUpdateEmail } from '../lib/email/templates';
 import { VideoMeetingService } from '../lib/integrations/video-links';
 import { supabase } from '../lib/supabaseClient';
@@ -216,24 +217,11 @@ export class CalendarService {
         throw new Error(`Failed to create event: ${error.message}`);
       }
 
-      // Send confirmation email (non-blocking)
+      // TODO: Send confirmation email via API route (server-side)
+      // Email sending should be moved to a dedicated API endpoint
       if (eventData.attendee_email) {
-        sendEmail({
-          to: eventData.attendee_email,
-          subject: `✅ Evento confermato: ${data.title}`,
-          html: eventConfirmationEmail({
-            eventTitle: data.title,
-            startTime: data.start_time,
-            endTime: data.end_time,
-            location: data.location,
-            meetingUrl: eventData.meeting_url,
-            description: data.description,
-            organizerName: eventData.organizer_name || user.email || 'CRM.AI Team',
-            attendeeName: eventData.attendee_name,
-          }),
-        }).catch(emailError => {
-          console.error('Confirmation email failed (non-blocking):', emailError);
-        });
+        console.log('TODO: Implement email confirmation via API route for:', eventData.attendee_email);
+        // Future implementation: call /api/email/calendar-confirmation
       }
 
       // Return in FullCalendar format
@@ -286,24 +274,10 @@ export class CalendarService {
         throw new Error(`Failed to update event: ${error.message}`);
       }
 
-      // Send update email (non-blocking)
+      // TODO: Send update email via API route (server-side)
       if (updateData.attendee_email) {
-        sendEmail({
-          to: updateData.attendee_email,
-          subject: `🔄 Evento aggiornato: ${data.title}`,
-          html: eventUpdateEmail({
-            eventTitle: data.title,
-            startTime: data.start_time,
-            endTime: data.end_time,
-            location: data.location,
-            meetingUrl: updateData.meeting_url,
-            description: data.description,
-            organizerName: updateData.organizer_name || user.email || 'CRM.AI Team',
-            attendeeName: updateData.attendee_name,
-          }),
-        }).catch(emailError => {
-          console.error('Update email failed (non-blocking):', emailError);
-        });
+        console.log('TODO: Implement email update via API route for:', updateData.attendee_email);
+        // Future implementation: call /api/email/calendar-update
       }
 
       return data;
@@ -348,22 +322,10 @@ export class CalendarService {
         throw new Error(`Failed to delete event: ${error.message}`);
       }
 
-      // Send cancellation email (non-blocking)
+      // TODO: Send cancellation email via API route (server-side)
       if (attendeeEmail && eventData) {
-        sendEmail({
-          to: attendeeEmail,
-          subject: `❌ Evento cancellato: ${eventData.title}`,
-          html: eventCancellationEmail({
-            eventTitle: eventData.title,
-            startTime: eventData.start_time,
-            endTime: eventData.end_time,
-            location: eventData.location,
-            organizerName: user.email || 'CRM.AI Team',
-            attendeeName: attendeeName,
-          }),
-        }).catch(emailError => {
-          console.error('Cancellation email failed (non-blocking):', emailError);
-        });
+        console.log('TODO: Implement email cancellation via API route for:', attendeeEmail);
+        // Future implementation: call /api/email/calendar-cancellation
       }
     } catch (error) {
       console.error('Calendar service error:', error);

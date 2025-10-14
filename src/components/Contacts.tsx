@@ -471,7 +471,7 @@ export const Contacts: React.FC = () => {
             handleOpenEmailModal(filteredContacts[0]);
             window.history.replaceState({}, '', location.pathname);
         }
-    }, [location.state, filteredContacts, handleOpenAddModal, handleOpenEmailModal]);
+    }, [location.state, location.pathname, filteredContacts, handleOpenAddModal, handleOpenEmailModal]);
 
     return (
         <>

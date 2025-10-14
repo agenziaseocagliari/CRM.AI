@@ -15,7 +15,6 @@ import {
     Upload
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Contact } from '../../types';
 import { LeadScoreBadge } from '../ui/LeadScoreBadge';
 import BulkActionsBar from './BulkActionsBar';
@@ -55,8 +54,6 @@ export default function ContactsTable({
     onBulkOperationComplete,
     currentFilters
 }: ContactsTableProps) {
-    const navigate = useNavigate();
-
     // Table state
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showActions, setShowActions] = useState<number | null>(null);

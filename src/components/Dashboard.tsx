@@ -71,7 +71,7 @@ export const Dashboard: React.FC = () => {
   const legacyConversionRate = allOpportunities.length > 0 ? ((legacyDealsWon / allOpportunities.length) * 100) : 0;
 
   // Use enhanced data if available, fallback to legacy
-  const displayStats = dashboardStats || {
+  const displayStats = useMemo(() => dashboardStats || {
     totalRevenue: legacyTotalRevenue,
     monthlyRevenue: 0,
     totalContacts: legacyContactsCount,
@@ -84,7 +84,7 @@ export const Dashboard: React.FC = () => {
     eventsThisMonth: 0,
     formSubmissions: 0,
     formSubmissionsThisMonth: 0,
-  };
+  }, [dashboardStats, legacyTotalRevenue, legacyContactsCount, allOpportunities.length, legacyDealsWon, legacyConversionRate]);
 
   // Chart data
   const pipelineData = Object.values(PipelineStage).map(stage => ({
@@ -285,9 +285,10 @@ export const Dashboard: React.FC = () => {
                     outerRadius={85}
                     fill="#8884d8"
                     dataKey="value"
-                    label={(props: any) => {
+                    label={(props: Record<string, unknown>) => {
                       // Only show labels for slices that are large enough (>8%)
-                      return props.percent > 0.08 ? `${(props.percent * 100).toFixed(0)}%` : '';
+                      const percent = props.percent as number;
+                      return percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : '';
                     }}
                   >
                     {leadSourceData.map((_, index) => (

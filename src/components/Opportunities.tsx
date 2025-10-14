@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 // FIX: Corrected the import for useOutletContext from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
 import { useOutletContext, useLocation } from 'react-router-dom';
@@ -137,24 +137,13 @@ export const Opportunities: React.FC = () => {
   
   const [isSaving, setIsSaving] = useState(false);
 
+  // ALL HOOKS FIRST - before any conditional returns
   useEffect(() => {
     setBoardData(initialData || {});
   }, [initialData]);
 
-  // Safety check after all hooks
-  if (!contextData) {
-    console.error('❌ Opportunities: No context data received');
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-red-500 font-medium">Errore: Dati del CRM non disponibili</p>
-          <p className="text-gray-500 text-sm mt-2">Ricarica la pagina o controlla la connessione</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleOpenAddModal = () => {
+  // Handler functions wrapped in useCallback
+  const handleOpenAddModal = useCallback(() => {
     setModalMode('add');
     // Reimposta lo stato del form al suo stato iniziale pulito
     setFormData({
@@ -162,7 +151,7 @@ export const Opportunities: React.FC = () => {
         contact_name: contacts?.[0]?.name || '' // Pre-seleziona il primo contatto
     });
     setIsModalOpen(true);
-  };
+  }, [contacts]);
 
   const handleOpenEditModal = (opportunity: Opportunity) => {
     setModalMode('edit');
@@ -197,7 +186,7 @@ export const Opportunities: React.FC = () => {
       // Clear the state to prevent reopening on re-renders
       window.history.replaceState({}, '', location.pathname);
     }
-  }, [location.state]);
+  }, [location.state, location.pathname, handleOpenAddModal]);
 
   const onDrop = (targetStage: PipelineStage) => async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();

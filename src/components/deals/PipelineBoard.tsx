@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-  DndContext,
-  DragOverlay,
-  DragStartEvent,
-  DragEndEvent,
-  DragOverEvent,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  rectIntersection,
+    DndContext,
+    DragEndEvent,
+    DragOverEvent,
+    DragOverlay,
+    DragStartEvent,
+    KeyboardSensor,
+    PointerSensor,
+    rectIntersection,
+    useSensor,
+    useSensors,
 } from '@dnd-kit/core';
 import {
-  sortableKeyboardCoordinates,
+    sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { Plus, Settings, Filter, Search, BarChart3, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
+import { AlertCircle, BarChart3, Filter, Plus, RefreshCw, Search, Settings, TrendingUp } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { Deal, PipelineStage, dealsService } from '../../services/dealsService';
-import PipelineColumn from './PipelineColumn';
 import DealCard from './DealCard';
+import PipelineColumn from './PipelineColumn';
 
 interface PipelineBoardProps {
   organizationId?: string;

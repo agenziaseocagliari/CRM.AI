@@ -1,6 +1,5 @@
-import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { User, Calendar, Euro, MoreHorizontal, TrendingUp, Phone, Mail } from 'lucide-react';
+import { Calendar, Euro, Mail, MoreHorizontal, Phone, TrendingUp, User } from 'lucide-react';
 import { Deal } from '../../services/dealsService';
 
 interface DealCardProps {

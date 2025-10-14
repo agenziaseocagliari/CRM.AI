@@ -1,6 +1,5 @@
-import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, MoreVertical } from 'lucide-react';
+import { MoreVertical, Plus } from 'lucide-react';
 import { Deal, PipelineStage } from '../../services/dealsService';
 import DealCard from './DealCard';
 

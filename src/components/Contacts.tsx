@@ -190,8 +190,21 @@ export const Contacts: React.FC = () => {
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
 
-        // Sanitize input to prevent XSS
-        const sanitizedValue = InputValidator.sanitizeString(value);
+        // Different sanitization for different fields
+        let sanitizedValue: string;
+        
+        if (name === 'company') {
+            // For company names, preserve spaces and common business punctuation
+            // Only remove the most dangerous XSS vectors
+            sanitizedValue = value
+                .replace(/[<>]/g, '') // Remove HTML tags
+                .replace(/javascript:/gi, '') // Remove javascript: schemes
+                .replace(/on\w+=/gi, '') // Remove event handlers
+                .slice(0, 200); // Reasonable company name length limit
+        } else {
+            // Use standard sanitization for other fields
+            sanitizedValue = InputValidator.sanitizeString(value);
+        }
 
         // Additional validation for specific fields
         if (name === 'email' && sanitizedValue && !InputValidator.isValidEmail(sanitizedValue)) {

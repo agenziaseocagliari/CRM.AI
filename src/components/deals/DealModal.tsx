@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, DollarSign, User, Building2, Percent, FileText } from 'lucide-react';
-import { Deal, PipelineStage, Contact } from '../../services/dealsService';
+import { Building2, Calendar, DollarSign, FileText, Percent, Save, User, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Contact, Deal, PipelineStage } from '../../services/dealsService';
 
 interface DealFormData {
   title: string;

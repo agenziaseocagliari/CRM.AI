@@ -1,6 +1,7 @@
 🚨 EMERGENCY: CREATE contact_notes TABLE MANUALLY
 
 **Go to Supabase Dashboard NOW:**
+
 1. Open: https://supabase.com/dashboard/project/qjtaqrlpronohgpfdxsi
 2. Click "SQL Editor" (left sidebar)
 3. Click "New Query"
@@ -25,20 +26,20 @@ CREATE INDEX IF NOT EXISTS idx_contact_notes_created_at ON public.contact_notes(
 ALTER TABLE public.contact_notes ENABLE ROW LEVEL SECURITY;
 
 -- Simple RLS policies
-CREATE POLICY "Enable read for authenticated users" 
-ON public.contact_notes FOR SELECT 
+CREATE POLICY "Enable read for authenticated users"
+ON public.contact_notes FOR SELECT
 TO authenticated USING (true);
 
-CREATE POLICY "Enable insert for authenticated users" 
-ON public.contact_notes FOR INSERT 
+CREATE POLICY "Enable insert for authenticated users"
+ON public.contact_notes FOR INSERT
 TO authenticated WITH CHECK (auth.uid() = created_by);
 
-CREATE POLICY "Enable update for own notes" 
-ON public.contact_notes FOR UPDATE 
+CREATE POLICY "Enable update for own notes"
+ON public.contact_notes FOR UPDATE
 TO authenticated USING (auth.uid() = created_by);
 
-CREATE POLICY "Enable delete for own notes" 
-ON public.contact_notes FOR DELETE 
+CREATE POLICY "Enable delete for own notes"
+ON public.contact_notes FOR DELETE
 TO authenticated USING (auth.uid() = created_by);
 
 -- Update trigger
@@ -62,6 +63,7 @@ CREATE TRIGGER update_contact_notes_updated_at
 **CRITICAL**: Do this NOW before testing the fixes!
 
 **After creating table, test:**
+
 1. Open contact modal
 2. Add note: "Test note 123"
 3. Should see success toast

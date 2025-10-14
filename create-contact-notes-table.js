@@ -1,17 +1,21 @@
 // Emergency script to create contact_notes table
 // Run this to apply the migration to the live database
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
 // This will be run once to create the contact_notes table
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://qjtaqrlpronohgpfdxsi.supabase.co'
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNzE2NTQ3OSwiZXhwIjoyMDQyNzQxNDc5fQ.FUqpJQKy-JysV5lBKamDVP5rkhYDzCRhRisOvkx4WpM'
+const supabaseUrl =
+  process.env.REACT_APP_SUPABASE_URL ||
+  'https://qjtaqrlpronohgpfdxsi.supabase.co';
+const supabaseServiceKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNzE2NTQ3OSwiZXhwIjoyMDQyNzQxNDc5fQ.FUqpJQKy-JysV5lBKamDVP5rkhYDzCRhRisOvkx4WpM';
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function createContactNotesTable() {
-  console.log('🔧 Creating contact_notes table...')
-  
+  console.log('🔧 Creating contact_notes table...');
+
   const { data, error } = await supabase.rpc('exec_sql', {
     sql: `
       -- Create contact_notes table for enhanced contact detail functionality
@@ -63,56 +67,56 @@ async function createContactNotesTable() {
       CREATE TRIGGER update_contact_notes_updated_at
           BEFORE UPDATE ON contact_notes
           FOR EACH ROW EXECUTE FUNCTION update_contact_notes_updated_at();
-    `
-  })
-  
+    `,
+  });
+
   if (error) {
-    console.error('❌ Error creating contact_notes table:', error)
+    console.error('❌ Error creating contact_notes table:', error);
   } else {
-    console.log('✅ Contact_notes table created successfully!')
+    console.log('✅ Contact_notes table created successfully!');
   }
 }
 
 // Check if table exists first
 async function checkTableExists() {
-  console.log('🔍 Checking if contact_notes table exists...')
-  
+  console.log('🔍 Checking if contact_notes table exists...');
+
   const { data, error } = await supabase
     .from('information_schema.tables')
     .select('table_name')
     .eq('table_schema', 'public')
-    .eq('table_name', 'contact_notes')
-  
+    .eq('table_name', 'contact_notes');
+
   if (error) {
-    console.error('❌ Error checking table:', error)
-    return false
+    console.error('❌ Error checking table:', error);
+    return false;
   }
-  
-  const exists = data && data.length > 0
-  console.log(`📊 contact_notes table exists: ${exists}`)
-  return exists
+
+  const exists = data && data.length > 0;
+  console.log(`📊 contact_notes table exists: ${exists}`);
+  return exists;
 }
 
 async function main() {
   try {
-    const exists = await checkTableExists()
-    
+    const exists = await checkTableExists();
+
     if (!exists) {
-      await createContactNotesTable()
-      
+      await createContactNotesTable();
+
       // Verify table was created
-      const nowExists = await checkTableExists()
+      const nowExists = await checkTableExists();
       if (nowExists) {
-        console.log('🎉 SUCCESS: contact_notes table is ready!')
+        console.log('🎉 SUCCESS: contact_notes table is ready!');
       } else {
-        console.log('❌ FAILED: Table creation failed')
+        console.log('❌ FAILED: Table creation failed');
       }
     } else {
-      console.log('✅ contact_notes table already exists!')
+      console.log('✅ contact_notes table already exists!');
     }
   } catch (error) {
-    console.error('💥 FATAL ERROR:', error)
+    console.error('💥 FATAL ERROR:', error);
   }
 }
 
-main()
+main();

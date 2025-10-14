@@ -20,6 +20,8 @@ import {
 } from '../types';
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
+  console.log('🗂️ PIPELINE DEBUG: Grouping opportunities by stage, input:', opportunities)
+  
   const emptyData: OpportunitiesData = {
     [PipelineStage.NewLead]: [],
     [PipelineStage.Contacted]: [],
@@ -28,14 +30,26 @@ const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesD
     [PipelineStage.Lost]: [],
   };
 
-  if (!opportunities) { return emptyData; }
+  if (!opportunities || opportunities.length === 0) { 
+    console.log('⚠️ PIPELINE DEBUG: No opportunities to group, returning empty data')
+    return emptyData; 
+  }
 
-  return opportunities.reduce((acc, op) => {
-    if (acc[op.stage]) {
-      acc[op.stage].push(op);
+  const grouped = opportunities.reduce((acc, op) => {
+    console.log(`📌 PIPELINE DEBUG: Processing opportunity "${op.contact_name}" with stage "${op.stage}"`)
+    
+    if (acc[op.stage as PipelineStage]) {
+      acc[op.stage as PipelineStage].push(op);
+      console.log(`✅ PIPELINE DEBUG: Added to stage "${op.stage}", now has ${acc[op.stage as PipelineStage].length} opportunities`)
+    } else {
+      console.error(`❌ PIPELINE DEBUG: Unknown stage "${op.stage}" for opportunity "${op.contact_name}"`)
+      console.log('Available stages:', Object.keys(emptyData))
     }
     return acc;
   }, emptyData);
+  
+  console.log('🎯 PIPELINE DEBUG: Final grouped opportunities:', grouped)
+  return grouped;
 };
 
 
@@ -144,18 +158,24 @@ export const useCrmData = () => {
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         (async () => {
-          console.log('🟢 PHASE2: Loading opportunities for organization:', organization_id)
+          console.log('� PIPELINE DEBUG: Loading opportunities for organization:', organization_id)
           const result = await supabase.from('opportunities').select('*').eq('organization_id', organization_id)
-          console.log('✅ Opportunities query result:', {
+          console.log('📦 PIPELINE DEBUG: Raw opportunities query result:', {
             error: result.error,
             count: result.data?.length || 0,
             data: result.data
           })
+          
           if (result.error) {
-            console.error('❌ Opportunities loading error:', result.error)
+            console.error('❌ PIPELINE DEBUG: Opportunities loading error:', result.error)
             if (result.error.code === '42P01') {
-              console.error('⚠️ opportunities table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
+              console.error('⚠️ PIPELINE DEBUG: opportunities table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
             }
+          } else if (result.data) {
+            console.log('📊 PIPELINE DEBUG: Individual opportunities details:')
+            result.data.forEach((opp, index) => {
+              console.log(`  ${index + 1}. ID: ${opp.id}, Contact: ${opp.contact_name}, Stage: "${opp.stage}", Value: €${opp.value}`)
+            })
           }
           return result
         })(),
@@ -184,7 +204,11 @@ export const useCrmData = () => {
         localStorage.setItem('organization_id', orgResponse.data.id);
       }
       setContacts(contactsResponse.data || []);
-      setOpportunities(groupOpportunitiesByStage(opportunitiesResponse.data || []));
+      
+      const groupedOpps = groupOpportunitiesByStage(opportunitiesResponse.data || []);
+      console.log('🔥 PIPELINE DEBUG: Setting opportunities state with:', groupedOpps)
+      setOpportunities(groupedOpps);
+      
       setForms(formsResponse.data || []);
       setAutomations(automationsResponse.data || []);
       setOrganizationSettings(settingsResponse.data);

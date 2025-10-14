@@ -7,10 +7,12 @@ import {
     Building,
     Calendar,
     Clock,
+    Edit2,
     FileText,
     Mail,
     MapPin,
     Phone,
+    Trash2,
     TrendingUp,
     X
 } from 'lucide-react'
@@ -45,6 +47,10 @@ export default function ContactDetailModal({
   const [loading, setLoading] = useState(true)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [isCreatingDeal, setIsCreatingDeal] = useState(false)
+  
+  // Enhanced notes functionality
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [editNoteText, setEditNoteText] = useState('')
 
   useEffect(() => {
     if (contact && isOpen) {
@@ -196,6 +202,70 @@ export default function ContactDetailModal({
     } finally {
       setIsAddingNote(false)
       console.log('🔵 handleAddNote completed')
+    }
+  }
+
+  // Enhanced Notes Functions: Update and Delete
+  async function handleUpdateNote(noteId: string, newText: string) {
+    if (!newText.trim()) {
+      toast.error('Nota vuota')
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('contact_notes')
+        .update({ 
+          note: newText.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', noteId)
+
+      if (error) {
+        console.error('❌ Error updating note:', error)
+        toast.error('Errore aggiornamento nota')
+        return
+      }
+
+      // Update local state
+      setNotes(notes.map(n => 
+        n.id === noteId 
+          ? { ...n, note: newText.trim(), updated_at: new Date().toISOString() }
+          : n
+      ))
+
+      setEditingNoteId(null)
+      setEditNoteText('')
+      toast.success('Nota aggiornata!')
+
+    } catch (error: any) {
+      console.error('Error updating note:', error)
+      toast.error('Errore aggiornamento nota')
+    }
+  }
+
+  async function handleDeleteNote(noteId: string) {
+    if (!confirm('Eliminare questa nota?')) return
+
+    try {
+      const { error } = await supabase
+        .from('contact_notes')
+        .delete()
+        .eq('id', noteId)
+
+      if (error) {
+        console.error('❌ Error deleting note:', error)
+        toast.error('Errore eliminazione nota')
+        return
+      }
+
+      // Update local state
+      setNotes(notes.filter(n => n.id !== noteId))
+      toast.success('Nota eliminata!')
+
+    } catch (error: any) {
+      console.error('Error deleting note:', error)
+      toast.error('Errore eliminazione nota')
     }
   }
 
@@ -496,11 +566,68 @@ export default function ContactDetailModal({
                       </p>
                     ) : (
                       notes.map((note) => (
-                        <div key={note.id} className="bg-gray-50 rounded-lg p-4">
-                          <p className="text-sm text-gray-900 mb-2">{note.note}</p>
-                          <p className="text-xs text-gray-500">
-                            {format(new Date(note.created_at), 'dd MMM yyyy HH:mm', { locale: it })}
-                          </p>
+                        <div key={note.id} className="bg-gray-50 rounded-lg p-4 group relative">
+                          {editingNoteId === note.id ? (
+                            // Edit mode
+                            <div>
+                              <textarea
+                                value={editNoteText}
+                                onChange={(e) => setEditNoteText(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                rows={3}
+                                autoFocus
+                              />
+                              <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={() => handleUpdateNote(note.id, editNoteText)}
+                                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                                >
+                                  Salva
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingNoteId(null)
+                                    setEditNoteText('')
+                                  }}
+                                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 transition-colors"
+                                >
+                                  Annulla
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            // View mode
+                            <>
+                              <p className="text-sm text-gray-900 mb-2">{note.note}</p>
+                              <p className="text-xs text-gray-500">
+                                {format(new Date(note.created_at), 'dd MMM yyyy HH:mm', { locale: it })}
+                                {note.updated_at && note.updated_at !== note.created_at && (
+                                  <span className="ml-2 text-gray-400">(modificata)</span>
+                                )}
+                              </p>
+
+                              {/* Actions - show on hover */}
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    setEditingNoteId(note.id)
+                                    setEditNoteText(note.note)
+                                  }}
+                                  className="p-1.5 bg-white border rounded hover:bg-gray-50 shadow-sm transition-colors"
+                                  title="Modifica"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 text-gray-600" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteNote(note.id)}
+                                  className="p-1.5 bg-white border rounded hover:bg-red-50 shadow-sm transition-colors"
+                                  title="Elimina"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       ))
                     )}

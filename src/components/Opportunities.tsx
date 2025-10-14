@@ -118,14 +118,21 @@ const initialFormState: OpportunityFormData = {
 };
 
 export const Opportunities: React.FC = () => {
-  console.log('🔄 Opportunities component is rendering');
+  console.log('🔄 PIPELINE DEBUG: Opportunities component is rendering');
   
   // Get context data safely
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
   const { opportunities: initialData, contacts, organization, refetch: refetchData } = contextData || {};
   const location = useLocation();
-  console.log('📊 Opportunities data:', { initialData, contacts, organization });
+  console.log('📊 PIPELINE DEBUG: Context data received:', { 
+    initialData, 
+    contacts: contacts?.length || 0, 
+    organization: organization?.name || 'none',
+    initialDataKeys: initialData ? Object.keys(initialData) : 'none'
+  });
+  
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData || {});
+  console.log('📋 PIPELINE DEBUG: Current boardData state:', boardData);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -139,6 +146,7 @@ export const Opportunities: React.FC = () => {
 
   // ALL HOOKS FIRST - before any conditional returns
   useEffect(() => {
+    console.log('🔄 PIPELINE DEBUG: initialData changed, updating boardData:', initialData);
     setBoardData(initialData || {});
   }, [initialData]);
 
@@ -317,16 +325,21 @@ export const Opportunities: React.FC = () => {
       {/* AI Agents Panel - REMOVED: Too cluttered, replaced with integrated LeadScorer chat */}
 
       <div className="flex space-x-4 overflow-x-auto pb-4">
-        {Object.values(PipelineStage).map(stage => (
+        {Object.values(PipelineStage).map(stage => {
+          const stageOpportunities = boardData[stage] || [];
+          console.log(`🎨 PIPELINE DEBUG: Rendering stage "${stage}" with ${stageOpportunities.length} opportunities:`, stageOpportunities);
+          
+          return (
             <KanbanColumn
                 key={stage}
                 stage={stage}
-                opportunities={boardData[stage] || []}
+                opportunities={stageOpportunities}
                 onDrop={onDrop(stage)}
                 onEdit={handleOpenEditModal}
                 onDelete={handleOpenDeleteModal}
             />
-        ))}
+          );
+        })}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModals} title={modalMode === 'add' ? 'Crea Nuova Opportunità ' : 'Modifica Opportunità '}>

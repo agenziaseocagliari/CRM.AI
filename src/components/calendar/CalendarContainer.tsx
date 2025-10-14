@@ -9,7 +9,7 @@ import { CalendarService, type FullCalendarEvent } from '../../services/calendar
 import AnalyticsModal from './AnalyticsModal';
 import BookingLinkModal from './BookingLinkModal';
 import CalendarView from './CalendarView';
-import EventModal from './EventModal';
+import EventModal, { type EventData } from './EventModal';
 import MyEventsModal from './MyEventsModal';
 import RecurringEditModal from './RecurringEditModal';
 import TeamSchedulingModal from './TeamSchedulingModal';
@@ -121,7 +121,7 @@ export default function CalendarContainer() {
         }
     };
 
-    const handleRecurringChoice = (choice: 'this' | 'series') => {
+    const handleRecurringChoice = (_choice: 'this' | 'series') => {
         setShowRecurringModal(false);
 
         if (pendingRecurringEvent) {
@@ -134,16 +134,17 @@ export default function CalendarContainer() {
         setPendingRecurringEvent(null);
     };
 
-    const handleDeleteRecurringEvent = async (eventId: string, choice: 'this' | 'series') => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const handleDeleteRecurringEvent = async (eventId: string, _choice: 'this' | 'series') => {
         try {
-            await CalendarService.deleteRecurringEvent(eventId, choice);
+            await CalendarService.deleteRecurringEvent(eventId, _choice);
             await fetchEvents(); // Refresh to show changes
         } catch (error) {
             console.error('Delete recurring event error:', error);
         }
     };
 
-    const handleSaveEvent = async (eventData: any) => {
+    const handleSaveEvent = async (eventData: EventData) => {
         try {
             // Convert EventData format to CalendarEventCreate format  
             const createData = {
@@ -165,7 +166,7 @@ export default function CalendarContainer() {
             };
 
             // Use appropriate service method for recurring vs regular events
-            const newEvent = eventData.is_recurring
+            eventData.is_recurring
                 ? await CalendarService.createRecurringEvent(createData)
                 : await CalendarService.createEvent(createData);
 

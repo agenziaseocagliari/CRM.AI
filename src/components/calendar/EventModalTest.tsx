@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import EventModal from './EventModal';
+import EventModal, { type EventData } from './EventModal';
 
 export default function EventModalTest() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [eventData, setEventData] = useState<any>(null);
+    const [eventData, setEventData] = useState<EventData | null>(null);
 
-    const handleSave = async (data: any) => {
+    const handleSave = async (data: EventData) => {
         console.log('💾 Saving event:', data);
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));

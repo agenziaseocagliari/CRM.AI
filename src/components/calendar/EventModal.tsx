@@ -3,7 +3,7 @@
 import { Bell, Calendar, Clock, MapPin, Palette, Repeat, Save, Tag, Trash2, Users, Video, X } from 'lucide-react';
 import { useState } from 'react';
 
-interface EventData {
+export interface EventData {
     id?: number;
     title: string;
     description: string;
@@ -150,12 +150,12 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
         return end.toISOString().slice(0, 16);
     };
 
-    const handleFieldChange = (field: keyof EventData, value: any) => {
+    const handleFieldChange = (field: keyof EventData, value: string | boolean | number | string[] | number[]) => {
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
 
             // Auto-update end time when start time changes
-            if (field === 'start_time' && value && !prev.end_time) {
+            if (field === 'start_time' && typeof value === 'string' && value && !prev.end_time) {
                 updated.end_time = updateEndTime(value);
             }
 
@@ -266,9 +266,6 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                 : [...prev.reminder_minutes, minutes]
         }));
     };
-
-    const selectedEventType = EVENT_TYPES.find(t => t.value === formData.event_type);
-    const selectedPriority = PRIORITY_LEVELS.find(p => p.value === formData.priority);
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

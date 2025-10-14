@@ -87,7 +87,7 @@ export default function CalendarView({
         }
     };
 
-    const renderEventContent = (eventInfo: any) => {
+    const renderEventContent = (eventInfo: { event: { title: string; extendedProps?: { is_recurring?: boolean } } }) => {
         const isRecurring = eventInfo.event.extendedProps?.is_recurring;
 
         return (

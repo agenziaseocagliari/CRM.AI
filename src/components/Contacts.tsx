@@ -690,15 +690,17 @@ export const Contacts: React.FC = () => {
             </Modal>
 
             {/* Enhanced Contact Details Modal */}
-            <ContactDetailModal
-                isOpen={isViewContactModalOpen}
-                onClose={handleCloseModals}
-                contact={selectedContact}
-                onUpdate={(updatedContact) => {
-                    // Update the contact in the list
-                    refetch()
-                }}
-            />
+            {selectedContact && (
+                <ContactDetailModal
+                    isOpen={isViewContactModalOpen}
+                    onClose={handleCloseModals}
+                    contact={selectedContact}
+                    onUpdate={(_updatedContact) => {
+                        // Update the contact in the list
+                        refetch()
+                    }}
+                />
+            )}
 
             {/* Create Deal Modal */}
             <Modal isOpen={isCreateDealModalOpen} onClose={handleCloseModals} title={`Crea Deal per ${selectedContact?.name}`}>

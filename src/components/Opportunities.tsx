@@ -7,7 +7,7 @@ import { useCrmData } from '../hooks/useCrmData';
 import { supabase } from '../lib/supabaseClient';
 import { OpportunitiesData, Opportunity, PipelineStage } from '../types';
 import { UniversalAIChat } from './ai/UniversalAIChat';
-import { PipelineDiagnostic } from './PipelineDiagnostic';
+// Pipeline diagnostic removed for production
 
 import { EditIcon, PlusIcon, TrashIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
@@ -315,7 +315,7 @@ export const Opportunities: React.FC = () => {
 
   return (
     <>
-      <PipelineDiagnostic />
+      {/* Pipeline diagnostic removed for production */}
       
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-text-primary">Pipeline Opportunità </h1>

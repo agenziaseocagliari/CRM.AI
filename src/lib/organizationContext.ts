@@ -35,8 +35,9 @@ export async function getUserOrganization() {
       organization: data.organization,
       error: null 
     }
-  } catch (error: any) {
-    console.error('getUserOrganization error:', error)
-    return { organization_id: null, error: error.message }
+  } catch (error: unknown) {
+    const err = error as Error
+    console.error('getUserOrganization error:', err)
+    return { organization_id: null, error: err.message }
   }
 }

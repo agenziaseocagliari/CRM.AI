@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useCrmData } from '../hooks/useCrmData';
@@ -102,38 +102,7 @@ export const Dashboard: React.FC = () => {
   
   const COLORS = ['#4f46e5', '#34d399', '#f59e0b', '#ec4899'];
 
-  // Quick actions handlers
-  const handleQuickAction = useCallback((action: string) => {
-    console.log(`Quick action clicked: ${action}`); // Debug log
-    switch (action) {
-      case 'add-contact':
-        console.log('Navigating to contacts with add modal...'); // Debug
-        navigate('/dashboard/contacts', { state: { openAddModal: true } });
-        break;
-      case 'create-deal':
-        console.log('Navigating to opportunities with add modal...'); // Debug
-        navigate('/dashboard/opportunities', { state: { openAddModal: true } });
-        break;
-      case 'schedule-event':
-        console.log('Navigating to calendar with add modal...'); // Debug
-        navigate('/dashboard/calendar', { state: { openAddModal: true } });
-        break;
-      case 'create-form':
-        console.log('Navigating to forms with add modal...'); // Debug
-        navigate('/dashboard/forms', { state: { openAddModal: true } });
-        break;
-      case 'send-email':
-        console.log('Navigating to contacts with email modal...'); // Debug
-        navigate('/dashboard/contacts', { state: { openEmailModal: true } });
-        break;
-      case 'view-pipeline':
-        console.log('Navigating to opportunities pipeline...'); // Debug
-        navigate('/dashboard/opportunities');
-        break;
-      default:
-        console.log('Unknown action:', action);
-    }
-  }, [navigate]);
+  // Quick actions are handled directly in onClick handlers
 
 
 

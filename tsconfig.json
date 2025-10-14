@@ -38,7 +38,11 @@
     }
   },
   "include": [
-    "src"
+    "src/**/*",
+    "components/**/*",
+    "app/**/*",
+    "types/**/*",
+    "vite-env.d.ts"
   ],
   "exclude": [
     "**/*.test.ts",

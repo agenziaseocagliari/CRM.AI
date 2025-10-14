@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Minimal</title>
+</head>
+<body>
+    <div id="root">
+        <h1>Loading...</h1>
+        <p>Se vedi questo, l'HTML funziona ma JavaScript potrebbe avere problemi.</p>
+    </div>
+    <script>
+        console.log('Test script caricato');
+        // Simulare il caricamento
+        setTimeout(() => {
+            document.getElementById('root').innerHTML = '<h1>Sito funzionante!</h1><p>JavaScript OK</p>';
+            console.log('App caricata con successo');
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -9,9 +9,7 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
-  closestCorners,
   rectIntersection,
-  getFirstCollision,
 } from '@dnd-kit/core';
 import {
   sortableKeyboardCoordinates,

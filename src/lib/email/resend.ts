@@ -11,8 +11,8 @@ export interface EmailParams {
 export interface EmailResult {
   success: boolean;
   message?: string;
-  data?: any;
-  error?: any;
+  data?: unknown;
+  error?: string | Error;
 }
 
 // Client-safe email function that skips execution in browser environments
@@ -29,8 +29,8 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
   // Only proceed if we're in a server environment (Node.js)
   try {
     // Check for Node.js environment variables
-    const apiKey = (globalThis as any).process?.env?.RESEND_API_KEY;
-    const fromEmail = (globalThis as any).process?.env?.RESEND_FROM_EMAIL;
+    const apiKey = (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.RESEND_API_KEY;
+    const fromEmail = (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.RESEND_FROM_EMAIL;
 
     if (!apiKey) {
       console.warn('Email sending skipped - RESEND_API_KEY not configured');
@@ -55,7 +55,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
       console.error('Resend API error:', error);
       return {
         success: false,
-        error,
+        error: error instanceof Error ? error : new Error(String(error)),
         message: 'Failed to send email via Resend API'
       };
     }
@@ -70,7 +70,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
     console.error('Email service error:', error);
     return {
       success: false,
-      error,
+      error: error instanceof Error ? error : new Error(String(error)),
       message: 'Email service encountered an error'
     };
   }

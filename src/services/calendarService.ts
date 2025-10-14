@@ -287,7 +287,7 @@ export class CalendarService {
   }
 
   // Soft delete an event
-  static async deleteEvent(eventId: string, attendeeEmail?: string, attendeeName?: string): Promise<void> {
+  static async deleteEvent(eventId: string, attendeeEmail?: string, _attendeeName?: string): Promise<void> {
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();

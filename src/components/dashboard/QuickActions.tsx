@@ -1,130 +1,111 @@
-import React, { memo, useMemo } from 'react';
-import { 
-  UsersIcon, 
-  DollarSignIcon, 
-  CalendarIcon, 
-  PlusIcon,
-  ClipboardDataIcon,
-  EmailIcon
-} from '../ui/icons';
+'use client'
 
-interface QuickAction {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  onClick: () => void;
-}
+import { useNavigate } from 'react-router-dom'
+import { UserPlus, TrendingUp, Calendar, FileText, Mail, Kanban } from 'lucide-react'
 
-interface QuickActionsProps {
-  onAddContact?: () => void;
-  onCreateDeal?: () => void;
-  onScheduleEvent?: () => void;
-  onCreateForm?: () => void;
-  onSendEmail?: () => void;
-  onViewPipeline?: () => void;
-}
+export default function QuickActions() {
+  const navigate = useNavigate()
 
-export const QuickActions: React.FC<QuickActionsProps> = memo(({
-  onAddContact,
-  onCreateDeal,
-  onScheduleEvent,
-  onCreateForm,
-  onSendEmail,
-  onViewPipeline
-}) => {
-  const actions: QuickAction[] = useMemo(() => [
+  const actions = [
     {
-      id: 'add-contact',
       title: 'Nuovo Contatto',
       description: 'Aggiungi un nuovo contatto al CRM',
-      icon: <UsersIcon className="w-6 h-6 text-white" />,
-      color: 'bg-blue-500 hover:bg-blue-600',
-      onClick: onAddContact || (() => {})
+      icon: UserPlus,
+      color: 'bg-blue-500',
+      hoverColor: 'hover:bg-blue-600',
+      action: () => {
+        console.log('Navigating to contacts...') // Debug log
+        navigate('/dashboard/contacts?action=new')
+      }
     },
     {
-      id: 'create-deal',
       title: 'Nuova Opportunità',
       description: 'Crea una nuova opportunità di vendita',
-      icon: <DollarSignIcon className="w-6 h-6 text-white" />,
-      color: 'bg-green-500 hover:bg-green-600',
-      onClick: onCreateDeal || (() => {})
+      icon: TrendingUp,
+      color: 'bg-purple-500',
+      hoverColor: 'hover:bg-purple-600',
+      action: () => {
+        console.log('Navigating to opportunities...') // Debug log
+        navigate('/dashboard/opportunities?action=new')
+      }
     },
     {
-      id: 'schedule-event',
       title: 'Programma Evento',
       description: 'Aggiungi un nuovo evento al calendario',
-      icon: <CalendarIcon className="w-6 h-6 text-white" />,
-      color: 'bg-purple-500 hover:bg-purple-600',
-      onClick: onScheduleEvent || (() => {})
+      icon: Calendar,
+      color: 'bg-green-500',
+      hoverColor: 'hover:bg-green-600',
+      action: () => {
+        console.log('Navigating to calendar...') // Debug log
+        navigate('/dashboard/calendar?action=new')
+      }
     },
     {
-      id: 'create-form',
       title: 'Nuovo Form',
       description: 'Crea un form per raccogliere lead',
-      icon: <ClipboardDataIcon className="w-6 h-6 text-white" />,
-      color: 'bg-orange-500 hover:bg-orange-600',
-      onClick: onCreateForm || (() => {})
+      icon: FileText,
+      color: 'bg-orange-500',
+      hoverColor: 'hover:bg-orange-600',
+      action: () => {
+        console.log('Navigating to forms...') // Debug log
+        navigate('/dashboard/forms?action=new')
+      }
     },
     {
-      id: 'send-email',
       title: 'Campagna Email',
       description: 'Invia una campagna email marketing',
-      icon: <EmailIcon className="w-6 h-6 text-white" />,
-      color: 'bg-red-500 hover:bg-red-600',
-      onClick: onSendEmail || (() => {})
+      icon: Mail,
+      color: 'bg-red-500',
+      hoverColor: 'hover:bg-red-600',
+      action: () => {
+        console.log('Navigating to email marketing...') // Debug log
+        navigate('/dashboard/email-marketing?action=new')
+      }
     },
     {
-      id: 'view-pipeline',
       title: 'Vedi Pipeline',
       description: 'Gestisci le tue opportunità',
-      icon: <PlusIcon className="w-6 h-6 text-white" />,
-      color: 'bg-indigo-500 hover:bg-indigo-600',
-      onClick: onViewPipeline || (() => {})
+      icon: Kanban,
+      color: 'bg-indigo-500',
+      hoverColor: 'hover:bg-indigo-600',
+      action: () => {
+        console.log('Navigating to opportunities pipeline...') // Debug log
+        navigate('/dashboard/opportunities')
+      }
     }
-  ], [onAddContact, onCreateDeal, onScheduleEvent, onCreateForm, onSendEmail, onViewPipeline]);
+  ]
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Azioni Rapide
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Accedi rapidamente alle funzioni principali del CRM
-        </p>
-      </div>
-      
-      <div className="p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {actions.map((action) => (
-            <button
-              key={action.id}
-              onClick={action.onClick}
-              className={`
-                ${action.color} rounded-lg p-4 text-left transition-all duration-200
-                hover:scale-105 active:scale-95 shadow-sm hover:shadow-md
-                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-              `}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  {action.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
-                    {action.title}
-                  </p>
-                  <p className="text-xs text-white opacity-80 truncate">
-                    {action.description}
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+    <div className="bg-white rounded-xl shadow p-6">
+      <h2 className="text-lg font-bold text-gray-900 mb-2">Azioni Rapide</h2>
+      <p className="text-sm text-gray-600 mb-4">
+        Accedi rapidamente alle funzioni principali del CRM
+      </p>
+
+      <div className="space-y-2">
+        {actions.map((action, index) => (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.preventDefault()
+              console.log(`Quick action clicked: ${action.title}`) // Debug
+              action.action()
+            }}
+            type="button"
+            className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all text-left group border border-transparent hover:border-gray-200"
+          >
+            <div className={`p-2.5 rounded-lg ${action.color} ${action.hoverColor} group-hover:scale-110 transition-transform`}>
+              <action.icon className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                {action.title}
+              </p>
+              <p className="text-xs text-gray-500 truncate">{action.description}</p>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
-  );
-});
+  )
+}

@@ -7,7 +7,7 @@ import { UniversalAIChat } from './ai/UniversalAIChat';
 import { SessionHealthIndicator } from './SessionHealthIndicator';
 import { EnhancedStatCard } from './dashboard/EnhancedStatCard';
 import { RecentActivityFeed } from './dashboard/RecentActivityFeed';
-import { QuickActions } from './dashboard/QuickActions';
+import QuickActions from './dashboard/QuickActions';
 import { DashboardService, DashboardStats, RecentActivity } from '../services/dashboardService';
 import { 
   CheckCircleIcon, 
@@ -104,25 +104,34 @@ export const Dashboard: React.FC = () => {
 
   // Quick actions handlers
   const handleQuickAction = useCallback((action: string) => {
+    console.log(`Quick action clicked: ${action}`); // Debug log
     switch (action) {
       case 'add-contact':
-        navigate('/contacts', { state: { openAddModal: true } });
+        console.log('Navigating to contacts with add modal...'); // Debug
+        navigate('/dashboard/contacts', { state: { openAddModal: true } });
         break;
       case 'create-deal':
-        navigate('/pipeline', { state: { openAddModal: true } });
+        console.log('Navigating to opportunities with add modal...'); // Debug
+        navigate('/dashboard/opportunities', { state: { openAddModal: true } });
         break;
       case 'schedule-event':
-        navigate('/calendar', { state: { openAddModal: true } });
+        console.log('Navigating to calendar with add modal...'); // Debug
+        navigate('/dashboard/calendar', { state: { openAddModal: true } });
         break;
       case 'create-form':
-        navigate('/forms', { state: { openAddModal: true } });
+        console.log('Navigating to forms with add modal...'); // Debug
+        navigate('/dashboard/forms', { state: { openAddModal: true } });
         break;
       case 'send-email':
-        navigate('/contacts', { state: { openEmailModal: true } });
+        console.log('Navigating to contacts with email modal...'); // Debug
+        navigate('/dashboard/contacts', { state: { openEmailModal: true } });
         break;
       case 'view-pipeline':
-        navigate('/pipeline');
+        console.log('Navigating to opportunities pipeline...'); // Debug
+        navigate('/dashboard/opportunities');
         break;
+      default:
+        console.log('Unknown action:', action);
     }
   }, [navigate]);
 
@@ -315,14 +324,7 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {/* Quick Actions */}
-          <QuickActions
-            onAddContact={() => handleQuickAction('add-contact')}
-            onCreateDeal={() => handleQuickAction('create-deal')}
-            onScheduleEvent={() => handleQuickAction('schedule-event')}
-            onCreateForm={() => handleQuickAction('create-form')}
-            onSendEmail={() => handleQuickAction('send-email')}
-            onViewPipeline={() => handleQuickAction('view-pipeline')}
-          />
+          <QuickActions />
         </div>
 
         {/* Recent Activity - Takes up 1 column */}

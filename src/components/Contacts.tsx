@@ -18,6 +18,7 @@ import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
 import { filterContacts } from '../utils/contactFilters';
 import { ContactEventsList } from './ContactEventsList'; // Importa il nuovo componente
 import { CreateEventModal } from './CreateEventModal';
+import ContactDetailModal from './contacts/ContactDetailModal';
 import { SparklesIcon, WhatsAppIcon } from './ui/icons';
 import { Modal } from './ui/Modal';
 
@@ -490,6 +491,7 @@ export const Contacts: React.FC = () => {
                 onCreateEvent={handleOpenCreateEventModal}
                 _onViewEvents={handleOpenViewEventsModal}
                 onViewContact={handleOpenViewContactModal}
+                onCreateDeal={handleOpenCreateDealModal}
                 onAddContact={handleOpenAddModal}
                 onUploadSuccess={refetch}
                 onBulkOperationComplete={refetch}
@@ -615,85 +617,16 @@ export const Contacts: React.FC = () => {
                 />
             </Modal>
 
-            {/* Contact Details Modal */}
-            <Modal isOpen={isViewContactModalOpen} onClose={handleCloseModals} title={`Dettagli Contatto - ${selectedContact?.name}`}>
-                {selectedContact && (
-                    <div className="space-y-6">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-3">Informazioni Contatto</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600">Nome</label>
-                                    <p className="text-gray-800 font-medium">{selectedContact.name}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600">Azienda</label>
-                                    <p className="text-gray-800">{selectedContact.company || 'Non specificato'}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600">Email</label>
-                                    <p className="text-gray-800">{selectedContact.email || 'Non specificato'}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600">Telefono</label>
-                                    <p className="text-gray-800">{selectedContact.phone || 'Non specificato'}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600">Data Creazione</label>
-                                    <p className="text-gray-800">{selectedContact.created_at ? new Date(selectedContact.created_at).toLocaleDateString('it-IT') : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600">Lead Score</label>
-                                    <p className="text-gray-800">{selectedContact.lead_score || 0}/100</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-2 pt-4 border-t">
-                            <button 
-                                onClick={() => {
-                                    handleCloseModals();
-                                    handleOpenEditModal(selectedContact);
-                                }}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                            >
-                                <Edit className="w-4 h-4" />
-                                Modifica
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    handleCloseModals();
-                                    handleOpenEmailModal(selectedContact);
-                                }}
-                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
-                            >
-                                <Mail className="w-4 h-4" />
-                                Email AI
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    handleCloseModals();
-                                    handleOpenCreateEventModal(selectedContact);
-                                }}
-                                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
-                            >
-                                <Calendar className="w-4 h-4" />
-                                Crea Evento
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    handleCloseModals();
-                                    handleOpenCreateDealModal(selectedContact);
-                                }}
-                                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Crea Deal
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+            {/* Enhanced Contact Details Modal */}
+            <ContactDetailModal
+                isOpen={isViewContactModalOpen}
+                onClose={handleCloseModals}
+                contact={selectedContact}
+                onUpdate={(updatedContact) => {
+                    // Update the contact in the list
+                    refetch()
+                }}
+            />
 
             {/* Create Deal Modal */}
             <Modal isOpen={isCreateDealModalOpen} onClose={handleCloseModals} title={`Crea Deal per ${selectedContact?.name}`}>

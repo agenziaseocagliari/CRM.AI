@@ -12,6 +12,7 @@ import {
     Plus,
     Sparkles,
     Trash2,
+    TrendingUp,
     Upload
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -31,6 +32,7 @@ interface ContactsTableProps {
     onCreateEvent: (contact: Contact) => void;
     _onViewEvents: (contact: Contact) => void;
     onViewContact: (contact: Contact) => void;
+    onCreateDeal: (contact: Contact) => void;
     onAddContact: () => void;
     onUploadSuccess: () => void;
     onBulkOperationComplete?: () => void;
@@ -49,6 +51,7 @@ export default function ContactsTable({
     onCreateEvent,
     _onViewEvents,
     onViewContact,
+    onCreateDeal,
     onAddContact,
     onUploadSuccess,
     onBulkOperationComplete,
@@ -356,76 +359,19 @@ export default function ContactsTable({
                                         <td className="px-4 py-3 text-gray-600 text-sm">
                                             {contact.created_at ? new Date(contact.created_at).toLocaleDateString('it-IT') : '-'}
                                         </td>
-                                        <td className="px-4 py-3 relative overflow-visible">
-                                            <div className="relative">
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="relative inline-block">
                                                 <button
                                                     onClick={(e) => {
+                                                        e.preventDefault();
                                                         e.stopPropagation();
                                                         setShowActions(showActions === contact.id ? null : contact.id);
                                                     }}
-                                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                                    type="button"
                                                 >
-                                                    <MoreVertical className="w-5 h-5 text-gray-400" />
+                                                    <MoreVertical className="w-5 h-5 text-gray-600" />
                                                 </button>
-
-                                                {showActions === contact.id && (
-                                                    <div
-                                                        className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[9999]"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <button
-                                                            onClick={() => {
-                                                                onViewContact(contact);
-                                                                setShowActions(null);
-                                                            }}
-                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                            Visualizza
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                onEditContact(contact);
-                                                                setShowActions(null);
-                                                            }}
-                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
-                                                            Modifica
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                onEmailContact(contact);
-                                                                setShowActions(null);
-                                                            }}
-                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
-                                                        >
-                                                            <Sparkles className="w-4 h-4" />
-                                                            Email AI
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                onCreateEvent(contact);
-                                                                setShowActions(null);
-                                                            }}
-                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-gray-700 w-full text-left transition-colors"
-                                                        >
-                                                            <Calendar className="w-4 h-4" />
-                                                            Crea Evento
-                                                        </button>
-                                                        <hr className="my-1" />
-                                                        <button
-                                                            onClick={() => {
-                                                                onDeleteContact(contact);
-                                                                setShowActions(null);
-                                                            }}
-                                                            className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 text-red-600 w-full text-left transition-colors"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                            Elimina
-                                                        </button>
-                                                    </div>
-                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -483,12 +429,106 @@ export default function ContactsTable({
                 )}
             </div>
 
-            {/* Click outside to close actions menu */}
+            {/* Portal-based dropdown menu */}
             {showActions && (
-                <div
-                    className="fixed inset-0 z-0"
-                    onClick={() => setShowActions(null)}
-                />
+                <>
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowActions(null);
+                        }}
+                    />
+
+                    {/* Dropdown Menu */}
+                    {(() => {
+                        const contact = contacts.find(c => c.id === showActions);
+                        if (!contact) return null;
+
+                        return (
+                            <div className="fixed z-50 w-56 bg-white rounded-lg shadow-xl border border-gray-200 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                <div className="py-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowActions(null);
+                                            onViewContact(contact);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                    >
+                                        <Eye className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-medium">Visualizza</span>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowActions(null);
+                                            onEditContact(contact);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                    >
+                                        <Edit className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-medium">Modifica</span>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowActions(null);
+                                            onEmailContact(contact);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                    >
+                                        <Mail className="w-4 h-4 text-green-600" />
+                                        <span className="text-sm font-medium">Invia Email</span>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowActions(null);
+                                            onCreateDeal(contact);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                    >
+                                        <TrendingUp className="w-4 h-4 text-purple-600" />
+                                        <span className="text-sm font-medium">Crea Opportunità</span>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowActions(null);
+                                            onCreateEvent(contact);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                    >
+                                        <Calendar className="w-4 h-4 text-indigo-600" />
+                                        <span className="text-sm font-medium">Crea Evento</span>
+                                    </button>
+
+                                    <div className="border-t border-gray-100 my-1" />
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowActions(null);
+                                            if (confirm(`Eliminare il contatto "${contact.name}"?`)) {
+                                                onDeleteContact(contact);
+                                            }
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 hover:bg-red-50 flex items-center gap-3 transition-colors text-red-600"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        <span className="text-sm font-medium">Elimina</span>
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </>
             )}
         </div>
     );

@@ -22,6 +22,8 @@ import { GoogleAuthCallback } from './components/Settings';
 
 // CRM Components - Riattivati
 import { Automations } from './components/Automations';
+import AutomationPage from './app/dashboard/automation/page';
+import AutomationDiagnostic from './app/dashboard/automation/diagnostic';
 import { Calendar } from './components/Calendar';
 import { Contacts } from './components/Contacts';
 import ContactDetailView from './components/contacts/ContactDetailView';
@@ -202,7 +204,7 @@ const App: React.FC = () => {
     if (loading || !session) { return; }
 
     const isSuperAdminRoute = location.pathname.startsWith('/super-admin');
-    const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/whatsapp', '/email-marketing', '/reports', '/settings'].some(
+    const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/automation', '/whatsapp', '/email-marketing', '/reports', '/settings'].some(
       path => location.pathname.startsWith(path)
     );
 
@@ -303,6 +305,8 @@ const App: React.FC = () => {
 
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />
+          <Route path="automation" element={<AutomationPage />} />
+          <Route path="automation/diagnostic" element={<AutomationDiagnostic />} />
 
           {/* Enterprise AI Modules */}
           <Route path="whatsapp" element={<WhatsAppModule />} />

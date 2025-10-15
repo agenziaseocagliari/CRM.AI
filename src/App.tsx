@@ -29,7 +29,7 @@ import { Dashboard } from './components/Dashboard';
 import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
 import { Opportunities } from './components/Opportunities';
-import ReportsPage from './app/dashboard/reports/page';
+import { Reports } from './components/Reports';
 import { ReportsTest } from './components/ReportsTest';
 import { Settings } from './components/Settings';
 import BookingSettings from './components/settings/BookingSettings';
@@ -298,7 +298,7 @@ const App: React.FC = () => {
           <Route path="contacts" element={<Contacts />} />
           <Route path="contacts/:id" element={<ContactDetailView />} />
           <Route path="calendar" element={<Calendar />} />
-          <Route path="reports" element={<ReportsPage />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="reports-test" element={<ReportsTest />} />
 
           <Route path="forms" element={<Forms />} />

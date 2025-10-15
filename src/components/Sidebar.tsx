@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, AdminPanelIcon, CreditCardIcon } from './ui/icons';
-import { MessageCircle, Mail } from 'lucide-react';
+import { MessageCircle, Mail, BarChart3 } from 'lucide-react';
 
 const NavItem: React.FC<{
   to: string;
@@ -57,6 +57,11 @@ export const Sidebar: React.FC = () => {
             to="calendar"
             icon={<CalendarIcon className="w-6 h-6" />}
             label="Calendario"
+          />
+          <NavItem
+            to="reports"
+            icon={<BarChart3 className="w-6 h-6" />}
+            label="Reports"
           />
 
           <NavItem

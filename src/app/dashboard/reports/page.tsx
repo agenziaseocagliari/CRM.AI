@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
 import { 
   ChartBarIcon, 
@@ -8,16 +8,21 @@ import {
   FunnelIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import { supabase } from '../../../lib/supabaseClient';
+import { useAuth } from '../../../contexts/AuthContext';
+import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
 export default function ReportsPage() {
+  const { organizationId } = useAuth();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data for now
+  // Mock data for display (to be replaced with real queries later)
   const mockRevenueData = [
     { month: '2025-01', stage: 'Won', total_revenue: 15000, deals_count: 3 },
     { month: '2025-02', stage: 'Won', total_revenue: 22000, deals_count: 4 },
@@ -37,69 +42,240 @@ export default function ReportsPage() {
     { stage: 'Won', count: 14, total_value: 70000, avg_time_in_stage: 15 },
   ];
 
-  // CSV Export functions
-  const exportRevenueCSV = () => {
-    const csvContent = [
-      ['Date', 'Stage', 'Revenue', 'Deals'],
-      ...mockRevenueData.map(row => [
-        row.month,
-        row.stage,
-        row.total_revenue.toString(),
-        row.deals_count.toString()
-      ])
-    ].map(row => row.join(',')).join('\n');
+  // CSV Export functions with real data
+  const exportRevenueCSV = async () => {
+    if (!organizationId) {
+      toast.error('Organization not loaded');
+      return;
+    }
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `revenue-report.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      setIsLoading(true);
+      
+      // Query ALL opportunities from database
+      const { data: opportunities, error } = await supabase
+        .from('opportunities')
+        .select(`
+          id,
+          contact_name,
+          value,
+          stage,
+          status,
+          close_date,
+          created_at,
+          updated_at
+        `)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!opportunities || opportunities.length === 0) {
+        toast.error('No opportunities found');
+        return;
+      }
+
+      // Transform to CSV format with all data
+      const csvData = opportunities.map(opp => ({
+        'Date Created': format(new Date(opp.created_at), 'yyyy-MM-dd'),
+        'Contact': opp.contact_name || 'N/A',
+        'Stage': opp.stage || 'N/A',
+        'Value': opp.value || 0,
+        'Status': opp.status || 'N/A',
+        'Close Date': opp.close_date ? format(new Date(opp.close_date), 'yyyy-MM-dd') : 'N/A',
+        'Last Updated': format(new Date(opp.updated_at), 'yyyy-MM-dd HH:mm')
+      }));
+
+      // Convert to CSV format
+      const headers = Object.keys(csvData[0]);
+      const csvContent = [
+        headers,
+        ...csvData.map(row => headers.map(header => row[header as keyof typeof row]))
+      ].map(row => row.join(',')).join('\n');
+
+      // Download with proper filename
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `revenue-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${opportunities.length} opportunities`);
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Export failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const exportContactsCSV = () => {
-    const csvContent = [
-      ['Date', 'New Contacts'],
-      ...mockContactData.map(row => [
-        row.date,
-        row.new_contacts.toString()
-      ])
-    ].map(row => row.join(',')).join('\n');
+  const exportContactsCSV = async () => {
+    if (!organizationId) {
+      toast.error('Organization not loaded');
+      return;
+    }
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `contacts-report.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      setIsLoading(true);
+      
+      // Query ALL contacts from database
+      const { data: contacts, error } = await supabase
+        .from('contacts')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          company,
+          lead_score,
+          source,
+          status,
+          created_at,
+          updated_at
+        `)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!contacts || contacts.length === 0) {
+        toast.error('No contacts found');
+        return;
+      }
+
+      // Transform to CSV format
+      const csvData = contacts.map(contact => ({
+        'Date Created': format(new Date(contact.created_at), 'yyyy-MM-dd'),
+        'Name': `${contact.first_name || ''} ${contact.last_name || ''}`.trim(),
+        'Email': contact.email || 'N/A',
+        'Phone': contact.phone || 'N/A',
+        'Company': contact.company || 'N/A',
+        'Lead Score': contact.lead_score || 0,
+        'Source': contact.source || 'N/A',
+        'Status': contact.status || 'N/A',
+        'Last Updated': format(new Date(contact.updated_at), 'yyyy-MM-dd HH:mm')
+      }));
+
+      // Convert to CSV format
+      const headers = Object.keys(csvData[0]);
+      const csvContent = [
+        headers,
+        ...csvData.map(row => headers.map(header => row[header as keyof typeof row]))
+      ].map(row => row.join(',')).join('\n');
+
+      // Download with proper filename
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `contacts-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${contacts.length} contacts`);
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Export failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const exportFunnelCSV = () => {
-    const csvContent = [
-      ['Stage', 'Count', 'Total Value', 'Avg Days'],
-      ...mockFunnelData.map(row => [
-        row.stage,
-        row.count.toString(),
-        row.total_value.toString(),
-        row.avg_time_in_stage.toString()
-      ])
-    ].map(row => row.join(',')).join('\n');
+  const exportFunnelCSV = async () => {
+    if (!organizationId) {
+      toast.error('Organization not loaded');
+      return;
+    }
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `funnel-report.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      setIsLoading(true);
+      
+      // Query opportunities grouped by stage
+      const { data: opportunities, error } = await supabase
+        .from('opportunities')
+        .select(`
+          stage,
+          value,
+          created_at,
+          close_date,
+          status
+        `)
+        .eq('organization_id', organizationId);
+
+      if (error) throw error;
+
+      if (!opportunities || opportunities.length === 0) {
+        toast.error('No opportunities found');
+        return;
+      }
+
+      // Process funnel data by stage
+      const stageStats = opportunities.reduce((acc, opp) => {
+        const stage = opp.stage || 'Unknown';
+        if (!acc[stage]) {
+          acc[stage] = {
+            count: 0,
+            total_value: 0,
+            total_days: 0
+          };
+        }
+        
+        acc[stage].count++;
+        acc[stage].total_value += opp.value || 0;
+        
+        // Calculate days in stage (simplified)
+        const created = new Date(opp.created_at);
+        const closeDate = opp.close_date ? new Date(opp.close_date) : new Date();
+        const days = Math.ceil((closeDate.getTime() - created.getTime()) / (1000 * 3600 * 24));
+        acc[stage].total_days += Math.max(days, 0);
+        
+        return acc;
+      }, {} as Record<string, { count: number; total_value: number; total_days: number }>);
+
+      // Transform to CSV format
+      const csvData = Object.entries(stageStats).map(([stage, stats]) => ({
+        'Stage': stage,
+        'Count': stats.count,
+        'Total Value': stats.total_value,
+        'Average Days': Math.round(stats.total_days / stats.count),
+        'Avg Deal Size': Math.round(stats.total_value / stats.count)
+      }));
+
+      // Convert to CSV format
+      const headers = Object.keys(csvData[0]);
+      const csvContent = [
+        headers,
+        ...csvData.map(row => headers.map(header => row[header as keyof typeof row]))
+      ].map(row => row.join(',')).join('\n');
+
+      // Download with proper filename
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pipeline-funnel-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${Object.keys(stageStats).length} pipeline stages`);
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Export failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const refreshData = () => {

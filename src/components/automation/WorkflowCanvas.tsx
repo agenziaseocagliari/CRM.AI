@@ -18,7 +18,9 @@ import {
 import '@xyflow/react/dist/style.css';
 import '../../styles/workflowCanvas.css';
 import { Beaker, Play, Save, Sparkles, Trash2 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import type { NodeDefinition } from '@/lib/nodes/nodeLibrary';
 import GenerateWorkflowModal from './GenerateWorkflowModal';
 import NodeSidebar from './NodeSidebar';
 import WorkflowSimulationPanel from './WorkflowSimulationPanel';
@@ -84,8 +86,7 @@ const initialEdges: Edge[] = [
   },
 ];
 
-let nodeId = 3;
-const getNodeId = () => `node_${nodeId++}`;
+// Node IDs are now generated using UUIDs in onDrop handler
 
 export default function WorkflowCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -93,6 +94,11 @@ export default function WorkflowCanvas() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  
+  // ReactFlow refs and state for drag-drop
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   
   // Simulation state
   const [isSimulating, setIsSimulating] = useState(false);
@@ -141,30 +147,43 @@ export default function WorkflowCanvas() {
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
 
-    const reactFlowBounds = event.currentTarget.getBoundingClientRect();
-    const dragData = event.dataTransfer.getData('application/reactflow');
-    
-    if (!dragData) return;
+    const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
+    if (!reactFlowBounds || !reactFlowInstance) return;
 
-    const { type, data } = JSON.parse(dragData);
-    const position = {
-      x: event.clientX - reactFlowBounds.left - 100,
-      y: event.clientY - reactFlowBounds.top - 50,
-    };
+    // Get node data from drag
+    const nodeData = event.dataTransfer.getData('application/reactflow');
+    if (!nodeData) return;
 
+    let nodeDefinition: NodeDefinition;
+    try {
+      nodeDefinition = JSON.parse(nodeData);
+    } catch (error) {
+      console.error('❌ Invalid node data:', error);
+      return;
+    }
+
+    // Calculate position on canvas using ReactFlow instance
+    const position = reactFlowInstance.project({
+      x: event.clientX - reactFlowBounds.left,
+      y: event.clientY - reactFlowBounds.top,
+    });
+
+    // Create new node with unique ID
     const newNode: Node = {
-      id: getNodeId(),
-      type,
+      id: `${nodeDefinition.id}-${uuidv4()}`,
+      type: nodeDefinition.type === 'trigger' ? 'input' : 'default',
       position,
       data: {
-        label: data.label,
-        nodeType: data.id,
-        description: data.description,
-        category: data.category,
+        label: nodeDefinition.label,
+        nodeType: nodeDefinition.id,
+        category: nodeDefinition.category,
+        icon: nodeDefinition.icon,
+        color: nodeDefinition.color,
+        config: {}
       },
       style: {
-        background: getNodeBackgroundColor(data.category),
-        border: `2px solid ${getNodeBorderColor(data.category)}`,
+        background: getNodeBackgroundColor(nodeDefinition.category),
+        border: `2px solid ${getNodeBorderColor(nodeDefinition.category)}`,
         borderRadius: '12px',
         padding: '12px',
         minWidth: '160px',
@@ -174,11 +193,12 @@ export default function WorkflowCanvas() {
         fontSize: '14px',
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
       },
-      className: `node-${data.category}`,
+      className: `node-${nodeDefinition.category}`,
     };
 
     setNodes((nds) => nds.concat(newNode));
-  }, [setNodes]);
+    console.log('✅ Node dropped successfully:', newNode.data.label);
+  }, [reactFlowInstance, setNodes]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -465,13 +485,16 @@ export default function WorkflowCanvas() {
           </div>
 
           {/* Canvas */}
-          <div className="flex-1" onDrop={onDrop} onDragOver={onDragOver}>
+          <div ref={reactFlowWrapper} className="flex-1 relative">
             <ReactFlow
               nodes={nodes}
               edges={edges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onInit={setReactFlowInstance}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
               fitView
               className="bg-gradient-to-br from-gray-50 to-gray-100"
               defaultEdgeOptions={{

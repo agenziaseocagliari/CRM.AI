@@ -5,12 +5,31 @@
 
 import { Edge, Node } from '@xyflow/react';
 
-// DataPizza API configuration with Railway production URL
-const DATAPIZZA_BASE_URL = typeof window !== 'undefined' && import.meta.env.VITE_DATAPIZZA_API_URL
-  ? import.meta.env.VITE_DATAPIZZA_API_URL
-  : process.env.NEXT_PUBLIC_DATAPIZZA_API_URL || 'https://datapizza-production.railway.app';
+// ✅ CORRECT - Production-first approach
+const getDataPizzaURL = (): string => {
+  // Priority 1: Vite environment variable (set in Vercel)
+  if (import.meta.env.VITE_DATAPIZZA_API_URL) {
+    console.log('🔗 Using Vite env var');
+    return import.meta.env.VITE_DATAPIZZA_API_URL;
+  }
+  
+  // Priority 2: Production default (Railway)
+  if (import.meta.env.PROD) {
+    console.log('🔗 Using production default');
+    return 'https://datapizza-production.railway.app';
+  }
+  
+  // Priority 3: Local development
+  console.log('🔗 Using localhost for development');
+  return 'http://localhost:8001';
+};
 
-console.log('🔗 DataPizza URL:', DATAPIZZA_BASE_URL); // Debug log
+const DATAPIZZA_BASE_URL = getDataPizzaURL();
+
+// Log for debugging
+console.log('🚀 DataPizza URL configured:', DATAPIZZA_BASE_URL);
+console.log('🌍 Environment:', import.meta.env.MODE);
+console.log('📦 Is production:', import.meta.env.PROD);
 
 export interface WorkflowGenerationRequest {
   description: string;
@@ -365,9 +384,12 @@ export async function generateWorkflow(
   description: string,
   organizationId?: string
 ): Promise<WorkflowGenerationResponse> {
+  console.log('🚀 Starting workflow generation');
+  console.log('📍 Target URL:', DATAPIZZA_BASE_URL);
+  console.log('📝 Description:', description);
+  
   // Check agent availability first
   console.log(`🔍 Checking DataPizza health at: ${DATAPIZZA_BASE_URL}`);
-  console.log('🚀 Starting workflow generation:', description);
   const healthCheck = await checkAgentHealth();
   const isAgentAvailable = healthCheck.status === 'healthy';
   
@@ -452,6 +474,12 @@ export async function generateWorkflow(
     const errorName = error instanceof Error ? error.name : 'Unknown';
     const isTimeout = errorName === 'AbortError';
 
+    if (isTimeout) {
+      console.error('⏱️ AI generation timeout (10s)');
+    } else {
+      console.error('❌ AI generation error:', error instanceof Error ? error.message : error);
+    }
+
     console.warn(
       isTimeout
         ? '⏱️ AI timeout - using intelligent fallback...'
@@ -461,7 +489,9 @@ export async function generateWorkflow(
   }
 
   // Use intelligent fallback generator
+  console.log('🔄 Using intelligent fallback generator');
   const fallbackResult = generateFallbackWorkflow(description);
+  console.log('✅ Fallback generation successful');
 
   return {
     success: true,

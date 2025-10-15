@@ -1,11 +1,11 @@
 import { supabase } from './supabaseClient'
 
 export async function getUserOrganization() {
-  
+
   try {
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
+
     if (authError || !user) {
       console.error('Auth error:', authError)
       return { organization_id: null, error: 'Not authenticated' }
@@ -30,10 +30,10 @@ export async function getUserOrganization() {
       return { organization_id: null, error: 'No organization found for user' }
     }
 
-    return { 
+    return {
       organization_id: data.organization_id,
       organization: data.organization,
-      error: null 
+      error: null
     }
   } catch (error: unknown) {
     const err = error as Error

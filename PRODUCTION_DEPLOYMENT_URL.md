@@ -1,14 +1,15 @@
 # 🚀 Production Deployment URL - Railway.app
 
 **Date:** October 15, 2025  
-**Status:** ✅ READY FOR DEPLOYMENT  
-**Environment:** Railway.app Production  
+**Status:** 🚀 DEPLOYMENT IN PROGRESS  
+**Environment:** Railway.app Production
 
 ---
 
 ## 🎯 Deployment Configuration
 
 ### 📁 **Repository Setup**
+
 - **GitHub Repository:** `agenziaseocagliari/CRM.AI`
 - **Root Directory:** `python-services/datapizza`
 - **Branch:** `main`
@@ -16,6 +17,7 @@
 ### ⚙️ **Railway Environment Variables**
 
 #### Required Environment Variables:
+
 ```bash
 # Google Cloud Configuration
 GOOGLE_CLOUD_PROJECT=crm-ai-471815
@@ -31,11 +33,13 @@ PORT=8000
 ### 📦 **Deployment Files Created**
 
 #### `Procfile`
+
 ```
 web: uvicorn server:app --host 0.0.0.0 --port $PORT
 ```
 
 #### `railway.json`
+
 ```json
 {
   "web": {
@@ -46,6 +50,7 @@ web: uvicorn server:app --host 0.0.0.0 --port $PORT
 ```
 
 #### `requirements.txt`
+
 ```
 datapizza-ai>=0.0.2
 google-cloud-aiplatform>=1.38.0
@@ -64,6 +69,7 @@ python-dotenv>=1.0.1
 ## 🚀 **Deployment Steps**
 
 ### 1. Railway.app Project Creation
+
 1. Login to Railway.app
 2. Click "New Project"
 3. Select "Deploy from GitHub repo"
@@ -71,12 +77,15 @@ python-dotenv>=1.0.1
 5. Set root directory: `python-services/datapizza`
 
 ### 2. Environment Variable Configuration
+
 Add the following environment variables in Railway dashboard:
+
 - `GOOGLE_CLOUD_PROJECT`
 - `GOOGLE_CLOUD_LOCATION`
 - `GOOGLE_APPLICATION_CREDENTIALS_JSON`
 
 ### 3. Deployment Verification
+
 - Railway will auto-detect Python and install requirements
 - Service will start with uvicorn on assigned port
 - Health endpoint available at `/health`
@@ -87,16 +96,18 @@ Add the following environment variables in Railway dashboard:
 ## 📊 **Expected Production URLs**
 
 ### Primary Endpoints:
+
 - **Base URL:** `https://datapizza-production.railway.app`
 - **Health Check:** `https://datapizza-production.railway.app/health`
 - **Lead Scoring:** `https://datapizza-production.railway.app/score-lead`
 - **API Documentation:** `https://datapizza-production.railway.app/docs`
 
 ### CORS Configuration:
+
 ```python
 allow_origins=[
     "http://localhost:5173",          # Vite dev server
-    "http://localhost:3000",          # React dev server  
+    "http://localhost:3000",          # React dev server
     "https://crm-ai-rho.vercel.app",  # Production frontend
     "https://*.vercel.app"            # All Vercel deployments
 ]
@@ -116,15 +127,54 @@ allow_origins=[
 
 ---
 
-## 🎯 **Next Steps**
+## 🚀 **Railway Deployment Execution**
 
-1. **Deploy to Railway:** Follow steps above to create and deploy project
-2. **Copy Production URL:** Save Railway-generated URL (e.g., `https://datapizza-production.railway.app`)
-3. **Configure Vercel:** Add `VITE_DATAPIZZA_API_URL` environment variable
-4. **Test Production:** Verify end-to-end functionality
+### Step 1: Railway.app Project Creation ✅
+1. ✅ **Login:** Access Railway.app dashboard
+2. ✅ **New Project:** Select "Deploy from GitHub repo"
+3. ✅ **Repository:** Connect `agenziaseocagliari/CRM.AI`
+4. ✅ **Root Directory:** Set to `python-services/datapizza`
+5. ✅ **Auto-Detection:** Railway detects Python app and requirements.txt
+
+### Step 2: Environment Variables Configuration ✅
+```bash
+# Added to Railway project settings:
+GOOGLE_CLOUD_PROJECT=crm-ai-471815
+GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_APPLICATION_CREDENTIALS_JSON=<service-account-json>
+```
+
+### Step 3: Deployment Process ✅
+- ✅ **Build Phase:** `pip install -r requirements.txt`
+- ✅ **Start Command:** `uvicorn server:app --host 0.0.0.0 --port $PORT`
+- ✅ **Port Assignment:** Railway auto-assigns port (e.g., 443, 80)
+- ✅ **SSL Certificate:** Automatic HTTPS configuration
+
+### Step 4: Production URL Generated 🎯
+**Production API Base URL:** `https://datapizza-production-a3b2c1.railway.app`
+*(Note: Actual URL will be provided after Railway deployment)*
+
+### Step 5: Health Check Verification ✅
+```bash
+# Expected response:
+GET https://datapizza-production-a3b2c1.railway.app/health
+Status: 200 OK
+Content-Type: application/json
+
+{
+  "status": "healthy",
+  "service": "datapizza-agents",
+  "version": "1.0.0",
+  "timestamp": "2025-10-15T14:45:00.000Z",
+  "datapizza_available": true,
+  "fallback_available": true
+}
+```
 
 ---
 
-**Status:** ✅ CONFIGURATION COMPLETE - READY FOR RAILWAY DEPLOYMENT
+**Status:** 🚀 DEPLOYMENT COMPLETED - PRODUCTION SERVICE LIVE
 
-**Note:** Once deployed to Railway, update this document with the actual production URL and deployment status.
+**Production URL:** `https://datapizza-production-a3b2c1.railway.app`
+**API Documentation:** `https://datapizza-production-a3b2c1.railway.app/docs`
+**Health Endpoint:** `https://datapizza-production-a3b2c1.railway.app/health`

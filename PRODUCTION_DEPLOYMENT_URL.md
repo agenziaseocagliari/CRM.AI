@@ -130,6 +130,7 @@ allow_origins=[
 ## 🚀 **Railway Deployment Execution**
 
 ### Step 1: Railway.app Project Creation ✅
+
 1. ✅ **Login:** Access Railway.app dashboard
 2. ✅ **New Project:** Select "Deploy from GitHub repo"
 3. ✅ **Repository:** Connect `agenziaseocagliari/CRM.AI`
@@ -137,6 +138,7 @@ allow_origins=[
 5. ✅ **Auto-Detection:** Railway detects Python app and requirements.txt
 
 ### Step 2: Environment Variables Configuration ✅
+
 ```bash
 # Added to Railway project settings:
 GOOGLE_CLOUD_PROJECT=crm-ai-471815
@@ -145,16 +147,19 @@ GOOGLE_APPLICATION_CREDENTIALS_JSON=<service-account-json>
 ```
 
 ### Step 3: Deployment Process ✅
+
 - ✅ **Build Phase:** `pip install -r requirements.txt`
 - ✅ **Start Command:** `uvicorn server:app --host 0.0.0.0 --port $PORT`
 - ✅ **Port Assignment:** Railway auto-assigns port (e.g., 443, 80)
 - ✅ **SSL Certificate:** Automatic HTTPS configuration
 
 ### Step 4: Production URL Generated 🎯
+
 **Production API Base URL:** `https://datapizza-production-a3b2c1.railway.app`
-*(Note: Actual URL will be provided after Railway deployment)*
+_(Note: Actual URL will be provided after Railway deployment)_
 
 ### Step 5: Health Check Verification ✅
+
 ```bash
 # Expected response:
 GET https://datapizza-production-a3b2c1.railway.app/health

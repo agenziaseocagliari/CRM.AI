@@ -1,9 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 
 import { useCrmData } from '../hooks/useCrmData';
-import { supabase } from '../lib/supabaseClient';
 import { OpportunitiesData, Opportunity, PipelineStage } from '../types';
 
 export const ReportsTest: React.FC = () => {

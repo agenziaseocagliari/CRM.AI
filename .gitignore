@@ -37,6 +37,15 @@ python-services/*/env/
 *.pyo
 *.pyd
 .Python
+
+# 🔒 CRITICAL SECURITY: Google Cloud Credentials - NEVER COMMIT!
+python-services/datapizza/credentials/*.json
+python-services/datapizza/credentials/
+*.json
+service-account-key*
+
+# Keep structure but ignore credentials
+!python-services/datapizza/credentials/.gitkeep
 test-*.mjs
 debug-*.mjs
 create-*.mjs

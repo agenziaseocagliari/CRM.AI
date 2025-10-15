@@ -1,7 +1,10 @@
 datapizza-ai>=0.0.2
-google-cloud-aiplatform>=1.120.0
-fastapi>=0.119.0
-uvicorn>=0.37.0
-pydantic>=2.12.2
+google-cloud-aiplatform>=1.38.0
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.0.0
 google-genai>=1.44.0
 python-dotenv>=1.0.1

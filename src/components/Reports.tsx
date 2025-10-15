@@ -1,33 +1,32 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { Tab } from '@headlessui/react';
+import {
+    ArrowPathIcon,
+    ChartBarIcon,
+    FunnelIcon,
+    UserGroupIcon
+} from '@heroicons/react/24/outline';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
-import { Tab } from '@headlessui/react';
-import { 
-  ChartBarIcon, 
-  UserGroupIcon, 
-  FunnelIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline';
 
 import { useCrmData } from '../hooks/useCrmData';
-import { supabase } from '../lib/supabaseClient';
 import { OpportunitiesData, Opportunity, PipelineStage } from '../types';
 
 // Chart.js imports
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  PointElement,
-  ArcElement,
+    ArcElement,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Legend,
+    LinearScale,
+    LineElement,
+    PointElement,
+    Title,
+    Tooltip,
 } from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { format } from 'date-fns';
+import { Bar, Line } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,

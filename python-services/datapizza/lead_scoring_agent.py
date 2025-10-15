@@ -4,26 +4,42 @@ Enhanced CRM lead scoring with structured agent framework
 """
 
 from datapizza.agents import Agent
-from datapizza.clients.openai import OpenAIClient
 from datapizza.tools import tool
 import os
 import json
 from typing import Dict, Any
 
-# Initialize OpenAI-compatible client (can be configured for Google or other providers)
-# For MVP, we'll use OpenAI client - TODO: Switch to VertexAI when available in DataPizza
+# Initialize Google VertexAI client for DataPizza
 try:
-    api_key = os.getenv('OPENAI_API_KEY', 'demo-key-for-testing')
+    # Try to import VertexAI client first
+    from datapizza.clients.vertexai import VertexAIClient
     
-    client = OpenAIClient(
-        api_key=api_key,
-        model='gpt-4'  # Default model - will use fallback if key missing
+    client = VertexAIClient(
+        project_id=os.getenv('GOOGLE_CLOUD_PROJECT', 'crm-ai-471815'),
+        location=os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1'),
+        model='gemini-1.5-pro'
     )
-    print("✅ DataPizza OpenAI client initialized")
-    print("⚠️ Note: Using OpenAI client for MVP - will migrate to VertexAI/Gemini in production")
+    print("✅ DataPizza VertexAI client initialized successfully")
+    
+except ImportError as e:
+    print("⚠️ VertexAI client not available, falling back to OpenAI...")
+    try:
+        from datapizza.clients.openai import OpenAIClient
+        
+        api_key = os.getenv('OPENAI_API_KEY', 'demo-key-for-testing')
+        client = OpenAIClient(
+            api_key=api_key,
+            model='gpt-4'
+        )
+        print("✅ DataPizza OpenAI client initialized (fallback)")
+    except Exception as e2:
+        print(f"⚠️ DataPizza client initialization failed: {e2}")
+        print("Using fallback configuration for testing...")
+        client = None
+        
 except Exception as e:
-    print(f"⚠️ DataPizza client initialization failed: {e}")
-    print("Using fallback configuration for testing...")
+    print(f"❌ VertexAI initialization error: {e}")
+    print("Using fallback configuration...")
     client = None
 
 # Define custom tools for CRM operations

@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { Tab } from '@headlessui/react';
-import { 
-  ChartBarIcon, 
-  UserGroupIcon, 
-  FunnelIcon,
-  ArrowPathIcon
+import {
+    ArrowPathIcon,
+    ChartBarIcon,
+    FunnelIcon,
+    UserGroupIcon
 } from '@heroicons/react/24/outline';
+import { format } from 'date-fns';
+import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { supabase } from '../../../lib/supabaseClient';
 
 // Type definitions for data structures
 interface FunnelData {
@@ -40,9 +43,6 @@ interface Metrics {
   newThisMonth: number;
   avgLeadScore: number;
 }
-import { supabase } from '../../../lib/supabaseClient';
-import { format } from 'date-fns';
-import toast from 'react-hot-toast';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');

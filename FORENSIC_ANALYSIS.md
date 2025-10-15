@@ -3,6 +3,7 @@
 ## Opportunities Module (WORKING)
 
 ### Import statement:
+
 ```tsx
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -14,23 +15,38 @@ import { OpportunitiesData, Opportunity, PipelineStage } from '../types';
 ```
 
 ### Data loading:
+
 ```tsx
 // Uses useOutletContext to get data from useCrmData hook
 const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
-const { opportunities: initialData, contacts, organization, refetch: refetchData } = contextData || {};
+const {
+  opportunities: initialData,
+  contacts,
+  organization,
+  refetch: refetchData,
+} = contextData || {};
 
 // Uses context-provided data directly
-const [boardData, setBoardData] = useState<OpportunitiesData>(initialData || {});
+const [boardData, setBoardData] = useState<OpportunitiesData>(
+  initialData || {}
+);
 ```
 
 ### Organization ID:
+
 ```tsx
 // Gets organization from context provided by useCrmData
-const { opportunities: initialData, contacts, organization, refetch: refetchData } = contextData || {};
+const {
+  opportunities: initialData,
+  contacts,
+  organization,
+  refetch: refetchData,
+} = contextData || {};
 // Organization context is managed by parent layout/outlet
 ```
 
 ### Query:
+
 ```tsx
 // Queries are handled by useCrmData hook in the context provider
 // Uses Supabase queries with proper organization scoping in useCrmData.ts
@@ -41,6 +57,7 @@ const { opportunities: initialData, contacts, organization, refetch: refetchData
 ## Reports Module (BROKEN)
 
 ### Import statement:
+
 ```tsx
 'use client';
 
@@ -49,12 +66,13 @@ import { Tab } from '@headlessui/react';
 // Missing React Router imports (useOutletContext)
 // Missing useCrmData hook import
 
-import { supabase } from '../../../lib/supabaseClient';  // Different path!
+import { supabase } from '../../../lib/supabaseClient'; // Different path!
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 ```
 
 ### Data loading:
+
 ```tsx
 // Implements its own data loading instead of using context
 async function getUserOrganizationId(): Promise<string | null> {
@@ -72,10 +90,14 @@ const loadAllReportsData = useCallback(async () => {
 ```
 
 ### Organization ID:
+
 ```tsx
 // Custom getUserOrganizationId function instead of context
 async function getUserOrganizationId(): Promise<string | null> {
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
   const { data: userOrg, error: orgError } = await supabase
     .from('user_organizations')
     .select('organization_id')
@@ -86,11 +108,13 @@ async function getUserOrganizationId(): Promise<string | null> {
 ```
 
 ### Query:
+
 ```tsx
 // Direct Supabase queries instead of using useCrmData context
 const { data: opportunities, error: oppError } = await supabase
   .from('opportunities')
-  .select(`
+  .select(
+    `
     id,
     contact_name,
     value,
@@ -99,7 +123,8 @@ const { data: opportunities, error: oppError } = await supabase
     close_date,
     created_at,
     updated_at
-  `)
+  `
+  )
   .eq('organization_id', orgId);
 ```
 
@@ -108,22 +133,27 @@ const { data: opportunities, error: oppError } = await supabase
 ## DIFFERENCES IDENTIFIED
 
 ### 1. Architecture Pattern Mismatch
+
 - **Opportunities**: Uses React Router context + useCrmData hook (shared state pattern)
 - **Reports**: Uses Next.js 'use client' + custom data loading (isolated pattern)
 
 ### 2. Supabase Import Path Difference
+
 - **Opportunities**: `import { supabase } from '../lib/supabaseClient';` (relative path)
 - **Reports**: `import { supabase } from '../../../lib/supabaseClient';` (different relative path)
 
 ### 3. Data Loading Strategy Difference
+
 - **Opportunities**: Leverages useCrmData hook context (tested and working)
 - **Reports**: Implements custom getUserOrganizationId + direct queries (untested)
 
 ### 4. React Framework Mismatch
+
 - **Opportunities**: Standard React component using React Router context
 - **Reports**: Next.js 13+ App Router pattern with 'use client' directive
 
 ### 5. State Management Difference
+
 - **Opportunities**: Uses shared context state via useOutletContext
 - **Reports**: Uses isolated useState with custom loading functions
 
@@ -136,6 +166,7 @@ const { data: opportunities, error: oppError } = await supabase
 **PRIMARY CAUSE**: Architecture mismatch - Reports module was built as Next.js App Router page but the app uses React Router + context pattern.
 
 **SECONDARY CAUSES**:
+
 1. Wrong import path for supabase client
 2. Custom authentication logic not matching the working pattern
 3. Missing React Router context integration

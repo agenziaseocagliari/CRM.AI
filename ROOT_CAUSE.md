@@ -9,19 +9,23 @@ The Reports module uses **Next.js App Router architecture** in a **React Router 
 ## Evidence
 
 ### 1. Code Comparison Evidence:
+
 - **Working Opportunities**: Located in `src/components/Opportunities.tsx` using React Router pattern
 - **Broken Reports**: Located in `src/app/dashboard/reports/page.tsx` using Next.js App Router pattern
 
 ### 2. Import Path Evidence:
+
 - **Working**: `import { supabase } from '../lib/supabaseClient';` (correct relative path from components/)
 - **Broken**: `import { supabase } from '../../../lib/supabaseClient';` (wrong relative path from app/)
 
 ### 3. Test Page Evidence:
+
 - **ReportsTest Component**: Successfully works using `src/components/ReportsTest.tsx` pattern
 - **Proves**: The React Router + useOutletContext pattern works perfectly
 - **Confirms**: The issue is architectural, not environmental or authentication
 
 ### 4. Architecture Evidence:
+
 - **Working Pattern**: React Router component → useOutletContext → useCrmData hook
 - **Broken Pattern**: Next.js 'use client' → custom auth → direct Supabase queries
 
@@ -30,8 +34,9 @@ The Reports module uses **Next.js App Router architecture** in a **React Router 
 The application is built as a **React Router SPA** with context-based data sharing via `useCrmData`. All working modules (Opportunities, Contacts, Calendar, Dashboard) use `useOutletContext` to access shared CRM data.
 
 The Reports module was incorrectly implemented as a **Next.js 13+ App Router page** with:
+
 - 'use client' directive
-- Located in `src/app/` directory structure  
+- Located in `src/app/` directory structure
 - Custom `getUserOrganizationId()` authentication
 - Direct Supabase queries instead of context
 

@@ -1,8 +1,8 @@
+import { BarChart3, Mail, MessageCircle } from 'lucide-react';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { DashboardIcon, PipelineIcon, ContactsIcon, SettingsIcon, GuardianIcon, FormsIcon, AutomationIcon, CalendarIcon, AdminPanelIcon, CreditCardIcon } from './ui/icons';
-import { MessageCircle, Mail, BarChart3 } from 'lucide-react';
+import { AdminPanelIcon, AutomationIcon, CalendarIcon, ContactsIcon, CreditCardIcon, DashboardIcon, FormsIcon, GuardianIcon, PipelineIcon, SettingsIcon } from './ui/icons';
 
 const NavItem: React.FC<{
   to: string;
@@ -70,9 +70,9 @@ export const Sidebar: React.FC = () => {
             label="Form"
           />
           <NavItem
-            to="automations"
+            to="automation"
             icon={<AutomationIcon className="w-6 h-6" />}
-            label="Automazioni"
+            label="Visual Automation"
           />
           
           {/* Universal Access Modules - All Available */}

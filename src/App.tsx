@@ -29,6 +29,7 @@ import { Dashboard } from './components/Dashboard';
 import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
 import { Opportunities } from './components/Opportunities';
+import ReportsPage from './app/dashboard/reports/page';
 import { Settings } from './components/Settings';
 import BookingSettings from './components/settings/BookingSettings';
 import { TestComponent } from './components/TestComponent';
@@ -200,7 +201,7 @@ const App: React.FC = () => {
     if (loading || !session) { return; }
 
     const isSuperAdminRoute = location.pathname.startsWith('/super-admin');
-    const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/whatsapp', '/email-marketing', '/settings'].some(
+    const isStandardCrmRoute = ['/dashboard', '/opportunities', '/contacts', '/calendar', '/meetings', '/forms', '/automations', '/whatsapp', '/email-marketing', '/reports', '/settings'].some(
       path => location.pathname.startsWith(path)
     );
 
@@ -296,6 +297,7 @@ const App: React.FC = () => {
           <Route path="contacts" element={<Contacts />} />
           <Route path="contacts/:id" element={<ContactDetailView />} />
           <Route path="calendar" element={<Calendar />} />
+          <Route path="reports" element={<ReportsPage />} />
 
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />

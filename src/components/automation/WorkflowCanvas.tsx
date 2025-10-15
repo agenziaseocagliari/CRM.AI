@@ -1,22 +1,24 @@
 import { useWorkflowExecution, useWorkflows } from '@/lib/workflowApi';
+import { SimulationResult, SimulationStep, WorkflowSimulator } from '@/lib/workflowSimulator';
 import {
-    addEdge,
-    Background,
-    BackgroundVariant,
-    Connection,
-    Controls,
-    Edge,
-    Node,
-    ReactFlow,
-    ReactFlowProvider,
-    useEdgesState,
-    useNodesState,
+  addEdge,
+  Background,
+  BackgroundVariant,
+  Connection,
+  Controls,
+  Edge,
+  Node,
+  ReactFlow,
+  ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Play, Save, Trash2, Sparkles } from 'lucide-react';
+import { Beaker, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
-import NodeSidebar from './NodeSidebar';
 import GenerateWorkflowModal from './GenerateWorkflowModal';
+import NodeSidebar from './NodeSidebar';
+import WorkflowSimulationPanel from './WorkflowSimulationPanel';
 
 const initialNodes: Node[] = [
   {
@@ -62,6 +64,11 @@ export default function WorkflowCanvas() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  
+  // Simulation state
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationSteps, setSimulationSteps] = useState<SimulationStep[]>([]);
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | undefined>();
 
   // Workflow management hooks
   const { createWorkflow } = useWorkflows();
@@ -176,6 +183,103 @@ export default function WorkflowCanvas() {
     setShowGenerateModal(false);
   };
 
+  const handleSimulateWorkflow = async () => {
+    if (nodes.length === 0) {
+      alert('Il canvas è vuoto. Aggiungi dei nodi per simulare il workflow.');
+      return;
+    }
+
+    // Reset simulation state
+    setIsSimulating(true);
+    setSimulationSteps([]);
+    setSimulationResult(undefined);
+
+    try {
+      // Create simulator instance
+      const simulator = new WorkflowSimulator(nodes, edges);
+
+      // Test data for simulation
+      const testData = {
+        name: 'Mario Rossi',
+        email: 'mario.rossi@example.it',
+        phone: '+39 333 1234567',
+        company: 'Example SRL',
+        formData: {
+          message: 'Vorrei maggiori informazioni sui vostri servizi',
+          source: 'website',
+        },
+      };
+
+      // Run simulation with step callback
+      const result = await simulator.simulate(testData, (step: SimulationStep) => {
+        // Update steps array
+        setSimulationSteps((prev) => {
+          const existingIndex = prev.findIndex((s) => s.stepId === step.stepId);
+          if (existingIndex >= 0) {
+            // Update existing step
+            const updated = [...prev];
+            updated[existingIndex] = step;
+            return updated;
+          } else {
+            // Add new step
+            return [...prev, step];
+          }
+        });
+
+        // Update node styles to reflect execution status
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.id === step.nodeId) {
+              let borderColor = 'border-gray-300';
+              if (step.status === 'running') {
+                borderColor = 'border-yellow-400';
+              } else if (step.status === 'success') {
+                borderColor = 'border-green-500';
+              } else if (step.status === 'error') {
+                borderColor = 'border-red-500';
+              } else if (step.status === 'skipped') {
+                borderColor = 'border-orange-400';
+              }
+
+              return {
+                ...node,
+                className: `${borderColor} ${
+                  step.status === 'running' ? 'shadow-lg shadow-yellow-200' : ''
+                }`,
+              };
+            }
+            return node;
+          })
+        );
+      });
+
+      setSimulationResult(result);
+
+      console.log('✅ Simulation completed:', result);
+    } catch (error) {
+      console.error('❌ Simulation error:', error);
+      alert(
+        'Errore durante la simulazione: ' +
+          (error instanceof Error ? error.message : 'Errore sconosciuto')
+      );
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const handleCloseSimulation = () => {
+    setSimulationSteps([]);
+    setSimulationResult(undefined);
+
+    // Reset node styles
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        className: node.data.category === 'trigger' ? 'border-blue-500' : 'border-green-500',
+      }))
+    );
+  };
+
   return (
     <ReactFlowProvider>
       <div className="flex h-full">
@@ -208,6 +312,15 @@ export default function WorkflowCanvas() {
             >
               <Play className="w-4 h-4 mr-2" />
               {isExecuting ? 'Running...' : 'Run Workflow'}
+            </button>
+
+            <button
+              onClick={handleSimulateWorkflow}
+              disabled={isSimulating || nodes.length === 0}
+              className="flex items-center px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Beaker className="w-4 h-4 mr-2" />
+              {isSimulating ? 'Simulazione...' : 'Simula Workflow'}
             </button>
             
             <button
@@ -247,6 +360,16 @@ export default function WorkflowCanvas() {
         onClose={() => setShowGenerateModal(false)}
         onGenerate={handleGeneratedWorkflow}
       />
+
+      {/* Simulation Panel */}
+      {simulationSteps.length > 0 && (
+        <WorkflowSimulationPanel
+          steps={simulationSteps}
+          isRunning={isSimulating}
+          result={simulationResult}
+          onClose={handleCloseSimulation}
+        />
+      )}
     </ReactFlowProvider>
   );
 }

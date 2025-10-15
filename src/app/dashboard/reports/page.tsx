@@ -41,7 +41,6 @@ interface Metrics {
   avgLeadScore: number;
 }
 import { supabase } from '../../../lib/supabaseClient';
-import { useAuth } from '../../../contexts/AuthContext';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -49,8 +48,38 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
+// Direct organization resolution - ROBUST approach
+async function getUserOrganizationId(): Promise<string | null> {
+  try {
+    // Get current authenticated user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('No authenticated user:', userError);
+      return null;
+    }
+
+    // Get user's organization from user_organizations table
+    const { data: userOrg, error: orgError } = await supabase
+      .from('user_organizations')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (orgError || !userOrg) {
+      console.error('User has no organization:', orgError);
+      return null;
+    }
+
+    return userOrg.organization_id;
+  } catch (error) {
+    console.error('Error getting user organization:', error);
+    return null;
+  }
+}
+
 export default function ReportsPage() {
-  const { organizationId } = useAuth();
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -71,12 +100,20 @@ export default function ReportsPage() {
   });
   const [dataLoading, setDataLoading] = useState(true);
 
-  // Load real data from database
+  // Load real data from database - DEFINITIVE VERSION
   const loadAllReportsData = useCallback(async () => {
-    if (!organizationId) return;
-    
     try {
       setDataLoading(true);
+      
+      // Get organization ID directly from database
+      const orgId = await getUserOrganizationId();
+      
+      if (!orgId) {
+        throw new Error('User not authenticated or no organization found');
+      }
+      
+      setOrganizationId(orgId);
+      console.log('✅ Using organization ID:', orgId);
       
       // Load opportunities for funnel and revenue data
       const { data: opportunities, error: oppError } = await supabase
@@ -91,7 +128,7 @@ export default function ReportsPage() {
           created_at,
           updated_at
         `)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', orgId);
 
       if (oppError) throw oppError;
 
@@ -106,7 +143,7 @@ export default function ReportsPage() {
           lead_score,
           created_at
         `)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', orgId);
 
       if (contactError) throw contactError;
 
@@ -221,20 +258,20 @@ export default function ReportsPage() {
     } finally {
       setDataLoading(false);
     }
-  }, [organizationId]);
+  }, []);
 
   useEffect(() => {
-    if (organizationId) {
-      loadAllReportsData();
-    }
-  }, [organizationId, loadAllReportsData]);
+    // Load data immediately on component mount
+    loadAllReportsData();
+  }, [loadAllReportsData]);
 
   // Real data processing complete - mock data removed
 
-  // CSV Export functions with real data
+  // CSV Export functions with real data - DEFINITIVE VERSION
   const exportRevenueCSV = async () => {
-    if (!organizationId) {
-      toast.error('Organization not loaded');
+    const orgId = organizationId || await getUserOrganizationId();
+    if (!orgId) {
+      toast.error('User not authenticated or organization not found');
       return;
     }
 
@@ -254,7 +291,7 @@ export default function ReportsPage() {
           created_at,
           updated_at
         `)
-        .eq('organization_id', organizationId)
+        .eq('organization_id', orgId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -304,8 +341,9 @@ export default function ReportsPage() {
   };
 
   const exportContactsCSV = async () => {
-    if (!organizationId) {
-      toast.error('Organization not loaded');
+    const orgId = organizationId || await getUserOrganizationId();
+    if (!orgId) {
+      toast.error('User not authenticated or organization not found');
       return;
     }
 
@@ -328,7 +366,7 @@ export default function ReportsPage() {
           created_at,
           updated_at
         `)
-        .eq('organization_id', organizationId)
+        .eq('organization_id', orgId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -380,8 +418,9 @@ export default function ReportsPage() {
   };
 
   const exportFunnelCSV = async () => {
-    if (!organizationId) {
-      toast.error('Organization not loaded');
+    const orgId = organizationId || await getUserOrganizationId();
+    if (!orgId) {
+      toast.error('User not authenticated or organization not found');
       return;
     }
 
@@ -398,7 +437,7 @@ export default function ReportsPage() {
           close_date,
           status
         `)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', orgId);
 
       if (error) throw error;
 

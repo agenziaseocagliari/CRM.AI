@@ -88,3 +88,7 @@ Desktop.ini
 /tmp
 .phase3-temp
 *.draft.md
+
+# Testing files with credentials - DO NOT COMMIT
+test-reports-query.js
+*-test-*.js

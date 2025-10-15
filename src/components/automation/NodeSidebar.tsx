@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
 import { NODE_LIBRARY, NodeDefinition } from '@/lib/nodes/nodeLibrary';
 import { Search } from 'lucide-react';
+import React, { useState } from 'react';
 
 export default function NodeSidebar() {
   const [searchTerm, setSearchTerm] = useState('');

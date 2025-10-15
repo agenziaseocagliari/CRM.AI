@@ -12,13 +12,13 @@ const getDataPizzaURL = (): string => {
     console.log('🔗 Using Vite env var');
     return import.meta.env.VITE_DATAPIZZA_API_URL;
   }
-  
+
   // Priority 2: Production default (Railway)
   if (import.meta.env.PROD) {
     console.log('🔗 Using production default');
     return 'https://datapizza-production.railway.app';
   }
-  
+
   // Priority 3: Local development
   console.log('🔗 Using localhost for development');
   return 'http://localhost:8001';
@@ -368,9 +368,9 @@ export async function checkAgentHealth(): Promise<{ status: 'healthy' | 'unavail
     });
     return response.ok ? { status: 'healthy' } : { status: 'unavailable', error: `HTTP ${response.status}` };
   } catch (error) {
-    return { 
-      status: 'unavailable', 
-      error: error instanceof Error ? error.message : 'Connection failed' 
+    return {
+      status: 'unavailable',
+      error: error instanceof Error ? error.message : 'Connection failed'
     };
   }
 }
@@ -387,12 +387,12 @@ export async function generateWorkflow(
   console.log('🚀 Starting workflow generation');
   console.log('📍 Target URL:', DATAPIZZA_BASE_URL);
   console.log('📝 Description:', description);
-  
+
   // Check agent availability first
   console.log(`🔍 Checking DataPizza health at: ${DATAPIZZA_BASE_URL}`);
   const healthCheck = await checkAgentHealth();
   const isAgentAvailable = healthCheck.status === 'healthy';
-  
+
   if (isAgentAvailable) {
     console.log('✅ DataPizza agent is healthy and available');
   } else {
@@ -402,7 +402,7 @@ export async function generateWorkflow(
   if (!isAgentAvailable) {
     console.warn('❌ DataPizza agent unavailable, using fallback');
     const fallbackResult = generateFallbackWorkflow(description);
-    
+
     return {
       success: true,
       method: 'fallback' as const,
@@ -522,7 +522,7 @@ export async function testAgentConnection(): Promise<{ connected: boolean; agent
     console.log(`🔍 Testing connection to: ${DATAPIZZA_BASE_URL}`);
     const healthStatus = await checkAgentHealth();
     const healthCheck = healthStatus.status === 'healthy';
-    
+
     if (!healthCheck) {
       throw new Error('Health check failed');
     }

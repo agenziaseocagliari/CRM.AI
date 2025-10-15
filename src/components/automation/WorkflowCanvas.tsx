@@ -1,6 +1,7 @@
+import type { NodeDefinition } from '@/lib/nodes/nodeLibrary';
 import { useWorkflows } from '@/lib/workflowApi';
+import { ExecutionResult, ExecutionStep, WorkflowExecutor } from '@/lib/workflowExecutor';
 import { SimulationResult, SimulationStep, WorkflowSimulator } from '@/lib/workflowSimulator';
-import { WorkflowExecutor, ExecutionStep, ExecutionResult } from '@/lib/workflowExecutor';
 import {
   addEdge,
   Background,
@@ -16,11 +17,10 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import '../../styles/workflowCanvas.css';
 import { Beaker, Play, Save, Sparkles, Trash2 } from 'lucide-react';
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { NodeDefinition } from '@/lib/nodes/nodeLibrary';
+import '../../styles/workflowCanvas.css';
 import GenerateWorkflowModal from './GenerateWorkflowModal';
 import NodeSidebar from './NodeSidebar';
 import WorkflowSimulationPanel from './WorkflowSimulationPanel';
@@ -147,28 +147,44 @@ export default function WorkflowCanvas() {
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
 
-    const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-    if (!reactFlowBounds || !reactFlowInstance) return;
+    console.log('🎯 DROP EVENT TRIGGERED');
+    console.log('📦 reactFlowWrapper:', reactFlowWrapper.current ? 'EXISTS' : 'NULL');
+    console.log('🔧 reactFlowInstance:', reactFlowInstance ? 'EXISTS' : 'NULL');
 
-    // Get node data from drag
+    const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
+    if (!reactFlowBounds) {
+      console.error('❌ reactFlowBounds is NULL');
+      return;
+    }
+
+    if (!reactFlowInstance) {
+      console.error('❌ reactFlowInstance is NULL - onInit not fired?');
+      return;
+    }
+
     const nodeData = event.dataTransfer.getData('application/reactflow');
-    if (!nodeData) return;
+    console.log('📄 Node data received:', nodeData);
+
+    if (!nodeData) {
+      console.error('❌ No node data in transfer');
+      return;
+    }
 
     let nodeDefinition: NodeDefinition;
     try {
       nodeDefinition = JSON.parse(nodeData);
+      console.log('✅ Node definition parsed:', nodeDefinition.label);
     } catch (error) {
-      console.error('❌ Invalid node data:', error);
+      console.error('❌ JSON parse error:', error);
       return;
     }
 
-    // Calculate position on canvas using ReactFlow instance
     const position = reactFlowInstance.project({
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
     });
+    console.log('📍 Calculated position:', position);
 
-    // Create new node with unique ID
     const newNode: Node = {
       id: `${nodeDefinition.id}-${uuidv4()}`,
       type: nodeDefinition.type === 'trigger' ? 'input' : 'default',
@@ -196,13 +212,25 @@ export default function WorkflowCanvas() {
       className: `node-${nodeDefinition.category}`,
     };
 
-    setNodes((nds) => nds.concat(newNode));
-    console.log('✅ Node dropped successfully:', newNode.data.label);
+    console.log('🎉 NEW NODE CREATED:', newNode);
+
+    setNodes((nds) => {
+      const updated = nds.concat(newNode);
+      console.log('✅ Nodes updated. Total nodes:', updated.length);
+      return updated;
+    });
   }, [reactFlowInstance, setNodes]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // ReactFlow init handler with logging
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleInit = useCallback((instance: any) => {
+    console.log('🚀 ReactFlow initialized:', instance ? 'SUCCESS' : 'FAILED');
+    setReactFlowInstance(instance);
   }, []);
 
   const handleSaveWorkflow = async () => {
@@ -492,7 +520,7 @@ export default function WorkflowCanvas() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
-              onInit={setReactFlowInstance}
+              onInit={handleInit}
               onDrop={onDrop}
               onDragOver={onDragOver}
               fitView

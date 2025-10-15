@@ -1,6 +1,6 @@
 import { Edge, Node } from '@xyflow/react';
 import { AlertTriangle, Brain, Lightbulb, Loader2, Sparkles, X } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 import { generateWorkflow, testAgentConnection } from '../../services/workflowGenerationService';
@@ -40,6 +40,39 @@ export default function GenerateWorkflowModal({
     "Valuta nuovi contatti e crea affare se il punteggio è alto, altrimenti aggiungi alla campagna di nurturing",
     "Invia email di promemoria 1 settimana dopo l'aggiornamento del contatto, poi crea task per il commerciale"
   ];
+
+  // Check agent availability when modal opens
+  const checkAgentHealth = async () => {
+    try {
+      const url = import.meta.env.VITE_DATAPIZZA_API_URL || 
+                  (import.meta.env.PROD ? 'https://datapizza-production.railway.app' : 'http://localhost:8001');
+      
+      console.log('🔍 Checking agent at:', url);
+      
+      const response = await fetch(`${url}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      
+      if (response.ok) {
+        console.log('✅ Agent available');
+        setAgentConnected(true);
+      } else {
+        console.warn('⚠️ Agent returned non-OK status');
+        setAgentConnected(false);
+      }
+    } catch (error) {
+      console.warn('⚠️ Agent check failed:', error instanceof Error ? error.message : String(error));
+      setAgentConnected(false);
+    }
+  };
+
+  // Check health when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      checkAgentHealth();
+    }
+  }, [isOpen]);
 
   const handleGenerateWorkflow = async () => {
     if (!description.trim()) {
@@ -338,12 +371,12 @@ export default function GenerateWorkflowModal({
               p-3 rounded-md text-sm
               ${agentConnected 
                 ? 'bg-green-50 border border-green-200 text-green-800'
-                : 'bg-red-50 border border-red-200 text-red-800'
+                : 'bg-yellow-50 border border-yellow-200 text-yellow-800'
               }
             `}>
               {agentConnected 
-                ? '✅ Connesso all\'Agente DataPizza AI'
-                : '❌ Agente AI non disponibile - assicurati che il server sia in esecuzione su localhost:8001'
+                ? '✅ Agente DataPizza AI disponibile'
+                : '⚠️ Agente AI non disponibile. Verrà utilizzato il generatore intelligente basato su parole chiave.'
               }
             </div>
           )}

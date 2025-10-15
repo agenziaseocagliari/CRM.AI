@@ -15,30 +15,25 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { calculateLeadScore, updateContactScore, type LeadScoringResponse } from '../../utils/leadScoring';
+import type { Contact } from '../../types';
 
-interface Contact {
-    id: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    company?: string;
+interface ExtendedContact extends Contact {
     address?: string;
     city?: string;
     state?: string;
     zip?: string;
     country?: string;
     notes?: string;
-    created_at: string;
-    updated_at: string;
+    updated_at?: string;
 }
 
 export default function ContactDetailView() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const [contact, setContact] = useState<Contact | null>(null);
+    const [contact, setContact] = useState<ExtendedContact | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
-    const [editedContact, setEditedContact] = useState<Contact | null>(null);
+    const [editedContact, setEditedContact] = useState<ExtendedContact | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isScoring, setIsScoring] = useState(false);
     const [aiScore, setAiScore] = useState<LeadScoringResponse | null>(null);
@@ -123,13 +118,13 @@ export default function ContactDetailView() {
             const result = await calculateLeadScore(contact, {
                 useDataPizza: true,
                 fallbackToEdgeFunction: true,
-                organizationId: (contact as any).organization_id
+                organizationId: contact.organization_id
             });
             
             setAiScore(result);
             
             // Update contact in database
-            const success = await updateContactScore(contact.id, result, (contact as any).organization_id);
+            const success = await updateContactScore(String(contact.id), result, contact.organization_id);
             
             if (success) {
                 // Update local contact state
@@ -137,7 +132,7 @@ export default function ContactDetailView() {
                     ...prev,
                     lead_score: result.score,
                     lead_score_reasoning: result.reasoning
-                } as any : null);
+                } : null);
                 
                 toast.success(`🎯 AI Score: ${result.score}/100 (${result.category.toUpperCase()})`);
                 console.log('✅ AI scoring completed successfully');
@@ -145,9 +140,10 @@ export default function ContactDetailView() {
                 toast.error('Score calcolato ma errore nel salvataggio');
             }
             
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('❌ AI scoring failed:', error);
-            toast.error('Errore durante il scoring AI: ' + (error.message || 'Errore sconosciuto'));
+            const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+            toast.error('Errore durante il scoring AI: ' + errorMessage);
         } finally {
             setIsScoring(false);
         }
@@ -518,7 +514,7 @@ export default function ContactDetailView() {
                                 <div>
                                     <span className="text-gray-500">Ultimo aggiornamento:</span>
                                     <div className="text-gray-900">
-                                        {new Date(contact.updated_at).toLocaleDateString('it-IT')}
+                                        {contact.updated_at ? new Date(contact.updated_at).toLocaleDateString('it-IT') : 'N/A'}
                                     </div>
                                 </div>
                             </div>

@@ -46,23 +46,23 @@ CREATE INDEX workflow_executions_executed_at_idx ON workflow_executions (execute
 
 -- RLS Policies for workflows table
 CREATE POLICY "Users can view their own workflows" ON workflows FOR
-SELECT USING (auth.uid () = user_id);
+SELECT TO public USING (auth.uid () = user_id);
 
 CREATE POLICY "Users can create their own workflows" ON workflows FOR
-INSERT
+INSERT TO public
 WITH
     CHECK (auth.uid () = user_id);
 
 CREATE POLICY "Users can update their own workflows" ON workflows FOR
-UPDATE USING (auth.uid () = user_id)
+UPDATE TO public USING (auth.uid () = user_id)
 WITH
     CHECK (auth.uid () = user_id);
 
-CREATE POLICY "Users can delete their own workflows" ON workflows FOR DELETE USING (auth.uid () = user_id);
+CREATE POLICY "Users can delete their own workflows" ON workflows FOR DELETE TO public USING (auth.uid () = user_id);
 
 -- RLS Policies for workflow_executions table
 CREATE POLICY "Users can view executions of their workflows" ON workflow_executions FOR
-SELECT USING (
+SELECT TO public USING (
         EXISTS (
             SELECT 1
             FROM workflows w
@@ -73,7 +73,7 @@ SELECT USING (
     );
 
 CREATE POLICY "System can insert workflow executions" ON workflow_executions FOR
-INSERT
+INSERT TO public
 WITH
     CHECK (
         EXISTS (
@@ -100,10 +100,9 @@ CREATE TRIGGER update_workflows_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Grant necessary permissions
-GRANT ALL ON workflows TO authenticated;
-
-GRANT ALL ON workflow_executions TO authenticated;
+-- Grant necessary permissions to public (RLS policies control access)
+GRANT SELECT, INSERT, UPDATE, DELETE ON workflows TO public;
+GRANT SELECT, INSERT, UPDATE, DELETE ON workflow_executions TO public;
 
 -- Insert sample workflow for testing (optional)
 INSERT INTO workflows (user_id, name, description, nodes, edges, is_active)

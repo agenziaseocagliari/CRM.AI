@@ -9,7 +9,7 @@ export const ReportsTest: React.FC = () => {
   
   // Use EXACT same pattern as Opportunities.tsx - Get context data safely
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
-  const { opportunities: initialData, contacts, organization, refetch: refetchData } = contextData || {};
+  const { opportunities: initialData, contacts, organization } = contextData || {};
   
   console.log('📊 REPORTS TEST: Context data received:', { 
     initialData, 
@@ -21,9 +21,6 @@ export const ReportsTest: React.FC = () => {
   // Use same state management as Opportunities
   const [boardData, setBoardData] = useState<OpportunitiesData>(initialData || {});
   console.log('📋 REPORTS TEST: Current boardData state:', boardData);
-  
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Use EXACT same useEffect pattern as Opportunities
   useEffect(() => {
@@ -46,9 +43,6 @@ export const ReportsTest: React.FC = () => {
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Reports Test - Using Opportunities Pattern</h1>
       
-      {loading && <div className="text-blue-600">Loading...</div>}
-      {error && <div className="text-red-600">Error: {error}</div>}
-      
       <div className="bg-white p-6 rounded-lg shadow mb-6">
         <h2 className="text-xl font-bold mb-4">Debug Information</h2>
         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -69,7 +63,7 @@ export const ReportsTest: React.FC = () => {
           <div className="text-gray-500">No opportunities found in context</div>
         ) : (
           <div>
-            {Object.entries(PipelineStage).map(([key, stage]) => {
+            {Object.entries(PipelineStage).map(([_key, stage]) => {
               const stageOpps = boardData[stage] || [];
               const stageValue = stageOpps.reduce((sum, op) => sum + (op.value || 0), 0);
               

@@ -85,8 +85,8 @@ export default function ReportsPage() {
   
   // Real data states
   const [realFunnelData, setRealFunnelData] = useState<FunnelData[]>([]);
-  const [realRevenueData, setRealRevenueData] = useState<RevenueData[]>([]);
-  const [realContactData, setRealContactData] = useState<ContactData[]>([]);
+  const [, setRealRevenueData] = useState<RevenueData[]>([]);
+  const [, setRealContactData] = useState<ContactData[]>([]);
   const [realMetrics, setRealMetrics] = useState<Metrics>({
     totalLeads: 0,
     dealsWon: 0,

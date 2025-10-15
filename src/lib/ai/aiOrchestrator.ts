@@ -3,6 +3,7 @@
 
 import { invokeSupabaseFunction } from '../api';
 import { getEffectiveUserTier, isDevelopmentEnterpriseUser } from '../enterpriseOverride';
+import type { Contact } from '../../types';
 
 export interface AIAgent {
   id: string;
@@ -584,8 +585,29 @@ export class AIOrchestrator {
       // Import the enhanced lead scoring service
       const { calculateLeadScore } = await import('../../utils/leadScoring');
 
-      // Use DataPizza AI agent with fallback to existing system
-      const contact = request.context?.contact || { name: '', email: '', company: '', phone: '' };
+      // Use DataPizza AI agent with fallback to existing system  
+      const defaultContact: Contact = {
+        id: 0, 
+        organization_id: request.organizationId || '',
+        name: '', 
+        email: '', 
+        company: '', 
+        phone: '', 
+        created_at: new Date().toISOString(),
+        lead_score: null,
+        lead_category: null,
+        lead_score_reasoning: null
+      };
+      
+      // Type guard to check if context.contact is a valid Contact
+      const isContact = (obj: unknown): obj is Contact => {
+        return obj !== null && typeof obj === 'object' && 
+               'id' in obj && 'organization_id' in obj && 'name' in obj && 'email' in obj;
+      };
+      
+      const contact: Contact = (request.context?.contact && isContact(request.context.contact)) 
+        ? request.context.contact 
+        : defaultContact;
       const scoringResult = await calculateLeadScore(
         contact,
         {

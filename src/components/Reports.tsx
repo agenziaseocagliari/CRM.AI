@@ -142,12 +142,17 @@ export const Reports: React.FC = () => {
         return;
       }
 
-      const csvContent = [
-        'Name,Email,Phone,Company,Lead Score,Created Date',
-        ...contacts.map(contact => 
-          `"${(contact.first_name || '') + ' ' + (contact.last_name || '')}","${contact.email || ''}","${contact.phone || ''}","${contact.company || ''}","${contact.lead_score || 0}","${contact.created_at || ''}"`
-        )
-      ].join('\\n');
+      const csvRows = ['Name,Email,Phone,Company,Lead Score,Created Date'];
+      contacts.forEach(contact => {
+        const name = contact.name || '';
+        const email = contact.email || '';
+        const phone = contact.phone || '';
+        const company = contact.company || '';
+        const leadScore = contact.lead_score || 0;
+        const createdAt = contact.created_at || '';
+        csvRows.push(`"${name}","${email}","${phone}","${company}","${leadScore}","${createdAt}"`);
+      });
+      const csvContent = csvRows.join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');

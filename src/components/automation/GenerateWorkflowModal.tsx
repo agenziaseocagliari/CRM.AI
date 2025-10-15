@@ -1,7 +1,7 @@
-import { Brain, Lightbulb, Loader2, Sparkles, X } from 'lucide-react';
-import React, { useState } from 'react';
+import { Edge, Node } from '@xyflow/react';
+import { AlertTriangle, Brain, Lightbulb, Loader2, Sparkles, X } from 'lucide-react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Node, Edge } from '@xyflow/react';
 
 import { generateWorkflow, testAgentConnection } from '../../services/workflowGenerationService';
 
@@ -31,6 +31,7 @@ export default function GenerateWorkflowModal({
   const [agentConnected, setAgentConnected] = useState<boolean | null>(null);
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [generationMethod, setGenerationMethod] = useState<'ai' | 'fallback' | null>(null);
 
   // Example workflow descriptions
   const exampleWorkflows = [
@@ -112,6 +113,9 @@ export default function GenerateWorkflowModal({
 
       const result = await generateWorkflow(description, organizationId);
 
+      // Track generation method
+      setGenerationMethod(result.method);
+
       setGenerationSteps(prev => prev.map(step => 
         step.id === 'generation'
           ? { ...step, completed: result.success, loading: false }
@@ -139,10 +143,26 @@ export default function GenerateWorkflowModal({
       // Success - populate canvas
       onGenerate(result.elements, result.edges);
       
-      toast.success(
-        `🎉 Generated workflow with ${result.elements.length} elements in ${result.processing_time_ms}ms!`,
-        { duration: 4000 }
-      );
+      // Show appropriate success message based on method
+      if (result.method === 'ai') {
+        toast.success(
+          `🤖 Workflow generato con AI! ${result.elements.length} elementi in ${result.processing_time_ms}ms`,
+          { duration: 4000 }
+        );
+      } else {
+        toast(
+          `📋 Workflow generato con template (${result.elements.length} elementi). AI non disponibile.`,
+          { 
+            duration: 5000,
+            icon: '⚠️',
+            style: {
+              background: '#fef3c7',
+              color: '#92400e',
+              border: '1px solid #fbbf24'
+            }
+          }
+        );
+      }
 
       // Auto-close after short delay to show completion
       setTimeout(() => {
@@ -272,6 +292,25 @@ export default function GenerateWorkflowModal({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fallback Warning Box */}
+          {generationMethod === 'fallback' && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">
+                    Generazione Template Base
+                  </p>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    L'agente AI non è disponibile. Il workflow è stato generato
+                    usando template basati su parole chiave. Per risultati più
+                    accurati, assicurati che DataPizza AI sia disponibile.
+                  </p>
+                </div>
               </div>
             </div>
           )}

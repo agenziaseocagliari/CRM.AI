@@ -1,183 +1,91 @@
-# Supabase CLI
+# 🚀 Guardian AI CRM
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+**Production-Ready Multi-Tenant CRM Platform**  
+**Stack:** React 18 + TypeScript + Supabase  
+**Status:** 65% Complete - Active Development
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+---
 
-This repository contains all the functionality for Supabase CLI.
+## 📋 Documentation
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+**🎯 ACTIVE ROADMAP:** See [MASTER_ROADMAP_OCT_2025.md](./MASTER_ROADMAP_OCT_2025.md)
 
-## Getting started
+All old roadmaps archived in `archive/old_roadmaps/` for historical reference.
 
-### Install the CLI
+---
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+## 🚀 Quick Start
 
-```bash
-npm i supabase --save-dev
-```
-
-To install the beta release channel:
+### Development Setup
 
 ```bash
-npm i supabase@beta --save-dev
+# Install dependencies
+npm install
+
+# Setup environment
+cp .env.example .env.local
+# Configure your Supabase URL and keys
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+### 🎯 Current Status (65% Complete)
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+- ✅ **Contact Management** (95%) - Full CRUD, CSV import/export
+- ✅ **Deal Pipeline** (95%) - Kanban board, stage management
+- ✅ **Calendar System** (85%) - Events, Google Calendar sync
+- ✅ **Multi-Tenancy** (100%) - Organization isolation, RLS
+- 🔄 **AI Agents** (30%) - Workflow automation, lead scoring
+- 🔄 **Reports** (60%) - Analytics, usage tracking
+- 🔴 **DataPizza AI** (0%) - Advanced AI integration
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+### 📊 Tech Stack
 
-<details>
-  <summary><b>macOS</b></summary>
+- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend:** Supabase (PostgreSQL + Auth + Real-time)
+- **Database:** 99+ tables with comprehensive RLS
+- **Deployment:** Vercel (Frontend) + Supabase Cloud
+- **AI/ML:** Google Generative AI
 
-  Available via [Homebrew](https://brew.sh). To install:
+### 🏢 Features
 
-  ```sh
-  brew install supabase/tap/supabase
-  ```
+#### ✅ Core CRM (Production Ready)
+- Contact management with 360° view
+- Deal pipeline with Kanban interface
+- Calendar integration and booking pages
+- Form builder with lead capture
+- Multi-tenant architecture (4 organizations active)
+- Role-based authentication and permissions
 
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
+#### 🔄 Advanced Features (In Development)
+- AI-powered automation workflows
+- Advanced reporting and analytics
+- External integrations (DataPizza AI)
+- Visual automation builder
+- Enterprise admin panel
 
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
+#### 📋 Planned Modules
+- **Modulo Assicurazioni** - Insurance policy management
+- **Modulo Marketing** - Advanced marketing automation
+- **Mobile App** - Native mobile experience
 
-<details>
-  <summary><b>Windows</b></summary>
+### 🚀 Getting Started
 
-  Available via [Scoop](https://scoop.sh). To install:
+1. **Read the Roadmap:** [MASTER_ROADMAP_OCT_2025.md](./MASTER_ROADMAP_OCT_2025.md)
+2. **Check Architecture:** [COMPREHENSIVE_CRM_ARCHITECTURE_REPORT.md](./COMPREHENSIVE_CRM_ARCHITECTURE_REPORT.md)
+3. **Phase 3 Development:** [PHASE_3_INDEX.md](./PHASE_3_INDEX.md)
 
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
+### 📞 Support
 
-  To upgrade:
+- **Repository:** [agenziaseocagliari/CRM.AI](https://github.com/agenziaseocagliari/CRM.AI)
+- **Issues:** [GitHub Issues](https://github.com/agenziaseocagliari/CRM.AI/issues)
+- **Documentation:** See `archive/` folder for historical documentation
 
-  ```powershell
-  scoop update supabase
-  ```
-</details>
+---
 
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
-
-```bash
-supabase bootstrap
-```
-
-Or using npx:
-
-```bash
-npx supabase bootstrap
-```
-
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
-
-## Docs
-
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
-
-## Breaking changes
-
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
-
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
-
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
-```
+**🎯 Current Priority:** Credit System Verification + DataPizza AI Integration  
+**📅 Last Updated:** 15 Ottobre 2025

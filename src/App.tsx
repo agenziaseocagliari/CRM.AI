@@ -30,6 +30,7 @@ import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
 import { Opportunities } from './components/Opportunities';
 import ReportsPage from './app/dashboard/reports/page';
+import { ReportsTest } from './components/ReportsTest';
 import { Settings } from './components/Settings';
 import BookingSettings from './components/settings/BookingSettings';
 import { TestComponent } from './components/TestComponent';
@@ -298,6 +299,7 @@ const App: React.FC = () => {
           <Route path="contacts/:id" element={<ContactDetailView />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="reports-test" element={<ReportsTest />} />
 
           <Route path="forms" element={<Forms />} />
           <Route path="automations" element={<Automations />} />

@@ -45,13 +45,30 @@ os.environ['GOOGLE_CLOUD_LOCATION'] = os.getenv('GOOGLE_CLOUD_LOCATION', 'us-cen
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import uvicorn
 import time
 from datetime import datetime
 
-# Import our DataPizza lead scoring agent
-from lead_scoring_agent import score_lead
+# Import our DataPizza agents (simple local imports)
+try:
+    from lead_scoring_agent import score_lead
+    print("✅ Lead scoring agent imported successfully")
+except ImportError as e:
+    print(f"⚠️ Lead scoring agent import failed: {e}")
+    def score_lead(*args, **kwargs):
+        return {"error": "Lead scoring agent not available", "score": 0.5}
+
+try:  
+    from automation_generator_agent import generate_workflow
+    print("✅ Automation generator agent imported successfully")
+except ImportError as e:
+    print(f"⚠️ Automation generator agent import failed: {e}")
+    def generate_workflow(*args, **kwargs):
+        return {
+            "nodes": [{"id": "fallback", "type": "input", "data": {"label": "Manual Trigger"}, "position": {"x": 100, "y": 100}}],
+            "edges": []
+        }
 
 app = FastAPI(
     title="Guardian CRM DataPizza Agents",
@@ -106,6 +123,35 @@ class AgentStatusResponse(BaseModel):
     models: list[str] 
     tools: list[str]
     status: str
+
+class WorkflowGenerationRequest(BaseModel):
+    description: str = Field(..., description="Natural language workflow description")
+    organization_id: Optional[str] = Field(None, description="CRM organization ID")
+
+class WorkflowElement(BaseModel):
+    id: str
+    type: str 
+    data: Dict[str, Any]
+    position: Dict[str, int]
+    className: str
+
+class WorkflowEdge(BaseModel):
+    id: str
+    source: str
+    target: str
+    animated: bool = True
+    style: Dict[str, str] = Field(default={"stroke": "#3b82f6"})
+
+class WorkflowGenerationResponse(BaseModel):
+    success: bool = Field(..., description="Whether generation was successful")
+    elements: List[WorkflowElement] = Field(..., description="Generated workflow elements")
+    edges: List[WorkflowEdge] = Field(default=[], description="Generated workflow connections")
+    agent_used: str = Field(..., description="Which agent generated the workflow")
+    validation: Dict[str, Any] = Field(..., description="Workflow validation results")
+    suggestions: List[str] = Field(default=[], description="Improvement suggestions")
+    processing_time_ms: int = Field(..., description="Processing time in milliseconds")
+    error: Optional[str] = Field(None, description="Error message if generation failed")
+    fallback_data: Optional[Dict[str, Any]] = Field(None, description="Fallback workflow if generation failed")
 
 # Health check endpoint
 @app.get("/health", response_model=HealthResponse)
@@ -203,6 +249,77 @@ async def analyze_contact_endpoint(contact: ContactData):
         print(f"❌ Analysis Error: {error_msg}")
         raise HTTPException(status_code=500, detail=error_msg)
 
+# Workflow generation endpoint  
+@app.post("/generate-workflow", response_model=WorkflowGenerationResponse)
+async def generate_workflow_endpoint(request: WorkflowGenerationRequest):
+    """
+    Generate workflow automation from natural language description using DataPizza AI.
+    
+    Takes a user's workflow description and converts it into React Flow JSON elements
+    that can be loaded directly into the Visual Automation Builder canvas.
+    """
+    start_time = time.time()
+    
+    try:
+        print(f"🤖 Generating workflow for: {request.description}")
+        
+        # Call our DataPizza workflow generation function
+        result = generate_workflow(request.description)
+        
+        # Calculate processing time  
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        result["processing_time_ms"] = processing_time_ms
+        
+        # Convert elements and edges to proper format
+        elements = []
+        edges = []
+        
+        if result["success"]:
+            # Convert elements
+            for element in result.get("elements", []):
+                elements.append(WorkflowElement(**element))
+                
+            # Convert edges  
+            for edge in result.get("edges", []):
+                edges.append(WorkflowEdge(**edge))
+        else:
+            # Use fallback data if generation failed
+            fallback = result.get("fallback_data", {})
+            for element in fallback.get("elements", []):
+                elements.append(WorkflowElement(**element))
+            for edge in fallback.get("edges", []):
+                edges.append(WorkflowEdge(**edge))
+        
+        return WorkflowGenerationResponse(
+            success=result["success"],
+            elements=elements,
+            edges=edges, 
+            agent_used=result.get("agent_used", "DataPizza Automation Generator"),
+            validation=result.get("validation", {"valid": True}),
+            suggestions=result.get("suggestions", []),
+            processing_time_ms=processing_time_ms,
+            error=result.get("error"),
+            fallback_data=result.get("fallback_data")
+        )
+        
+    except Exception as e:
+        # Log error and return HTTP exception
+        error_msg = f"Workflow generation failed: {str(e)}"
+        print(f"❌ Generation Error: {error_msg}")
+        
+        # Return error response with empty workflow
+        return WorkflowGenerationResponse(
+            success=False,
+            elements=[],
+            edges=[],
+            agent_used="Error Handler",
+            validation={"valid": False, "errors": [error_msg]},
+            suggestions=[],
+            processing_time_ms=int((time.time() - start_time) * 1000),
+            error=error_msg,
+            fallback_data={"elements": [], "edges": []}
+        )
+
 # Agent status endpoint
 @app.get("/agents/status", response_model=AgentStatusResponse)
 async def get_agent_status():
@@ -210,9 +327,9 @@ async def get_agent_status():
     Get status of available agents and tools
     """
     return AgentStatusResponse(
-        agents=["guardian_lead_scoring_agent"],
-        models=["gpt-4", "fallback_algorithm"],
-        tools=["get_contact_history", "get_company_info", "analyze_email_quality"],
+        agents=["guardian_lead_scoring_agent", "guardian_automation_generator_agent"],
+        models=["gemini-1.5-pro", "gpt-4", "fallback_algorithm"],
+        tools=["get_contact_history", "get_company_info", "analyze_email_quality", "get_available_triggers", "get_available_actions", "validate_workflow_structure", "suggest_workflow_improvements"],
         status="operational"
     )
 
@@ -230,6 +347,7 @@ async def root():
             "health": "/health",
             "score_lead": "/score-lead",
             "analyze_contact": "/analyze-contact",
+            "generate_workflow": "/generate-workflow",
             "agent_status": "/agents/status"
         },
         "documentation": "/docs"
@@ -238,7 +356,7 @@ async def root():
 # Error handlers
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
-    return {"error": "Endpoint not found", "available_endpoints": ["/health", "/score-lead", "/analyze-contact", "/agents/status"]}
+    return {"error": "Endpoint not found", "available_endpoints": ["/health", "/score-lead", "/analyze-contact", "/generate-workflow", "/agents/status"]}
 
 @app.exception_handler(500) 
 async def internal_error_handler(request, exc):

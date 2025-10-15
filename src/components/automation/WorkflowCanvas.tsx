@@ -13,9 +13,10 @@ import {
     useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Play, Save, Trash2 } from 'lucide-react';
+import { Play, Save, Trash2, Sparkles } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import NodeSidebar from './NodeSidebar';
+import GenerateWorkflowModal from './GenerateWorkflowModal';
 
 const initialNodes: Node[] = [
   {
@@ -60,6 +61,7 @@ export default function WorkflowCanvas() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isSaving, setIsSaving] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   // Workflow management hooks
   const { createWorkflow } = useWorkflows();
@@ -167,6 +169,13 @@ export default function WorkflowCanvas() {
     }
   };
 
+  const handleGeneratedWorkflow = (nodes: Node[], edges: Edge[]) => {
+    // Add generated nodes and edges to canvas
+    setNodes(nodes);
+    setEdges(edges);
+    setShowGenerateModal(false);
+  };
+
   return (
     <ReactFlowProvider>
       <div className="flex h-full">
@@ -175,6 +184,14 @@ export default function WorkflowCanvas() {
         <div className="flex flex-col flex-1">
           {/* Toolbar */}
           <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+            <button
+              onClick={() => setShowGenerateModal(true)}
+              className="flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generate with AI
+            </button>
+
             <button
               onClick={handleSaveWorkflow}
               disabled={isSaving}
@@ -223,6 +240,13 @@ export default function WorkflowCanvas() {
           </div>
         </div>
       </div>
+
+      {/* AI Generation Modal */}
+      <GenerateWorkflowModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        onGenerate={handleGeneratedWorkflow}
+      />
     </ReactFlowProvider>
   );
 }

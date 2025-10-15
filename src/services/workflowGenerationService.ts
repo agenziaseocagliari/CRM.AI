@@ -5,9 +5,12 @@
 
 import { Edge, Node } from '@xyflow/react';
 
-// DataPizza API configuration with environment variable support
-const DATAPIZZA_BASE_URL = import.meta.env.VITE_DATAPIZZA_API_URL || 
-  (import.meta.env.PROD ? 'https://datapizza-production.railway.app' : 'http://localhost:8001');
+// DataPizza API configuration with Railway production URL
+const DATAPIZZA_BASE_URL = typeof window !== 'undefined' && import.meta.env.VITE_DATAPIZZA_API_URL
+  ? import.meta.env.VITE_DATAPIZZA_API_URL
+  : process.env.NEXT_PUBLIC_DATAPIZZA_API_URL || 'https://datapizza-production.railway.app';
+
+console.log('🔗 DataPizza URL:', DATAPIZZA_BASE_URL); // Debug log
 
 export interface WorkflowGenerationRequest {
   description: string;
@@ -364,8 +367,15 @@ export async function generateWorkflow(
 ): Promise<WorkflowGenerationResponse> {
   // Check agent availability first
   console.log(`🔍 Checking DataPizza health at: ${DATAPIZZA_BASE_URL}`);
+  console.log('🚀 Starting workflow generation:', description);
   const healthCheck = await checkAgentHealth();
   const isAgentAvailable = healthCheck.status === 'healthy';
+  
+  if (isAgentAvailable) {
+    console.log('✅ DataPizza agent is healthy and available');
+  } else {
+    console.warn('❌ DataPizza agent unavailable:', healthCheck.error);
+  }
 
   if (!isAgentAvailable) {
     console.warn('❌ DataPizza agent unavailable, using fallback');
@@ -427,7 +437,8 @@ export async function generateWorkflow(
       success: result.success,
       elements: result.elements.length,
       edges: result.edges.length,
-      processing_time: result.processing_time_ms
+      processing_time: result.processing_time_ms,
+      agent: result.agent_used
     });
 
     // Return with AI method indicator

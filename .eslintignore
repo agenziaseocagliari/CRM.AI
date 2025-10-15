@@ -68,3 +68,8 @@ vite.config.optimization.ts
 
 # Scripts directory with experimental code
 scripts/
+
+# Embedded repository directory  
+CRM.AI/
+**/CRM.AI/**
+./CRM.AI/

@@ -1,5 +1,6 @@
-import { useWorkflowExecution, useWorkflows } from '@/lib/workflowApi';
+import { useWorkflows } from '@/lib/workflowApi';
 import { SimulationResult, SimulationStep, WorkflowSimulator } from '@/lib/workflowSimulator';
+import { WorkflowExecutor, ExecutionStep, ExecutionResult } from '@/lib/workflowExecutor';
 import {
   addEdge,
   Background,
@@ -7,6 +8,7 @@ import {
   Connection,
   Controls,
   Edge,
+  MiniMap,
   Node,
   ReactFlow,
   ReactFlowProvider,
@@ -14,6 +16,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import '../../styles/workflowCanvas.css';
 import { Beaker, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import GenerateWorkflowModal from './GenerateWorkflowModal';
@@ -27,10 +30,23 @@ const initialNodes: Node[] = [
     data: { 
       label: 'Trigger Invio Modulo',
       nodeType: 'form_submit',
-      description: 'Quando un modulo viene inviato'
+      description: 'Quando un modulo viene inviato',
+      category: 'trigger'
     },
     position: { x: 100, y: 100 },
-    className: 'border-blue-500',
+    style: {
+      background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+      border: '2px solid #2563eb',
+      borderRadius: '12px',
+      padding: '12px',
+      minWidth: '160px',
+      fontWeight: '500',
+      color: '#ffffff',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+      fontSize: '14px',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    },
+    className: 'node-trigger',
   },
   {
     id: 'action-1',
@@ -38,10 +54,23 @@ const initialNodes: Node[] = [
     data: { 
       label: 'Valuta Contatto AI',
       nodeType: 'ai_score',
-      description: 'Valuta lead con DataPizza AI'
+      description: 'Valuta lead con DataPizza AI',
+      category: 'ai'
     },
     position: { x: 400, y: 100 },
-    className: 'border-green-500',
+    style: {
+      background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+      border: '2px solid #7c3aed',
+      borderRadius: '12px',
+      padding: '12px',
+      minWidth: '160px',
+      fontWeight: '500',
+      color: '#ffffff',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+      fontSize: '14px',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    },
+    className: 'node-ai',
   },
 ];
 
@@ -72,7 +101,37 @@ export default function WorkflowCanvas() {
 
   // Workflow management hooks
   const { createWorkflow } = useWorkflows();
-  const { executeWorkflow } = useWorkflowExecution();
+
+  // Helper functions for professional node styling
+  const getNodeBackgroundColor = (category: string) => {
+    switch (category) {
+      case 'trigger':
+        return 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
+      case 'action':
+        return 'linear-gradient(135deg, #10b981 0%, #047857 100%)';
+      case 'logic':
+        return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+      case 'ai':
+        return 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+      default:
+        return 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+    }
+  };
+
+  const getNodeBorderColor = (category: string) => {
+    switch (category) {
+      case 'trigger':
+        return '#2563eb';
+      case 'action':
+        return '#059669';
+      case 'logic':
+        return '#f59e0b';
+      case 'ai':
+        return '#7c3aed';
+      default:
+        return '#6b7280';
+    }
+  };
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -101,8 +160,21 @@ export default function WorkflowCanvas() {
         label: data.label,
         nodeType: data.id,
         description: data.description,
+        category: data.category,
       },
-      className: data.category === 'trigger' ? 'border-blue-500' : 'border-green-500',
+      style: {
+        background: getNodeBackgroundColor(data.category),
+        border: `2px solid ${getNodeBorderColor(data.category)}`,
+        borderRadius: '12px',
+        padding: '12px',
+        minWidth: '160px',
+        fontWeight: '500',
+        color: '#ffffff',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        fontSize: '14px',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      },
+      className: `node-${data.category}`,
     };
 
     setNodes((nds) => nds.concat(newNode));
@@ -134,36 +206,92 @@ export default function WorkflowCanvas() {
   };
 
   const handleRunWorkflow = async () => {
-    setIsExecuting(true);
-    try {
-      // First create a temporary workflow for execution
-      const workflow = await createWorkflow(
-        'Test Execution Workflow',
-        'Temporary workflow for testing execution',
-        nodes,
-        edges
-      );
+    if (nodes.length === 0) {
+      alert('Il canvas è vuoto. Aggiungi nodi prima di eseguire.');
+      return;
+    }
 
-      // Execute the workflow with test data
-      const execution = await executeWorkflow(workflow, { 
-        test: true,
-        source: 'manual_trigger',
-        timestamp: new Date().toISOString()
+    setIsExecuting(true);
+    
+    // Clear previous simulation state
+    setSimulationSteps([]);
+    setSimulationResult(undefined);
+
+    try {
+      console.log('🚀 Starting real workflow execution...');
+
+      // Create workflow executor
+      const executor = new WorkflowExecutor({
+        organizationId: 'test-org',
+        userId: 'test-user',
+        workflowId: `workflow_${Date.now()}`
       });
 
-      console.log('Workflow execution result:', execution);
-      
-      const successCount = execution.results.filter(r => r.success).length;
-      const totalCount = execution.results.length;
-      
-      if (execution.success) {
-        alert(`Workflow eseguito con successo! ${successCount}/${totalCount} nodi completati.`);
+      // Execute workflow with real-time step updates
+      const result: ExecutionResult = await executor.execute(
+        { nodes, edges },
+        (step: ExecutionStep) => {
+          console.log('Step executed:', step);
+          
+          // Convert execution step to simulation step for UI compatibility
+          const simulationStep: SimulationStep = {
+            stepId: step.stepId,
+            nodeId: step.nodeId,
+            nodeName: step.nodeName,
+            nodeType: step.nodeType,
+            status: step.status,
+            input: step.input,
+            output: step.output,
+            duration: step.duration,
+            startTime: step.startTime,
+          };
+          
+          // Update simulation steps for UI
+          setSimulationSteps(prev => {
+            const newSteps = [...prev];
+            const existingIndex = newSteps.findIndex(s => s.stepId === step.stepId);
+            
+            if (existingIndex >= 0) {
+              newSteps[existingIndex] = simulationStep;
+            } else {
+              newSteps.push(simulationStep);
+            }
+            
+            return newSteps;
+          });
+        }
+      );
+
+      // Update simulation result for UI
+      setSimulationResult({
+        success: result.success,
+        steps: result.steps.map(step => ({
+          stepId: step.stepId,
+          nodeId: step.nodeId,
+          nodeName: step.nodeName,
+          nodeType: step.nodeType,
+          status: step.status,
+          input: step.input,
+          output: step.output,
+          duration: step.duration,
+          startTime: step.startTime,
+        })),
+        successCount: result.successCount,
+        errorCount: result.errorCount,
+        skippedCount: 0,
+        totalDuration: result.totalDuration
+      });
+
+      // Show success message
+      if (result.success) {
+        alert(`✅ Workflow eseguito con successo! ${result.successCount} nodi completati in ${result.totalDuration}ms.`);
       } else {
-        alert(`Workflow completato con errori. ${successCount}/${totalCount} nodi riusciti. Controlla la console per i dettagli.`);
+        alert(`⚠️ Workflow completato con errori. ${result.successCount}/${result.steps.length} nodi riusciti. Controlla i dettagli nell'panel di simulazione.`);
       }
+
     } catch (error) {
-      console.error('Error running workflow:', error);
-      alert('Error running workflow: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('❌ Workflow execution failed:', error);
+      alert('❌ Errore nell\'esecuzione: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
     } finally {
       setIsExecuting(false);
     }
@@ -345,10 +473,43 @@ export default function WorkflowCanvas() {
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               fitView
-              className="bg-gray-50"
+              className="bg-gradient-to-br from-gray-50 to-gray-100"
+              defaultEdgeOptions={{
+                type: 'smoothstep',
+                animated: true,
+                style: { 
+                  stroke: '#6366f1', 
+                  strokeWidth: 2,
+                  filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))'
+                }
+              }}
+              connectionLineStyle={{
+                stroke: '#6366f1',
+                strokeWidth: 2,
+                strokeDasharray: '5,5'
+              }}
             >
-              <Background variant={BackgroundVariant.Dots} />
-              <Controls />
+              <Background 
+                color="#e5e7eb" 
+                gap={20} 
+                size={1}
+                variant={BackgroundVariant.Dots}
+              />
+              <Controls 
+                className="bg-white border border-gray-300 shadow-lg rounded-lg" 
+                showZoom={true}
+                showFitView={true}
+                showInteractive={true}
+              />
+              <MiniMap 
+                nodeColor={(node) => {
+                  if (node.type === 'input') return '#3b82f6';
+                  return '#10b981';
+                }}
+                className="bg-white border border-gray-300 shadow-lg rounded-lg"
+                maskColor="rgba(50, 50, 50, 0.6)"
+                position="bottom-right"
+              />
             </ReactFlow>
           </div>
         </div>

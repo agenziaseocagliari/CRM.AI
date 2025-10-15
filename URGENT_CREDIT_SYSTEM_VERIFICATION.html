@@ -1,23 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>🚨 URGENT CREDIT SYSTEM VERIFICATION</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
-        .success { background-color: #d4edda; border-color: #c3e6cb; }
-        .error { background-color: #f8d7da; border-color: #f5c6cb; }
-        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
-        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
-        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .loading { color: #007bff; font-weight: bold; }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+      }
+      .success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+      }
+      .error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+      }
+      .warning {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        overflow-x: auto;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .loading {
+        color: #007bff;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>🚨 URGENT CREDIT SYSTEM VERIFICATION</h1>
     <p><strong>Generated:</strong> October 15, 2025 - 10:00 AM</p>
-    <p><strong>Target:</strong> Complete credit system verification in 1 hour</p>
+    <p>
+      <strong>Target:</strong> Complete credit system verification in 1 hour
+    </p>
 
     <button onclick="runFullVerification()">🚀 RUN FULL VERIFICATION</button>
     <button onclick="testDirectFunction()">🧪 TEST EDGE FUNCTION ONLY</button>
@@ -26,96 +60,117 @@
     <div id="results"></div>
 
     <script>
-        const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
-        const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg4MTYwNTEsImV4cCI6MjA0NDM5MjA1MX0.cO4e5Jxq3pN4XN_KQWtKXfvE2UXm9dIGx9utnegHBNQ';
-        
-        // Test organization ID from the SQL files
-        const TEST_ORG_ID = 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e';
+      const SUPABASE_URL = 'https://qjtaqrlpronohgpfdxsi.supabase.co';
+      const ANON_KEY =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdGFxcmxwcm9ub2hncGZkeHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg4MTYwNTEsImV4cCI6MjA0NDM5MjA1MX0.cO4e5Jxq3pN4XN_KQWtKXfvE2UXm9dIGx9utnegHBNQ';
 
-        function addResult(title, content, type = 'info') {
-            const div = document.createElement('div');
-            div.className = `test-section ${type}`;
-            div.innerHTML = `
+      // Test organization ID from the SQL files
+      const TEST_ORG_ID = 'a4a71877-bddf-44ee-9f3a-c3c36c53c24e';
+
+      function addResult(title, content, type = 'info') {
+        const div = document.createElement('div');
+        div.className = `test-section ${type}`;
+        div.innerHTML = `
                 <h3>${title}</h3>
                 <div>${content}</div>
             `;
-            document.getElementById('results').appendChild(div);
-        }
+        document.getElementById('results').appendChild(div);
+      }
 
-        async function runFullVerification() {
-            document.getElementById('results').innerHTML = '';
-            addResult('🚀 Starting Full Credit System Verification', 'Running comprehensive tests...', 'warning');
+      async function runFullVerification() {
+        document.getElementById('results').innerHTML = '';
+        addResult(
+          '🚀 Starting Full Credit System Verification',
+          'Running comprehensive tests...',
+          'warning'
+        );
 
-            // Test 1: Database Tables
-            await testDatabaseTables();
-            
-            // Test 2: RPC Function  
-            await testRPCFunction();
-            
-            // Test 3: Edge Function
-            await testEdgeFunction();
-            
-            // Test 4: Credit Consumption Flow
-            await testCreditFlow();
+        // Test 1: Database Tables
+        await testDatabaseTables();
 
-            // Generate Final Report
-            generateFinalReport();
-        }
+        // Test 2: RPC Function
+        await testRPCFunction();
 
-        async function testDatabaseTables() {
-            addResult('📊 Testing Database Tables', '<div class="loading">Checking table existence...</div>', 'warning');
+        // Test 3: Edge Function
+        await testEdgeFunction();
 
+        // Test 4: Credit Consumption Flow
+        await testCreditFlow();
+
+        // Generate Final Report
+        generateFinalReport();
+      }
+
+      async function testDatabaseTables() {
+        addResult(
+          '📊 Testing Database Tables',
+          '<div class="loading">Checking table existence...</div>',
+          'warning'
+        );
+
+        try {
+          // Check if tables exist
+          const tables = [
+            'organization_credits',
+            'credit_actions',
+            'credit_consumption_logs',
+          ];
+          let tableResults = [];
+
+          for (let table of tables) {
             try {
-                // Check if tables exist
-                const tables = ['organization_credits', 'credit_actions', 'credit_consumption_logs'];
-                let tableResults = [];
-
-                for (let table of tables) {
-                    try {
-                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&limit=1`, {
-                            headers: {
-                                'apikey': ANON_KEY,
-                                'Authorization': `Bearer ${ANON_KEY}`,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            tableResults.push(`✅ ${table}: EXISTS`);
-                        } else {
-                            tableResults.push(`❌ ${table}: NOT FOUND (${response.status})`);
-                        }
-                    } catch (error) {
-                        tableResults.push(`❌ ${table}: ERROR - ${error.message}`);
-                    }
+              const response = await fetch(
+                `${SUPABASE_URL}/rest/v1/${table}?select=*&limit=1`,
+                {
+                  headers: {
+                    apikey: ANON_KEY,
+                    Authorization: `Bearer ${ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                  },
                 }
+              );
 
-                // Check current credits for test org
-                let orgCreditsStatus = '';
-                try {
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/organization_credits?organization_id=eq.${TEST_ORG_ID}&select=*`, {
-                        headers: {
-                            'apikey': ANON_KEY,
-                            'Authorization': `Bearer ${ANON_KEY}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
+              if (response.ok) {
+                tableResults.push(`✅ ${table}: EXISTS`);
+              } else {
+                tableResults.push(
+                  `❌ ${table}: NOT FOUND (${response.status})`
+                );
+              }
+            } catch (error) {
+              tableResults.push(`❌ ${table}: ERROR - ${error.message}`);
+            }
+          }
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.length > 0) {
-                            orgCreditsStatus = `✅ Test org credits: ${data[0].credits_remaining} remaining`;
-                        } else {
-                            orgCreditsStatus = `⚠️ Test org has no credit record`;
-                        }
-                    } else {
-                        orgCreditsStatus = `❌ Cannot check org credits (${response.status})`;
-                    }
-                } catch (error) {
-                    orgCreditsStatus = `❌ Org credits check failed: ${error.message}`;
-                }
+          // Check current credits for test org
+          let orgCreditsStatus = '';
+          try {
+            const response = await fetch(
+              `${SUPABASE_URL}/rest/v1/organization_credits?organization_id=eq.${TEST_ORG_ID}&select=*`,
+              {
+                headers: {
+                  apikey: ANON_KEY,
+                  Authorization: `Bearer ${ANON_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
 
-                const content = `
+            if (response.ok) {
+              const data = await response.json();
+              if (data.length > 0) {
+                orgCreditsStatus = `✅ Test org credits: ${data[0].credits_remaining} remaining`;
+              } else {
+                orgCreditsStatus = `⚠️ Test org has no credit record`;
+              }
+            } else {
+              orgCreditsStatus = `❌ Cannot check org credits (${response.status})`;
+            }
+          } catch (error) {
+            orgCreditsStatus = `❌ Org credits check failed: ${error.message}`;
+          }
+
+          const content = `
                     <h4>Table Status:</h4>
                     <ul>${tableResults.map(r => `<li>${r}</li>`).join('')}</ul>
                     <h4>Test Organization Status:</h4>
@@ -123,124 +178,155 @@
                     <p><strong>Test Org ID:</strong> ${TEST_ORG_ID}</p>
                 `;
 
-                const hasAllTables = tableResults.every(r => r.includes('✅'));
-                addResult('📊 Database Tables Check', content, hasAllTables ? 'success' : 'error');
-
-            } catch (error) {
-                addResult('📊 Database Tables Check', `❌ FAILED: ${error.message}`, 'error');
-            }
+          const hasAllTables = tableResults.every(r => r.includes('✅'));
+          addResult(
+            '📊 Database Tables Check',
+            content,
+            hasAllTables ? 'success' : 'error'
+          );
+        } catch (error) {
+          addResult(
+            '📊 Database Tables Check',
+            `❌ FAILED: ${error.message}`,
+            'error'
+          );
         }
+      }
 
-        async function testRPCFunction() {
-            addResult('🔧 Testing RPC Function', '<div class="loading">Testing consume_credits_rpc...</div>', 'warning');
+      async function testRPCFunction() {
+        addResult(
+          '🔧 Testing RPC Function',
+          '<div class="loading">Testing consume_credits_rpc...</div>',
+          'warning'
+        );
 
+        try {
+          const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/rpc/consume_credits_rpc`,
+            {
+              method: 'POST',
+              headers: {
+                apikey: ANON_KEY,
+                Authorization: `Bearer ${ANON_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                p_organization_id: TEST_ORG_ID,
+                p_action_type: 'form_generation',
+              }),
+            }
+          );
+
+          const responseText = await response.text();
+          let result = '';
+
+          if (response.ok) {
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_credits_rpc`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': ANON_KEY,
-                        'Authorization': `Bearer ${ANON_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        p_organization_id: TEST_ORG_ID,
-                        p_action_type: 'form_generation'
-                    })
-                });
-
-                const responseText = await response.text();
-                let result = '';
-
-                if (response.ok) {
-                    try {
-                        const data = JSON.parse(responseText);
-                        result = `✅ RPC Function Working
+              const data = JSON.parse(responseText);
+              result = `✅ RPC Function Working
                             <pre>${JSON.stringify(data, null, 2)}</pre>`;
-                        addResult('🔧 RPC Function Test', result, 'success');
-                    } catch (parseError) {
-                        result = `⚠️ RPC Response not JSON: ${responseText}`;
-                        addResult('🔧 RPC Function Test', result, 'warning');
-                    }
-                } else {
-                    result = `❌ RPC Function Failed (${response.status})
-                        <pre>${responseText}</pre>`;
-                    addResult('🔧 RPC Function Test', result, 'error');
-                }
-
-            } catch (error) {
-                addResult('🔧 RPC Function Test', `❌ RPC Test Failed: ${error.message}`, 'error');
+              addResult('🔧 RPC Function Test', result, 'success');
+            } catch (parseError) {
+              result = `⚠️ RPC Response not JSON: ${responseText}`;
+              addResult('🔧 RPC Function Test', result, 'warning');
             }
+          } else {
+            result = `❌ RPC Function Failed (${response.status})
+                        <pre>${responseText}</pre>`;
+            addResult('🔧 RPC Function Test', result, 'error');
+          }
+        } catch (error) {
+          addResult(
+            '🔧 RPC Function Test',
+            `❌ RPC Test Failed: ${error.message}`,
+            'error'
+          );
         }
+      }
 
-        async function testEdgeFunction() {
-            addResult('⚡ Testing Edge Function', '<div class="loading">Testing consume-credits edge function...</div>', 'warning');
+      async function testEdgeFunction() {
+        addResult(
+          '⚡ Testing Edge Function',
+          '<div class="loading">Testing consume-credits edge function...</div>',
+          'warning'
+        );
 
+        try {
+          const response = await fetch(
+            `${SUPABASE_URL}/functions/v1/consume-credits`,
+            {
+              method: 'POST',
+              headers: {
+                apikey: ANON_KEY,
+                Authorization: `Bearer ${ANON_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                organization_id: TEST_ORG_ID,
+                action_type: 'form_generation',
+              }),
+            }
+          );
+
+          const responseText = await response.text();
+          let result = '';
+
+          if (response.ok) {
             try {
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/consume-credits`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': ANON_KEY,
-                        'Authorization': `Bearer ${ANON_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        organization_id: TEST_ORG_ID,
-                        action_type: 'form_generation'
-                    })
-                });
-
-                const responseText = await response.text();
-                let result = '';
-
-                if (response.ok) {
-                    try {
-                        const data = JSON.parse(responseText);
-                        result = `✅ Edge Function Working
+              const data = JSON.parse(responseText);
+              result = `✅ Edge Function Working
                             <pre>${JSON.stringify(data, null, 2)}</pre>`;
-                        addResult('⚡ Edge Function Test', result, 'success');
-                    } catch (parseError) {
-                        result = `⚠️ Edge Function Response not JSON: ${responseText}`;
-                        addResult('⚡ Edge Function Test', result, 'warning');
-                    }
-                } else {
-                    result = `❌ Edge Function Failed (${response.status})
-                        <pre>${responseText}</pre>`;
-                    addResult('⚡ Edge Function Test', result, 'error');
-                }
-
-            } catch (error) {
-                addResult('⚡ Edge Function Test', `❌ Edge Function Test Failed: ${error.message}`, 'error');
+              addResult('⚡ Edge Function Test', result, 'success');
+            } catch (parseError) {
+              result = `⚠️ Edge Function Response not JSON: ${responseText}`;
+              addResult('⚡ Edge Function Test', result, 'warning');
             }
+          } else {
+            result = `❌ Edge Function Failed (${response.status})
+                        <pre>${responseText}</pre>`;
+            addResult('⚡ Edge Function Test', result, 'error');
+          }
+        } catch (error) {
+          addResult(
+            '⚡ Edge Function Test',
+            `❌ Edge Function Test Failed: ${error.message}`,
+            'error'
+          );
         }
+      }
 
-        async function testCreditFlow() {
-            addResult('🔄 Testing Credit Flow', '<div class="loading">Testing complete credit consumption flow...</div>', 'warning');
+      async function testCreditFlow() {
+        addResult(
+          '🔄 Testing Credit Flow',
+          '<div class="loading">Testing complete credit consumption flow...</div>',
+          'warning'
+        );
 
-            // This would test the actual form generation with credit consumption
-            // For now, we'll report what we found
-            const result = `
+        // This would test the actual form generation with credit consumption
+        // For now, we'll report what we found
+        const result = `
                 <h4>Credit Flow Analysis:</h4>
                 <p>✅ Edge function exists: /functions/v1/consume-credits</p>
                 <p>✅ RPC function exists: consume_credits_rpc</p>
                 <p>⚠️ Integration with generate-form-fields: NEEDS VERIFICATION</p>
                 <p><strong>Next Step:</strong> Test actual form generation to verify credit consumption</p>
             `;
-            addResult('🔄 Credit Flow Test', result, 'warning');
-        }
+        addResult('🔄 Credit Flow Test', result, 'warning');
+      }
 
-        async function testDirectFunction() {
-            document.getElementById('results').innerHTML = '';
-            await testEdgeFunction();
-        }
+      async function testDirectFunction() {
+        document.getElementById('results').innerHTML = '';
+        await testEdgeFunction();
+      }
 
-        async function testDatabaseOnly() {
-            document.getElementById('results').innerHTML = '';
-            await testDatabaseTables();
-        }
+      async function testDatabaseOnly() {
+        document.getElementById('results').innerHTML = '';
+        await testDatabaseTables();
+      }
 
-        function generateFinalReport() {
-            const timestamp = new Date().toLocaleString();
-            const report = `
+      function generateFinalReport() {
+        const timestamp = new Date().toLocaleString();
+        const report = `
                 <h3>📋 VERIFICATION COMPLETE</h3>
                 <p><strong>Timestamp:</strong> ${timestamp}</p>
                 <p><strong>Duration:</strong> ~10 minutes</p>
@@ -260,8 +346,8 @@
                     <li>If RPC failing: Check function permissions in Supabase</li>
                 </ul>
             `;
-            addResult('📊 FINAL VERIFICATION REPORT', report, 'success');
-        }
+        addResult('📊 FINAL VERIFICATION REPORT', report, 'success');
+      }
     </script>
-</body>
+  </body>
 </html>

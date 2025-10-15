@@ -12,6 +12,7 @@
 ### ✅ 1. DATABASE TABLES - VERIFICATE E FUNZIONANTI
 
 **Tabella: `organization_credits`**
+
 - ✅ Esistente e popolata
 - ✅ 2+ organizzazioni attive con crediti
 - ✅ Struttura completa: ai_credits, whatsapp_credits, email_credits, sms_credits
@@ -19,11 +20,13 @@
 - ✅ Organizzazione 2: 195 AI credits disponibili
 
 **Tabella: `credit_actions`**
+
 - ✅ Esistente e popolata
 - ✅ 5+ tipi di azioni definiti (ai_chat, ai_assistant, form_generation, automation_run, whatsapp_message)
 - ✅ Costi per azione configurati correttamente
 
 **Tabella: `credit_consumption_logs`**
+
 - ✅ Esistente e popolata
 - ✅ 5+ logs di consumo registrati
 - ✅ Tracciamento success/failure funzionante
@@ -31,6 +34,7 @@
 ### ✅ 2. POSTGRESQL FUNCTION - TESTATA E FUNZIONANTE
 
 **Funzione: `consume_credits_rpc`**
+
 - ✅ Esistente nel database
 - ✅ Parametri: `p_organization_id`, `p_action_type`, `p_quantity`
 - ✅ **TEST SUPERATO**: Chiamata ai_chat con quantity=1
@@ -40,6 +44,7 @@
 ### ✅ 3. EDGE FUNCTION - TESTATA E FUNZIONANTE
 
 **Edge Function: `consume-credits`**
+
 - ✅ Esistente su Supabase Functions
 - ✅ URL: `https://qjtaqrlpronohgpfdxsi.supabase.co/functions/v1/consume-credits`
 - ✅ Parametri: `organization_id`, `action_type`, `quantity`
@@ -52,6 +57,7 @@
 ## 🔧 TECHNICAL DETAILS
 
 ### API Keys Utilizzate (da `.credentials_protected`)
+
 ```
 SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 PROJECT_URL: https://qjtaqrlpronohgpfdxsi.supabase.co
@@ -60,19 +66,22 @@ PROJECT_URL: https://qjtaqrlpronohgpfdxsi.supabase.co
 ### Test Commands Eseguiti
 
 **1. Database Connection Test:**
+
 ```bash
 curl -X GET "https://qjtaqrlpronohgpfdxsi.supabase.co/rest/v1/organization_credits?select=*"
 # ✅ SUCCESS: Returned 2 organizations with credits
 ```
 
 **2. PostgreSQL Function Test:**
+
 ```bash
-curl -X POST ".../rest/v1/rpc/consume_credits_rpc" 
+curl -X POST ".../rest/v1/rpc/consume_credits_rpc"
 -d '{"p_organization_id":"00000000-0000-0000-0000-000000000001","p_action_type":"ai_chat","p_quantity":1}'
 # ✅ SUCCESS: Credits consumed, balance updated
 ```
 
 **3. Edge Function Test:**
+
 ```bash
 curl -X POST ".../functions/v1/consume-credits"
 -d '{"organization_id":"00000000-0000-0000-0000-000000000001","action_type":"ai_chat","quantity":1}'
@@ -98,6 +107,7 @@ curl -X POST ".../functions/v1/consume-credits"
 ## 🎯 BUSINESS LOGIC VERIFIED
 
 **Tipi di Crediti Supportati:**
+
 - ✅ AI Credits (per chat, assistant, form generation)
 - ✅ WhatsApp Credits (per messaggi)
 - ✅ Email Credits (per invii email)
@@ -105,6 +115,7 @@ curl -X POST ".../functions/v1/consume-credits"
 - ✅ Generic Credits (fallback)
 
 **Azioni Supportate:**
+
 - ✅ `ai_chat` (1 AI credit)
 - ✅ `ai_assistant` (2 AI credits)
 - ✅ `form_generation` (5 AI credits)
@@ -116,12 +127,15 @@ curl -X POST ".../functions/v1/consume-credits"
 ## ⚠️ ISSUES FOUND & RESOLVED
 
 **Issue**: API key non trovata inizialmente
+
 - ✅ **Risolto**: Trovate credenziali in `.credentials_protected`
 
 **Issue**: Parametri function errati
+
 - ✅ **Risolto**: Usare `p_quantity` invece di `p_user_id`
 
 **Issue**: Edge Function parameter mismatch
+
 - ✅ **Risolto**: Usare `organization_id` invece di `organizationId`
 
 ---
@@ -129,13 +143,15 @@ curl -X POST ".../functions/v1/consume-credits"
 ## 🚀 READY FOR INTEGRATION
 
 **Status Update per MASTER_ROADMAP:**
+
 - ❌ Credit System: 40% → ✅ **80%**
 - ✅ Database: WORKING
-- ✅ Backend: WORKING  
+- ✅ Backend: WORKING
 - ✅ API: WORKING
 - 🔄 Frontend Integration: TODO (DataPizza AI)
 
 **Next Steps:**
+
 1. ✅ Verifica completata (QUESTO DOCUMENTO)
 2. 🔄 Integrazione DataPizza AI (14:00-18:00)
 3. 🔄 Frontend credit display
@@ -150,7 +166,7 @@ curl -X POST ".../functions/v1/consume-credits"
 
 - Database tables: organization_credits, credit_actions, credit_consumption_logs ✅ VERIFIED
 - PostgreSQL function: consume_credits_rpc ✅ TESTED & WORKING
-- Edge function: consume-credits ✅ TESTED & WORKING  
+- Edge function: consume-credits ✅ TESTED & WORKING
 - Credit consumption flow: ✅ END-TO-END VERIFIED
 - API keys: ✅ RESOLVED from .credentials_protected
 - Status: Ready for DataPizza AI integration

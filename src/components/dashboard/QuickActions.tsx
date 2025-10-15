@@ -1,6 +1,6 @@
 'use client'
 
-import { Calendar, FileText, Kanban, Mail, TrendingUp, UserPlus } from 'lucide-react'
+import { BarChart3, Calendar, FileText, Kanban, Mail, TrendingUp, UserPlus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function QuickActions() {
@@ -71,6 +71,17 @@ export default function QuickActions() {
       action: () => {
         console.log('Navigating to opportunities pipeline...') // Debug log
         navigate('/dashboard/opportunities')
+      }
+    },
+    {
+      title: 'Reports & Analytics',
+      description: 'Visualizza analisi e statistiche',
+      icon: BarChart3,
+      color: 'bg-emerald-500',
+      hoverColor: 'hover:bg-emerald-600',
+      action: () => {
+        console.log('Navigating to reports...') // Debug log
+        navigate('/dashboard/reports')
       }
     }
   ]

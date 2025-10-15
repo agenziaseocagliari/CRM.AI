@@ -65,11 +65,7 @@ interface WhatsAppGenerationResponse {
   message?: string;
 }
 
-interface LeadScoringResponse {
-  score?: number;
-  category?: string;
-  reasoning?: string;
-}
+// LeadScoringResponse moved to utils/leadScoring.ts
 
 interface AnalyticsInsightsResponse {
   predictions?: Array<{
@@ -316,21 +312,21 @@ export class AIOrchestrator {
         (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL,
         (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY
       );
-      
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('Sessione non trovata. Ricarica la pagina.');
       }
-      
+
       const supabaseUrl = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL;
       const supabaseAnonKey = (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
-      
+
       console.log('🔍 AI ORCHESTRATOR - FormMaster Request:', {
         prompt: request.prompt,
         organization_id: request.organizationId,
         timestamp: new Date().toISOString()
       });
-      
+
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-form-fields`, {
         method: 'POST',
         headers: {
@@ -344,7 +340,7 @@ export class AIOrchestrator {
           context: request.context
         })
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('🔍 AI ORCHESTRATOR - FormMaster Error:', {
@@ -352,7 +348,7 @@ export class AIOrchestrator {
           errorText,
           timestamp: new Date().toISOString()
         });
-        
+
         let errorMessage = `Server error (${response.status})`;
         try {
           const errorData = JSON.parse(errorText);
@@ -362,7 +358,7 @@ export class AIOrchestrator {
         }
         throw new Error(errorMessage);
       }
-      
+
       const data = await response.json() as FormGenerationResponse;
 
       return {
@@ -581,28 +577,38 @@ export class AIOrchestrator {
   }
 
   private async processLeadScorer(request: AIAgentRequest, agent: AIAgent): Promise<AIAgentResponse> {
-    // LeadScorer AI processing logic - REAL GEMINI INTEGRATION
+    // LeadScorer AI processing logic - ENHANCED WITH DATAPIZZA
     const startTime = Date.now();
 
     try {
-      // Call the existing score-contact-lead edge function with Gemini
-      const data = await invokeSupabaseFunction('score-contact-lead', {
-        contact: request.context?.contact || {},
-        organization_id: request.organizationId,
-        scoring_criteria: request.prompt || 'Score this lead based on quality and conversion potential'
-      }) as LeadScoringResponse;
+      // Import the enhanced lead scoring service
+      const { calculateLeadScore } = await import('../../utils/leadScoring');
+
+      // Use DataPizza AI agent with fallback to existing system
+      const contact = request.context?.contact || { name: '', email: '', company: '', phone: '' };
+      const scoringResult = await calculateLeadScore(
+        contact,
+        {
+          useDataPizza: true,
+          fallbackToEdgeFunction: true,
+          organizationId: request.organizationId,
+          prompt: request.prompt || 'Score this lead based on quality and conversion potential'
+        }
+      );
+
+      // Generate recommendations based on score category
+      const recommendations = this.generateScoringRecommendations(scoringResult.category, scoringResult.score);
 
       return {
         success: true,
         data: {
-          leadScore: data?.score || 50,
-          category: data?.category || 'Medium',
-          reasoning: data?.reasoning || 'Lead scored using AI analysis',
-          recommendations: [
-            'Contatto ad alta priorità per il follow-up',
-            'Personalizza l\'approccio basato sul settore',
-            'Programma chiamata entro 24 ore'
-          ]
+          leadScore: scoringResult.score,
+          category: scoringResult.category.charAt(0).toUpperCase() + scoringResult.category.slice(1),
+          reasoning: scoringResult.reasoning,
+          confidence: scoringResult.confidence || 0.8,
+          breakdown: scoringResult.breakdown,
+          agentUsed: scoringResult.agent_used,
+          recommendations
         },
         agentUsed: agent.id,
         creditsUsed: 1,
@@ -618,6 +624,31 @@ export class AIOrchestrator {
         processingTime: Date.now() - startTime,
         error: `Errore LeadScorer: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
+    }
+  }
+
+  private generateScoringRecommendations(category: 'hot' | 'warm' | 'cold', score: number): string[] {
+    if (category === 'hot' || score >= 80) {
+      return [
+        '🔥 Contatto prioritario - Follow-up immediato entro 2 ore',
+        '📞 Chiamata telefonica raccomandata come primo contatto',
+        '🎯 Personalizza il messaggio basato sui punti di forza identificati',
+        '⏰ Programma demo o meeting entro 48 ore'
+      ];
+    } else if (category === 'warm' || score >= 50) {
+      return [
+        '📧 Invia email personalizzata entro 24 ore',
+        '📚 Condividi contenuti rilevanti per il loro settore',
+        '🔄 Programma follow-up in 3-5 giorni',
+        '📊 Monitora engagement per upgrade a lead "hot"'
+      ];
+    } else {
+      return [
+        '📝 Aggiungi a campagna di nurturing a lungo termine',
+        '📱 Considera outreach sui social media',
+        '🎯 Raccogli più informazioni prima del contatto diretto',
+        '📅 Re-valuta in 2-4 settimane'
+      ];
     }
   }
 

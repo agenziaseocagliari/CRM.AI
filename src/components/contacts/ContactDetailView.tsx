@@ -7,11 +7,14 @@ import {
     Mail,
     MapPin,
     Phone,
+    Sparkles,
     Trash2
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
+import { calculateLeadScore, updateContactScore, type LeadScoringResponse } from '../../utils/leadScoring';
 
 interface Contact {
     id: string;
@@ -37,6 +40,8 @@ export default function ContactDetailView() {
     const [isEditing, setIsEditing] = useState(false);
     const [editedContact, setEditedContact] = useState<Contact | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isScoring, setIsScoring] = useState(false);
+    const [aiScore, setAiScore] = useState<LeadScoringResponse | null>(null);
 
     const fetchContact = useCallback(async (contactId: string) => {
         try {
@@ -107,6 +112,47 @@ export default function ContactDetailView() {
         }
     };
 
+    const handleAIScore = async () => {
+        if (!contact) return;
+
+        try {
+            setIsScoring(true);
+            
+            console.log('🤖 Starting AI scoring for:', contact.name);
+            
+            const result = await calculateLeadScore(contact, {
+                useDataPizza: true,
+                fallbackToEdgeFunction: true,
+                organizationId: (contact as any).organization_id
+            });
+            
+            setAiScore(result);
+            
+            // Update contact in database
+            const success = await updateContactScore(contact.id, result, (contact as any).organization_id);
+            
+            if (success) {
+                // Update local contact state
+                setContact(prev => prev ? {
+                    ...prev,
+                    lead_score: result.score,
+                    lead_score_reasoning: result.reasoning
+                } as any : null);
+                
+                toast.success(`🎯 AI Score: ${result.score}/100 (${result.category.toUpperCase()})`);
+                console.log('✅ AI scoring completed successfully');
+            } else {
+                toast.error('Score calcolato ma errore nel salvataggio');
+            }
+            
+        } catch (error: any) {
+            console.error('❌ AI scoring failed:', error);
+            toast.error('Errore durante il scoring AI: ' + (error.message || 'Errore sconosciuto'));
+        } finally {
+            setIsScoring(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -161,6 +207,14 @@ export default function ContactDetailView() {
                         <div className="flex gap-2">
                             {!isEditing ? (
                                 <>
+                                    <button
+                                        onClick={handleAIScore}
+                                        disabled={isScoring}
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-400"
+                                    >
+                                        <Sparkles className="w-4 h-4" />
+                                        {isScoring ? 'AI Scoring...' : 'AI Score'}
+                                    </button>
                                     <button
                                         onClick={() => setIsEditing(true)}
                                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -390,6 +444,66 @@ export default function ContactDetailView() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* AI Score Display */}
+                        {aiScore && (
+                            <div className="bg-white rounded-lg shadow p-6">
+                                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                                    AI Lead Score
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">Score:</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl font-bold text-indigo-600">{aiScore.score}</span>
+                                            <span className="text-sm text-gray-500">/100</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">Categoria:</span>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                            aiScore.category === 'hot' ? 'bg-red-100 text-red-800' :
+                                            aiScore.category === 'warm' ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-blue-100 text-blue-800'
+                                        }`}>
+                                            {aiScore.category.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="pt-2 border-t border-gray-100">
+                                        <p className="text-sm text-gray-700">{aiScore.reasoning}</p>
+                                    </div>
+                                    {aiScore.breakdown && (
+                                        <div className="pt-2 border-t border-gray-100">
+                                            <p className="text-xs text-gray-500 mb-2">Breakdown:</p>
+                                            <div className="space-y-1 text-xs">
+                                                <div className="flex justify-between">
+                                                    <span>Email Quality:</span>
+                                                    <span>{aiScore.breakdown.email_quality}/20</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Company Fit:</span>
+                                                    <span>{aiScore.breakdown.company_fit}/30</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Engagement:</span>
+                                                    <span>{aiScore.breakdown.engagement}/30</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Qualification:</span>
+                                                    <span>{aiScore.breakdown.qualification}/20</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="pt-2 border-t border-gray-100">
+                                        <p className="text-xs text-gray-400">
+                                            Agent: {aiScore.agent_used} • {aiScore.timestamp}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Metadata */}
                         <div className="bg-white rounded-lg shadow p-6">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tab } from '@headlessui/react';
 import { 
   ChartBarIcon, 
@@ -8,6 +8,38 @@ import {
   FunnelIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+
+// Type definitions for data structures
+interface FunnelData {
+  stage: string;
+  count: number;
+  total_value: number;
+  avg_time_in_stage: number;
+}
+
+interface RevenueData {
+  month: string;
+  stage: string;
+  total_revenue: number;
+  deals_count: number;
+}
+
+interface ContactData {
+  date: string;
+  new_contacts: number;
+}
+
+interface Metrics {
+  totalLeads: number;
+  dealsWon: number;
+  conversionRate: number;
+  avgCycle: number;
+  totalRevenue: number;
+  avgDealSize: number;
+  totalContacts: number;
+  newThisMonth: number;
+  avgLeadScore: number;
+}
 import { supabase } from '../../../lib/supabaseClient';
 import { useAuth } from '../../../contexts/AuthContext';
 import { format } from 'date-fns';
@@ -21,26 +53,183 @@ export default function ReportsPage() {
   const { organizationId } = useAuth();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Real data states
+  const [realFunnelData, setRealFunnelData] = useState<FunnelData[]>([]);
+  const [realRevenueData, setRealRevenueData] = useState<RevenueData[]>([]);
+  const [realContactData, setRealContactData] = useState<ContactData[]>([]);
+  const [realMetrics, setRealMetrics] = useState<Metrics>({
+    totalLeads: 0,
+    dealsWon: 0,
+    conversionRate: 0,
+    avgCycle: 0,
+    totalRevenue: 0,
+    avgDealSize: 0,
+    totalContacts: 0,
+    newThisMonth: 0,
+    avgLeadScore: 0
+  });
+  const [dataLoading, setDataLoading] = useState(true);
 
-  // Mock data for display (to be replaced with real queries later)
-  const mockRevenueData = [
-    { month: '2025-01', stage: 'Won', total_revenue: 15000, deals_count: 3 },
-    { month: '2025-02', stage: 'Won', total_revenue: 22000, deals_count: 4 },
-    { month: '2025-03', stage: 'Won', total_revenue: 18000, deals_count: 2 },
-  ];
+  // Load real data from database
+  const loadAllReportsData = useCallback(async () => {
+    if (!organizationId) return;
+    
+    try {
+      setDataLoading(true);
+      
+      // Load opportunities for funnel and revenue data
+      const { data: opportunities, error: oppError } = await supabase
+        .from('opportunities')
+        .select(`
+          id,
+          contact_name,
+          value,
+          stage,
+          status,
+          close_date,
+          created_at,
+          updated_at
+        `)
+        .eq('organization_id', organizationId);
 
-  const mockContactData = [
-    { date: '2025-01-15', new_contacts: 12 },
-    { date: '2025-01-16', new_contacts: 8 },
-    { date: '2025-01-17', new_contacts: 15 },
-  ];
+      if (oppError) throw oppError;
 
-  const mockFunnelData = [
-    { stage: 'New Lead', count: 100, total_value: 500000, avg_time_in_stage: 2 },
-    { stage: 'Contacted', count: 70, total_value: 350000, avg_time_in_stage: 5 },
-    { stage: 'Proposal', count: 35, total_value: 175000, avg_time_in_stage: 10 },
-    { stage: 'Won', count: 14, total_value: 70000, avg_time_in_stage: 15 },
-  ];
+      // Load contacts for contact analytics  
+      const { data: contacts, error: contactError } = await supabase
+        .from('contacts')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          lead_score,
+          created_at
+        `)
+        .eq('organization_id', organizationId);
+
+      if (contactError) throw contactError;
+
+      // Process funnel data
+      const stageGroups: Record<string, { stage: string; count: number; total_value: number; days: number[] }> = {};
+      const stages = ['New Lead', 'Contacted', 'Proposal Sent', 'Won', 'Lost'];
+      
+      opportunities?.forEach(opp => {
+        const stage = opp.stage || 'New Lead';
+        if (!stageGroups[stage]) {
+          stageGroups[stage] = {
+            stage: stage,
+            count: 0,
+            total_value: 0,
+            days: []
+          };
+        }
+        
+        stageGroups[stage].count++;
+        stageGroups[stage].total_value += parseFloat(opp.value) || 0;
+        
+        if (opp.close_date) {
+          const days = Math.floor(
+            (new Date(opp.close_date).getTime() - new Date(opp.created_at).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          stageGroups[stage].days.push(days);
+        }
+      });
+
+      const totalLeads = opportunities?.length || 0;
+      const funnelArray: FunnelData[] = stages.map(stageName => {
+        const group = stageGroups[stageName] || { count: 0, total_value: 0, days: [] };
+        return {
+          stage: stageName,
+          count: group.count,
+          total_value: group.total_value,
+          avg_time_in_stage: group.days.length > 0 
+            ? Math.round(group.days.reduce((a: number, b: number) => a + b, 0) / group.days.length)
+            : 0
+        };
+      }).filter(stage => stage.count > 0);
+
+      // Calculate metrics
+      const dealsWon = opportunities?.filter(o => o.status === 'won').length || 0;
+      const totalRevenue = opportunities?.reduce((sum, o) => sum + (parseFloat(o.value) || 0), 0) || 0;
+      const conversionRate = totalLeads > 0 ? (dealsWon / totalLeads) * 100 : 0;
+      
+      // Contact metrics
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const contactsThisMonth = contacts?.filter(c => 
+        c.created_at?.substring(0, 7) === currentMonth
+      ).length || 0;
+      
+      const avgLeadScore = contacts?.length > 0 
+        ? contacts.reduce((sum, c) => sum + (c.lead_score || 0), 0) / contacts.length
+        : 0;
+
+      // Process revenue data by month for charts
+      const revenueByMonth: Record<string, { total_revenue: number; deals_count: number }> = {};
+      opportunities?.filter(o => o.status === 'won' && o.close_date).forEach(opp => {
+        const month = opp.close_date.substring(0, 7); // YYYY-MM
+        if (!revenueByMonth[month]) {
+          revenueByMonth[month] = { total_revenue: 0, deals_count: 0 };
+        }
+        revenueByMonth[month].total_revenue += parseFloat(opp.value) || 0;
+        revenueByMonth[month].deals_count++;
+      });
+
+      const revenueArray: RevenueData[] = Object.entries(revenueByMonth).map(([month, data]) => ({
+        month,
+        stage: 'Won',
+        total_revenue: data.total_revenue,
+        deals_count: data.deals_count
+      })).sort((a, b) => a.month.localeCompare(b.month));
+
+      // Process contact data by date for charts
+      const contactsByDate: Record<string, number> = {};
+      contacts?.forEach(contact => {
+        const date = contact.created_at?.substring(0, 10); // YYYY-MM-DD
+        if (date) {
+          if (!contactsByDate[date]) {
+            contactsByDate[date] = 0;
+          }
+          contactsByDate[date]++;
+        }
+      });
+
+      const contactArray: ContactData[] = Object.entries(contactsByDate).map(([date, new_contacts]) => ({
+        date,
+        new_contacts: new_contacts as number
+      })).sort((a, b) => a.date.localeCompare(b.date));
+
+      // Set all real data
+      setRealFunnelData(funnelArray);
+      setRealRevenueData(revenueArray);
+      setRealContactData(contactArray);
+      setRealMetrics({
+        totalLeads,
+        dealsWon,
+        conversionRate,
+        avgCycle: 0, // TODO: Calculate based on won deals
+        totalRevenue,
+        avgDealSize: totalLeads > 0 ? totalRevenue / totalLeads : 0,
+        totalContacts: contacts?.length || 0,
+        newThisMonth: contactsThisMonth,
+        avgLeadScore
+      });
+
+    } catch (error) {
+      console.error('Error loading reports data:', error);
+      toast.error('Failed to load reports data');
+    } finally {
+      setDataLoading(false);
+    }
+  }, [organizationId]);
+
+  useEffect(() => {
+    if (organizationId) {
+      loadAllReportsData();
+    }
+  }, [organizationId, loadAllReportsData]);
+
+  // Real data processing complete - mock data removed
 
   // CSV Export functions with real data
   const exportRevenueCSV = async () => {
@@ -322,7 +511,9 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">€55,000</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {dataLoading ? '...' : `€${realMetrics.totalRevenue.toLocaleString()}`}
+                  </p>
                 </div>
                 <div className="p-3 rounded-lg bg-green-50 text-green-600">
                   <ChartBarIcon className="h-6 w-6" />
@@ -333,7 +524,9 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Average Deal</p>
-                  <p className="text-2xl font-bold text-gray-900">€6,111</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {dataLoading ? '...' : `€${Math.round(realMetrics.avgDealSize).toLocaleString()}`}
+                  </p>
                 </div>
                 <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
                   <ChartBarIcon className="h-6 w-6" />
@@ -344,7 +537,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Deals Won</p>
-                  <p className="text-2xl font-bold text-gray-900">9</p>
+                  <p className="text-2xl font-bold text-gray-900">{dataLoading ? '...' : realMetrics.dealsWon}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-purple-50 text-purple-600">
                   <ChartBarIcon className="h-6 w-6" />
@@ -355,7 +548,9 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Growth Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">+15.2%</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {dataLoading ? '...' : Math.round(realMetrics.conversionRate)}%
+                  </p>
                 </div>
                 <div className="p-3 rounded-lg bg-orange-50 text-orange-600">
                   <ChartBarIcon className="h-6 w-6" />
@@ -402,7 +597,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Total Contacts</p>
-                  <p className="text-2xl font-bold text-gray-900">247</p>
+                  <p className="text-2xl font-bold text-gray-900">{dataLoading ? '...' : realMetrics.totalContacts}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
                   <UserGroupIcon className="h-6 w-6" />
@@ -413,7 +608,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">New This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">35</p>
+                  <p className="text-2xl font-bold text-gray-900">{dataLoading ? '...' : realMetrics.newThisMonth}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-green-50 text-green-600">
                   <UserGroupIcon className="h-6 w-6" />
@@ -424,7 +619,9 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Avg Lead Score</p>
-                  <p className="text-2xl font-bold text-gray-900">72.5/100</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {dataLoading ? '...' : `${Math.round(realMetrics.avgLeadScore)}/100`}
+                  </p>
                 </div>
                 <div className="p-3 rounded-lg bg-orange-50 text-orange-600">
                   <UserGroupIcon className="h-6 w-6" />
@@ -468,15 +665,15 @@ export default function ReportsPage() {
           {/* Pipeline Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center bg-white p-4 rounded-lg shadow border">
-              <div className="text-2xl font-bold text-blue-600">100</div>
+              <div className="text-2xl font-bold text-blue-600">{dataLoading ? '...' : realMetrics.totalLeads}</div>
               <div className="text-sm text-gray-500">Total Leads</div>
             </div>
             <div className="text-center bg-white p-4 rounded-lg shadow border">
-              <div className="text-2xl font-bold text-green-600">14</div>
+              <div className="text-2xl font-bold text-green-600">{dataLoading ? '...' : realMetrics.dealsWon}</div>
               <div className="text-sm text-gray-500">Deals Won</div>
             </div>
             <div className="text-center bg-white p-4 rounded-lg shadow border">
-              <div className="text-2xl font-bold text-purple-600">14%</div>
+              <div className="text-2xl font-bold text-purple-600">{dataLoading ? '...' : Math.round(realMetrics.conversionRate)}%</div>
               <div className="text-sm text-gray-500">Overall Conversion</div>
             </div>
             <div className="text-center bg-white p-4 rounded-lg shadow border">
@@ -489,8 +686,8 @@ export default function ReportsPage() {
           <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Deal Funnel</h3>
             <div className="space-y-4">
-              {mockFunnelData.map((stage, index) => {
-                const widthPercentage = (stage.count / mockFunnelData[0].count) * 100;
+              {realFunnelData.map((stage, index) => {
+                const widthPercentage = realFunnelData.length > 0 ? (stage.count / realFunnelData[0].count) * 100 : 0;
                 const colors = ['bg-blue-100 border-blue-300', 'bg-green-100 border-green-300', 'bg-yellow-100 border-yellow-300', 'bg-purple-100 border-purple-300'];
                 
                 return (

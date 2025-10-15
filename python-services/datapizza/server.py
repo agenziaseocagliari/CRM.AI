@@ -1,7 +1,46 @@
 """
 DataPizza Agent API Server
-FastAPI server exposing CRM AI agents with fallback system
+FastAPI server exposing CRM AI agents with Google Cloud VertexAI
 """
+
+import os
+from pathlib import Path
+import json
+
+# Configure Google Cloud credentials for Railway deployment
+def setup_google_cloud_credentials():
+    # For Railway: Check if credentials are passed as environment variable
+    gcp_credentials = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+    
+    if gcp_credentials:
+        # Parse JSON string and save to temporary file
+        try:
+            credentials_data = json.loads(gcp_credentials)
+            credentials_path = '/tmp/google-credentials.json'
+            with open(credentials_path, 'w') as f:
+                json.dump(credentials_data, f)
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+            print(f"✅ Google Cloud credentials loaded from environment variable")
+            return True
+        except Exception as e:
+            print(f"❌ Error parsing credentials JSON: {e}")
+    
+    # Fallback: Local credentials file (for development)
+    CREDENTIALS_PATH = Path(__file__).parent / 'credentials' / 'service-account-key.json'
+    if CREDENTIALS_PATH.exists():
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(CREDENTIALS_PATH)
+        print(f"✅ Google Cloud credentials loaded from: {CREDENTIALS_PATH}")
+        return True
+    
+    print(f"⚠️ WARNING: No Google Cloud credentials found")
+    return False
+
+# Setup credentials
+setup_google_cloud_credentials()
+
+# Set Google Cloud project
+os.environ['GOOGLE_CLOUD_PROJECT'] = os.getenv('GOOGLE_CLOUD_PROJECT', 'crm-ai-471815')
+os.environ['GOOGLE_CLOUD_LOCATION'] = os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

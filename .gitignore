@@ -28,6 +28,15 @@ dist-ssr
 .env.*
 
 # 🔒 SECURITY: Debug and test files with hardcoded secrets
+
+# Python Virtual Environments
+python-services/*/venv/
+python-services/*/env/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
 test-*.mjs
 debug-*.mjs
 create-*.mjs

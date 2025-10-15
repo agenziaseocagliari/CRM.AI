@@ -25,9 +25,9 @@ const initialNodes: Node[] = [
     id: 'trigger-1',
     type: 'input',
     data: { 
-      label: 'Form Submission Trigger',
+      label: 'Trigger Invio Modulo',
       nodeType: 'form_submit',
-      description: 'When a form is submitted'
+      description: 'Quando un modulo viene inviato'
     },
     position: { x: 100, y: 100 },
     className: 'border-blue-500',
@@ -36,9 +36,9 @@ const initialNodes: Node[] = [
     id: 'action-1',
     type: 'default',
     data: { 
-      label: 'AI Score Contact',
+      label: 'Valuta Contatto AI',
       nodeType: 'ai_score',
-      description: 'Score lead with DataPizza AI'
+      description: 'Valuta lead con DataPizza AI'
     },
     position: { x: 400, y: 100 },
     className: 'border-green-500',
@@ -124,10 +124,10 @@ export default function WorkflowCanvas() {
       );
       
       console.log('Workflow saved:', workflow);
-      alert(`Workflow "${workflow.name}" saved successfully!`);
+      alert(`Workflow "${workflow.name}" salvato con successo!`);
     } catch (error) {
-      console.error('Error saving workflow:', error);
-      alert('Error saving workflow: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('Errore salvataggio workflow:', error);
+      alert('Errore salvataggio workflow: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
     } finally {
       setIsSaving(false);
     }
@@ -157,9 +157,9 @@ export default function WorkflowCanvas() {
       const totalCount = execution.results.length;
       
       if (execution.success) {
-        alert(`Workflow executed successfully! ${successCount}/${totalCount} nodes completed.`);
+        alert(`Workflow eseguito con successo! ${successCount}/${totalCount} nodi completati.`);
       } else {
-        alert(`Workflow completed with errors. ${successCount}/${totalCount} nodes succeeded. Check console for details.`);
+        alert(`Workflow completato con errori. ${successCount}/${totalCount} nodi riusciti. Controlla la console per i dettagli.`);
       }
     } catch (error) {
       console.error('Error running workflow:', error);
@@ -170,7 +170,7 @@ export default function WorkflowCanvas() {
   };
 
   const handleClearCanvas = () => {
-    if (confirm('Are you sure you want to clear the canvas?')) {
+    if (confirm('Sei sicuro di voler cancellare tutto il canvas?')) {
       setNodes([]);
       setEdges([]);
     }
@@ -293,7 +293,7 @@ export default function WorkflowCanvas() {
               className="flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Generate with AI
+              Genera con AI
             </button>
 
             <button
@@ -302,7 +302,7 @@ export default function WorkflowCanvas() {
               className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : 'Save Workflow'}
+              {isSaving ? 'Salvataggio...' : 'Salva Workflow'}
             </button>
             
             <button
@@ -311,7 +311,7 @@ export default function WorkflowCanvas() {
               className="flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="w-4 h-4 mr-2" />
-              {isExecuting ? 'Running...' : 'Run Workflow'}
+              {isExecuting ? 'Esecuzione...' : 'Esegui Workflow'}
             </button>
 
             <button
@@ -328,11 +328,11 @@ export default function WorkflowCanvas() {
               className="flex items-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Clear Canvas
+              Pulisci Canvas
             </button>
 
             <div className="ml-auto text-sm text-gray-600">
-              Nodes: {nodes.length} | Edges: {edges.length}
+              Nodi: {nodes.length} | Connessioni: {edges.length}
             </div>
           </div>
 

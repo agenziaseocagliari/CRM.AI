@@ -14,52 +14,52 @@ const nodeTypes: NodeType[] = [
   // Triggers
   { 
     id: 'form_submit', 
-    label: 'Form Submit', 
+    label: 'Invio Modulo', 
     type: 'input',
     icon: Play,
     category: 'trigger',
-    description: 'When a form is submitted'
+    description: 'Quando un modulo viene inviato'
   },
   { 
     id: 'contact_update', 
-    label: 'Contact Update', 
+    label: 'Aggiornamento Contatto', 
     type: 'input',
     icon: User,
     category: 'trigger',
-    description: 'When a contact is updated'
+    description: 'Quando un contatto viene aggiornato'
   },
   { 
     id: 'deal_won', 
-    label: 'Deal Won', 
+    label: 'Affare Vinto', 
     type: 'input',
     icon: Target,
     category: 'trigger',
-    description: 'When a deal is won'
+    description: 'Quando un affare viene vinto'
   },
   // Actions
   { 
     id: 'send_email', 
-    label: 'Send Email', 
+    label: 'Invia Email', 
     type: 'default',
     icon: Mail,
     category: 'action',
-    description: 'Send automated email'
+    description: 'Invia email automatica'
   },
   { 
     id: 'ai_score', 
-    label: 'AI Score', 
+    label: 'Punteggio AI', 
     type: 'default',
     icon: Brain,
     category: 'action',
-    description: 'Score lead with DataPizza AI'
+    description: 'Valuta lead con DataPizza AI'
   },
   { 
     id: 'create_deal', 
-    label: 'Create Deal', 
+    label: 'Crea Affare', 
     type: 'default',
     icon: Zap,
     category: 'action',
-    description: 'Create new deal/opportunity'
+    description: 'Crea nuovo affare/opportunità'
   },
 ];
 
@@ -78,14 +78,14 @@ export default function NodeSidebar() {
   return (
     <aside className="w-64 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        Workflow Builder
+        Costruttore Workflow
       </h3>
       
       {/* Triggers Section */}
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
           <Play className="w-4 h-4 mr-2" />
-          Triggers
+          Trigger
         </h4>
         <div className="space-y-2">
           {triggerNodes.map((node) => {
@@ -114,7 +114,7 @@ export default function NodeSidebar() {
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
           <Zap className="w-4 h-4 mr-2" />
-          Actions
+          Azioni
         </h4>
         <div className="space-y-2">
           {actionNodes.map((node) => {
@@ -142,13 +142,13 @@ export default function NodeSidebar() {
       {/* Usage Instructions */}
       <div className="mt-6 p-3 bg-blue-50 rounded-lg">
         <h5 className="text-xs font-medium text-blue-900 mb-1">
-          How to use:
+          Come usarlo:
         </h5>
         <ul className="text-xs text-blue-700 space-y-1">
-          <li>• Drag nodes to canvas</li>
-          <li>• Connect nodes with edges</li>
-          <li>• Configure node settings</li>
-          <li>• Save and test workflow</li>
+          <li>• Trascina i nodi sul canvas</li>
+          <li>• Collega i nodi con linee</li>
+          <li>• Configura le impostazioni dei nodi</li>
+          <li>• Salva e testa il workflow</li>
         </ul>
       </div>
     </aside>

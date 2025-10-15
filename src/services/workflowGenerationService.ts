@@ -5,8 +5,9 @@
 
 import { Edge, Node } from '@xyflow/react';
 
-// DataPizza API configuration
-const DATAPIZZA_BASE_URL = 'http://localhost:8001';
+// DataPizza API configuration with environment variable support
+const DATAPIZZA_BASE_URL = import.meta.env.VITE_DATAPIZZA_API_URL || 
+  (import.meta.env.PROD ? 'https://datapizza-production.railway.app' : 'http://localhost:8001');
 
 export interface WorkflowGenerationRequest {
   description: string;
@@ -335,6 +336,24 @@ export function generateFallbackWorkflow(description: string): {
 }
 
 /**
+ * Check if DataPizza service is healthy and available
+ */
+export async function checkAgentHealth(): Promise<{ status: 'healthy' | 'unavailable'; error?: string }> {
+  try {
+    const response = await fetch(`${DATAPIZZA_BASE_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3000) // Quick health check
+    });
+    return response.ok ? { status: 'healthy' } : { status: 'unavailable', error: `HTTP ${response.status}` };
+  } catch (error) {
+    return { 
+      status: 'unavailable', 
+      error: error instanceof Error ? error.message : 'Connection failed' 
+    };
+  }
+}
+
+/**
  * Generate workflow from natural language description
  * Primary: DataPizza AI Agent (10s timeout)
  * Fallback: Keyword-based generation
@@ -343,6 +362,35 @@ export async function generateWorkflow(
   description: string,
   organizationId?: string
 ): Promise<WorkflowGenerationResponse> {
+  // Check agent availability first
+  console.log(`🔍 Checking DataPizza health at: ${DATAPIZZA_BASE_URL}`);
+  const healthCheck = await checkAgentHealth();
+  const isAgentAvailable = healthCheck.status === 'healthy';
+
+  if (!isAgentAvailable) {
+    console.warn('❌ DataPizza agent unavailable, using fallback');
+    const fallbackResult = generateFallbackWorkflow(description);
+    
+    return {
+      success: true,
+      method: 'fallback' as const,
+      confidence: fallbackResult.confidence,
+      elements: fallbackResult.elements,
+      edges: fallbackResult.edges,
+      agent_used: 'Intelligent Fallback Generator',
+      validation: {
+        valid: true,
+        errors: []
+      },
+      suggestions: [
+        'Workflow generated using keyword-based templates',
+        'DataPizza AI agent is not available - consider checking the service',
+        'For better results, ensure DataPizza AI service is running'
+      ],
+      processing_time_ms: 0
+    };
+  }
+
   // Try DataPizza AI with 10s timeout
   try {
     console.log('🤖 Attempting AI workflow generation with DataPizza...');
@@ -429,7 +477,19 @@ export async function generateWorkflow(
  */
 export async function testAgentConnection(): Promise<{ connected: boolean; agents: string[] }> {
   try {
-    const response = await fetch(`${DATAPIZZA_BASE_URL}/agents/status`);
+    // First check health endpoint
+    console.log(`🔍 Testing connection to: ${DATAPIZZA_BASE_URL}`);
+    const healthStatus = await checkAgentHealth();
+    const healthCheck = healthStatus.status === 'healthy';
+    
+    if (!healthCheck) {
+      throw new Error('Health check failed');
+    }
+
+    // Then get agent status
+    const response = await fetch(`${DATAPIZZA_BASE_URL}/agents/status`, {
+      signal: AbortSignal.timeout(5000)
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -437,6 +497,7 @@ export async function testAgentConnection(): Promise<{ connected: boolean; agent
 
     const status = await response.json();
 
+    console.log('✅ DataPizza agent connection successful');
     return {
       connected: true,
       agents: status.agents || []

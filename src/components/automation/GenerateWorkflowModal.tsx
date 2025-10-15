@@ -35,15 +35,15 @@ export default function GenerateWorkflowModal({
 
   // Example workflow descriptions
   const exampleWorkflows = [
-    "Send welcome email when form is submitted, then score the lead with AI",
-    "When a deal is won, wait 2 days then send follow-up email and notify sales team", 
-    "Score new contacts and create deal if score is high, otherwise add to nurture campaign",
-    "Send reminder email 1 week after contact update, then create task for sales rep"
+    "Invia email di benvenuto quando il modulo viene inviato, poi valuta il lead con AI",
+    "Quando un affare viene vinto, aspetta 2 giorni poi invia email di follow-up e notifica il team vendite", 
+    "Valuta nuovi contatti e crea affare se il punteggio è alto, altrimenti aggiungi alla campagna di nurturing",
+    "Invia email di promemoria 1 settimana dopo l'aggiornamento del contatto, poi crea task per il commerciale"
   ];
 
   const handleGenerateWorkflow = async () => {
     if (!description.trim()) {
-      toast.error('Please enter a workflow description');
+      toast.error('Inserisci una descrizione del workflow');
       return;
     }
 
@@ -54,29 +54,29 @@ export default function GenerateWorkflowModal({
     const steps: GenerationStep[] = [
       {
         id: 'connection',
-        label: 'Connect to AI Agent',
-        description: 'Testing DataPizza agent connection...',
+        label: 'Connessione Agente AI',
+        description: 'Test connessione agente DataPizza...',
         completed: false,
         loading: true
       },
       {
         id: 'analysis',
-        label: 'Analyze Description', 
-        description: 'AI is analyzing your workflow requirements...',
+        label: 'Analisi Descrizione', 
+        description: 'AI sta analizzando i requisiti del workflow...',
         completed: false,
         loading: false
       },
       {
         id: 'generation',
-        label: 'Generate Workflow',
-        description: 'Creating workflow elements and connections...',
+        label: 'Generazione Workflow',
+        description: 'Creazione elementi e connessioni del workflow...',
         completed: false,
         loading: false
       },
       {
         id: 'validation',
-        label: 'Validate Structure',
-        description: 'Checking workflow logic and connections...',
+        label: 'Validazione Struttura',
+        description: 'Controllo logica e connessioni del workflow...',
         completed: false,
         loading: false
       }
@@ -97,7 +97,7 @@ export default function GenerateWorkflowModal({
       ));
       
       if (!connectionTest.connected) {
-        throw new Error('DataPizza AI agent is not available. Please ensure the agent server is running.');
+        throw new Error('Agente DataPizza AI non disponibile. Assicurati che il server agente sia in esecuzione.');
       }
 
       setAgentConnected(true);
@@ -125,7 +125,7 @@ export default function GenerateWorkflowModal({
       ));
 
       if (!result.success) {
-        throw new Error(result.error || 'Workflow generation failed');
+        throw new Error(result.error || 'Generazione workflow fallita');
       }
 
       // Step 3: Validation complete
@@ -175,8 +175,8 @@ export default function GenerateWorkflowModal({
     } catch (error) {
       console.error('Workflow generation error:', error);
       
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Generation failed: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+      toast.error(`Generazione fallita: ${errorMessage}`);
       
       setAgentConnected(false);
       
@@ -207,10 +207,10 @@ export default function GenerateWorkflowModal({
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                Generate Workflow with AI
+                Genera Workflow con AI
               </h2>
               <p className="text-sm text-gray-600">
-                Describe your automation in natural language
+                Descrivi la tua automazione in linguaggio naturale
               </p>
             </div>
           </div>
@@ -228,12 +228,12 @@ export default function GenerateWorkflowModal({
           {/* Description Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Workflow Description
+              Descrizione Workflow
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your workflow in plain English. For example: 'Send welcome email when form is submitted, then score the lead with AI'"
+              placeholder="Descrivi il tuo workflow in italiano semplice. Ad esempio: 'Invia email di benvenuto quando il modulo viene inviato, poi valuta il lead con AI'"
               className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               disabled={isGenerating}
             />
@@ -244,7 +244,7 @@ export default function GenerateWorkflowModal({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Lightbulb className="w-4 h-4 inline mr-1" />
-                Example Workflows
+                Esempi di Workflow
               </label>
               <div className="space-y-2">
                 {exampleWorkflows.map((example, index) => (
@@ -264,7 +264,7 @@ export default function GenerateWorkflowModal({
           {isGenerating && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Generation Progress
+                Progresso Generazione
               </label>
               <div className="space-y-3">
                 {generationSteps.map((step) => (
@@ -319,7 +319,7 @@ export default function GenerateWorkflowModal({
           {suggestions.length > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-blue-900 mb-2">
-                💡 AI Suggestions for Improvement
+                💡 Suggerimenti AI per Miglioramento
               </h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 {suggestions.map((suggestion, index) => (
@@ -342,8 +342,8 @@ export default function GenerateWorkflowModal({
               }
             `}>
               {agentConnected 
-                ? '✅ Connected to DataPizza AI Agent'
-                : '❌ AI Agent unavailable - ensure server is running at localhost:8001'
+                ? '✅ Connesso all\'Agente DataPizza AI'
+                : '❌ Agente AI non disponibile - assicurati che il server sia in esecuzione su localhost:8001'
               }
             </div>
           )}
@@ -356,7 +356,7 @@ export default function GenerateWorkflowModal({
             disabled={isGenerating}
             className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50"
           >
-            Cancel
+            Annulla
           </button>
           <button
             onClick={handleGenerateWorkflow}
@@ -366,12 +366,12 @@ export default function GenerateWorkflowModal({
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Generating...
+                Generazione...
               </>
             ) : (
               <>
                 <Brain className="w-4 h-4" />
-                Generate Workflow
+                Genera Workflow
               </>
             )}
           </button>

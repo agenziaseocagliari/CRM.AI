@@ -72,7 +72,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case 'git_status':
+      case 'git_status': {
         const status = execSync('git status --porcelain', { encoding: 'utf-8', cwd: '/workspaces/CRM.AI' });
         return {
           content: [
@@ -82,8 +82,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           ]
         };
+      }
 
-      case 'git_log':
+      case 'git_log': {
         const lines = args.lines || 10;
         const log = execSync(`git log --oneline -${lines}`, { encoding: 'utf-8', cwd: '/workspaces/CRM.AI' });
         return {
@@ -94,8 +95,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           ]
         };
+      }
 
-      case 'git_commit':
+      case 'git_commit': {
         execSync('git add .', { cwd: '/workspaces/CRM.AI' });
         const commitResult = execSync(`git commit -m "${args.message}"`, { encoding: 'utf-8', cwd: '/workspaces/CRM.AI' });
         return {
@@ -106,6 +108,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           ]
         };
+      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);

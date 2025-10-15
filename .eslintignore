@@ -56,14 +56,15 @@ coverage/
 temp/
 
 # Test and debug files (excluded from linting)
-test-*.cjs
-test-*.js
-debug-*.cjs
-debug-*.js
-simple-*.cjs
+**/*.cjs
+**/test-*.js
+**/debug-*.js
+**/simple-*.js
+advanced-supabase-test.js
 
-# Specific debug and test files
-debug-503-error.cjs
-debug-503-error.js
-simple-csv-test.cjs
-test-csv-upload-real.cjs
+# Backup configuration files  
+vite.config.backup.ts
+vite.config.optimization.ts
+
+# Scripts directory with experimental code
+scripts/

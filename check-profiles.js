@@ -48,3 +48,7 @@ try {
 } catch (error) {
   console.log('❌ Query Error:', error)
 }
+}
+
+// Execute the check
+checkDatabase()

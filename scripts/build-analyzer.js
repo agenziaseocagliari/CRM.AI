@@ -76,7 +76,7 @@ class BuildAnalyzer {
 
     console.log('🧩 Chunk analysis:');
     this.analysis.chunks.slice(0, 5).forEach(chunk => {
-      console.log(  : ());
+      console.log(`  ${chunk.name}: ${(chunk.size / 1024).toFixed(2)}KB`);
     });
   }
 

@@ -63,7 +63,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case 'query_database':
+      case 'query_database': {
         const { data, error } = await supabase.rpc('exec_sql', { sql_query: args.query });
         if (error) throw error;
         return {
@@ -74,8 +74,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           ]
         };
+      }
 
-      case 'list_tables':
+      case 'list_tables': {
         const { data: tables, error: tablesError } = await supabase
           .from('information_schema.tables')
           .select('table_name')
@@ -89,6 +90,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           ]
         };
+      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);

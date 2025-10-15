@@ -30,6 +30,7 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
 console.log('✅ Admin client created successfully')
 
 // Test 3: Database health check
+async function runTests() {
 console.log('\n3️⃣ Testing database connection...')
 try {
   const { data, error } = await supabaseAdmin
@@ -112,3 +113,10 @@ try {
 
 console.log('\n' + '='.repeat(50))
 console.log('🏁 Authentication test completed')
+}
+
+// Run the tests
+runTests().catch(error => {
+  console.error('❌ Test execution failed:', error)
+  process.exit(1)
+})

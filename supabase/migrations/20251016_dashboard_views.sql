@@ -81,10 +81,8 @@ ALTER VIEW dashboard_events SET (security_invoker = true);
 -- 5. PERMISSIONS
 -- =======================
 
--- Grant permissions to authenticated users
-GRANT SELECT ON dashboard_opportunities TO authenticated;
-GRANT SELECT ON dashboard_events TO authenticated;
-GRANT ALL ON form_submissions TO authenticated;
+-- Note: Views inherit permissions from base tables via RLS
+-- No explicit GRANT statements needed - security handled by RLS policies
 
 -- =======================
 -- 6. TRIGGER FOR AUTO-UPDATING

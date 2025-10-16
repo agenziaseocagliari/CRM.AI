@@ -20,9 +20,6 @@ FROM opportunities;
 -- Set security invoker
 ALTER VIEW dashboard_opportunities SET (security_invoker = true);
 
--- Grant permissions
-GRANT SELECT ON dashboard_opportunities TO authenticated;
-
 -- Add comment for documentation
 COMMENT ON VIEW dashboard_opportunities IS 'Dashboard view: aliases contact_name to name for dashboard compatibility';
 

@@ -10,9 +10,9 @@ interface WorkflowNode {
         category?: string;
         icon?: string;
         color?: string;
-        config?: Record<string, any>;
+        config?: Record<string, unknown>;
     };
-    style?: Record<string, any>;
+    style?: Record<string, unknown>;
 }
 
 interface WorkflowEdge {
@@ -103,8 +103,8 @@ export default async function handler(
             res.status(200).json(response);
             return;
         }
-    } catch (error: any) {
-        console.warn('⚠️ [Vercel API] Gemini failed:', error.message);
+    } catch (error: unknown) {
+        console.warn('⚠️ [Vercel API] Gemini failed:', error instanceof Error ? error.message : String(error));
     }
 
     // Fallback: keyword-based generation
@@ -212,15 +212,15 @@ Make the workflow logical and connected. Use Italian labels when possible.`;
                 const parsed = JSON.parse(cleaned);
                 console.log('✅ [Gemini] Successfully parsed JSON');
                 return parsed;
-            } catch (parseError: any) {
-                console.error('❌ [Gemini] JSON parse error:', parseError.message);
+            } catch (parseError: unknown) {
+                console.error('❌ [Gemini] JSON parse error:', parseError instanceof Error ? parseError.message : String(parseError));
                 console.error('❌ [Gemini] Cleaned text:', cleaned);
             }
         } else {
             console.error('❌ [Gemini] No text in response');
         }
-    } catch (error: any) {
-        console.error('❌ [Gemini] Request error:', error.message);
+    } catch (error: unknown) {
+        console.error('❌ [Gemini] Request error:', error instanceof Error ? error.message : String(error));
     }
 
     return null;

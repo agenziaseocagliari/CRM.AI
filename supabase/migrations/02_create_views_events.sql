@@ -18,9 +18,6 @@ FROM events;
 -- Set security invoker
 ALTER VIEW dashboard_events SET (security_invoker = true);
 
--- Grant permissions
-GRANT SELECT ON dashboard_events TO authenticated;
-
 -- Add comment for documentation
 COMMENT ON VIEW dashboard_events IS 'Dashboard view: aliases start_time to start_date for dashboard compatibility';
 

@@ -77,10 +77,10 @@ export default function NodeSidebar() {
   };
 
   return (
-    <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-lg mb-3">Nodi Disponibili</h3>
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+      {/* Header - flex-shrink-0 */}
+      <div className="flex-shrink-0 p-3 border-b border-gray-200">
+        <h3 className="font-semibold text-sm mb-3">Nodi Disponibili</h3>
         
         {/* Search */}
         <div className="relative mb-3">
@@ -112,8 +112,8 @@ export default function NodeSidebar() {
         </div>
       </div>
       
-      {/* Node List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {/* Node List - Scrollable Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4">
         {/* Triggers */}
         {triggers.length > 0 && (
           <div>

@@ -728,16 +728,16 @@ export default function WorkflowCanvas() {
 
   return (
     <ReactFlowProvider>
-      <div className="flex flex-col h-screen overflow-hidden">
+      <div className="flex flex-col h-screen w-screen overflow-hidden">
         {/* Top Section: Sidebar + Canvas */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          {/* Desktop Sidebar - Hidden on mobile */}
-          <div className="hidden lg:block lg:w-[150px] xl:w-[180px]">
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+          {/* Desktop Sidebar - Independent scroll container */}
+          <div className="hidden lg:flex lg:flex-col lg:w-[150px] xl:w-[180px] border-r overflow-y-auto flex-shrink-0">
             <NodeSidebar />
           </div>
           
-          {/* Mobile Sidebar - Collapsible */}
-          <div className="lg:hidden">
+          {/* Mobile Sidebar - Collapsible with proper height */}
+          <div className="lg:hidden flex-shrink-0">
             <button
               onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
               className="w-full bg-gray-100 px-4 py-3 flex items-center justify-between border-b"
@@ -746,17 +746,17 @@ export default function WorkflowCanvas() {
               <ChevronDown className={`w-5 h-5 transition-transform ${mobileSidebarOpen ? 'rotate-180' : ''}`} />
             </button>
             {mobileSidebarOpen && (
-              <div className="border-b max-h-[50vh] overflow-y-auto bg-white">
+              <div className="border-b max-h-[40vh] overflow-y-auto bg-white">
                 <NodeSidebar />
               </div>
             )}
           </div>
           
-          {/* Canvas Section */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            {/* Toolbar - Responsive */}
-            <div className="bg-white border-b px-2 sm:px-4 py-2 sm:py-3">
-              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1">{/* Genera AI */}
+          {/* Canvas Container - CRITICAL: Must have min-h-0 and min-w-0 */}
+          <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
+            {/* Toolbar - MUST BE flex-shrink-0 */}
+            <div className="flex-shrink-0 bg-white border-b px-2 sm:px-4 py-2 sm:py-3">
+              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mb-1">{/* Genera AI */}
                 <button
                   onClick={() => setShowGenerateModal(true)}
                   className="px-2 sm:px-3 py-1.5 sm:py-2 bg-purple-600 text-white rounded text-xs sm:text-sm whitespace-nowrap flex items-center gap-1 sm:gap-2 hover:bg-purple-700"
@@ -841,8 +841,8 @@ export default function WorkflowCanvas() {
               </div>
             </div>
             
-            {/* ReactFlow Canvas */}
-            <div ref={reactFlowWrapper} className="flex-1 relative bg-gray-50">
+            {/* ReactFlow Canvas - CRITICAL: Must have explicit height and touch handling */}
+            <div ref={reactFlowWrapper} className="flex-1 min-h-0 relative bg-gray-50 touch-none">
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -857,12 +857,29 @@ export default function WorkflowCanvas() {
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 fitView
+                fitViewOptions={{
+                  padding: 0.2,
+                  includeHiddenNodes: false,
+                }}
+                minZoom={0.2}
+                maxZoom={1.5}
+                defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+                panOnDrag={true}
+                panOnScroll={false}
+                zoomOnScroll={false}
+                zoomOnPinch={true}
+                preventScrolling={true}
                 nodesDraggable={true}
                 nodesConnectable={true}
                 elementsSelectable={true}
                 selectNodesOnDrag={false}
                 deleteKeyCode={['Delete', 'Backspace']}
-                className="bg-gradient-to-br from-gray-50 to-gray-100"
+                className="absolute inset-0 touch-pan-x touch-pan-y bg-gradient-to-br from-gray-50 to-gray-100"
+                style={{ 
+                  width: '100%', 
+                  height: '100%',
+                  touchAction: 'none'
+                }}
                 defaultEdgeOptions={{
                   type: 'smoothstep',
                   animated: true,
@@ -880,23 +897,24 @@ export default function WorkflowCanvas() {
               >
                 <Background 
                   color="#e5e7eb" 
-                  gap={20} 
+                  gap={16} 
                   size={1}
                   variant={BackgroundVariant.Dots}
                 />
                 <Controls 
-                  className="bg-white border border-gray-300 shadow-lg rounded-lg" 
+                  className="!bottom-20 !left-4 bg-white border border-gray-300 shadow-lg rounded-lg" 
                   showZoom={true}
                   showFitView={true}
-                  showInteractive={true}
+                  showInteractive={false}
                 />
                 <MiniMap 
                   nodeColor={(node) => {
                     if (node.type === 'input') return '#3b82f6';
                     return '#10b981';
                   }}
-                  className="bg-white border border-gray-300 shadow-lg rounded-lg"
+                  className="hidden lg:block !bottom-4 !right-4 bg-white border border-gray-300 shadow-lg rounded-lg"
                   maskColor="rgba(50, 50, 50, 0.6)"
+                  nodeStrokeWidth={3}
                   position="bottom-right"
                 />
               </ReactFlow>
@@ -904,8 +922,8 @@ export default function WorkflowCanvas() {
           </div>
         </div>
 
-        {/* Bottom Panel - Responsive Height */}
-        <div className="h-auto max-h-[40vh] lg:h-64">
+        {/* Bottom Panel - MUST NOT overflow parent */}
+        <div className="flex-shrink-0 max-h-[35vh] lg:h-64 overflow-hidden">
           <SavedWorkflowsPanel
             key={workflowsKey}
             onLoadWorkflow={handleLoadWorkflow}

@@ -273,9 +273,9 @@ export default function SavedWorkflowsPanel({
   }
 
   return (
-    <div className="h-64 bg-white border-t border-gray-200 flex flex-col">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+    <div className="h-full flex flex-col overflow-hidden bg-white border-t border-gray-200">
+      {/* Header - flex-shrink-0 */}
+      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
         <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-sm lg:text-base">
             <FileText className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
@@ -304,8 +304,8 @@ export default function SavedWorkflowsPanel({
         </button>
       </div>
 
-      {/* Workflows Container */}
-      <div className="flex-1 overflow-auto p-4">
+      {/* Content - flex-1 with overflow */}
+      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden p-4">
         {loading ? (
           <div className="h-full flex items-center justify-center text-gray-500">
             Caricamento...

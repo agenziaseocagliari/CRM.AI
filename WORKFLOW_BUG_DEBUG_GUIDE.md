@@ -1,16 +1,19 @@
 # 🐛 WORKFLOW BUG DEBUGGING GUIDE
 
 ## PROBLEM
+
 Workflows save successfully but don't appear in the SavedWorkflowsPanel list.
 
 ## IMMEDIATE ACTIONS REQUIRED
 
 ### Step 1: Open Browser Console
+
 1. Press `F12` to open developer tools
 2. Go to **Console** tab
 3. Clear console (`Ctrl+L`)
 
 ### Step 2: Test Workflow Save
+
 1. Create a workflow (add 2 nodes, connect them)
 2. Click "Salva Workflow Corrente"
 3. **COPY ALL CONSOLE OUTPUT** - especially the grouped logs:
@@ -22,6 +25,7 @@ Workflows save successfully but don't appear in the SavedWorkflowsPanel list.
 **Login to Supabase Dashboard and run these queries:**
 
 #### Query 1: Check if workflow was saved
+
 ```sql
 -- Check if workflow was actually saved
 SELECT
@@ -39,6 +43,7 @@ LIMIT 5;
 ```
 
 #### Query 2: Test RLS Policies
+
 ```sql
 -- Test if current user can SELECT workflows
 SELECT
@@ -52,6 +57,7 @@ ORDER BY w.created_at DESC;
 ```
 
 #### Query 3: Temporarily disable RLS (TEST ONLY)
+
 ```sql
 -- TEMPORARY TEST - Disable RLS
 ALTER TABLE workflows DISABLE ROW LEVEL SECURITY;
@@ -66,6 +72,7 @@ ALTER TABLE workflows ENABLE ROW LEVEL SECURITY;
 ## EXPECTED CONSOLE OUTPUT
 
 When saving workflow, you should see:
+
 ```
 💾 WORKFLOW SAVE PROCESS
   🔍 Starting workflow save...
@@ -98,6 +105,7 @@ When saving workflow, you should see:
 ## REPORT TO DEVELOPER
 
 Please provide:
+
 1. **Complete console output** (copy-paste all grouped logs)
 2. **Results of SQL Query 1** (number of rows, data)
 3. **Results of SQL Query 2** (any rows returned?)
@@ -108,21 +116,29 @@ Please provide:
 Based on the debug output, we can apply one of these fixes:
 
 ### Fix 1: Organization ID Mismatch
+
 If SAVE and LOAD org IDs are different:
+
 - Check profile table data
 - Verify auth.uid() returns correct user
 
-### Fix 2: RLS Policy Too Strict  
+### Fix 2: RLS Policy Too Strict
+
 If Query 2 returns no rows:
+
 - Modify RLS policies to be less restrictive
 - Check if user profile has organization_id
 
 ### Fix 3: State Not Updating
+
 If workflow saves but state doesn't update:
+
 - Force component remount after save
 - Check React state management
 
 ### Fix 4: Database Query Issue
+
 If Query 1 shows data but Query 2 doesn't:
+
 - RLS policies are blocking the query
 - Need to adjust SELECT policy

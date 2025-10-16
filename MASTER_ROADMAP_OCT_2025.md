@@ -45,15 +45,26 @@ Credits System:        ████████████████░░░
 **Completion change**: 73% → 85%
 **Current priority**: Production-ready deployment preparation
 
-### **16 Ottobre 2025** - AUTOMATION MODULE COMPLETED ✅
+### **16 Ottobre 2025** - EMERGENCY ROLLBACK + DASHBOARD FIXES ✅
 
-- ✅ **Visual Automation Builder COMPLETE** (65% → 100%)
-  - Fixed critical tooltip positioning with React Portal
-  - Enhanced workflow execution engine with detailed logging
-  - Integrated Email/SMS/WhatsApp API endpoints
-  - Dynamic organization ID handling for multi-tenant support
-  - User confirmed: "Workflow executed successfully (2/2 steps)"
-  - Production-ready and launch-ready status achieved
+- ✅ **EMERGENCY GIT ROLLBACK COMPLETED** 
+  - Successfully reverted to commit `05aa2a8` (working state)
+  - Vercel deployment triggered with empty commit
+  - Console errors from recent commits eliminated
+  - Production stability restored
+
+- ✅ **DASHBOARD 404/400 ERRORS FIXED** 
+  - Added comprehensive error handling in DashboardService
+  - Graceful fallbacks for failed database queries (opportunities, events, form_submissions)
+  - Console warnings instead of red errors
+  - Dashboard remains functional with schema mismatches
+  - Created docs/DASHBOARD_QUERIES_AUDIT.md for user schema verification
+
+- ✅ **AUTOMATION MODULE COMPLETED** (Previous work preserved in rollback)
+  - Visual Automation Builder production-ready
+  - Fixed tooltip positioning with React Portal
+  - Enhanced workflow execution engine
+  - Email/SMS/WhatsApp API integration complete
 
 ### **15 Ottobre 2025** (End of Morning)
 

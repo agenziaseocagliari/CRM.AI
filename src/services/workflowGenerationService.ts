@@ -476,7 +476,7 @@ export async function generateWorkflow(
       method: 'ai' as const,
       confidence: 0.9
     };
-    
+
     console.log('✅ [generateWorkflow] Returning AI result to caller');
     return finalResult;
 
@@ -505,9 +505,9 @@ export async function generateWorkflow(
   // Use intelligent fallback generator
   console.log('🔄 [generateWorkflow] Activating local fallback generator');
   console.log('📝 [generateWorkflow] Fallback processing description:', description);
-  
+
   const fallbackResult = generateFallbackWorkflow(description);
-  
+
   console.log('✅ [generateWorkflow] Fallback generation COMPLETED');
   console.log('📊 [generateWorkflow] Fallback Result Summary:', {
     elements: fallbackResult.elements.length,

@@ -1,6 +1,7 @@
 # 🔍 ROOT CAUSE ANALYSIS REPORT
 
 ## Analysis Date: October 16, 2025
+
 ## Analyst: Principal Debugging Engineer
 
 ---
@@ -8,9 +9,10 @@
 ## WorkflowCanvas.tsx Analysis
 
 **onDrop Handler Status**: ✅ **EXISTS** (Line 147)
+
 - **Status**: FULLY IMPLEMENTED with extensive debug logging
 - **Location**: Lines 147-200+
-- **Debug Features**: 
+- **Debug Features**:
   - `🎯 DROP EVENT TRIGGERED` console log
   - reactFlowWrapper existence check
   - reactFlowInstance null check
@@ -18,17 +20,20 @@
   - Node creation logging
 
 **onInit Handler Status**: ✅ **EXISTS** (Line 231 - handleInit)
+
 - **Status**: PROPERLY IMPLEMENTED
 - **Function**: `handleInit` callback with ReactFlow instance logging
 - **Console Output**: `🚀 ReactFlow initialized: SUCCESS/FAILED`
 - **Functionality**: Sets `reactFlowInstance` state
 
 **reactFlowWrapper Ref**: ✅ **EXISTS** (Line 99)
+
 - **Declaration**: `const reactFlowWrapper = useRef<HTMLDivElement>(null);`
 - **Usage**: Applied to div wrapper (Line 516)
 - **Bounds Calculation**: Used in onDrop for position calculation
 
 **ReactFlow Props**: ✅ **ALL REQUIRED PROPS SET**
+
 - `nodes={nodes}`
 - `edges={edges}`
 - `onNodesChange={onNodesChange}`
@@ -40,6 +45,7 @@
 - `fitView` ✅
 
 **ROOT CAUSE**: ❌ **NO STRUCTURAL ISSUES FOUND IN WORKFLOWCANVAS**
+
 - All drag-drop infrastructure is properly implemented
 - Debug logging is extensive and working
 - **POTENTIAL ISSUE**: User may not be seeing console logs or nodes are dropping but not persisting
@@ -49,23 +55,27 @@
 ## GenerateWorkflowModal.tsx Analysis
 
 **Hardcoded localhost:8001**: ⚠️ **FOUND** (Line 48)
+
 - **Location**: Line 48 in checkAgentHealth function
 - **Context**: Fallback URL in environment variable logic
 - **Code**: `'http://localhost:8001'` used as development default
 
 **Health Check Logic**: ✅ **EXISTS**
+
 - **Function**: `checkAgentHealth()` (Lines 46+)
 - **Trigger**: Called on modal open via useEffect
-- **Environment Priority**: 
+- **Environment Priority**:
   1. `VITE_DATAPIZZA_API_URL` (first priority)
   2. Production: `https://datapizza-production.railway.app`
   3. Development: `http://localhost:8001`
 
-**Current Error Message**: 
+**Current Error Message**:
+
 - **When Connected**: `✅ Agente DataPizza AI disponibile`
 - **When Disconnected**: `⚠️ Agente AI non disponibile. Verrà utilizzato il generatore intelligente basato su parole chiave.`
 
 **ROOT CAUSE**: ⚠️ **ENVIRONMENT VARIABLE PRIORITY ISSUE**
+
 - Logic is correct, but user may not have `VITE_DATAPIZZA_API_URL` set in production
 - Railway service is healthy (200 OK response) but modal may be checking wrong URL
 
@@ -74,6 +84,7 @@
 ## workflowGenerationService.ts Analysis
 
 **Current DATAPIZZA_URL Logic**: ✅ **CORRECT IMPLEMENTATION**
+
 ```typescript
 const getDataPizzaURL = (): string => {
   // Priority 1: Vite environment variable (set in Vercel)
@@ -95,15 +106,18 @@ const getDataPizzaURL = (): string => {
 ```
 
 **Environment Variable Check Order**: ✅ **CORRECT PRIORITY**
+
 1. `VITE_DATAPIZZA_API_URL` (Vercel environment variable)
 2. `https://datapizza-production.railway.app` (Production default)
 3. `http://localhost:8001` (Development)
 
 **Production Default**: ✅ **CORRECT**
+
 - Railway URL: `https://datapizza-production.railway.app`
 - Status: Service responds with 200 OK
 
 **ROOT CAUSE**: ❌ **NO ISSUES FOUND**
+
 - URL priority logic is correct
 - Railway service is operational
 - Environment variable handling is proper
@@ -119,6 +133,7 @@ const getDataPizzaURL = (): string => {
 **Timeout**: ✅ **RESPONDS QUICKLY** (< 1 second)
 
 **ROOT CAUSE**: ❌ **RAILWAY SERVICE IS HEALTHY**
+
 - Service is running and responding correctly
 - No network or availability issues
 
@@ -127,12 +142,15 @@ const getDataPizzaURL = (): string => {
 ## 🎯 CRITICAL ROOT CAUSE ASSESSMENT
 
 ### **PRIMARY ISSUE**: Environment Variable Configuration
+
 **Problem**: User's Vercel deployment likely does NOT have `VITE_DATAPIZZA_API_URL` environment variable set, causing fallback to localhost in production.
 
-### **SECONDARY ISSUE**: Domain Reference Mismatch  
+### **SECONDARY ISSUE**: Domain Reference Mismatch
+
 **Problem**: User mentioned domain is `crm-ai-rho.vercel.app` but previous fixes referenced `guardian-ai-crm.vercel.app`
 
 ### **TERTIARY ISSUE**: Console Logging vs Visual Feedback
+
 **Problem**: Drag-drop may be working (console logs) but nodes might not be visually persisting or user isn't checking console
 
 ---

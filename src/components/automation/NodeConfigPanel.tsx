@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { Node } from '@xyflow/react';
-import { X, Save, Info } from 'lucide-react';
+import { Save, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface NodeConfigPanelProps {
   node: Node | null;

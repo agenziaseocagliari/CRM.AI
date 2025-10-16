@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, NodeProps, Position } from '@xyflow/react';
 import { Info, X } from 'lucide-react';
+import React, { useState } from 'react';
 
 const NODE_DESCRIPTIONS: Record<string, string> = {
   'trigger-form-submit': 'Si attiva quando un utente invia un modulo sul sito web. Puoi specificare quale modulo monitorare.',

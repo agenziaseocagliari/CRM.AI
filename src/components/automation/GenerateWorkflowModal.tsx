@@ -1,6 +1,6 @@
 import { Edge, Node } from '@xyflow/react';
 import { AlertTriangle, Brain, Lightbulb, Loader2, Sparkles, X } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { generateWorkflow, testAgentConnection } from '../../services/workflowGenerationService';

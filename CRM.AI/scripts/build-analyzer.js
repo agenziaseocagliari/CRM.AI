@@ -11,7 +11,7 @@ class BuildAnalyzer {
       totalSize: 0,
       chunks: [],
       assets: [],
-      recommendations: []
+      recommendations: [],
     };
   }
 
@@ -31,7 +31,7 @@ class BuildAnalyzer {
   }
 
   analyzeBundleSize() {
-    const getDirectorySize = (dirPath) => {
+    const getDirectorySize = dirPath => {
       let totalSize = 0;
       const files = fs.readdirSync(dirPath);
 
@@ -66,7 +66,7 @@ class BuildAnalyzer {
       this.analysis.chunks.push({
         name: file,
         size: stat.size,
-        type: this.getChunkType(file)
+        type: this.getChunkType(file),
       });
     });
 
@@ -93,7 +93,7 @@ class BuildAnalyzer {
             name: file,
             path: filePath,
             size: stat.size,
-            category
+            category,
           });
         }
       });
@@ -115,14 +115,18 @@ class BuildAnalyzer {
   }
 
   generateRecommendations() {
-    const largeChunks = this.analysis.chunks.filter(chunk => chunk.size > 500000); // 500KB
-    const largeAssets = this.analysis.assets.filter(asset => asset.size > 100000); // 100KB
+    const largeChunks = this.analysis.chunks.filter(
+      chunk => chunk.size > 500000
+    ); // 500KB
+    const largeAssets = this.analysis.assets.filter(
+      asset => asset.size > 100000
+    ); // 100KB
 
     if (largeChunks.length > 0) {
       this.analysis.recommendations.push({
         type: 'chunk-splitting',
         message: `Consider splitting large chunks: ${largeChunks.map(c => c.name).join(', ')}`,
-        impact: 'high'
+        impact: 'high',
       });
     }
 
@@ -130,15 +134,17 @@ class BuildAnalyzer {
       this.analysis.recommendations.push({
         type: 'asset-optimization',
         message: `Optimize large assets: ${largeAssets.map(a => a.name).join(', ')}`,
-        impact: 'medium'
+        impact: 'medium',
       });
     }
 
-    if (this.analysis.totalSize > 2000000) { // 2MB
+    if (this.analysis.totalSize > 2000000) {
+      // 2MB
       this.analysis.recommendations.push({
         type: 'bundle-size',
-        message: 'Total bundle size exceeds 2MB. Consider lazy loading and code splitting.',
-        impact: 'high'
+        message:
+          'Total bundle size exceeds 2MB. Consider lazy loading and code splitting.',
+        impact: 'high',
       });
     }
   }
@@ -149,8 +155,8 @@ class BuildAnalyzer {
       analysis: this.analysis,
       performance: {
         score: this.calculatePerformanceScore(),
-        grade: this.getPerformanceGrade()
-      }
+        grade: this.getPerformanceGrade(),
+      },
     };
 
     // Save to file
@@ -158,7 +164,9 @@ class BuildAnalyzer {
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
 
     console.log('\\n📋 Bundle Analysis Report:');
-    console.log(`Performance Score: ${report.performance.score}/100 (${report.performance.grade})`);
+    console.log(
+      `Performance Score: ${report.performance.score}/100 (${report.performance.grade})`
+    );
     console.log(`Total Size: ${this.analysis.totalSize}`);
     console.log(`Chunks: ${this.analysis.chunks.length}`);
     console.log(`Assets: ${this.analysis.assets.length}`);

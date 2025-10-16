@@ -74,6 +74,14 @@ export class WorkflowExecutionEngine {
                     log.output = await this.executeSendEmail(node.data.config as Record<string, string>);
                     break;
 
+                case 'action-sms':
+                    log.output = await this.executeSendSMS(node.data.config as Record<string, string>);
+                    break;
+
+                case 'action-whatsapp':
+                    log.output = await this.executeSendWhatsApp(node.data.config as Record<string, string>);
+                    break;
+
                 case 'action-ai-score':
                     log.output = await this.executeAIScore(node.data.config as Record<string, string>);
                     break;
@@ -124,6 +132,34 @@ export class WorkflowExecutionEngine {
 
         if (!response.ok) throw new Error('Email send failed');
 
+        return await response.json();
+    }
+
+    private async executeSendSMS(config: Record<string, string>) {
+        const response = await fetch('/api/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: config.to || this.context.triggerData.phone,
+                body: config.body,
+            }),
+        });
+
+        if (!response.ok) throw new Error('SMS send failed');
+        return await response.json();
+    }
+
+    private async executeSendWhatsApp(config: Record<string, string>) {
+        const response = await fetch('/api/send-whatsapp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: config.to || this.context.triggerData.phone,
+                body: config.body,
+            }),
+        });
+
+        if (!response.ok) throw new Error('WhatsApp send failed');
         return await response.json();
     }
 

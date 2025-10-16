@@ -43,7 +43,16 @@ export default function SavedWorkflowsPanel({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
+  // 🚨 VERIFICATION: Component is rendering
   useEffect(() => {
+    console.log('🔥 SavedWorkflowsPanel MOUNTED');
+    console.log('🔥 Current nodes:', currentNodes.length);
+    console.log('🔥 Current edges:', currentEdges.length);
+    alert('🔥 DEBUG: SavedWorkflowsPanel loaded!');
+  }, []);
+
+  useEffect(() => {
+    console.log('🔥 Loading workflows on mount...');
     loadWorkflows();
   }, []);
 
@@ -103,6 +112,7 @@ export default function SavedWorkflowsPanel({
   };
 
   const handleSaveNew = async () => {
+    alert('🔥 DEBUG: handleSaveNew CALLED');
     console.group('💾 WORKFLOW SAVE PROCESS');
     
     if (currentNodes.length === 0) {
@@ -111,11 +121,14 @@ export default function SavedWorkflowsPanel({
       return;
     }
 
+    alert('🔥 DEBUG: About to prompt for name');
     const name = prompt('Nome workflow:', 'Nuovo Workflow');
     if (!name) {
+      alert('🔥 DEBUG: Name prompt cancelled');
       console.groupEnd();
       return;
     }
+    alert('🔥 DEBUG: Name entered: ' + name);
 
     console.log('🔍 Starting workflow save...');
     console.log('📊 Nodes count:', currentNodes.length);
@@ -329,7 +342,11 @@ export default function SavedWorkflowsPanel({
           </h3>
 
           <button
-            onClick={handleSaveNew}
+            onClick={() => {
+              console.log('🔥 Button clicked!');
+              alert('🔥 DEBUG: Save button clicked!');
+              handleSaveNew();
+            }}
             className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm"
           >
             <Plus className="w-4 h-4" />

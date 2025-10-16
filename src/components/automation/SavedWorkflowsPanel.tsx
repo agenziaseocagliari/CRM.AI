@@ -43,33 +43,19 @@ export default function SavedWorkflowsPanel({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
-  // 🚨 VERIFICATION: Component is rendering
   useEffect(() => {
-    console.log('🔥 SavedWorkflowsPanel MOUNTED');
-    console.log('🔥 Current nodes:', currentNodes.length);
-    console.log('🔥 Current edges:', currentEdges.length);
-    alert('🔥 DEBUG: SavedWorkflowsPanel loaded!');
-  }, []);
-
-  useEffect(() => {
-    console.log('🔥 Loading workflows on mount...');
     loadWorkflows();
   }, []);
 
   const loadWorkflows = async () => {
-    console.group('📥 WORKFLOW LOAD PROCESS');
-    console.log('🔍 Loading workflows...');
     setLoading(true);
-
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error('❌ No authenticated user for loading');
-        console.groupEnd();
         setLoading(false);
         return;
       }
-      console.log('✅ User for loading:', user.id);
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -78,14 +64,10 @@ export default function SavedWorkflowsPanel({
         .single();
 
       if (profileError || !profile?.organization_id) {
-        console.error('❌ Failed to get organization_id for loading:', profileError);
-        console.error('❌ Profile data:', profile);
-        console.groupEnd();
+        console.error('Failed to get organization_id:', profileError);
         setLoading(false);
         return;
       }
-      console.log('✅ Loading for organization:', profile.organization_id);
-      console.log('📥 LOAD - Organization ID used:', profile.organization_id);
 
       const { data, error } = await supabase
         .from('workflows')
@@ -94,56 +76,34 @@ export default function SavedWorkflowsPanel({
         .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Error loading workflows:', error);
-        console.error(' Code:', error.code);
-        console.error(' Message:', error.message);
-        console.error(' Details:', error.details);
+        console.error('Error loading workflows:', error.message);
       } else {
-        console.log('✅ Workflows loaded:', data?.length || 0, 'workflows');
-        console.table(data);
         setWorkflows(data || []);
       }
     } catch (error) {
-      console.error('❌ Error in loadWorkflows:', error);
+      console.error('Error in loadWorkflows:', error);
     }
 
-    console.groupEnd();
     setLoading(false);
   };
 
   const handleSaveNew = async () => {
-    alert('🔥 DEBUG: handleSaveNew CALLED');
-    console.group('💾 WORKFLOW SAVE PROCESS');
-    
     if (currentNodes.length === 0) {
       alert('⚠️ Canvas vuoto. Crea un workflow prima di salvare.');
-      console.groupEnd();
       return;
     }
 
-    alert('🔥 DEBUG: About to prompt for name');
     const name = prompt('Nome workflow:', 'Nuovo Workflow');
-    if (!name) {
-      alert('🔥 DEBUG: Name prompt cancelled');
-      console.groupEnd();
-      return;
-    }
-    alert('🔥 DEBUG: Name entered: ' + name);
-
-    console.log('🔍 Starting workflow save...');
-    console.log('📊 Nodes count:', currentNodes.length);
-    console.log('📊 Edges count:', currentEdges.length);
+    if (!name) return;
 
     try {
       // Get user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
-        console.error('❌ User authentication failed:', userError);
+        console.error('User authentication failed:', userError);
         alert('❌ Errore di autenticazione');
-        console.groupEnd();
         return;
       }
-      console.log('✅ User authenticated:', user.id);
 
       // Get organization ID from profile
       const { data: profile, error: profileError } = await supabase
@@ -153,14 +113,10 @@ export default function SavedWorkflowsPanel({
         .single();
 
       if (profileError || !profile?.organization_id) {
-        console.error('❌ Profile fetch failed:', profileError);
-        console.error('❌ Profile data:', profile);
+        console.error('Profile fetch failed:', profileError);
         alert('❌ Impossibile ottenere organization_id');
-        console.groupEnd();
         return;
       }
-      console.log('✅ Organization ID:', profile.organization_id);
-      console.log('💾 SAVE - Organization ID used:', profile.organization_id);
 
       // Prepare workflow data
       const workflowData = {
@@ -171,7 +127,6 @@ export default function SavedWorkflowsPanel({
         edges: currentEdges,
         is_active: false,
       };
-      console.log('📤 Inserting workflow:', workflowData);
 
       // Insert workflow
       const { data: insertedData, error } = await supabase
@@ -181,39 +136,21 @@ export default function SavedWorkflowsPanel({
         .single();
 
       if (error) {
-        console.error('❌ Insert error:', error);
-        console.error(' Code:', error.code);
-        console.error(' Message:', error.message);
-        console.error(' Details:', error.details);
+        console.error('Insert error:', error.message);
         alert('❌ Errore nel salvare il workflow: ' + error.message);
-        console.groupEnd();
         return;
       }
 
       console.log('✅ Workflow saved successfully:', insertedData);
       
-      // Immediate reload to check
-      console.log('🔄 Reloading workflows list...');
+      // Reload workflows list
       await loadWorkflows();
       
-      // Check if newly saved workflow appears in the list
-      const found = workflows.find(w => w.id === insertedData.id);
-      console.log('� Workflow in list after reload?', found ? 'YES ✅' : 'NO ❌');
-      console.log('📊 Total workflows in state after save:', workflows.length);
-      
-      if (!found) {
-        console.error('🚨 CRITICAL: Workflow saved but not appearing in list!');
-        console.log('🔍 Saved workflow ID:', insertedData.id);
-        console.log('🔍 Current workflows IDs:', workflows.map(w => w.id));
-      }
-
-      console.groupEnd();
       alert('✅ Workflow salvato!');
       onWorkflowSaved();
     } catch (error) {
       console.error('❌ Error in handleSaveNew:', error);
       alert('❌ Errore nel salvare il workflow');
-      console.groupEnd();
     }
   };
 
@@ -325,7 +262,11 @@ export default function SavedWorkflowsPanel({
           title="Mostra workflow salvati"
         >
           <ChevronRight className="w-4 h-4 rotate-[-90deg]" />
-          <span className="text-sm text-gray-600">Mostra I Miei Workflow ({workflows.length})</span>
+          <span className="text-sm text-gray-600">
+            <span className="hidden sm:inline">Mostra I Miei Workflow</span>
+            <span className="sm:hidden">Workflow</span>
+            <span className="ml-1">({workflows.length})</span>
+          </span>
         </button>
       </div>
     );
@@ -335,37 +276,36 @@ export default function SavedWorkflowsPanel({
     <div className="h-64 bg-white border-t border-gray-200 flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-        <div className="flex items-center gap-4">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            I Miei Workflow ({workflows.length})
+        <div className="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-sm lg:text-base">
+            <FileText className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
+            <span className="hidden sm:inline">I Miei Workflow</span>
+            <span className="sm:hidden">Workflow</span>
+            <span className="text-sm lg:text-base">({workflows.length})</span>
           </h3>
 
           <button
-            onClick={() => {
-              console.log('🔥 Button clicked!');
-              alert('🔥 DEBUG: Save button clicked!');
-              handleSaveNew();
-            }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm font-medium shadow-md"
+            onClick={handleSaveNew}
+            className="bg-blue-600 text-white px-2 py-1.5 lg:px-4 lg:py-2 rounded-lg hover:bg-blue-700 flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-medium shadow-md flex-shrink-0"
             title="Salva il workflow corrente nel database"
           >
-            <Plus className="w-4 h-4" />
-            💾 Salva Workflow
+            <Plus className="w-3 h-3 lg:w-4 lg:h-4" />
+            <span className="hidden sm:inline">💾 Salva Workflow</span>
+            <span className="sm:hidden">💾</span>
           </button>
         </div>
 
         <button
           onClick={() => setIsCollapsed(true)}
-          className="p-1 hover:bg-gray-200 rounded"
+          className="p-1 hover:bg-gray-200 rounded flex-shrink-0"
           title="Nascondi"
         >
           <ChevronLeft className="w-4 h-4 rotate-[-90deg]" />
         </button>
       </div>
 
-      {/* Workflows Horizontal Scroll */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
+      {/* Workflows Container */}
+      <div className="flex-1 overflow-auto p-4">
         {loading ? (
           <div className="h-full flex items-center justify-center text-gray-500">
             Caricamento...
@@ -377,11 +317,14 @@ export default function SavedWorkflowsPanel({
             <p className="mt-1">Crea e salva il tuo primo workflow!</p>
           </div>
         ) : (
-          <div className="flex gap-4 h-full">
+          /* Mobile: Vertical scroll | Desktop: Horizontal scroll */
+          <div className="lg:flex lg:gap-4 lg:h-full lg:overflow-x-auto lg:overflow-y-hidden
+                          grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-none gap-4 lg:gap-4">
             {workflows.map(workflow => (
               <div
                 key={workflow.id}
-                className="min-w-[280px] w-[280px] border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow bg-white flex-shrink-0"
+                className="lg:min-w-[280px] lg:w-[280px] lg:flex-shrink-0
+                           w-full border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow bg-white"
               >
                 {/* Workflow Name */}
                 {editingId === workflow.id ? (
@@ -426,8 +369,8 @@ export default function SavedWorkflowsPanel({
 
                 {/* Workflow Info */}
                 <div className="text-xs text-gray-500 mb-4 space-y-1">
-                  <div>📊 {workflow.nodes?.length || 0} nodi · {workflow.edges?.length || 0} connessioni</div>
-                  <div>📅 {new Date(workflow.updated_at).toLocaleDateString('it-IT', { 
+                  <div className="truncate">📊 {workflow.nodes?.length || 0} nodi · {workflow.edges?.length || 0} connessioni</div>
+                  <div className="truncate">📅 {new Date(workflow.updated_at).toLocaleDateString('it-IT', { 
                     day: '2-digit', 
                     month: 'short', 
                     hour: '2-digit', 
@@ -439,7 +382,7 @@ export default function SavedWorkflowsPanel({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleLoad(workflow)}
-                    className="col-span-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+                    className="col-span-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs lg:text-sm font-medium"
                   >
                     Carica Workflow
                   </button>
@@ -448,21 +391,24 @@ export default function SavedWorkflowsPanel({
                     className="px-2 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-xs flex items-center justify-center gap-1"
                   >
                     <Edit2 className="w-3 h-3" />
-                    Rinomina
+                    <span className="hidden lg:inline">Rinomina</span>
+                    <span className="lg:hidden">📝</span>
                   </button>
                   <button
                     onClick={() => handleDuplicate(workflow)}
                     className="px-2 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-xs flex items-center justify-center gap-1"
                   >
                     <Copy className="w-3 h-3" />
-                    Duplica
+                    <span className="hidden lg:inline">Duplica</span>
+                    <span className="lg:hidden">📄</span>
                   </button>
                   <button
                     onClick={() => handleDelete(workflow.id, workflow.name)}
                     className="col-span-2 px-2 py-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 text-xs flex items-center justify-center gap-1"
                   >
                     <Trash2 className="w-3 h-3" />
-                    Elimina Workflow
+                    <span className="hidden lg:inline">Elimina Workflow</span>
+                    <span className="lg:hidden">🗑️ Elimina</span>
                   </button>
                 </div>
               </div>

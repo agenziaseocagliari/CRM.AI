@@ -20,7 +20,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { AlertTriangle, Beaker, Play, Redo, Sparkles, Trash2, Undo } from 'lucide-react';
+import { AlertTriangle, Beaker, ChevronDown, Play, Redo, Sparkles, Trash2, Undo } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import '../../styles/workflowCanvas.css';
@@ -101,6 +101,7 @@ export default function WorkflowCanvas() {
   // isSaving state removed - using SavedWorkflowsPanel's database save instead
   const [isExecuting, setIsExecuting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
   // ReactFlow refs and state for drag-drop
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -727,98 +728,121 @@ export default function WorkflowCanvas() {
 
   return (
     <ReactFlowProvider>
-      <div className="flex flex-col h-full">
-        {/* Top section with sidebar and canvas */}
-        <div className="flex flex-1 min-h-0">
-          <NodeSidebar />
-          <div className="flex flex-col flex-1">
-            {/* Toolbar */}
-            <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+      <div className="flex flex-col h-screen overflow-hidden">
+        {/* Top Section: Sidebar + Canvas */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* Desktop Sidebar - Hidden on mobile */}
+          <div className="hidden lg:block lg:w-[150px] xl:w-[180px]">
+            <NodeSidebar />
+          </div>
+          
+          {/* Mobile Sidebar - Collapsible */}
+          <div className="lg:hidden">
             <button
-              onClick={() => setShowGenerateModal(true)}
-              className="flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              className="w-full bg-gray-100 px-4 py-3 flex items-center justify-between border-b"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Genera con AI
+              <span className="font-medium text-sm">📋 Nodi Disponibili</span>
+              <ChevronDown className={`w-5 h-5 transition-transform ${mobileSidebarOpen ? 'rotate-180' : ''}`} />
             </button>
+            {mobileSidebarOpen && (
+              <div className="border-b max-h-[50vh] overflow-y-auto bg-white">
+                <NodeSidebar />
+              </div>
+            )}
+          </div>
+          
+          {/* Canvas Section */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            {/* Toolbar - Responsive */}
+            <div className="bg-white border-b px-2 sm:px-4 py-2 sm:py-3">
+              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1">{/* Genera AI */}
+                <button
+                  onClick={() => setShowGenerateModal(true)}
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-purple-600 text-white rounded text-xs sm:text-sm whitespace-nowrap flex items-center gap-1 sm:gap-2 hover:bg-purple-700"
+                >
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Genera con AI</span>
+                  <span className="sm:hidden">AI</span>
+                </button>
 
-            <button
-              onClick={handleRunWorkflow}
-              disabled={isExecuting || nodes.length === 0}
-              className="flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              {isExecuting ? 'Esecuzione...' : 'Esegui Workflow'}
-            </button>
+                {/* Esegui Workflow */}
+                <button
+                  onClick={handleRunWorkflow}
+                  disabled={isExecuting || nodes.length === 0}
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-green-600 text-white rounded text-xs sm:text-sm whitespace-nowrap flex items-center gap-1 sm:gap-2 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{isExecuting ? 'Esecuzione...' : 'Esegui'}</span>
+                  <span className="sm:hidden">▶️</span>
+                </button>
 
-            <button
-              onClick={handleSimulateWorkflow}
-              disabled={isSimulating || nodes.length === 0}
-              className="flex items-center px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Beaker className="w-4 h-4 mr-2" />
-              {isSimulating ? 'Simulazione...' : 'Simula Workflow'}
-            </button>
+                {/* Simula Workflow */}
+                <button
+                  onClick={handleSimulateWorkflow}
+                  disabled={isSimulating || nodes.length === 0}
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-orange-600 text-white rounded text-xs sm:text-sm whitespace-nowrap flex items-center gap-1 sm:gap-2 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Beaker className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{isSimulating ? 'Simulazione...' : 'Simula'}</span>
+                  <span className="sm:hidden">🧪</span>
+                </button>
 
-            <button
-              onClick={handleExecuteWorkflow}
-              disabled={nodes.length === 0}
-              className="flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Test real execution with Silvestro Sanna contact"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              ▶️ Test Execute (Silvestro)
-            </button>
+                {/* Pulisci Canvas */}
+                <button
+                  onClick={handleClearCanvas}
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-red-600 text-white rounded text-xs sm:text-sm whitespace-nowrap flex items-center gap-1 sm:gap-2 hover:bg-red-700"
+                >
+                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Pulisci</span>
+                  <span className="sm:hidden">🗑️</span>
+                </button>
+
+                {/* Enterprise Features - Hidden on mobile */}
+                <div className="hidden sm:flex border-l border-gray-300 ml-2 pl-2 items-center gap-2">
+                  <button
+                    onClick={undo}
+                    disabled={!canUndo}
+                    className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Annulla (Ctrl+Z)"
+                  >
+                    <Undo className="w-4 h-4" />
+                  </button>
+                  
+                  <button
+                    onClick={redo}
+                    disabled={!canRedo}
+                    className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Ripeti (Ctrl+Y)"
+                  >
+                    <Redo className="w-4 h-4" />
+                  </button>
+                  
+                  <button
+                    onClick={validateWorkflow}
+                    className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+                    title="Valida Workflow"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Stats - Responsive */}
+                <div className="ml-auto text-[10px] sm:text-xs text-gray-600 flex items-center gap-2 sm:gap-3 px-2">
+                  <span>Nodi: {nodes.length}</span>
+                  <span className="hidden sm:inline">|</span>
+                  <span>Connessioni: {edges.length}</span>
+                  {validationErrors.length > 0 && (
+                    <span className="text-yellow-600">
+                      ⚠️ {validationErrors.length}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
             
-            <button
-              onClick={handleClearCanvas}
-              className="flex items-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Pulisci Canvas
-            </button>
-
-            {/* Enterprise Features */}
-            <div className="border-l border-gray-300 ml-2 pl-2 flex items-center gap-2">
-              <button
-                onClick={undo}
-                disabled={!canUndo}
-                className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Annulla (Ctrl+Z)"
-              >
-                <Undo className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={redo}
-                disabled={!canRedo}
-                className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Ripeti (Ctrl+Y)"
-              >
-                <Redo className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={validateWorkflow}
-                className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
-                title="Valida Workflow"
-              >
-                <AlertTriangle className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="ml-auto text-sm text-gray-600">
-              Nodi: {nodes.length} | Connessioni: {edges.length}
-              {validationErrors.length > 0 && (
-                <span className="ml-2 text-yellow-600">
-                  ⚠️ {validationErrors.length} avvisi
-                </span>
-              )}
-            </div>
-            </div>
-
-            {/* Canvas */}
-            <div ref={reactFlowWrapper} className="flex-1 relative">
+            {/* ReactFlow Canvas */}
+            <div ref={reactFlowWrapper} className="flex-1 relative bg-gray-50">
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -880,8 +904,8 @@ export default function WorkflowCanvas() {
           </div>
         </div>
 
-        {/* Saved Workflows Panel - Bottom Section */}
-        <div className="border-t border-gray-200 bg-gray-50">
+        {/* Bottom Panel - Responsive Height */}
+        <div className="h-auto max-h-[40vh] lg:h-64">
           <SavedWorkflowsPanel
             key={workflowsKey}
             onLoadWorkflow={handleLoadWorkflow}
@@ -891,11 +915,14 @@ export default function WorkflowCanvas() {
           />
         </div>
 
-        {/* Instructions */}  
-        <div className="bg-blue-50 border-t border-blue-200 p-3 text-sm text-blue-800">
-          💡 <strong>Suggerimenti Enterprise:</strong> Trascina nodi dalla sidebar | Doppio-click per configurare | 
+        {/* Instructions - Responsive */}  
+        <div className="bg-blue-50 border-t border-blue-200 p-2 sm:p-3 text-xs sm:text-sm text-blue-800">
+          💡 <strong className="hidden sm:inline">Suggerimenti Enterprise:</strong>
+          <strong className="sm:hidden">Suggerimenti:</strong>
+          <span className="hidden lg:inline"> Trascina nodi dalla sidebar | Doppio-click per configurare | 
           Seleziona + Canc per eliminare | Connetti trascinando dai punti di connessione | 
-          Ctrl+S per salvare | Ctrl+Z/Y per annulla/ripeti | Hover sui nodi per info
+          Ctrl+S per salvare | Ctrl+Z/Y per annulla/ripeti | Hover sui nodi per info</span>
+          <span className="lg:hidden"> Trascina nodi | Doppio-click per configurare | Ctrl+S salva</span>
         </div>
       </div>
 

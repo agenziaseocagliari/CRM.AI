@@ -76,17 +76,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS for React frontend
+# CORS for React frontend - Updated for Railway deployment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",          # Vite dev server
         "http://localhost:3000",          # React dev server  
         "https://crm-ai-rho.vercel.app",  # Production frontend
-        "https://*.vercel.app"            # All Vercel deployments
+        "https://railway.com",            # Railway dashboard
+        "https://datapizza-production.railway.app",  # Railway self-reference
+        "https://vercel.app",             # Vercel domain
+        "*"                               # Allow all origins for Railway compatibility
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

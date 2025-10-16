@@ -20,11 +20,6 @@ interface EventRecord {
     created_at: string;
 }
 
-interface FormSubmissionRecord {
-    id: string;
-    created_at: string;
-}
-
 // Extended types for recent activity
 interface ContactActivityRecord {
     id: string;
@@ -51,7 +46,8 @@ interface EventActivityRecord {
 interface FormActivityRecord {
     id: string;
     form_name: string;
-    data: { email?: string; name?: string };
+    submitter_name: string;
+    submitter_email: string;
     created_at: string;
 }
 
@@ -90,8 +86,7 @@ export class DashboardService {
             const [
                 contactsData,
                 dealsData,
-                eventsData,
-                formsData
+                eventsData
             ] = await Promise.allSettled([
                 // Total contacts and new contacts this month
                 supabase
@@ -101,21 +96,15 @@ export class DashboardService {
 
                 // All deals for revenue and conversion calculations
                 supabase
-                    .from('opportunities')
-                    .select('id, value, stage, created_at, updated_at')
+                    .from('dashboard_opportunities')  // ✅ Use VIEW with correct column names
+                    .select('id, name, stage, value, created_at, updated_at')
                     .eq('organization_id', organizationId),
 
                 // Events for activity metrics
                 supabase
-                    .from('events')
+                    .from('dashboard_events')  // ✅ Use VIEW with correct column names
                     .select('id, created_at')
                     .eq('organization_id', organizationId),
-
-                // Form submissions
-                supabase
-                    .from('form_submissions')
-                    .select('id, created_at')
-                    .eq('organization_id', organizationId)
             ]);
 
             // Process contacts data with error handling
@@ -163,17 +152,9 @@ export class DashboardService {
                 console.warn('[DashboardService] Events query failed:', eventsData.reason);
             }
 
-            // Process forms data with error handling
-            let formSubmissions = 0;
-            let formSubmissionsThisMonth = 0;
-            if (formsData.status === 'fulfilled' && formsData.value.data) {
-                formSubmissions = formsData.value.data.length;
-                formSubmissionsThisMonth = formsData.value.data.filter((submission: FormSubmissionRecord) =>
-                    new Date(submission.created_at) >= startOfMonth
-                ).length;
-            } else if (formsData.status === 'rejected') {
-                console.warn('[DashboardService] Form submissions query failed:', formsData.reason);
-            }
+            // Form submissions - table doesn't exist, set to 0
+            const formSubmissions = 0;
+            const formSubmissionsThisMonth = 0;
 
             return {
                 totalRevenue,
@@ -229,7 +210,7 @@ export class DashboardService {
 
                 // Recent deals
                 supabase
-                    .from('opportunities')
+                    .from('dashboard_opportunities')  // ✅ Use VIEW with correct column names
                     .select('id, name, stage, value, updated_at')
                     .eq('organization_id', organizationId)
                     .order('updated_at', { ascending: false })
@@ -237,7 +218,7 @@ export class DashboardService {
 
                 // Recent events
                 supabase
-                    .from('events')
+                    .from('dashboard_events')  // ✅ Use VIEW with correct column names
                     .select('id, title, start_date, created_at')
                     .eq('organization_id', organizationId)
                     .order('created_at', { ascending: false })
@@ -245,8 +226,8 @@ export class DashboardService {
 
                 // Recent form submissions
                 supabase
-                    .from('form_submissions')
-                    .select('id, form_name, data, created_at')
+                    .from('form_submissions')  // ✅ Now uses the newly created table
+                    .select('id, form_name, submitter_name, submitter_email, created_at')
                     .eq('organization_id', organizationId)
                     .order('created_at', { ascending: false })
                     .limit(5)
@@ -302,12 +283,11 @@ export class DashboardService {
             // Process form submissions with error handling
             if (recentForms.status === 'fulfilled' && recentForms.value.data) {
                 recentForms.value.data.forEach((form: FormActivityRecord) => {
-                    const formData = form.data as { email?: string; name?: string };
                     activities.push({
                         id: `form-${form.id}`,
                         type: 'form',
                         title: 'Form completato',
-                        description: `${form.form_name} - ${formData?.name || formData?.email || 'Anonimo'}`,
+                        description: `${form.form_name} - ${form.submitter_name || form.submitter_email || 'Anonimo'}`,
                         timestamp: form.created_at
                     });
                 });

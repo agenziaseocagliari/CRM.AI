@@ -359,9 +359,9 @@ export function getSecurityHeaders(): Headers {
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https:",
-    "connect-src 'self' https://api.openai.com wss://realtime.supabase.co",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://fonts.googleapis.com https://datapizza-production.railway.app https://api.openai.com",
     "font-src 'self' https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'self'",

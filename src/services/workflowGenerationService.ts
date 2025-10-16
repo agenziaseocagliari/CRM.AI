@@ -5,43 +5,24 @@
 
 import { Edge, Node } from '@xyflow/react';
 
-// ✅ VERIFIED - Environment-aware URL selection
+// ✅ PRODUCTION-FIRST: Always use Railway in production builds
 const getDataPizzaURL = (): string => {
-  const envVar = import.meta.env.VITE_DATAPIZZA_API_URL;
-  const isProduction = import.meta.env.PROD;
-  const isDevelopment = import.meta.env.DEV;
-
-  // Priority 1: Explicit environment variable (Vercel setting)
-  if (envVar && envVar.trim()) {
-    console.log('🔗 Using explicit env var:', envVar);
-    return envVar.trim();
-  }
-
-  // Priority 2: Production mode - use Railway
-  if (isProduction) {
+  // For Vercel production deployment
+  if (import.meta.env.PROD) {
     const railwayUrl = 'https://datapizza-production.railway.app';
-    console.log('🔗 Using production Railway:', railwayUrl);
+    console.log('� [PRODUCTION] Using Railway:', railwayUrl);
     return railwayUrl;
   }
 
-  // Priority 3: Development mode - use localhost
-  if (isDevelopment) {
-    const localUrl = 'http://localhost:8001';
-    console.log('🔗 Using development localhost:', localUrl);
-    return localUrl;
-  }
-
-  // Fallback (should never reach here)
-  console.warn('⚠️ Unknown environment, defaulting to Railway');
-  return 'https://datapizza-production.railway.app';
+  // Development only (never used in Vercel)
+  console.log('� [DEV] Using localhost');
+  return 'http://localhost:8001';
 };
 
-const DATAPIZZA_BASE_URL = getDataPizzaURL();
+const DATAPIZZA_URL = getDataPizzaURL();
 
-// Log for debugging
-console.log('🚀 DataPizza URL configured:', DATAPIZZA_BASE_URL);
 console.log('🌍 Environment:', import.meta.env.MODE);
-console.log('📦 Is production:', import.meta.env.PROD);
+console.log('� Final DataPizza URL:', DATAPIZZA_URL);
 
 export interface WorkflowGenerationRequest {
   description: string;
@@ -374,7 +355,7 @@ export function generateFallbackWorkflow(description: string): {
  */
 export async function checkAgentHealth(): Promise<{ status: 'healthy' | 'unavailable'; error?: string }> {
   try {
-    const response = await fetch(`${DATAPIZZA_BASE_URL}/health`, {
+    const response = await fetch(`${DATAPIZZA_URL}/health`, {
       method: 'GET',
       signal: AbortSignal.timeout(3000) // Quick health check
     });
@@ -396,19 +377,19 @@ export async function generateWorkflow(
   description: string,
   organizationId?: string
 ): Promise<WorkflowGenerationResponse> {
-  console.log('🚀 Starting workflow generation');
-  console.log('📍 Target URL:', DATAPIZZA_BASE_URL);
-  console.log('📝 Description:', description);
+  console.log('🚀 [generateWorkflow] Starting generation');
+  console.log('📍 [generateWorkflow] Target URL:', DATAPIZZA_URL);
+  console.log('📝 [generateWorkflow] Description:', description);
 
   // Check agent availability first
-  console.log(`🔍 Checking DataPizza health at: ${DATAPIZZA_BASE_URL}`);
+  console.log(`🔍 [generateWorkflow] Checking Railway health at: ${DATAPIZZA_URL}`);
   const healthCheck = await checkAgentHealth();
   const isAgentAvailable = healthCheck.status === 'healthy';
 
   if (isAgentAvailable) {
-    console.log('✅ DataPizza agent is healthy and available');
+    console.log('✅ [generateWorkflow] Railway agent is healthy and available');
   } else {
-    console.warn('❌ DataPizza agent unavailable:', healthCheck.error);
+    console.warn('❌ [generateWorkflow] Railway agent unavailable:', healthCheck.error);
   }
 
   if (!isAgentAvailable) {
@@ -435,14 +416,15 @@ export async function generateWorkflow(
     };
   }
 
-  // Try DataPizza AI with 10s timeout
+  // Try Railway DataPizza AI with 10s timeout
   try {
-    console.log('🤖 Attempting AI workflow generation with DataPizza...');
+    console.log('🚀 [generateWorkflow] Starting Railway API call');
+    console.log('🎯 [generateWorkflow] Railway endpoint:', `${DATAPIZZA_URL}/generate-workflow`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-      console.warn('⏱️ AI request timeout (10s exceeded)');
+      console.error('⏱️ [generateWorkflow] Railway timeout (10s exceeded)');
     }, 10000);
 
     const requestBody: WorkflowGenerationRequest = {
@@ -450,7 +432,12 @@ export async function generateWorkflow(
       organization_id: organizationId
     };
 
-    const response = await fetch(`${DATAPIZZA_BASE_URL}/generate-workflow`, {
+    console.log('📦 [generateWorkflow] Request payload:', JSON.stringify(requestBody, null, 2));
+
+    const startTime = Date.now();
+    console.log('⏰ [generateWorkflow] Request started at:', new Date().toISOString());
+
+    const response = await fetch(`${DATAPIZZA_URL}/generate-workflow`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -459,70 +446,103 @@ export async function generateWorkflow(
       signal: controller.signal,
     });
 
+    const endTime = Date.now();
+    console.log('⏰ [generateWorkflow] Request completed at:', new Date().toISOString());
+    console.log('⚡ [generateWorkflow] Railway response time:', endTime - startTime, 'ms');
+
     clearTimeout(timeoutId);
 
+    console.log('📊 [generateWorkflow] Railway response status:', response.status);
+    console.log('📊 [generateWorkflow] Railway response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ [generateWorkflow] Railway error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
 
+    console.log('✅ [generateWorkflow] Railway response OK, parsing JSON...');
     const result: WorkflowGenerationResponse = await response.json();
+    console.log('📄 [generateWorkflow] Railway JSON parsed successfully:', result);
 
-    console.log('✅ AI workflow generation successful:', {
+    console.log('🎉 [generateWorkflow] Railway AI generation SUCCESSFUL!');
+    console.log('📊 [generateWorkflow] AI Result Summary:', {
       success: result.success,
       elements: result.elements.length,
       edges: result.edges.length,
       processing_time: result.processing_time_ms,
-      agent: result.agent_used
+      agent: result.agent_used,
+      method: 'ai',
+      confidence: 0.9
     });
 
     // Return with AI method indicator
-    return {
+    const finalResult = {
       ...result,
       method: 'ai' as const,
       confidence: 0.9
     };
+    
+    console.log('✅ [generateWorkflow] Returning AI result to caller');
+    return finalResult;
 
   } catch (error) {
     const errorName = error instanceof Error ? error.name : 'Unknown';
     const isTimeout = errorName === 'AbortError';
 
+    console.error('💥 [generateWorkflow] Railway API call FAILED!');
+    console.error('🔍 [generateWorkflow] Error type:', errorName);
+    console.error('🔍 [generateWorkflow] Is timeout:', isTimeout);
+
     if (isTimeout) {
-      console.error('⏱️ AI generation timeout (10s)');
+      console.error('⏱️ [generateWorkflow] Railway timeout (10s exceeded)');
     } else {
-      console.error('❌ AI generation error:', error instanceof Error ? error.message : error);
+      console.error('❌ [generateWorkflow] Railway error details:', error instanceof Error ? error.message : error);
+      console.error('🔍 [generateWorkflow] Full error object:', error);
     }
 
     console.warn(
       isTimeout
-        ? '⏱️ AI timeout - using intelligent fallback...'
-        : '❌ AI unavailable - using intelligent fallback...',
-      error
+        ? '⏱️ [generateWorkflow] Railway timeout - falling back to local generator...'
+        : '❌ [generateWorkflow] Railway unavailable - falling back to local generator...'
     );
   }
 
   // Use intelligent fallback generator
-  console.log('🔄 Using intelligent fallback generator');
+  console.log('🔄 [generateWorkflow] Activating local fallback generator');
+  console.log('📝 [generateWorkflow] Fallback processing description:', description);
+  
   const fallbackResult = generateFallbackWorkflow(description);
-  console.log('✅ Fallback generation successful');
+  
+  console.log('✅ [generateWorkflow] Fallback generation COMPLETED');
+  console.log('📊 [generateWorkflow] Fallback Result Summary:', {
+    elements: fallbackResult.elements.length,
+    edges: fallbackResult.edges.length,
+    confidence: fallbackResult.confidence,
+    method: 'fallback'
+  });
 
-  return {
+  const fallbackResponse = {
     success: true,
     method: 'fallback' as const,
     confidence: fallbackResult.confidence,
     elements: fallbackResult.elements,
     edges: fallbackResult.edges,
-    agent_used: 'Keyword Fallback Generator',
+    agent_used: 'Local Keyword Generator',
     validation: {
       valid: true,
       errors: []
     },
     suggestions: [
       'Workflow generated using keyword-based templates',
-      'For better results, ensure DataPizza AI is available',
-      'Consider simplifying your description for more accurate keyword matching'
+      'Railway AI service was unavailable - check network connection',
+      'Consider retrying when Railway service is restored'
     ],
     processing_time_ms: 0
   };
+
+  console.log('✅ [generateWorkflow] Returning fallback result to caller');
+  return fallbackResponse;
 }
 
 /**
@@ -531,7 +551,7 @@ export async function generateWorkflow(
 export async function testAgentConnection(): Promise<{ connected: boolean; agents: string[] }> {
   try {
     // First check health endpoint
-    console.log(`🔍 Testing connection to: ${DATAPIZZA_BASE_URL}`);
+    console.log(`🔍 Testing connection to: ${DATAPIZZA_URL}`);
     const healthStatus = await checkAgentHealth();
     const healthCheck = healthStatus.status === 'healthy';
 
@@ -540,7 +560,7 @@ export async function testAgentConnection(): Promise<{ connected: boolean; agent
     }
 
     // Then get agent status
-    const response = await fetch(`${DATAPIZZA_BASE_URL}/agents/status`, {
+    const response = await fetch(`${DATAPIZZA_URL}/agents/status`, {
       signal: AbortSignal.timeout(5000)
     });
 

@@ -41,40 +41,47 @@ export default function GenerateWorkflowModal({
     "Invia email di promemoria 1 settimana dopo l'aggiornamento del contatto, poi crea task per il commerciale"
   ];
 
-  // Check agent availability when modal opens
+  // Check Railway agent availability with production-first logic
   const checkAgentHealth = async () => {
     try {
-      // Use same URL logic as workflow service
-      const envVar = import.meta.env.VITE_DATAPIZZA_API_URL;
+      console.log('🚀 [Modal] Starting Railway health check');
+      
+      // Production-first URL logic (same as service)
       const isProduction = import.meta.env.PROD;
+      const railwayUrl = 'https://datapizza-production.railway.app';
       
       let url: string;
-      if (envVar && envVar.trim()) {
-        url = envVar.trim();
-        console.log('🔍 Checking agent via env var:', url);
-      } else if (isProduction) {
-        url = 'https://datapizza-production.railway.app';
-        console.log('🔍 Checking agent via Railway (prod):', url);
+      if (isProduction) {
+        url = railwayUrl;
+        console.log('🎯 [Modal] Production mode - using Railway:', url);
       } else {
-        url = 'http://localhost:8001';
-        console.log('🔍 Checking agent via localhost (dev):', url);
+        url = railwayUrl;  // Force Railway for testing
+        console.log('🧪 [Modal] Dev mode - forcing Railway for testing:', url);
       }
+      
+      console.log('� [Modal] Sending health check to:', `${url}/health`);
+      const startTime = Date.now();
       
       const response = await fetch(`${url}/health`, {
         method: 'GET',
-        signal: AbortSignal.timeout(5000) // Increased timeout
+        signal: AbortSignal.timeout(8000) // Longer timeout for Railway
       });
+      
+      const endTime = Date.now();
+      console.log('⚡ [Modal] Health check response time:', endTime - startTime, 'ms');
+      console.log('📊 [Modal] Health check status:', response.status);
       
       if (response.ok) {
         const responseText = await response.text();
-        console.log('✅ Agent available - Response:', responseText);
+        console.log('✅ [Modal] Railway agent HEALTHY - Response:', responseText);
         setAgentConnected(true);
       } else {
-        console.warn('⚠️ Agent returned non-OK status');
+        console.error('❌ [Modal] Railway agent unhealthy - Status:', response.status);
         setAgentConnected(false);
       }
     } catch (error) {
-      console.warn('⚠️ Agent check failed:', error instanceof Error ? error.message : String(error));
+      console.error('💥 [Modal] Railway health check FAILED:', error instanceof Error ? error.message : String(error));
+      console.error('🔍 [Modal] Full error object:', error);
       setAgentConnected(false);
     }
   };
@@ -95,33 +102,33 @@ export default function GenerateWorkflowModal({
     setIsGenerating(true);
     setSuggestions([]);
     
-    // Initialize generation steps
+    // Initialize Railway-specific generation steps
     const steps: GenerationStep[] = [
       {
         id: 'connection',
-        label: 'Connessione Agente AI',
-        description: 'Test connessione agente DataPizza...',
+        label: 'Railway Agent Connection',
+        description: 'Connessione a datapizza-production.railway.app...',
         completed: false,
         loading: true
       },
       {
         id: 'analysis',
-        label: 'Analisi Descrizione', 
-        description: 'AI sta analizzando i requisiti del workflow...',
+        label: 'Railway AI Analysis', 
+        description: 'Railway AI sta analizzando i requisiti del workflow...',
         completed: false,
         loading: false
       },
       {
         id: 'generation',
-        label: 'Generazione Workflow',
-        description: 'Creazione elementi e connessioni del workflow...',
+        label: 'Railway Workflow Generation',
+        description: 'Railway AI sta creando elementi e connessioni...',
         completed: false,
         loading: false
       },
       {
         id: 'validation',
-        label: 'Validazione Struttura',
-        description: 'Controllo logica e connessioni del workflow...',
+        label: 'Structure Validation',
+        description: 'Validazione finale della logica workflow...',
         completed: false,
         loading: false
       }
@@ -341,19 +348,19 @@ export default function GenerateWorkflowModal({
             </div>
           )}
 
-          {/* Fallback Warning Box */}
+          {/* Railway Fallback Warning Box */}
           {generationMethod === 'fallback' && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-yellow-800">
-                    Generazione Template Base
+                  <p className="text-sm font-medium text-orange-800">
+                    🚂 Railway AI Unavailable - Local Fallback Used
                   </p>
-                  <p className="text-sm text-yellow-700 mt-1">
-                    L'agente AI non è disponibile. Il workflow è stato generato
-                    usando template basati su parole chiave. Per risultati più
-                    accurati, assicurati che DataPizza AI sia disponibile.
+                  <p className="text-sm text-orange-700 mt-1">
+                    datapizza-production.railway.app non è raggiungibile. Il workflow è stato generato
+                    usando il generatore locale basato su template. Per risultati AI completi,
+                    verifica la connessione a Railway.
                   </p>
                 </div>
               </div>
@@ -377,19 +384,35 @@ export default function GenerateWorkflowModal({
             </div>
           )}
 
-          {/* Agent Connection Status */}
+          {/* Railway Agent Connection Status */}
           {agentConnected !== null && (
             <div className={`
-              p-3 rounded-md text-sm
+              p-4 rounded-md text-sm border
               ${agentConnected 
-                ? 'bg-green-50 border border-green-200 text-green-800'
-                : 'bg-yellow-50 border border-yellow-200 text-yellow-800'
+                ? 'bg-green-50 border-green-200 text-green-800'
+                : 'bg-red-50 border-red-200 text-red-800'
               }
             `}>
-              {agentConnected 
-                ? '✅ Agente DataPizza AI disponibile'
-                : '⚠️ Agente AI non disponibile. Verrà utilizzato il generatore intelligente basato su parole chiave.'
-              }
+              <div className="flex items-start gap-3">
+                <div className={`
+                  w-3 h-3 rounded-full mt-1 flex-shrink-0
+                  ${agentConnected ? 'bg-green-500' : 'bg-red-500'}
+                `} />
+                <div>
+                  <div className="font-medium">
+                    {agentConnected 
+                      ? '🚀 Railway AI Agent ONLINE'
+                      : '⚠️ Railway AI Agent OFFLINE'
+                    }
+                  </div>
+                  <div className="mt-1 text-xs opacity-75">
+                    {agentConnected 
+                      ? 'Connesso a datapizza-production.railway.app - Generazione AI completa disponibile'
+                      : 'datapizza-production.railway.app non raggiungibile - Utilizzo generatore locale di fallback'
+                    }
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

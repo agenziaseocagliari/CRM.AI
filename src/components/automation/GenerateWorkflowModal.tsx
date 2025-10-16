@@ -140,7 +140,7 @@ export default function GenerateWorkflowModal({
       ));
       
       if (!connectionTest.connected) {
-        throw new Error('Agente DataPizza AI non disponibile. Assicurati che il server agente sia in esecuzione.');
+        throw new Error('Servizio AI non disponibile. Assicurati che le API Vercel siano funzionanti.');
       }
 
       setAgentConnected(true);

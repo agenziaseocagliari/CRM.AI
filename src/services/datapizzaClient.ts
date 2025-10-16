@@ -185,7 +185,7 @@ class DataPizzaClient {
         status: string
     }> {
         try {
-            const response = await fetch(`${this.baseUrl}/agents/status`, {
+            const response = await fetch(`${this.baseUrl}/health`, {
                 method: 'GET',
                 signal: AbortSignal.timeout(5000)
             })

@@ -1,19 +1,19 @@
 /**
  * Workflow Generation Service
- * Integrates with DataPizza AI agents for natural language workflow generation
+ * Integrates with Vercel AI API for natural language workflow generation
  */
 
 import { Edge, Node } from '@xyflow/react';
 
 // ✅ VERCEL API ROUTES: No external service needed!
-const getDataPizzaURL = (): string => {
+const getVercelApiURL = (): string => {
   // Always use Vercel API routes (same origin, no CORS issues)
   const vercelApiUrl = '/api';
   console.log('🚀 [VERCEL] Using Vercel API routes:', vercelApiUrl);
   return vercelApiUrl;
 };
 
-const DATAPIZZA_URL = getDataPizzaURL();
+const VERCEL_API_URL = getVercelApiURL();
 
 console.log('🌍 Environment:', import.meta.env.MODE);
 console.log('✅ Using Vercel API routes - no external service needed!');
@@ -345,11 +345,11 @@ export function generateFallbackWorkflow(description: string): {
 }
 
 /**
- * Check if DataPizza service is healthy and available
+ * Check if Vercel API service is healthy and available
  */
 export async function checkAgentHealth(): Promise<{ status: 'healthy' | 'unavailable'; error?: string }> {
   try {
-    const response = await fetch(`${DATAPIZZA_URL}/health`, {
+    const response = await fetch(`${VERCEL_API_URL}/health`, {
       method: 'GET',
       signal: AbortSignal.timeout(3000) // Quick health check
     });
@@ -364,7 +364,7 @@ export async function checkAgentHealth(): Promise<{ status: 'healthy' | 'unavail
 
 /**
  * Generate workflow from natural language description
- * Primary: DataPizza AI Agent (10s timeout)
+ * Primary: Vercel AI API (10s timeout)
  * Fallback: Keyword-based generation
  */
 export async function generateWorkflow(
@@ -372,22 +372,22 @@ export async function generateWorkflow(
   organizationId?: string
 ): Promise<WorkflowGenerationResponse> {
   console.log('🚀 [generateWorkflow] Starting generation');
-  console.log('📍 [generateWorkflow] Target URL:', DATAPIZZA_URL);
+  console.log('📍 [generateWorkflow] Target URL:', VERCEL_API_URL);
   console.log('📝 [generateWorkflow] Description:', description);
 
   // Check agent availability first
-  console.log(`🔍 [generateWorkflow] Checking Railway health at: ${DATAPIZZA_URL}`);
+  console.log(`🔍 [generateWorkflow] Checking Vercel API health at: ${VERCEL_API_URL}`);
   const healthCheck = await checkAgentHealth();
   const isAgentAvailable = healthCheck.status === 'healthy';
 
   if (isAgentAvailable) {
-    console.log('✅ [generateWorkflow] Railway agent is healthy and available');
+    console.log('✅ [generateWorkflow] Vercel API is healthy and available');
   } else {
-    console.warn('❌ [generateWorkflow] Railway agent unavailable:', healthCheck.error);
+    console.warn('❌ [generateWorkflow] Vercel API unavailable:', healthCheck.error);
   }
 
   if (!isAgentAvailable) {
-    console.warn('❌ DataPizza agent unavailable, using fallback');
+    console.warn('❌ Vercel API unavailable, using fallback');
     const fallbackResult = generateFallbackWorkflow(description);
 
     return {
@@ -403,22 +403,22 @@ export async function generateWorkflow(
       },
       suggestions: [
         'Workflow generated using keyword-based templates',
-        'DataPizza AI agent is not available - consider checking the service',
-        'For better results, ensure DataPizza AI service is running'
+        'Vercel AI API is not available - consider checking the service',
+        'For better results, ensure Vercel API service is running'
       ],
       processing_time_ms: 0
     };
   }
 
-  // Try Railway DataPizza AI with 10s timeout
+  // Try Vercel AI API with 10s timeout
   try {
-    console.log('🚀 [generateWorkflow] Starting Railway API call');
-    console.log('🎯 [generateWorkflow] Railway endpoint:', `${DATAPIZZA_URL}/generate-workflow`);
+    console.log('🚀 [generateWorkflow] Starting Vercel API call');
+    console.log('🎯 [generateWorkflow] Vercel API endpoint:', `${VERCEL_API_URL}/generate-workflow`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-      console.error('⏱️ [generateWorkflow] Railway timeout (10s exceeded)');
+      console.error('⏱️ [generateWorkflow] Vercel API timeout (10s exceeded)');
     }, 10000);
 
     const requestBody: WorkflowGenerationRequest = {
@@ -431,7 +431,7 @@ export async function generateWorkflow(
     const startTime = Date.now();
     console.log('⏰ [generateWorkflow] Request started at:', new Date().toISOString());
 
-    const response = await fetch(`${DATAPIZZA_URL}/generate-workflow`, {
+    const response = await fetch(`${VERCEL_API_URL}/generate-workflow`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -442,24 +442,24 @@ export async function generateWorkflow(
 
     const endTime = Date.now();
     console.log('⏰ [generateWorkflow] Request completed at:', new Date().toISOString());
-    console.log('⚡ [generateWorkflow] Railway response time:', endTime - startTime, 'ms');
+    console.log('⚡ [generateWorkflow] Vercel API response time:', endTime - startTime, 'ms');
 
     clearTimeout(timeoutId);
 
-    console.log('📊 [generateWorkflow] Railway response status:', response.status);
-    console.log('📊 [generateWorkflow] Railway response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('📊 [generateWorkflow] Vercel API response status:', response.status);
+    console.log('📊 [generateWorkflow] Vercel API response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ [generateWorkflow] Railway error response:', errorText);
+      console.error('❌ [generateWorkflow] Vercel API error response:', errorText);
       throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
 
-    console.log('✅ [generateWorkflow] Railway response OK, parsing JSON...');
+    console.log('✅ [generateWorkflow] Vercel API response OK, parsing JSON...');
     const result: WorkflowGenerationResponse = await response.json();
-    console.log('📄 [generateWorkflow] Railway JSON parsed successfully:', result);
+    console.log('📄 [generateWorkflow] Vercel API JSON parsed successfully:', result);
 
-    console.log('🎉 [generateWorkflow] Railway AI generation SUCCESSFUL!');
+    console.log('🎉 [generateWorkflow] Vercel AI generation SUCCESSFUL!');
     console.log('📊 [generateWorkflow] AI Result Summary:', {
       success: result.success,
       elements: result.elements.length,
@@ -484,21 +484,21 @@ export async function generateWorkflow(
     const errorName = error instanceof Error ? error.name : 'Unknown';
     const isTimeout = errorName === 'AbortError';
 
-    console.error('💥 [generateWorkflow] Railway API call FAILED!');
+    console.error('💥 [generateWorkflow] Vercel API call FAILED!');
     console.error('🔍 [generateWorkflow] Error type:', errorName);
     console.error('🔍 [generateWorkflow] Is timeout:', isTimeout);
 
     if (isTimeout) {
-      console.error('⏱️ [generateWorkflow] Railway timeout (10s exceeded)');
+      console.error('⏱️ [generateWorkflow] Vercel API timeout (10s exceeded)');
     } else {
-      console.error('❌ [generateWorkflow] Railway error details:', error instanceof Error ? error.message : error);
+      console.error('❌ [generateWorkflow] Vercel API error details:', error instanceof Error ? error.message : error);
       console.error('🔍 [generateWorkflow] Full error object:', error);
     }
 
     console.warn(
       isTimeout
-        ? '⏱️ [generateWorkflow] Railway timeout - falling back to local generator...'
-        : '❌ [generateWorkflow] Railway unavailable - falling back to local generator...'
+        ? '⏱️ [generateWorkflow] Vercel API timeout - falling back to local generator...'
+        : '❌ [generateWorkflow] Vercel API unavailable - falling back to local generator...'
     );
   }
 
@@ -529,8 +529,8 @@ export async function generateWorkflow(
     },
     suggestions: [
       'Workflow generated using keyword-based templates',
-      'Railway AI service was unavailable - check network connection',
-      'Consider retrying when Railway service is restored'
+      'Vercel AI service was unavailable - check network connection',
+      'Consider retrying when Vercel API service is restored'
     ],
     processing_time_ms: 0
   };
@@ -540,12 +540,12 @@ export async function generateWorkflow(
 }
 
 /**
- * Test DataPizza agent connectivity
+ * Test Vercel API connectivity
  */
 export async function testAgentConnection(): Promise<{ connected: boolean; agents: string[] }> {
   try {
     // First check health endpoint
-    console.log(`🔍 Testing connection to: ${DATAPIZZA_URL}`);
+    console.log(`🔍 Testing connection to: ${VERCEL_API_URL}`);
     const healthStatus = await checkAgentHealth();
     const healthCheck = healthStatus.status === 'healthy';
 
@@ -554,7 +554,7 @@ export async function testAgentConnection(): Promise<{ connected: boolean; agent
     }
 
     // Then get agent status
-    const response = await fetch(`${DATAPIZZA_URL}/agents/status`, {
+    const response = await fetch(`${VERCEL_API_URL}/health`, {
       signal: AbortSignal.timeout(5000)
     });
 
@@ -564,14 +564,14 @@ export async function testAgentConnection(): Promise<{ connected: boolean; agent
 
     const status = await response.json();
 
-    console.log('✅ DataPizza agent connection successful');
+    console.log('✅ Vercel API connection successful');
     return {
       connected: true,
       agents: status.agents || []
     };
 
   } catch (error) {
-    console.warn('⚠️ DataPizza agent connection failed:', error);
+    console.warn('⚠️ Vercel API connection failed:', error);
 
     return {
       connected: false,
@@ -599,7 +599,7 @@ export async function getAvailableNodeTypes(): Promise<{
     },
     actions: {
       send_email: "Send automated email",
-      ai_score: "Score lead with DataPizza AI",
+      ai_score: "Score lead with Vercel AI",
       create_deal: "Create new deal/opportunity",
       update_contact: "Modify contact information",
       send_notification: "Internal team notification",

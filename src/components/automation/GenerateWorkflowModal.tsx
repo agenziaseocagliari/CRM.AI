@@ -41,30 +41,21 @@ export default function GenerateWorkflowModal({
     "Invia email di promemoria 1 settimana dopo l'aggiornamento del contatto, poi crea task per il commerciale"
   ];
 
-  // Check Railway agent availability with production-first logic
+  // Check Vercel API availability
   const checkAgentHealth = async () => {
     try {
-      console.log('🚀 [Modal] Starting Railway health check');
+      console.log('🚀 [Modal] Starting Vercel API health check');
       
-      // Production-first URL logic (same as service)
-      const isProduction = import.meta.env.PROD;
-      const railwayUrl = 'https://datapizza-production.railway.app';
+      // Use Vercel API route (same-origin, no CORS issues)
+      const url = '/api';
+      console.log('🎯 [Modal] Using Vercel API:', url);
       
-      let url: string;
-      if (isProduction) {
-        url = railwayUrl;
-        console.log('🎯 [Modal] Production mode - using Railway:', url);
-      } else {
-        url = railwayUrl;  // Force Railway for testing
-        console.log('🧪 [Modal] Dev mode - forcing Railway for testing:', url);
-      }
-      
-      console.log('� [Modal] Sending health check to:', `${url}/health`);
+      console.log('📡 [Modal] Sending health check to:', `${url}/health`);
       const startTime = Date.now();
       
       const response = await fetch(`${url}/health`, {
         method: 'GET',
-        signal: AbortSignal.timeout(8000) // Longer timeout for Railway
+        signal: AbortSignal.timeout(5000) // Standard timeout for local API
       });
       
       const endTime = Date.now();
@@ -73,14 +64,14 @@ export default function GenerateWorkflowModal({
       
       if (response.ok) {
         const responseText = await response.text();
-        console.log('✅ [Modal] Railway agent HEALTHY - Response:', responseText);
+        console.log('✅ [Modal] Vercel API HEALTHY - Response:', responseText);
         setAgentConnected(true);
       } else {
-        console.error('❌ [Modal] Railway agent unhealthy - Status:', response.status);
+        console.error('❌ [Modal] Vercel API unhealthy - Status:', response.status);
         setAgentConnected(false);
       }
     } catch (error) {
-      console.error('💥 [Modal] Railway health check FAILED:', error instanceof Error ? error.message : String(error));
+      console.error('💥 [Modal] Vercel API health check FAILED:', error instanceof Error ? error.message : String(error));
       console.error('🔍 [Modal] Full error object:', error);
       setAgentConnected(false);
     }
@@ -102,26 +93,26 @@ export default function GenerateWorkflowModal({
     setIsGenerating(true);
     setSuggestions([]);
     
-    // Initialize Railway-specific generation steps
+    // Initialize Vercel API generation steps
     const steps: GenerationStep[] = [
       {
         id: 'connection',
-        label: 'Railway Agent Connection',
-        description: 'Connessione a datapizza-production.railway.app...',
+        label: 'Vercel API Connection',
+        description: 'Connessione alle API Vercel...',
         completed: false,
         loading: true
       },
       {
         id: 'analysis',
-        label: 'Railway AI Analysis', 
-        description: 'Railway AI sta analizzando i requisiti del workflow...',
+        label: 'Gemini AI Analysis', 
+        description: 'Gemini AI sta analizzando i requisiti del workflow...',
         completed: false,
         loading: false
       },
       {
         id: 'generation',
-        label: 'Railway Workflow Generation',
-        description: 'Railway AI sta creando elementi e connessioni...',
+        label: 'Gemini Workflow Generation',
+        description: 'Gemini AI sta creando elementi e connessioni...',
         completed: false,
         loading: false
       },
@@ -348,19 +339,19 @@ export default function GenerateWorkflowModal({
             </div>
           )}
 
-          {/* Railway Fallback Warning Box */}
+          {/* Gemini AI Fallback Warning Box */}
           {generationMethod === 'fallback' && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-orange-800">
-                    🚂 Railway AI Unavailable - Local Fallback Used
+                    🤖 Gemini AI Unavailable - Local Fallback Used
                   </p>
                   <p className="text-sm text-orange-700 mt-1">
-                    datapizza-production.railway.app non è raggiungibile. Il workflow è stato generato
+                    Gemini AI non è raggiungibile. Il workflow è stato generato
                     usando il generatore locale basato su template. Per risultati AI completi,
-                    verifica la connessione a Railway.
+                    verifica la connessione API Vercel.
                   </p>
                 </div>
               </div>
@@ -384,7 +375,7 @@ export default function GenerateWorkflowModal({
             </div>
           )}
 
-          {/* Railway Agent Connection Status */}
+          {/* Vercel API Connection Status */}
           {agentConnected !== null && (
             <div className={`
               p-4 rounded-md text-sm border
@@ -401,14 +392,14 @@ export default function GenerateWorkflowModal({
                 <div>
                   <div className="font-medium">
                     {agentConnected 
-                      ? '🚀 Railway AI Agent ONLINE'
-                      : '⚠️ Railway AI Agent OFFLINE'
+                      ? '🚀 Vercel API ONLINE'
+                      : '⚠️ Vercel API OFFLINE'
                     }
                   </div>
                   <div className="mt-1 text-xs opacity-75">
                     {agentConnected 
-                      ? 'Connesso a datapizza-production.railway.app - Generazione AI completa disponibile'
-                      : 'datapizza-production.railway.app non raggiungibile - Utilizzo generatore locale di fallback'
+                      ? 'Connesso alle API Vercel - Generazione Gemini AI completa disponibile'
+                      : 'API Vercel non raggiungibili - Utilizzo generatore locale di fallback'
                     }
                   </div>
                 </div>

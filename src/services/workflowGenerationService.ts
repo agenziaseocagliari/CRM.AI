@@ -5,24 +5,18 @@
 
 import { Edge, Node } from '@xyflow/react';
 
-// ✅ PRODUCTION-FIRST: Always use Railway in production builds
+// ✅ VERCEL API ROUTES: No external service needed!
 const getDataPizzaURL = (): string => {
-  // For Vercel production deployment
-  if (import.meta.env.PROD) {
-    const railwayUrl = 'https://datapizza-production.railway.app';
-    console.log('� [PRODUCTION] Using Railway:', railwayUrl);
-    return railwayUrl;
-  }
-
-  // Development only (never used in Vercel)
-  console.log('� [DEV] Using localhost');
-  return 'http://localhost:8001';
+  // Always use Vercel API routes (same origin, no CORS issues)
+  const vercelApiUrl = '/api';
+  console.log('🚀 [VERCEL] Using Vercel API routes:', vercelApiUrl);
+  return vercelApiUrl;
 };
 
 const DATAPIZZA_URL = getDataPizzaURL();
 
 console.log('🌍 Environment:', import.meta.env.MODE);
-console.log('� Final DataPizza URL:', DATAPIZZA_URL);
+console.log('✅ Using Vercel API routes - no external service needed!');
 
 export interface WorkflowGenerationRequest {
   description: string;

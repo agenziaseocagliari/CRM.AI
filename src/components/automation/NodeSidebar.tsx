@@ -22,16 +22,9 @@ export default function NodeSidebar() {
   const actions = filteredNodes.filter(n => n.type === 'action');
 
   const onDragStart = (event: React.DragEvent, node: NodeDefinition) => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify({
-      type: node.type === 'trigger' ? 'input' : 'default',
-      nodeType: node.id,
-      label: node.label,
-      category: node.category,
-      icon: node.icon,
-      color: node.color,
-      config: node.config || []
-    }));
+    event.dataTransfer.setData('application/reactflow', JSON.stringify(node));
     event.dataTransfer.effectAllowed = 'move';
+    console.log('🎯 Drag started:', node.label);
   };
 
   return (

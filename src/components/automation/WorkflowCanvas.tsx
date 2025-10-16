@@ -18,7 +18,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Beaker, Play, Save, Sparkles, Trash2 } from 'lucide-react';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import '../../styles/workflowCanvas.css';
 import GenerateWorkflowModal from './GenerateWorkflowModal';
@@ -140,9 +140,95 @@ export default function WorkflowCanvas() {
   };
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      setEdges((eds) => addEdge({ ...params, animated: true }, eds));
+      console.log('✅ Nodes connected:', params.source, '→', params.target);
+    },
     [setEdges]
   );
+
+  // Delete nodes handler (Delete/Backspace key)
+  const onNodesDelete = useCallback((deleted: Node[]) => {
+    console.log('🗑️ Nodes deleted:', deleted.map(n => n.data.label));
+    // Also remove any edges connected to deleted nodes
+    const deletedNodeIds = deleted.map(n => n.id);
+    setEdges((eds) => eds.filter(edge => 
+      !deletedNodeIds.includes(edge.source) && !deletedNodeIds.includes(edge.target)
+    ));
+  }, [setEdges]);
+
+  // Delete edges handler (Delete/Backspace key)
+  const onEdgesDelete = useCallback((deleted: Edge[]) => {
+    console.log('🗑️ Edges deleted:', deleted.map(e => `${e.source} → ${e.target}`));
+  }, []);
+
+  // Clear canvas function
+  const handleClearCanvas = useCallback(() => {
+    if (confirm('Vuoi cancellare tutti i nodi e connessioni?')) {
+      setNodes([]);
+      setEdges([]);
+      console.log('🗑️ Canvas cleared');
+    }
+  }, [setNodes, setEdges]);
+
+  // Save workflow function
+  const handleSaveWorkflow = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      const workflow = await createWorkflow(
+        'My Automation Workflow',
+        'Auto-generated workflow from visual builder',
+        nodes,
+        edges
+      );
+      
+      console.log('Workflow saved:', workflow);
+      alert(`Workflow "${workflow.name}" salvato con successo!`);
+    } catch (error) {
+      console.error('Errore salvataggio workflow:', error);
+      alert('Errore salvataggio workflow: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
+    } finally {
+      setIsSaving(false);
+    }
+  }, [createWorkflow, nodes, edges]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl/Cmd + S = Save
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        handleSaveWorkflow();
+      }
+      
+      // Ctrl/Cmd + A = Select All
+      if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+        event.preventDefault();
+        setNodes(nds => nds.map(n => ({ ...n, selected: true })));
+        setEdges(eds => eds.map(e => ({ ...e, selected: true })));
+        console.log('✅ All elements selected');
+      }
+
+      // Delete key = Delete selected
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        const selectedNodes = nodes.filter(n => n.selected);
+        const selectedEdges = edges.filter(e => e.selected);
+        
+        if (selectedNodes.length > 0) {
+          onNodesDelete(selectedNodes);
+          setNodes(nds => nds.filter(n => !n.selected));
+        }
+        
+        if (selectedEdges.length > 0) {
+          onEdgesDelete(selectedEdges);
+          setEdges(eds => eds.filter(e => !e.selected));
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSaveWorkflow, nodes, edges, onNodesDelete, onEdgesDelete, setNodes, setEdges]);
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -256,25 +342,7 @@ export default function WorkflowCanvas() {
     }
   }, []);
 
-  const handleSaveWorkflow = async () => {
-    setIsSaving(true);
-    try {
-      const workflow = await createWorkflow(
-        'My Automation Workflow',
-        'Auto-generated workflow from visual builder',
-        nodes,
-        edges
-      );
-      
-      console.log('Workflow saved:', workflow);
-      alert(`Workflow "${workflow.name}" salvato con successo!`);
-    } catch (error) {
-      console.error('Errore salvataggio workflow:', error);
-      alert('Errore salvataggio workflow: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // handleSaveWorkflow moved above to fix dependency order
 
   const handleRunWorkflow = async () => {
     if (nodes.length === 0) {
@@ -368,12 +436,7 @@ export default function WorkflowCanvas() {
     }
   };
 
-  const handleClearCanvas = () => {
-    if (confirm('Sei sicuro di voler cancellare tutto il canvas?')) {
-      setNodes([]);
-      setEdges([]);
-    }
-  };
+  // handleClearCanvas is already defined above with useCallback
 
   const handleGeneratedWorkflow = (nodes: Node[], edges: Edge[]) => {
     // Add generated nodes and edges to canvas
@@ -543,10 +606,17 @@ export default function WorkflowCanvas() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onNodesDelete={onNodesDelete}
+              onEdgesDelete={onEdgesDelete}
               onInit={handleInit}
               onDrop={onDrop}
               onDragOver={onDragOver}
               fitView
+              nodesDraggable={true}
+              nodesConnectable={true}
+              elementsSelectable={true}
+              selectNodesOnDrag={false}
+              deleteKeyCode={['Delete', 'Backspace']}
               className="bg-gradient-to-br from-gray-50 to-gray-100"
               defaultEdgeOptions={{
                 type: 'smoothstep',
@@ -587,6 +657,20 @@ export default function WorkflowCanvas() {
             </ReactFlow>
           </div>
         </div>
+      </div>
+
+      {/* AI Generation Modal */}
+      <GenerateWorkflowModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        onGenerate={handleGeneratedWorkflow}
+      />
+
+      {/* Instructions */}
+      <div className="bg-blue-50 border-t border-blue-200 p-3 text-sm text-blue-800">
+        💡 <strong>Suggerimenti:</strong> Trascina nodi dalla sidebar | Clicca e trascina per muovere | 
+        Seleziona + Canc per eliminare | Connetti trascinando dai punti di connessione | 
+        Ctrl+S per salvare | Ctrl+A per selezionare tutto
       </div>
 
       {/* AI Generation Modal */}

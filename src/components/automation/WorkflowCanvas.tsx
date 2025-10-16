@@ -18,11 +18,14 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Beaker, Play, Save, Sparkles, Trash2 } from 'lucide-react';
+import { Beaker, Play, Save, Sparkles, Trash2, Undo, Redo, AlertTriangle } from 'lucide-react';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import '../../styles/workflowCanvas.css';
+import CustomNode from './CustomNode';
 import GenerateWorkflowModal from './GenerateWorkflowModal';
+import { useUndoRedo } from './hooks/useUndoRedo';
+import NodeConfigPanel from './NodeConfigPanel';
 import NodeSidebar from './NodeSidebar';
 import WorkflowSimulationPanel from './WorkflowSimulationPanel';
 
@@ -106,8 +109,16 @@ export default function WorkflowCanvas() {
   const [simulationSteps, setSimulationSteps] = useState<SimulationStep[]>([]);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | undefined>();
 
+  // Enterprise features state
+  const [selectedNodeForConfig, setSelectedNodeForConfig] = useState<Node | null>(null);
+  const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
   // Workflow management hooks
   const { createWorkflow } = useWorkflows();
+
+  // Undo/Redo functionality
+  const { undo, redo, canUndo, canRedo, takeSnapshot } = useUndoRedo(nodes, edges, setNodes, setEdges);
 
   // Helper functions for professional node styling
   const getNodeBackgroundColor = (category: string) => {
@@ -193,7 +204,7 @@ export default function WorkflowCanvas() {
     }
   }, [createWorkflow, nodes, edges]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts with enterprise features
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Ctrl/Cmd + S = Save
@@ -210,10 +221,26 @@ export default function WorkflowCanvas() {
         console.log('✅ All elements selected');
       }
 
+      // Ctrl/Cmd + Z = Undo
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+      }
+
+      // Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z = Redo
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
+        event.preventDefault();
+        redo();
+      }
+
       // Delete key = Delete selected
       if (event.key === 'Delete' || event.key === 'Backspace') {
         const selectedNodes = nodes.filter(n => n.selected);
         const selectedEdges = edges.filter(e => e.selected);
+        
+        if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+          takeSnapshot(); // Save state before deletion for undo
+        }
         
         if (selectedNodes.length > 0) {
           onNodesDelete(selectedNodes);
@@ -229,7 +256,7 @@ export default function WorkflowCanvas() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSaveWorkflow, nodes, edges, onNodesDelete, onEdgesDelete, setNodes, setEdges]);
+  }, [handleSaveWorkflow, nodes, edges, onNodesDelete, onEdgesDelete, setNodes, setEdges, undo, redo, takeSnapshot]);
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -344,6 +371,56 @@ export default function WorkflowCanvas() {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  // Double-click handler for node configuration
+  const onNodeDoubleClick = useCallback((event: React.MouseEvent, node: Node) => {
+    setSelectedNodeForConfig(node);
+    setIsConfigPanelOpen(true);
+    console.log('🔧 Opening config for:', node.data.label);
+  }, []);
+
+  // Config save handler
+  const handleSaveNodeConfig = useCallback((nodeId: string, config: Record<string, string | number>) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, config } }
+          : node
+      )
+    );
+    console.log('✅ Node config saved:', nodeId, config);
+    takeSnapshot(); // Save state for undo/redo
+  }, [setNodes, takeSnapshot]);
+
+  // Workflow validation
+  const validateWorkflow = useCallback(() => {
+    const errors: string[] = [];
+
+    // Check if there's at least one trigger
+    const triggers = nodes.filter(n => n.data.category === 'trigger');
+    if (triggers.length === 0) {
+      errors.push('⚠️ Workflow deve avere almeno un trigger');
+    }
+
+    // Check if nodes are connected
+    const connectedNodeIds = new Set(edges.flatMap(e => [e.source, e.target]));
+    const disconnectedNodes = nodes.filter(n => !connectedNodeIds.has(n.id) && nodes.length > 1);
+    if (disconnectedNodes.length > 0) {
+      errors.push(`⚠️ ${disconnectedNodes.length} nodi non connessi`);
+    }
+
+    // Check if nodes need configuration
+    const unconfiguredNodes = nodes.filter(n =>
+      n.data.category !== 'trigger' &&
+      (!n.data.config || Object.keys(n.data.config).length === 0)
+    );
+    if (unconfiguredNodes.length > 0) {
+      errors.push(`⚠️ ${unconfiguredNodes.length} nodi richiedono configurazione`);
+    }
+
+    setValidationErrors(errors);
+    return errors;
+  }, [nodes, edges]);
 
   // ReactFlow init handler with comprehensive logging
   const handleInit = useCallback((instance: ReactFlowInstance) => {
@@ -629,8 +706,42 @@ export default function WorkflowCanvas() {
               Pulisci Canvas
             </button>
 
+            {/* Enterprise Features */}
+            <div className="border-l border-gray-300 ml-2 pl-2 flex items-center gap-2">
+              <button
+                onClick={undo}
+                disabled={!canUndo}
+                className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Annulla (Ctrl+Z)"
+              >
+                <Undo className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={redo}
+                disabled={!canRedo}
+                className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Ripeti (Ctrl+Y)"
+              >
+                <Redo className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={validateWorkflow}
+                className="flex items-center px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+                title="Valida Workflow"
+              >
+                <AlertTriangle className="w-4 h-4" />
+              </button>
+            </div>
+
             <div className="ml-auto text-sm text-gray-600">
               Nodi: {nodes.length} | Connessioni: {edges.length}
+              {validationErrors.length > 0 && (
+                <span className="ml-2 text-yellow-600">
+                  ⚠️ {validationErrors.length} avvisi
+                </span>
+              )}
             </div>
           </div>
 
@@ -639,11 +750,13 @@ export default function WorkflowCanvas() {
             <ReactFlow
               nodes={nodes}
               edges={edges}
+              nodeTypes={{ default: CustomNode, input: CustomNode }}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onNodesDelete={onNodesDelete}
               onEdgesDelete={onEdgesDelete}
+              onNodeDoubleClick={onNodeDoubleClick}
               onInit={handleInit}
               onDrop={onDrop}
               onDragOver={onDragOver}
@@ -695,18 +808,11 @@ export default function WorkflowCanvas() {
         </div>
       </div>
 
-      {/* AI Generation Modal */}
-      <GenerateWorkflowModal
-        isOpen={showGenerateModal}
-        onClose={() => setShowGenerateModal(false)}
-        onGenerate={handleGeneratedWorkflow}
-      />
-
-      {/* Instructions */}
+      {/* Instructions */}  
       <div className="bg-blue-50 border-t border-blue-200 p-3 text-sm text-blue-800">
-        💡 <strong>Suggerimenti:</strong> Trascina nodi dalla sidebar | Clicca e trascina per muovere | 
+        💡 <strong>Suggerimenti Enterprise:</strong> Trascina nodi dalla sidebar | Doppio-click per configurare | 
         Seleziona + Canc per eliminare | Connetti trascinando dai punti di connessione | 
-        Ctrl+S per salvare | Ctrl+A per selezionare tutto
+        Ctrl+S per salvare | Ctrl+Z/Y per annulla/ripeti | Hover sui nodi per info
       </div>
 
       {/* AI Generation Modal */}
@@ -714,6 +820,14 @@ export default function WorkflowCanvas() {
         isOpen={showGenerateModal}
         onClose={() => setShowGenerateModal(false)}
         onGenerate={handleGeneratedWorkflow}
+      />
+
+      {/* Node Configuration Panel */}
+      <NodeConfigPanel
+        node={selectedNodeForConfig}
+        isOpen={isConfigPanelOpen}
+        onClose={() => setIsConfigPanelOpen(false)}
+        onSave={handleSaveNodeConfig}
       />
 
       {/* Simulation Panel */}
@@ -724,6 +838,21 @@ export default function WorkflowCanvas() {
           result={simulationResult}
           onClose={handleCloseSimulation}
         />
+      )}
+
+      {/* Validation Errors */}
+      {validationErrors.length > 0 && (
+        <div className="fixed bottom-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded shadow-lg max-w-sm">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+            <h4 className="text-sm font-medium text-yellow-800">Avvisi Workflow</h4>
+          </div>
+          <div className="mt-2 text-sm text-yellow-700">
+            {validationErrors.map((error, index) => (
+              <div key={index}>{error}</div>
+            ))}
+          </div>
+        </div>
       )}
     </ReactFlowProvider>
   );

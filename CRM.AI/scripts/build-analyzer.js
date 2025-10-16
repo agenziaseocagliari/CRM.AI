@@ -3,7 +3,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 class BuildAnalyzer {
   constructor(distPath = './dist') {
@@ -105,7 +104,7 @@ class BuildAnalyzer {
     analyzeDirectory(path.join(this.distPath, 'fonts'), 'font');
     analyzeDirectory(path.join(this.distPath, 'styles'), 'css');
 
-    console.log('� Assets analyzed:', files);
+    console.log('📊 Assets analyzed:', this.analysis.assets.length);
   }
 
   getChunkType(filename) {
@@ -122,7 +121,7 @@ class BuildAnalyzer {
     if (largeChunks.length > 0) {
       this.analysis.recommendations.push({
         type: 'chunk-splitting',
-        message: Consider splitting large chunks: ,
+        message: `Consider splitting large chunks: ${largeChunks.map(c => c.name).join(', ')}`,
         impact: 'high'
       });
     }
@@ -130,7 +129,7 @@ class BuildAnalyzer {
     if (largeAssets.length > 0) {
       this.analysis.recommendations.push({
         type: 'asset-optimization',
-        message: Optimize large assets: ,
+        message: `Optimize large assets: ${largeAssets.map(a => a.name).join(', ')}`,
         impact: 'medium'
       });
     }

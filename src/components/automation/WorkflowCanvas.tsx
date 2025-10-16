@@ -29,6 +29,7 @@ import GenerateWorkflowModal from './GenerateWorkflowModal';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import NodeConfigPanel from './NodeConfigPanel';
 import NodeSidebar from './NodeSidebar';
+import SavedWorkflowsPanel from './SavedWorkflowsPanel';
 import WorkflowSimulationPanel from './WorkflowSimulationPanel';
 
 const initialNodes: Node[] = [
@@ -115,6 +116,9 @@ export default function WorkflowCanvas() {
   const [selectedNodeForConfig, setSelectedNodeForConfig] = useState<Node | null>(null);
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
+  // Saved workflows state
+  const [workflowsKey, setWorkflowsKey] = useState(0);
 
   // Workflow management hooks
   const { createWorkflow } = useWorkflows();
@@ -630,6 +634,19 @@ export default function WorkflowCanvas() {
     setShowGenerateModal(false);
   };
 
+  // Handler to load workflow from saved workflows panel
+  const handleLoadWorkflow = useCallback((nodes: Node[], edges: Edge[]) => {
+    setNodes(nodes);
+    setEdges(edges);
+    console.log('✅ Workflow caricato:', nodes.length, 'nodi');
+  }, [setNodes, setEdges]);
+
+  // Handler for workflow saved callback
+  const handleWorkflowSaved = useCallback(() => {
+    // Refresh workflows list
+    setWorkflowsKey(prev => prev + 1);
+  }, []);
+
   const handleSimulateWorkflow = async () => {
     if (nodes.length === 0) {
       alert('Il canvas è vuoto. Aggiungi dei nodi per simulare il workflow.');
@@ -731,6 +748,15 @@ export default function WorkflowCanvas() {
     <ReactFlowProvider>
       <div className="flex h-full">
         <NodeSidebar />
+        
+        {/* Saved Workflows Panel */}
+        <SavedWorkflowsPanel
+          key={workflowsKey}
+          onLoadWorkflow={handleLoadWorkflow}
+          currentNodes={nodes}
+          currentEdges={edges}
+          onWorkflowSaved={handleWorkflowSaved}
+        />
         
         <div className="flex flex-col flex-1">
           {/* Toolbar */}

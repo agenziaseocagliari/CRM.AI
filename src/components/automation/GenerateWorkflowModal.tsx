@@ -44,18 +44,30 @@ export default function GenerateWorkflowModal({
   // Check agent availability when modal opens
   const checkAgentHealth = async () => {
     try {
-      const url = import.meta.env.VITE_DATAPIZZA_API_URL || 
-                  (import.meta.env.PROD ? 'https://datapizza-production.railway.app' : 'http://localhost:8001');
+      // Use same URL logic as workflow service
+      const envVar = import.meta.env.VITE_DATAPIZZA_API_URL;
+      const isProduction = import.meta.env.PROD;
       
-      console.log('🔍 Checking agent at:', url);
+      let url: string;
+      if (envVar && envVar.trim()) {
+        url = envVar.trim();
+        console.log('🔍 Checking agent via env var:', url);
+      } else if (isProduction) {
+        url = 'https://datapizza-production.railway.app';
+        console.log('🔍 Checking agent via Railway (prod):', url);
+      } else {
+        url = 'http://localhost:8001';
+        console.log('🔍 Checking agent via localhost (dev):', url);
+      }
       
       const response = await fetch(`${url}/health`, {
         method: 'GET',
-        signal: AbortSignal.timeout(3000)
+        signal: AbortSignal.timeout(5000) // Increased timeout
       });
       
       if (response.ok) {
-        console.log('✅ Agent available');
+        const responseText = await response.text();
+        console.log('✅ Agent available - Response:', responseText);
         setAgentConnected(true);
       } else {
         console.warn('⚠️ Agent returned non-OK status');

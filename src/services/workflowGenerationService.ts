@@ -5,23 +5,35 @@
 
 import { Edge, Node } from '@xyflow/react';
 
-// ✅ CORRECT - Production-first approach
+// ✅ VERIFIED - Environment-aware URL selection
 const getDataPizzaURL = (): string => {
-  // Priority 1: Vite environment variable (set in Vercel)
-  if (import.meta.env.VITE_DATAPIZZA_API_URL) {
-    console.log('🔗 Using Vite env var');
-    return import.meta.env.VITE_DATAPIZZA_API_URL;
+  const envVar = import.meta.env.VITE_DATAPIZZA_API_URL;
+  const isProduction = import.meta.env.PROD;
+  const isDevelopment = import.meta.env.DEV;
+
+  // Priority 1: Explicit environment variable (Vercel setting)
+  if (envVar && envVar.trim()) {
+    console.log('🔗 Using explicit env var:', envVar);
+    return envVar.trim();
   }
 
-  // Priority 2: Production default (Railway)
-  if (import.meta.env.PROD) {
-    console.log('🔗 Using production default');
-    return 'https://datapizza-production.railway.app';
+  // Priority 2: Production mode - use Railway
+  if (isProduction) {
+    const railwayUrl = 'https://datapizza-production.railway.app';
+    console.log('🔗 Using production Railway:', railwayUrl);
+    return railwayUrl;
   }
 
-  // Priority 3: Local development
-  console.log('🔗 Using localhost for development');
-  return 'http://localhost:8001';
+  // Priority 3: Development mode - use localhost
+  if (isDevelopment) {
+    const localUrl = 'http://localhost:8001';
+    console.log('🔗 Using development localhost:', localUrl);
+    return localUrl;
+  }
+
+  // Fallback (should never reach here)
+  console.warn('⚠️ Unknown environment, defaulting to Railway');
+  return 'https://datapizza-production.railway.app';
 };
 
 const DATAPIZZA_BASE_URL = getDataPizzaURL();

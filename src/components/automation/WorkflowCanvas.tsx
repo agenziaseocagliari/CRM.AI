@@ -212,11 +212,28 @@ export default function WorkflowCanvas() {
       className: `node-${nodeDefinition.category}`,
     };
 
-    console.log('🎉 NEW NODE CREATED:', newNode);
+    console.log('🎉 NEW NODE CREATED:', {
+      id: newNode.id,
+      label: newNode.data.label,
+      position: newNode.position,
+      category: newNode.data.category
+    });
 
     setNodes((nds) => {
       const updated = nds.concat(newNode);
-      console.log('✅ Nodes updated. Total nodes:', updated.length);
+      console.log('✅ NODES STATE UPDATED:');
+      console.log(`   Previous count: ${nds.length}`);
+      console.log(`   New count: ${updated.length}`);
+      console.log('   All node IDs:', updated.map(n => n.id));
+      
+      // Verify the new node is in the array
+      const foundNode = updated.find(n => n.id === newNode.id);
+      if (foundNode) {
+        console.log('✅ NEW NODE CONFIRMED IN STATE:', foundNode.data.label);
+      } else {
+        console.error('❌ NEW NODE NOT FOUND IN STATE!');
+      }
+      
       return updated;
     });
   }, [reactFlowInstance, setNodes]);
@@ -229,8 +246,14 @@ export default function WorkflowCanvas() {
   // ReactFlow init handler with logging
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInit = useCallback((instance: any) => {
-    console.log('🚀 ReactFlow initialized:', instance ? 'SUCCESS' : 'FAILED');
-    setReactFlowInstance(instance);
+    const timestamp = new Date().toLocaleTimeString();
+    if (instance) {
+      console.log('🚀 ReactFlow initialized successfully at', timestamp);
+      console.log('📊 ReactFlow instance methods:', Object.keys(instance));
+      setReactFlowInstance(instance);
+    } else {
+      console.error('❌ ReactFlow initialization failed at', timestamp);
+    }
   }, []);
 
   const handleSaveWorkflow = async () => {

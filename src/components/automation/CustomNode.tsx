@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { Info } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 
 const NODE_DESCRIPTIONS: Record<string, string> = {
   'trigger-form-submit': 'Si attiva quando un utente invia un modulo sul sito web. Puoi specificare quale modulo monitorare.',
@@ -14,21 +14,74 @@ const NODE_DESCRIPTIONS: Record<string, string> = {
   'action-condition-if': 'Divide il workflow in base a una condizione. Es: se punteggio > 70, vai a path A, altrimenti B.',
 };
 
-export default function CustomNode({ data, selected }: NodeProps) {
+export default function CustomNode({ id, data, selected }: NodeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const nodeType = (data.nodeType as string) || '';
   const description = NODE_DESCRIPTIONS[nodeType] || 'Nessuna descrizione disponibile.';
   const isConfigured = data.config && Object.keys(data.config).length > 0;
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+  
+  const confirmDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Trigger node deletion via React Flow's API
+    const event = new CustomEvent('deleteNode', { detail: { nodeId: id } });
+    window.dispatchEvent(event);
+    setShowDeleteConfirm(false);
+  };
+  
+  const cancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(false);
+  };
+
   return (
     <div
-      className={`px-4 py-3 shadow-lg rounded-lg border-2 bg-white min-w-[180px] relative ${
+      className={`px-4 py-3 shadow-lg rounded-lg border-2 bg-white min-w-[180px] relative group ${
         selected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'
       }`}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
+      {/* Delete Button */}
+      {!showDeleteConfirm && (
+        <button
+          onClick={handleDeleteClick}
+          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Elimina nodo"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+      
+      {/* Delete Confirmation Popup */}
+      {showDeleteConfirm && (
+        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-white border-2 border-red-500 rounded-lg shadow-xl p-3 w-64">
+            <div className="text-sm font-medium mb-2">Eliminare questo nodo?</div>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+              >
+                Elimina
+              </button>
+              <button
+                onClick={cancelDelete}
+                className="flex-1 border border-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-50"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Handles */}
       {data.category !== 'trigger' && (
         <Handle type="target" position={Position.Left} className="w-3 h-3 bg-blue-500" />

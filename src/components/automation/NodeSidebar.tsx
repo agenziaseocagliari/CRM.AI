@@ -1,10 +1,44 @@
 import { NODE_LIBRARY, NodeDefinition } from '@/lib/nodes/nodeLibrary';
-import { Search } from 'lucide-react';
+import { Info, Search } from 'lucide-react';
 import React, { useState } from 'react';
+
+const NODE_DESCRIPTIONS: Record<string, string> = {
+  'trigger-form-submit': 'Si attiva quando un utente invia un modulo sul sito web. Puoi specificare quale modulo monitorare per avviare l\'automazione.',
+  'trigger-contact-created': 'Si attiva automaticamente quando viene creato un nuovo contatto nel CRM. Perfetto per email di benvenuto e onboarding.',
+  'trigger-deal-won': 'Si attiva quando un affare viene marcato come vinto. Ideale per follow-up post-vendita, richieste recensioni, upselling.',
+  'trigger-deal-lost': 'Si attiva quando un affare viene perso. Utile per survey e win-back campaigns.',
+  'trigger-email-received': 'Si attiva quando ricevi un\'email da un contatto. Può triggerare risposte automatiche o task assignment.',
+  'trigger-task-completed': 'Si attiva quando un\'attività viene completata. Utile per catene di task o notification ai manager.',
+  'trigger-schedule-time': 'Si attiva in base a un orario programmato (es: ogni giorno alle 9:00). Perfetto per report giornalieri.',
+  'trigger-webhook': 'Riceve dati da servizi esterni via HTTP POST. Integra qualsiasi app che supporti webhook.',
+  'trigger-contact-updated': 'Si attiva quando un contatto viene modificato. Utile per sincronizzazione dati o scoring dinamico.',
+  
+  'action-send-email': 'Invia un\'email personalizzata con variabili dinamiche come {{name}}, {{email}}, {{company}}. Supporta HTML e allegati.',
+  'action-ai-score': 'Calcola un punteggio AI (0-100) per il lead basato su engagement, fit aziendale, e intent signals.',
+  'action-ai-classify': 'Classifica automaticamente il contatto in categorie (Enterprise, SMB, Startup, Individual) usando AI.',
+  'action-ai-enrich': 'Arricchisce i dati del contatto con informazioni aziendali, social profiles, e technographics.',
+  'action-ai-sentiment': 'Analizza il sentiment di una email o messaggio (Positivo, Neutro, Negativo) per prioritizzazione.',
+  'action-create-deal': 'Crea un nuovo affare nel CRM con valore, fase, data di chiusura prevista, e assegnazione automatica.',
+  'action-update-deal': 'Aggiorna un affare esistente cambiando fase, valore, o altri campi. Utile per pipeline automation.',
+  'action-add-tag': 'Aggiunge uno o più tag al contatto per segmentazione avanzata. Es: "hot-lead", "webinar-attendee".',
+  'action-remove-tag': 'Rimuove tag specifici dal contatto. Utile per cleanup o cambio stato.',
+  'action-assign-user': 'Assegna il contatto o deal a un utente specifico del team. Supporta round-robin e territory-based.',
+  'action-create-task': 'Crea un\'attività per un membro del team con titolo, descrizione, data scadenza, e priorità.',
+  'action-wait': 'Mette in pausa il workflow per un periodo specifico (minuti, ore, giorni). Perfetto per drip campaigns.',
+  'action-wait-until': 'Attende fino a una data/ora specifica o fino a quando una condizione diventa vera.',
+  'action-condition-if': 'Divide il workflow in due path basato su una condizione. Es: se score > 70, vai a sales, altrimenti a nurture.',
+  'action-switch': 'Crea multiple branch basate su valori diversi. Es: routing per industry, company size, region.',
+  'action-loop-foreach': 'Itera su un array di elementi eseguendo azioni per ciascuno. Es: invia email a tutti i membri di un team.',
+  'action-webhook-call': 'Chiama un endpoint HTTP esterno con dati del workflow. Integra con qualsiasi API RESTful.',
+  'action-api-request': 'Esegue una richiesta API personalizzata (GET, POST, PUT, DELETE) con headers e body custom.',
+  'action-slack-message': 'Invia un messaggio a un canale Slack. Perfetto per notifiche team in real-time.',
+  'action-sms': 'Invia un SMS al numero del contatto. Richiede integrazione con Twilio o simili.',
+};
 
 export default function NodeSidebar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   // Get unique categories
   const categories = ['all', ...new Set(NODE_LIBRARY.map(n => n.category))];
@@ -77,7 +111,9 @@ export default function NodeSidebar() {
                   key={node.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, node)}
-                  className="p-3 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-all hover:border-blue-300 group"
+                  onMouseEnter={() => setHoveredNode(node.id)}
+                  onMouseLeave={() => setHoveredNode(null)}
+                  className="relative p-3 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-all hover:border-blue-300 group"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-xl" role="img" aria-label={node.label}>
@@ -90,11 +126,30 @@ export default function NodeSidebar() {
                       )}
                       <div className="text-xs text-gray-400 mt-1">{node.category}</div>
                     </div>
-                    <div 
-                      className="w-3 h-3 rounded-full opacity-60 group-hover:opacity-100 transition-opacity"
-                      style={{ backgroundColor: node.color }}
-                    />
+                    <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </div>
+
+                  {/* Tooltip */}
+                  {hoveredNode === node.id && (
+                    <div className="absolute left-full ml-2 top-0 z-50 w-80">
+                      <div className="bg-gray-900 text-white text-sm rounded-lg py-3 px-4 shadow-2xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xl">{node.icon}</span>
+                          <div className="font-semibold">{node.label}</div>
+                        </div>
+                        <div className="text-gray-300 mb-2">
+                          {NODE_DESCRIPTIONS[node.id] || 'Nessuna descrizione disponibile.'}
+                        </div>
+                        <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
+                          💡 Trascina sul canvas per aggiungere
+                        </div>
+                        {/* Arrow pointing left */}
+                        <div className="absolute right-full top-4">
+                          <div className="border-8 border-transparent border-r-gray-900" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -113,7 +168,9 @@ export default function NodeSidebar() {
                   key={node.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, node)}
-                  className="p-3 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-all hover:border-green-300 group"
+                  onMouseEnter={() => setHoveredNode(node.id)}
+                  onMouseLeave={() => setHoveredNode(null)}
+                  className="relative p-3 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-all hover:border-green-300 group"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-xl" role="img" aria-label={node.label}>
@@ -126,11 +183,30 @@ export default function NodeSidebar() {
                       )}
                       <div className="text-xs text-gray-400 mt-1">{node.category}</div>
                     </div>
-                    <div 
-                      className="w-3 h-3 rounded-full opacity-60 group-hover:opacity-100 transition-opacity"
-                      style={{ backgroundColor: node.color }}
-                    />
+                    <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </div>
+
+                  {/* Tooltip */}
+                  {hoveredNode === node.id && (
+                    <div className="absolute left-full ml-2 top-0 z-50 w-80">
+                      <div className="bg-gray-900 text-white text-sm rounded-lg py-3 px-4 shadow-2xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xl">{node.icon}</span>
+                          <div className="font-semibold">{node.label}</div>
+                        </div>
+                        <div className="text-gray-300 mb-2">
+                          {NODE_DESCRIPTIONS[node.id] || 'Nessuna descrizione disponibile.'}
+                        </div>
+                        <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
+                          💡 Trascina sul canvas per aggiungere
+                        </div>
+                        {/* Arrow pointing left */}
+                        <div className="absolute right-full top-4">
+                          <div className="border-8 border-transparent border-r-gray-900" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

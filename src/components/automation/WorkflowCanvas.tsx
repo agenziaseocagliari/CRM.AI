@@ -1,5 +1,6 @@
 import type { NodeDefinition } from '@/lib/nodes/nodeLibrary';
 import { useWorkflows } from '@/lib/workflowApi';
+import { WorkflowExecutionEngine } from '@/lib/workflowExecutionEngine';
 import { ExecutionResult, ExecutionStep, WorkflowExecutor } from '@/lib/workflowExecutor';
 import { SimulationResult, SimulationStep, WorkflowSimulator } from '@/lib/workflowSimulator';
 import {
@@ -18,8 +19,8 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Beaker, Play, Save, Sparkles, Trash2, Undo, Redo, AlertTriangle } from 'lucide-react';
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { AlertTriangle, Beaker, Play, Redo, Save, Sparkles, Trash2, Undo } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import '../../styles/workflowCanvas.css';
 import CustomNode from './CustomNode';
@@ -257,6 +258,20 @@ export default function WorkflowCanvas() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSaveWorkflow, nodes, edges, onNodesDelete, onEdgesDelete, setNodes, setEdges, undo, redo, takeSnapshot]);
+
+  // Delete node event listener for custom node X button
+  useEffect(() => {
+    const handleDeleteNode = (event: CustomEvent<{ nodeId: string }>) => {
+      const nodeId = event.detail.nodeId;
+      takeSnapshot(); // Save state for undo
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+      console.log('🗑️ Node deleted via X button:', nodeId);
+    };
+    
+    window.addEventListener('deleteNode', handleDeleteNode as EventListener);
+    return () => window.removeEventListener('deleteNode', handleDeleteNode as EventListener);
+  }, [setNodes, setEdges, takeSnapshot]);
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -551,6 +566,49 @@ export default function WorkflowCanvas() {
 
   // handleClearCanvas is already defined above with useCallback
 
+  const handleExecuteWorkflow = async () => {
+    if (nodes.length === 0) {
+      alert('Canvas vuoto. Aggiungi nodi prima di eseguire.');
+      return;
+    }
+    
+    // Test with Silvestro Sanna contact
+    const testContact = {
+      contactId: '123', // Real ID from database
+      name: 'Silvestro Sanna',
+      email: 'silvestro.sanna@example.com',
+      phone: '+39 XXX XXX XXXX',
+    };
+    
+    try {
+      console.log('🚀 Starting workflow execution with test contact:', testContact);
+      
+      const engine = new WorkflowExecutionEngine({
+        workflowId: 'test-workflow-' + Date.now(),
+        organizationId: 'test-org-123',
+        triggerData: testContact,
+      });
+      
+      const logs = await engine.execute(nodes, edges);
+      
+      console.log('✅ Workflow execution complete:', logs);
+      
+      // Show detailed results
+      const successSteps = logs.filter(l => l.status === 'success').length;
+      const errorSteps = logs.filter(l => l.status === 'error').length;
+      
+      if (errorSteps === 0) {
+        alert(`✅ Workflow eseguito con successo!\n${successSteps} passi completati\nContatto: ${testContact.name}\nControlla console per dettagli`);
+      } else {
+        alert(`⚠️ Workflow completato con errori\n${successSteps} riusciti, ${errorSteps} falliti\nContatto: ${testContact.name}\nControlla console per dettagli`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Workflow execution failed:', error);
+      alert('❌ Errore nell\'esecuzione: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
+    }
+  };
+
   const handleGeneratedWorkflow = (nodes: Node[], edges: Edge[]) => {
     // Add generated nodes and edges to canvas
     setNodes(nodes);
@@ -696,6 +754,16 @@ export default function WorkflowCanvas() {
             >
               <Beaker className="w-4 h-4 mr-2" />
               {isSimulating ? 'Simulazione...' : 'Simula Workflow'}
+            </button>
+
+            <button
+              onClick={handleExecuteWorkflow}
+              disabled={nodes.length === 0}
+              className="flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Test real execution with Silvestro Sanna contact"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              ▶️ Test Execute (Silvestro)
             </button>
             
             <button

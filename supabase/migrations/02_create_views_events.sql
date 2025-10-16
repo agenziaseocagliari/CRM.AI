@@ -10,13 +10,13 @@ CREATE VIEW dashboard_events AS
 SELECT
     id,
     title,
-    start_time AS start_date,  -- ✅ Alias start_time to start_date for dashboard
+    start_time AS start_date, -- ✅ Alias start_time to start_date for dashboard
     created_at,
     organization_id
 FROM events;
 
 -- Set security invoker
-ALTER VIEW dashboard_events SET (security_invoker = true);
+ALTER VIEW dashboard_events SET(security_invoker = true);
 
 -- Add comment for documentation
 COMMENT ON VIEW dashboard_events IS 'Dashboard view: aliases start_time to start_date for dashboard compatibility';
@@ -29,11 +29,12 @@ COMMENT ON VIEW dashboard_events IS 'Dashboard view: aliases start_time to start
 SELECT 'dashboard_events VIEW created successfully ✅' AS status;
 
 -- Check view structure
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'dashboard_events' 
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE
+    table_name = 'dashboard_events'
 ORDER BY ordinal_position;
 
 -- Test view works (should show count)
-SELECT 'Record count in dashboard_events:' AS info, COUNT(*) AS count 
+SELECT 'Record count in dashboard_events:' AS info, COUNT(*) AS count
 FROM dashboard_events;

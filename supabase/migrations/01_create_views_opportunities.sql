@@ -9,7 +9,7 @@ DROP VIEW IF EXISTS dashboard_opportunities CASCADE;
 CREATE VIEW dashboard_opportunities AS
 SELECT
     id,
-    contact_name AS name,  -- ✅ Alias contact_name to name for dashboard
+    contact_name AS name, -- ✅ Alias contact_name to name for dashboard
     stage,
     value,
     created_at,
@@ -18,7 +18,7 @@ SELECT
 FROM opportunities;
 
 -- Set security invoker
-ALTER VIEW dashboard_opportunities SET (security_invoker = true);
+ALTER VIEW dashboard_opportunities SET(security_invoker = true);
 
 -- Add comment for documentation
 COMMENT ON VIEW dashboard_opportunities IS 'Dashboard view: aliases contact_name to name for dashboard compatibility';
@@ -31,11 +31,12 @@ COMMENT ON VIEW dashboard_opportunities IS 'Dashboard view: aliases contact_name
 SELECT 'dashboard_opportunities VIEW created successfully ✅' AS status;
 
 -- Check view structure
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'dashboard_opportunities' 
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE
+    table_name = 'dashboard_opportunities'
 ORDER BY ordinal_position;
 
 -- Test view works (should show count)
-SELECT 'Record count in dashboard_opportunities:' AS info, COUNT(*) AS count 
+SELECT 'Record count in dashboard_opportunities:' AS info, COUNT(*) AS count
 FROM dashboard_opportunities;

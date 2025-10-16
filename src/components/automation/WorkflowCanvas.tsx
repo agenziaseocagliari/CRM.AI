@@ -746,19 +746,11 @@ export default function WorkflowCanvas() {
 
   return (
     <ReactFlowProvider>
-      <div className="flex h-full">
-        <NodeSidebar />
-        
-        {/* Saved Workflows Panel */}
-        <SavedWorkflowsPanel
-          key={workflowsKey}
-          onLoadWorkflow={handleLoadWorkflow}
-          currentNodes={nodes}
-          currentEdges={edges}
-          onWorkflowSaved={handleWorkflowSaved}
-        />
-        
-        <div className="flex flex-col flex-1">
+      <div className="flex flex-col h-full">
+        {/* Top section with sidebar and canvas */}
+        <div className="flex flex-1 min-h-0">
+          <NodeSidebar />
+          <div className="flex flex-col flex-1">
           {/* Toolbar */}
           <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2">
             <button
@@ -914,13 +906,24 @@ export default function WorkflowCanvas() {
             </ReactFlow>
           </div>
         </div>
-      </div>
 
-      {/* Instructions */}  
-      <div className="bg-blue-50 border-t border-blue-200 p-3 text-sm text-blue-800">
-        💡 <strong>Suggerimenti Enterprise:</strong> Trascina nodi dalla sidebar | Doppio-click per configurare | 
-        Seleziona + Canc per eliminare | Connetti trascinando dai punti di connessione | 
-        Ctrl+S per salvare | Ctrl+Z/Y per annulla/ripeti | Hover sui nodi per info
+        {/* Saved Workflows Panel - Bottom Section */}
+        <div className="border-t border-gray-200 bg-gray-50">
+          <SavedWorkflowsPanel
+            key={workflowsKey}
+            onLoadWorkflow={handleLoadWorkflow}
+            currentNodes={nodes}
+            currentEdges={edges}
+            onWorkflowSaved={handleWorkflowSaved}
+          />
+        </div>
+
+        {/* Instructions */}  
+        <div className="bg-blue-50 border-t border-blue-200 p-3 text-sm text-blue-800">
+          💡 <strong>Suggerimenti Enterprise:</strong> Trascina nodi dalla sidebar | Doppio-click per configurare | 
+          Seleziona + Canc per eliminare | Connetti trascinando dai punti di connessione | 
+          Ctrl+S per salvare | Ctrl+Z/Y per annulla/ripeti | Hover sui nodi per info
+        </div>
       </div>
 
       {/* AI Generation Modal */}

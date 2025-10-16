@@ -24,7 +24,7 @@
 
 ### Step 2: Create dashboard_events VIEW
 
-1. **Copy all content** from `02_create_views_events.sql`  
+1. **Copy all content** from `02_create_views_events.sql`
 2. **Paste and RUN** in SQL Editor
 3. **Expected Output**:
    ```
@@ -38,14 +38,15 @@
 ### Step 3: Complete Verification
 
 1. **Copy all content** from `03_verify_all_objects.sql`
-2. **Paste and RUN** in SQL Editor  
+2. **Paste and RUN** in SQL Editor
 3. **Expected Output**:
+
    ```
    table_name               | table_type  | object_status
    dashboard_events         | VIEW        | ✅ VIEW
-   dashboard_opportunities  | VIEW        | ✅ VIEW  
+   dashboard_opportunities  | VIEW        | ✅ VIEW
    form_submissions        | BASE TABLE  | ✅ TABLE
-   
+
    Final status: "🎯 DASHBOARD MIGRATION COMPLETE - Test your dashboard now!"
    ```
 
@@ -56,7 +57,7 @@
 After completing all 3 steps, you should have:
 
 - ✅ **dashboard_opportunities** VIEW with `name` column (aliased from `contact_name`)
-- ✅ **dashboard_events** VIEW with `start_date` column (aliased from `start_time`)  
+- ✅ **dashboard_events** VIEW with `start_date` column (aliased from `start_time`)
 - ✅ **form_submissions** TABLE (already exists from previous run)
 
 ---
@@ -76,8 +77,9 @@ After migration:
 ## 📋 REPORT BACK
 
 After execution, please share:
+
 1. **Output from Step 3** (verification results)
-2. **Any errors** encountered during execution  
+2. **Any errors** encountered during execution
 3. **Dashboard test results** (console errors cleared?)
 
 ---

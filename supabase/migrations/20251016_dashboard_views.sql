@@ -10,7 +10,7 @@
 CREATE OR REPLACE VIEW dashboard_opportunities AS
 SELECT
     id,
-    contact_name AS name,  -- ✅ Alias to match dashboard expectations
+    contact_name AS name, -- ✅ Alias to match dashboard expectations
     stage,
     value,
     created_at,
@@ -18,12 +18,12 @@ SELECT
     organization_id
 FROM opportunities;
 
--- Dashboard Events View - Maps start_time to start_date  
+-- Dashboard Events View - Maps start_time to start_date
 CREATE OR REPLACE VIEW dashboard_events AS
 SELECT
     id,
     title,
-    start_time AS start_date,  -- ✅ Alias to match dashboard expectations
+    start_time AS start_date, -- ✅ Alias to match dashboard expectations
     created_at,
     organization_id
 FROM events;
@@ -34,8 +34,8 @@ FROM events;
 
 -- Form Submissions Table (was missing causing 404)
 CREATE TABLE IF NOT EXISTS form_submissions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    form_id UUID REFERENCES forms(id) ON DELETE CASCADE,
+    id UUID DEFAULT gen_random_uuid () PRIMARY KEY,
+    form_id UUID REFERENCES forms (id) ON DELETE CASCADE,
     organization_id UUID NOT NULL,
     form_name TEXT,
     submitted_data JSONB,
@@ -49,14 +49,11 @@ CREATE TABLE IF NOT EXISTS form_submissions (
 -- 3. INDEXES FOR PERFORMANCE
 -- =======================
 
-CREATE INDEX IF NOT EXISTS idx_form_submissions_org 
-ON form_submissions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_org ON form_submissions (organization_id);
 
-CREATE INDEX IF NOT EXISTS idx_form_submissions_form 
-ON form_submissions(form_id);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_form ON form_submissions (form_id);
 
-CREATE INDEX IF NOT EXISTS idx_form_submissions_created 
-ON form_submissions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_created ON form_submissions (created_at DESC);
 
 -- =======================
 -- 4. ROW LEVEL SECURITY
@@ -66,16 +63,19 @@ ON form_submissions(created_at DESC);
 ALTER TABLE form_submissions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy for form_submissions
-CREATE POLICY "org_access_form_submissions" ON form_submissions
-FOR ALL USING (
+CREATE POLICY "org_access_form_submissions" ON form_submissions FOR ALL USING (
     organization_id IN (
-        SELECT organization_id FROM profiles WHERE id = auth.uid()
+        SELECT organization_id
+        FROM profiles
+        WHERE
+            id = auth.uid ()
     )
 );
 
 -- Views inherit RLS from base tables, but set security invoker for clarity
-ALTER VIEW dashboard_opportunities SET (security_invoker = true);
-ALTER VIEW dashboard_events SET (security_invoker = true);
+ALTER VIEW dashboard_opportunities SET(security_invoker = true);
+
+ALTER VIEW dashboard_events SET(security_invoker = true);
 
 -- =======================
 -- 5. PERMISSIONS
@@ -107,6 +107,11 @@ CREATE TRIGGER form_submissions_updated_at
 -- =======================
 
 -- Test views work correctly
-SELECT 'dashboard_opportunities' as table_name, count(*) as record_count FROM dashboard_opportunities;
-SELECT 'dashboard_events' as table_name, count(*) as record_count FROM dashboard_events;
-SELECT 'form_submissions' as table_name, count(*) as record_count FROM form_submissions;
+SELECT 'dashboard_opportunities' as table_name, count(*) as record_count
+FROM dashboard_opportunities;
+
+SELECT 'dashboard_events' as table_name, count(*) as record_count
+FROM dashboard_events;
+
+SELECT 'form_submissions' as table_name, count(*) as record_count
+FROM form_submissions;

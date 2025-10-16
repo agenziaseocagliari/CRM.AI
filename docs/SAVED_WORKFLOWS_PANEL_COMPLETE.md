@@ -12,7 +12,7 @@
 
 1. **Open Supabase SQL Editor**
 2. **Copy and execute** the complete SQL from `supabase/migrations/20251016_workflows_table.sql`
-3. **Expected Output**: 
+3. **Expected Output**:
    ```
    status: "workflows table created successfully ✅"
    Column listing showing: id, name, description, organization_id, created_by, nodes, edges, is_active, created_at, updated_at
@@ -35,12 +35,14 @@
 ## ✅ FEATURES IMPLEMENTED
 
 ### 🎨 Visual Layout
+
 - **Panel width**: 320px (collapsible to 48px)
 - **Position**: Between node sidebar and canvas
 - **Responsive**: Clean mobile-friendly design
 - **Collapsible**: Hide/show with chevron buttons
 
 ### 🔧 Core Features
+
 - **Save Current Workflow**: Prompts for name, saves nodes+edges to database
 - **Load Workflow**: Click "Carica" → loads to canvas (with confirmation)
 - **Edit Name**: Click edit icon → inline editing with save/cancel
@@ -49,12 +51,14 @@
 - **Toggle Active/Inactive**: Visual status indicator with toggle
 
 ### 🗄️ Database Integration
+
 - **Table**: `workflows` with proper RLS policies
 - **Organization-scoped**: Users only see workflows from their org
-- **User-owned**: Only creators can edit/delete their workflows  
+- **User-owned**: Only creators can edit/delete their workflows
 - **Auto-timestamps**: `created_at` and `updated_at` managed automatically
 
 ### 🔒 Security
+
 - **RLS Policies**: Organization and user-based access control
 - **Type Safety**: Full TypeScript interfaces
 - **Error Handling**: Graceful handling of DB errors
@@ -65,24 +69,28 @@
 ## 🎯 SUCCESS CRITERIA
 
 ### ✅ Panel Display
+
 - [ ] Panel visible between sidebar and canvas
 - [ ] Collapsible functionality works
 - [ ] Clean, professional UI design
 - [ ] Shows "No workflows" state when empty
 
-### ✅ Save Functionality  
+### ✅ Save Functionality
+
 - [ ] "Salva Workflow Corrente" button works
 - [ ] Prompts for workflow name
 - [ ] Saves to database successfully
 - [ ] Refreshes panel after save
 
 ### ✅ Load Functionality
+
 - [ ] "Carica" button loads workflow to canvas
 - [ ] Confirmation dialog before overwriting
 - [ ] Nodes and edges loaded correctly
 - [ ] Console shows success message
 
 ### ✅ Management Features
+
 - [ ] Edit name works (inline editing)
 - [ ] Duplicate creates copy with "(Copia)" suffix
 - [ ] Delete removes from database
@@ -90,6 +98,7 @@
 - [ ] All actions refresh the list
 
 ### ✅ Database Integration
+
 - [ ] Workflows table created successfully
 - [ ] RLS policies work (organization-scoped)
 - [ ] Only user's workflows visible
@@ -100,6 +109,7 @@
 ## 🚀 USAGE INSTRUCTIONS
 
 ### Creating First Workflow
+
 1. **Drag nodes** from sidebar to canvas
 2. **Connect nodes** by dragging between connection points
 3. **Click "Salva Workflow Corrente"**
@@ -107,6 +117,7 @@
 5. **Verify** workflow appears in panel
 
 ### Managing Workflows
+
 - **Load**: Click "Carica" → Confirm → Workflow loads to canvas
 - **Rename**: Click edit icon → Type new name → Click checkmark
 - **Duplicate**: Click copy icon → Creates duplicate with "(Copia)"
@@ -114,6 +125,7 @@
 - **Toggle Status**: Click status badge to toggle active/inactive
 
 ### Panel Controls
+
 - **Collapse**: Click left arrow to minimize panel
 - **Expand**: Click right arrow to show full panel
 - **Refresh**: Panel auto-refreshes after any change

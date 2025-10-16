@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import type { Edge, Node } from '@xyflow/react';
 import {
-  FileText,
-  Edit2,
-  Copy,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Check,
-  X
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Copy,
+    Edit2,
+    FileText,
+    Plus,
+    Trash2,
+    X
 } from 'lucide-react';
-import type { Node, Edge } from '@xyflow/react';
+import { useEffect, useState } from 'react';
 
 interface SavedWorkflow {
   id: string;
@@ -48,25 +48,30 @@ export default function SavedWorkflowsPanel({
   }, []);
 
   const loadWorkflows = async () => {
+    console.log('🔍 Loading workflows...');
     setLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('❌ No authenticated user for loading');
         setLoading(false);
         return;
       }
+      console.log('✅ User for loading:', user.id);
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
         .single();
 
-      if (!profile) {
+      if (profileError || !profile) {
+        console.error('❌ Failed to get organization_id:', profileError);
         setLoading(false);
         return;
       }
+      console.log('✅ Loading for organization:', profile.organization_id);
 
       const { data, error } = await supabase
         .from('workflows')
@@ -75,8 +80,12 @@ export default function SavedWorkflowsPanel({
         .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading workflows:', error);
+        console.error('❌ Error loading workflows:', error);
+        console.error(' Code:', error.code);
+        console.error(' Message:', error.message);
       } else {
+        console.log('✅ Workflows loaded:', data?.length || 0, 'workflows');
+        console.log(' Data:', data);
         setWorkflows(data || []);
       }
     } catch (error) {
@@ -95,37 +104,63 @@ export default function SavedWorkflowsPanel({
     const name = prompt('Nome workflow:', 'Nuovo Workflow');
     if (!name) return;
 
+    console.log('🔍 Starting workflow save...');
+    console.log(' - Nodes count:', currentNodes.length);
+    console.log(' - Edges count:', currentEdges.length);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.error('❌ No authenticated user');
+        return;
+      }
+      console.log('✅ User authenticated:', user.id);
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
         .single();
 
-      if (!profile) return;
+      if (profileError || !profile) {
+        console.error('❌ Failed to get organization_id:', profileError);
+        return;
+      }
+      console.log('✅ Organization ID:', profile.organization_id);
 
-      const { error } = await supabase
+      const workflowData = {
+        name,
+        organization_id: profile.organization_id,
+        created_by: user.id,
+        nodes: currentNodes,
+        edges: currentEdges,
+        is_active: false,
+      };
+
+      console.log('📤 Inserting workflow:', workflowData);
+
+      const { data: insertedData, error } = await supabase
         .from('workflows')
-        .insert({
-          name,
-          organization_id: profile.organization_id,
-          created_by: user.id,
-          nodes: currentNodes,
-          edges: currentEdges,
-          is_active: false,
-        });
+        .insert(workflowData)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Error saving workflow:', error);
-        alert('❌ Errore nel salvare il workflow');
-      } else {
-        alert('✅ Workflow salvato!');
-        loadWorkflows();
-        onWorkflowSaved();
+        console.error('❌ Error saving workflow:', error);
+        console.error(' Code:', error.code);
+        console.error(' Message:', error.message);
+        console.error(' Details:', error.details);
+        alert('❌ Errore nel salvare il workflow: ' + error.message);
+        return;
       }
+
+      console.log('✅ Workflow saved successfully:', insertedData);
+      alert('✅ Workflow salvato!');
+
+      // Force reload
+      console.log('🔄 Reloading workflows list...');
+      await loadWorkflows();
+      onWorkflowSaved();
     } catch (error) {
       console.error('Error in handleSaveNew:', error);
       alert('❌ Errore nel salvare il workflow');
@@ -233,147 +268,151 @@ export default function SavedWorkflowsPanel({
 
   if (isCollapsed) {
     return (
-      <div className="w-12 bg-gray-50 border-r border-gray-200 flex flex-col items-center py-4">
+      <div className="h-12 bg-gray-50 border-t border-gray-200 flex items-center justify-center">
         <button
           onClick={() => setIsCollapsed(false)}
-          className="p-2 hover:bg-gray-200 rounded"
-          title="Mostra workflow"
+          className="px-4 py-2 hover:bg-gray-200 rounded flex items-center gap-2"
+          title="Mostra workflow salvati"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4 rotate-[-90deg]" />
+          <span className="text-sm text-gray-600">Mostra I Miei Workflow ({workflows.length})</span>
         </button>
-        <div className="mt-4 transform -rotate-90 whitespace-nowrap text-sm text-gray-600">
-          Workflow
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
+    <div className="h-64 bg-white border-t border-gray-200 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          I Miei Workflow
-        </h3>
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <div className="flex items-center gap-4">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            I Miei Workflow ({workflows.length})
+          </h3>
+
+          <button
+            onClick={handleSaveNew}
+            className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Salva Workflow Corrente
+          </button>
+        </div>
+
         <button
           onClick={() => setIsCollapsed(true)}
-          className="p-1 hover:bg-gray-100 rounded"
+          className="p-1 hover:bg-gray-200 rounded"
           title="Nascondi"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4 rotate-[-90deg]" />
         </button>
       </div>
 
-      {/* Save Current Button */}
-      <div className="p-3 border-b border-gray-200">
-        <button
-          onClick={handleSaveNew}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Salva Workflow Corrente
-        </button>
-      </div>
-
-      {/* Workflows List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      {/* Workflows Horizontal Scroll */}
+      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
         {loading ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="h-full flex items-center justify-center text-gray-500">
             Caricamento...
           </div>
         ) : workflows.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">
-            <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
+            <FileText className="w-12 h-12 mb-2 opacity-50" />
             <p>Nessun workflow salvato</p>
             <p className="mt-1">Crea e salva il tuo primo workflow!</p>
           </div>
         ) : (
-          workflows.map(workflow => (
-            <div
-              key={workflow.id}
-              className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow bg-white"
-            >
-              {/* Workflow Name */}
-              {editingId === workflow.id ? (
-                <div className="flex items-center gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 px-2 py-1 border rounded text-sm"
-                    autoFocus
-                  />
+          <div className="flex gap-4 h-full">
+            {workflows.map(workflow => (
+              <div
+                key={workflow.id}
+                className="min-w-[280px] w-[280px] border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow bg-white flex-shrink-0"
+              >
+                {/* Workflow Name */}
+                {editingId === workflow.id ? (
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="flex-1 px-2 py-1 border rounded text-sm"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleSaveEdit(workflow.id)}
+                      className="p-1 text-green-600 hover:bg-green-50 rounded"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between mb-3">
+                    <h4 className="font-medium text-sm text-gray-900 flex-1 line-clamp-2">
+                      {workflow.name}
+                    </h4>
+                    <button
+                      onClick={() => handleToggleActive(workflow.id, workflow.is_active)}
+                      className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-2 ${
+                        workflow.is_active
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {workflow.is_active ? '🟢 Attivo' : '⚫ Inattivo'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Workflow Info */}
+                <div className="text-xs text-gray-500 mb-4 space-y-1">
+                  <div>📊 {workflow.nodes?.length || 0} nodi · {workflow.edges?.length || 0} connessioni</div>
+                  <div>📅 {new Date(workflow.updated_at).toLocaleDateString('it-IT', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}</div>
+                </div>
+
+                {/* Actions */}
+                <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => handleSaveEdit(workflow.id)}
-                    className="p-1 text-green-600 hover:bg-green-50 rounded"
+                    onClick={() => handleLoad(workflow)}
+                    className="col-span-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
                   >
-                    <Check className="w-4 h-4" />
+                    Carica Workflow
                   </button>
                   <button
-                    onClick={handleCancelEdit}
-                    className="p-1 text-red-600 hover:bg-red-50 rounded"
+                    onClick={() => handleStartEdit(workflow)}
+                    className="px-2 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-xs flex items-center justify-center gap-1"
                   >
-                    <X className="w-4 h-4" />
+                    <Edit2 className="w-3 h-3" />
+                    Rinomina
+                  </button>
+                  <button
+                    onClick={() => handleDuplicate(workflow)}
+                    className="px-2 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-xs flex items-center justify-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Duplica
+                  </button>
+                  <button
+                    onClick={() => handleDelete(workflow.id, workflow.name)}
+                    className="col-span-2 px-2 py-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 text-xs flex items-center justify-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Elimina Workflow
                   </button>
                 </div>
-              ) : (
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-medium text-sm text-gray-900 flex-1">
-                    {workflow.name}
-                  </h4>
-                  <button
-                    onClick={() => handleToggleActive(workflow.id, workflow.is_active)}
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      workflow.is_active
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {workflow.is_active ? '🟢 Attivo' : '⚫ Inattivo'}
-                  </button>
-                </div>
-              )}
-
-              {/* Workflow Info */}
-              <div className="text-xs text-gray-500 mb-3 space-y-1">
-                <div>📊 {workflow.nodes?.length || 0} nodi</div>
-                <div>📅 {new Date(workflow.updated_at).toLocaleDateString('it-IT')}</div>
               </div>
-
-              {/* Actions */}
-              <div className="flex gap-1">
-                <button
-                  onClick={() => handleLoad(workflow)}
-                  className="flex-1 px-2 py-1.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 text-xs font-medium"
-                  title="Carica workflow"
-                >
-                  Carica
-                </button>
-                <button
-                  onClick={() => handleStartEdit(workflow)}
-                  className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                  title="Rinomina"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => handleDuplicate(workflow)}
-                  className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                  title="Duplica"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(workflow.id, workflow.name)}
-                  className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                  title="Elimina"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>

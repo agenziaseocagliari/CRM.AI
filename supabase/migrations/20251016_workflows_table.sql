@@ -6,11 +6,11 @@
 
 -- Create workflows table if doesn't exist
 CREATE TABLE IF NOT EXISTS workflows (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid () PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
     organization_id UUID NOT NULL,
-    created_by UUID REFERENCES auth.users(id),
+    created_by UUID REFERENCES auth.users (id),
     nodes JSONB NOT NULL DEFAULT '[]',
     edges JSONB NOT NULL DEFAULT '[]',
     is_active BOOLEAN DEFAULT false,
@@ -22,10 +22,13 @@ CREATE TABLE IF NOT EXISTS workflows (
 -- INDEXES FOR PERFORMANCE
 -- =======================
 
-CREATE INDEX IF NOT EXISTS idx_workflows_org ON workflows(organization_id);
-CREATE INDEX IF NOT EXISTS idx_workflows_user ON workflows(created_by);
-CREATE INDEX IF NOT EXISTS idx_workflows_active ON workflows(is_active);
-CREATE INDEX IF NOT EXISTS idx_workflows_created ON workflows(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_workflows_org ON workflows (organization_id);
+
+CREATE INDEX IF NOT EXISTS idx_workflows_user ON workflows (created_by);
+
+CREATE INDEX IF NOT EXISTS idx_workflows_active ON workflows (is_active);
+
+CREATE INDEX IF NOT EXISTS idx_workflows_created ON workflows (created_at DESC);
 
 -- =======================
 -- ROW LEVEL SECURITY
@@ -40,32 +43,43 @@ ALTER TABLE workflows ENABLE ROW LEVEL SECURITY;
 
 -- Policy for SELECT: Users can see workflows from their organization
 DROP POLICY IF EXISTS "org_workflows_select" ON workflows;
-CREATE POLICY "org_workflows_select" ON workflows
-FOR SELECT USING (
-    organization_id IN (
-        SELECT organization_id FROM profiles WHERE id = auth.uid()
-    )
-);
+
+CREATE POLICY "org_workflows_select" ON workflows FOR
+SELECT USING (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+    );
 
 -- Policy for INSERT: Users can create workflows in their organization
 DROP POLICY IF EXISTS "org_workflows_insert" ON workflows;
-CREATE POLICY "org_workflows_insert" ON workflows
-FOR INSERT WITH CHECK (
-    organization_id IN (
-        SELECT organization_id FROM profiles WHERE id = auth.uid()
-    )
-    AND created_by = auth.uid()
-);
+
+CREATE POLICY "org_workflows_insert" ON workflows FOR
+INSERT
+WITH
+    CHECK (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+        AND created_by = auth.uid ()
+    );
 
 -- Policy for UPDATE: Users can only update their own workflows
 DROP POLICY IF EXISTS "own_workflows_update" ON workflows;
-CREATE POLICY "own_workflows_update" ON workflows
-FOR UPDATE USING (created_by = auth.uid());
+
+CREATE POLICY "own_workflows_update" ON workflows FOR
+UPDATE USING (created_by = auth.uid ());
 
 -- Policy for DELETE: Users can only delete their own workflows
 DROP POLICY IF EXISTS "own_workflows_delete" ON workflows;
-CREATE POLICY "own_workflows_delete" ON workflows
-FOR DELETE USING (created_by = auth.uid());
+
+CREATE POLICY "own_workflows_delete" ON workflows FOR DELETE USING (created_by = auth.uid ());
 
 -- =======================
 -- TRIGGER FOR AUTO-UPDATING
@@ -93,7 +107,11 @@ CREATE TRIGGER workflows_updated_at
 SELECT 'workflows table created successfully ✅' AS status;
 
 -- Check table structure
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns 
-WHERE table_name = 'workflows' 
+SELECT
+    column_name,
+    data_type,
+    is_nullable
+FROM information_schema.columns
+WHERE
+    table_name = 'workflows'
 ORDER BY ordinal_position;

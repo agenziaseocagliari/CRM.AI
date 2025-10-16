@@ -751,8 +751,8 @@ export default function WorkflowCanvas() {
         <div className="flex flex-1 min-h-0">
           <NodeSidebar />
           <div className="flex flex-col flex-1">
-          {/* Toolbar */}
-          <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+            {/* Toolbar */}
+            <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2">
             <button
               onClick={() => setShowGenerateModal(true)}
               className="flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
@@ -843,67 +843,68 @@ export default function WorkflowCanvas() {
                 </span>
               )}
             </div>
-          </div>
+            </div>
 
-          {/* Canvas */}
-          <div ref={reactFlowWrapper} className="flex-1 relative">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={{ default: CustomNode, input: CustomNode }}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodesDelete={onNodesDelete}
-              onEdgesDelete={onEdgesDelete}
-              onNodeDoubleClick={onNodeDoubleClick}
-              onInit={handleInit}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              fitView
-              nodesDraggable={true}
-              nodesConnectable={true}
-              elementsSelectable={true}
-              selectNodesOnDrag={false}
-              deleteKeyCode={['Delete', 'Backspace']}
-              className="bg-gradient-to-br from-gray-50 to-gray-100"
-              defaultEdgeOptions={{
-                type: 'smoothstep',
-                animated: true,
-                style: { 
-                  stroke: '#6366f1', 
-                  strokeWidth: 2,
-                  filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))'
-                }
-              }}
-              connectionLineStyle={{
-                stroke: '#6366f1',
-                strokeWidth: 2,
-                strokeDasharray: '5,5'
-              }}
-            >
-              <Background 
-                color="#e5e7eb" 
-                gap={20} 
-                size={1}
-                variant={BackgroundVariant.Dots}
-              />
-              <Controls 
-                className="bg-white border border-gray-300 shadow-lg rounded-lg" 
-                showZoom={true}
-                showFitView={true}
-                showInteractive={true}
-              />
-              <MiniMap 
-                nodeColor={(node) => {
-                  if (node.type === 'input') return '#3b82f6';
-                  return '#10b981';
+            {/* Canvas */}
+            <div ref={reactFlowWrapper} className="flex-1 relative">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={{ default: CustomNode, input: CustomNode }}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodesDelete={onNodesDelete}
+                onEdgesDelete={onEdgesDelete}
+                onNodeDoubleClick={onNodeDoubleClick}
+                onInit={handleInit}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+                fitView
+                nodesDraggable={true}
+                nodesConnectable={true}
+                elementsSelectable={true}
+                selectNodesOnDrag={false}
+                deleteKeyCode={['Delete', 'Backspace']}
+                className="bg-gradient-to-br from-gray-50 to-gray-100"
+                defaultEdgeOptions={{
+                  type: 'smoothstep',
+                  animated: true,
+                  style: { 
+                    stroke: '#6366f1', 
+                    strokeWidth: 2,
+                    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))'
+                  }
                 }}
-                className="bg-white border border-gray-300 shadow-lg rounded-lg"
-                maskColor="rgba(50, 50, 50, 0.6)"
-                position="bottom-right"
-              />
-            </ReactFlow>
+                connectionLineStyle={{
+                  stroke: '#6366f1',
+                  strokeWidth: 2,
+                  strokeDasharray: '5,5'
+                }}
+              >
+                <Background 
+                  color="#e5e7eb" 
+                  gap={20} 
+                  size={1}
+                  variant={BackgroundVariant.Dots}
+                />
+                <Controls 
+                  className="bg-white border border-gray-300 shadow-lg rounded-lg" 
+                  showZoom={true}
+                  showFitView={true}
+                  showInteractive={true}
+                />
+                <MiniMap 
+                  nodeColor={(node) => {
+                    if (node.type === 'input') return '#3b82f6';
+                    return '#10b981';
+                  }}
+                  className="bg-white border border-gray-300 shadow-lg rounded-lg"
+                  maskColor="rgba(50, 50, 50, 0.6)"
+                  position="bottom-right"
+                />
+              </ReactFlow>
+            </div>
           </div>
         </div>
 

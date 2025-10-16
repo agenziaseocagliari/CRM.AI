@@ -1,4 +1,5 @@
 import type { NodeDefinition } from '@/lib/nodes/nodeLibrary';
+import { supabase } from '@/lib/supabaseClient';
 import { useWorkflows } from '@/lib/workflowApi';
 import { WorkflowExecutionEngine } from '@/lib/workflowExecutionEngine';
 import { ExecutionResult, ExecutionStep, WorkflowExecutor } from '@/lib/workflowExecutor';
@@ -572,6 +573,19 @@ export default function WorkflowCanvas() {
       return;
     }
     
+    // Get user and organization ID
+    const { data: { user } } = await supabase.auth.getUser();
+    const orgId = user?.user_metadata?.organization_id || 
+                  user?.user_metadata?.org_id || 
+                  '00000000-0000-0000-0000-000000000000';
+    
+    console.log('🔍 User:', user);
+    console.log('🔍 Organization ID:', orgId);
+    
+    if (!orgId || orgId === '00000000-0000-0000-0000-000000000000') {
+      console.warn('⚠️ No valid organization ID, using mock mode');
+    }
+    
     // Test with Silvestro Sanna contact
     const testContact = {
       contactId: '123', // Real ID from database
@@ -585,7 +599,7 @@ export default function WorkflowCanvas() {
       
       const engine = new WorkflowExecutionEngine({
         workflowId: 'test-workflow-' + Date.now(),
-        organizationId: 'test-org-123',
+        organizationId: orgId,
         triggerData: testContact,
       });
       

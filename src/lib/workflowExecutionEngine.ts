@@ -235,18 +235,34 @@ export class WorkflowExecutionEngine {
 
     private async saveExecution() {
         try {
-            const { error } = await supabase.from('workflow_executions').insert({
+            const payload = {
                 workflow_id: this.context.workflowId,
                 organization_id: this.context.organizationId,
                 status: this.logs.some(l => l.status === 'error') ? 'failed' : 'completed',
                 execution_log: this.logs,
-                started_at: this.logs[0]?.timestamp,
+                started_at: this.logs[0]?.timestamp || new Date(),
                 completed_at: new Date(),
-            });
+            };
 
-            if (error) console.error('Failed to save execution:', error);
+            console.log('💾 Saving execution to Supabase:', payload);
+            console.log('🔍 Organization ID:', this.context.organizationId);
+            console.log('🔍 Workflow ID:', this.context.workflowId);
+
+            const { data, error } = await supabase
+                .from('workflow_executions')
+                .insert(payload)
+                .select();
+
+            if (error) {
+                console.error('❌ Supabase insert failed:', error);
+                console.error('Error details:', error.message, error.details, error.hint);
+                console.error('Error code:', error.code);
+            } else {
+                console.log('✅ Execution saved successfully:', data);
+            }
         } catch (error) {
-            console.error('Failed to save execution:', error);
+            console.error('❌ Failed to save execution (catch block):', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
         }
     }
 }

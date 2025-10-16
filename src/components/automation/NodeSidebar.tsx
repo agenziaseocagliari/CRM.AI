@@ -1,6 +1,7 @@
 import { NODE_LIBRARY, NodeDefinition } from '@/lib/nodes/nodeLibrary';
 import { Info, Search } from 'lucide-react';
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const NODE_DESCRIPTIONS: Record<string, string> = {
   'trigger-form-submit': 'Si attiva quando un utente invia un modulo sul sito web. Puoi specificare quale modulo monitorare per avviare l\'automazione.',
@@ -39,6 +40,20 @@ export default function NodeSidebar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouseEnter = (nodeId: string, event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltipPosition({
+      x: rect.left + rect.width / 2, // Center horizontally
+      y: rect.top - 10, // Above the node
+    });
+    setHoveredNode(nodeId);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredNode(null);
+  };
 
   // Get unique categories
   const categories = ['all', ...new Set(NODE_LIBRARY.map(n => n.category))];
@@ -111,8 +126,8 @@ export default function NodeSidebar() {
                   key={node.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, node)}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
+                  onMouseEnter={(e) => handleMouseEnter(node.id, e)}
+                  onMouseLeave={handleMouseLeave}
                   className="relative p-3 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-all hover:border-blue-300 group"
                 >
                   <div className="flex items-center gap-2">
@@ -128,28 +143,6 @@ export default function NodeSidebar() {
                     </div>
                     <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </div>
-
-                  {/* Tooltip */}
-                  {hoveredNode === node.id && (
-                    <div className="absolute left-full ml-2 top-0 z-50 w-80">
-                      <div className="bg-gray-900 text-white text-sm rounded-lg py-3 px-4 shadow-2xl">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xl">{node.icon}</span>
-                          <div className="font-semibold">{node.label}</div>
-                        </div>
-                        <div className="text-gray-300 mb-2">
-                          {NODE_DESCRIPTIONS[node.id] || 'Nessuna descrizione disponibile.'}
-                        </div>
-                        <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
-                          💡 Trascina sul canvas per aggiungere
-                        </div>
-                        {/* Arrow pointing left */}
-                        <div className="absolute right-full top-4">
-                          <div className="border-8 border-transparent border-r-gray-900" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -168,8 +161,8 @@ export default function NodeSidebar() {
                   key={node.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, node)}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
+                  onMouseEnter={(e) => handleMouseEnter(node.id, e)}
+                  onMouseLeave={handleMouseLeave}
                   className="relative p-3 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-all hover:border-green-300 group"
                 >
                   <div className="flex items-center gap-2">
@@ -185,28 +178,6 @@ export default function NodeSidebar() {
                     </div>
                     <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </div>
-
-                  {/* Tooltip */}
-                  {hoveredNode === node.id && (
-                    <div className="absolute left-full ml-2 top-0 z-50 w-80">
-                      <div className="bg-gray-900 text-white text-sm rounded-lg py-3 px-4 shadow-2xl">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xl">{node.icon}</span>
-                          <div className="font-semibold">{node.label}</div>
-                        </div>
-                        <div className="text-gray-300 mb-2">
-                          {NODE_DESCRIPTIONS[node.id] || 'Nessuna descrizione disponibile.'}
-                        </div>
-                        <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
-                          💡 Trascina sul canvas per aggiungere
-                        </div>
-                        {/* Arrow pointing left */}
-                        <div className="absolute right-full top-4">
-                          <div className="border-8 border-transparent border-r-gray-900" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -239,6 +210,50 @@ export default function NodeSidebar() {
           </div>
         </div>
       </div>
+
+      {/* Portal Tooltip - renders above everything */}
+      {hoveredNode && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 99999,
+            pointerEvents: 'none',
+          }}
+          className="w-80"
+        >
+          <div className="bg-gray-900 text-white text-sm rounded-lg py-3 px-4 shadow-2xl">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">
+                {filteredNodes.find(n => n.id === hoveredNode)?.icon}
+              </span>
+              <div className="font-semibold">
+                {filteredNodes.find(n => n.id === hoveredNode)?.label}
+              </div>
+            </div>
+            <div className="text-gray-300 mb-2">
+              {NODE_DESCRIPTIONS[hoveredNode] || 'Nessuna descrizione disponibile.'}
+            </div>
+            <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
+              💡 Trascina sul canvas per aggiungere
+            </div>
+            {/* Arrow pointing down */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-8px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+              }}
+            >
+              <div className="border-8 border-transparent border-t-gray-900" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

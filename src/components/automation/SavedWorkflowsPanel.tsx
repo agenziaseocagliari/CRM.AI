@@ -48,6 +48,7 @@ export default function SavedWorkflowsPanel({
   }, []);
 
   const loadWorkflows = async () => {
+    console.group('📥 WORKFLOW LOAD PROCESS');
     console.log('🔍 Loading workflows...');
     setLoading(true);
 
@@ -55,6 +56,7 @@ export default function SavedWorkflowsPanel({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('❌ No authenticated user for loading');
+        console.groupEnd();
         setLoading(false);
         return;
       }
@@ -66,12 +68,15 @@ export default function SavedWorkflowsPanel({
         .eq('id', user.id)
         .single();
 
-      if (profileError || !profile) {
-        console.error('❌ Failed to get organization_id:', profileError);
+      if (profileError || !profile?.organization_id) {
+        console.error('❌ Failed to get organization_id for loading:', profileError);
+        console.error('❌ Profile data:', profile);
+        console.groupEnd();
         setLoading(false);
         return;
       }
       console.log('✅ Loading for organization:', profile.organization_id);
+      console.log('📥 LOAD - Organization ID used:', profile.organization_id);
 
       const { data, error } = await supabase
         .from('workflows')
@@ -83,51 +88,68 @@ export default function SavedWorkflowsPanel({
         console.error('❌ Error loading workflows:', error);
         console.error(' Code:', error.code);
         console.error(' Message:', error.message);
+        console.error(' Details:', error.details);
       } else {
         console.log('✅ Workflows loaded:', data?.length || 0, 'workflows');
-        console.log(' Data:', data);
+        console.table(data);
         setWorkflows(data || []);
       }
     } catch (error) {
-      console.error('Error in loadWorkflows:', error);
+      console.error('❌ Error in loadWorkflows:', error);
     }
 
+    console.groupEnd();
     setLoading(false);
   };
 
   const handleSaveNew = async () => {
+    console.group('💾 WORKFLOW SAVE PROCESS');
+    
     if (currentNodes.length === 0) {
       alert('⚠️ Canvas vuoto. Crea un workflow prima di salvare.');
+      console.groupEnd();
       return;
     }
 
     const name = prompt('Nome workflow:', 'Nuovo Workflow');
-    if (!name) return;
+    if (!name) {
+      console.groupEnd();
+      return;
+    }
 
     console.log('🔍 Starting workflow save...');
-    console.log(' - Nodes count:', currentNodes.length);
-    console.log(' - Edges count:', currentEdges.length);
+    console.log('📊 Nodes count:', currentNodes.length);
+    console.log('📊 Edges count:', currentEdges.length);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('❌ No authenticated user');
+      // Get user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('❌ User authentication failed:', userError);
+        alert('❌ Errore di autenticazione');
+        console.groupEnd();
         return;
       }
       console.log('✅ User authenticated:', user.id);
 
+      // Get organization ID from profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
         .single();
 
-      if (profileError || !profile) {
-        console.error('❌ Failed to get organization_id:', profileError);
+      if (profileError || !profile?.organization_id) {
+        console.error('❌ Profile fetch failed:', profileError);
+        console.error('❌ Profile data:', profile);
+        alert('❌ Impossibile ottenere organization_id');
+        console.groupEnd();
         return;
       }
       console.log('✅ Organization ID:', profile.organization_id);
+      console.log('💾 SAVE - Organization ID used:', profile.organization_id);
 
+      // Prepare workflow data
       const workflowData = {
         name,
         organization_id: profile.organization_id,
@@ -136,9 +158,9 @@ export default function SavedWorkflowsPanel({
         edges: currentEdges,
         is_active: false,
       };
-
       console.log('📤 Inserting workflow:', workflowData);
 
+      // Insert workflow
       const { data: insertedData, error } = await supabase
         .from('workflows')
         .insert(workflowData)
@@ -146,24 +168,39 @@ export default function SavedWorkflowsPanel({
         .single();
 
       if (error) {
-        console.error('❌ Error saving workflow:', error);
+        console.error('❌ Insert error:', error);
         console.error(' Code:', error.code);
         console.error(' Message:', error.message);
         console.error(' Details:', error.details);
         alert('❌ Errore nel salvare il workflow: ' + error.message);
+        console.groupEnd();
         return;
       }
 
       console.log('✅ Workflow saved successfully:', insertedData);
-      alert('✅ Workflow salvato!');
-
-      // Force reload
+      
+      // Immediate reload to check
       console.log('🔄 Reloading workflows list...');
       await loadWorkflows();
+      
+      // Check if newly saved workflow appears in the list
+      const found = workflows.find(w => w.id === insertedData.id);
+      console.log('� Workflow in list after reload?', found ? 'YES ✅' : 'NO ❌');
+      console.log('📊 Total workflows in state after save:', workflows.length);
+      
+      if (!found) {
+        console.error('🚨 CRITICAL: Workflow saved but not appearing in list!');
+        console.log('🔍 Saved workflow ID:', insertedData.id);
+        console.log('🔍 Current workflows IDs:', workflows.map(w => w.id));
+      }
+
+      console.groupEnd();
+      alert('✅ Workflow salvato!');
       onWorkflowSaved();
     } catch (error) {
-      console.error('Error in handleSaveNew:', error);
+      console.error('❌ Error in handleSaveNew:', error);
       alert('❌ Errore nel salvare il workflow');
+      console.groupEnd();
     }
   };
 

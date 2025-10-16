@@ -105,7 +105,7 @@ class BuildAnalyzer {
     analyzeDirectory(path.join(this.distPath, 'fonts'), 'font');
     analyzeDirectory(path.join(this.distPath, 'styles'), 'css');
 
-    console.log(🖼️ Assets analyzed: files);
+    console.log('� Assets analyzed:', files);
   }
 
   getChunkType(filename) {
@@ -159,19 +159,19 @@ class BuildAnalyzer {
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
 
     console.log('\\n📋 Bundle Analysis Report:');
-    console.log(Performance Score: /100 ());
-    console.log(Total Size: );
-    console.log(Chunks: );
-    console.log(Assets: );
+    console.log(`Performance Score: ${report.performance.score}/100 (${report.performance.grade})`);
+    console.log(`Total Size: ${this.analysis.totalSize}`);
+    console.log(`Chunks: ${this.analysis.chunks.length}`);
+    console.log(`Assets: ${this.analysis.assets.length}`);
 
     if (this.analysis.recommendations.length > 0) {
       console.log('\\n⚠️ Recommendations:');
       this.analysis.recommendations.forEach(rec => {
-        console.log(   : );
+        console.log(`  • ${rec}`);
       });
     }
 
-    console.log(\\n📄 Full report saved to: );
+    console.log(`\\n📄 Full report saved to: ${reportPath}`);
   }
 
   calculatePerformanceScore() {

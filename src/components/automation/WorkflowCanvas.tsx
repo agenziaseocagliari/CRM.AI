@@ -12,6 +12,7 @@ import {
   MiniMap,
   Node,
   ReactFlow,
+  ReactFlowInstance,
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
@@ -98,7 +99,7 @@ export default function WorkflowCanvas() {
   // ReactFlow refs and state for drag-drop
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   
   // Simulation state
   const [isSimulating, setIsSimulating] = useState(false);
@@ -237,39 +238,54 @@ export default function WorkflowCanvas() {
     console.log('📦 reactFlowWrapper:', reactFlowWrapper.current ? 'EXISTS' : 'NULL');
     console.log('🔧 reactFlowInstance:', reactFlowInstance ? 'EXISTS' : 'NULL');
 
-    const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-    if (!reactFlowBounds) {
-      console.error('❌ reactFlowBounds is NULL');
+    // Check 1: Wrapper exists
+    if (!reactFlowWrapper.current) {
+      console.error('❌ reactFlowWrapper is null');
       return;
     }
 
-    if (!reactFlowInstance) {
-      console.error('❌ reactFlowInstance is NULL - onInit not fired?');
+    // Check 2: Instance exists AND has screenToFlowPosition method (ReactFlow v12)
+    if (!reactFlowInstance || typeof reactFlowInstance.screenToFlowPosition !== 'function') {
+      console.error('❌ ReactFlow instance not ready. Instance:', reactFlowInstance);
+      console.error('❌ Available methods:', reactFlowInstance ? Object.keys(reactFlowInstance) : 'N/A');
+      alert('Canvas non pronto. Riprova tra 1 secondo.');
       return;
     }
 
-    const nodeData = event.dataTransfer.getData('application/reactflow');
-    console.log('📄 Node data received:', nodeData);
+    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+    const nodeDataString = event.dataTransfer.getData('application/reactflow');
 
-    if (!nodeData) {
-      console.error('❌ No node data in transfer');
+    if (!nodeDataString) {
+      console.error('❌ No node data in drop event');
       return;
     }
 
     let nodeDefinition: NodeDefinition;
     try {
-      nodeDefinition = JSON.parse(nodeData);
-      console.log('✅ Node definition parsed:', nodeDefinition.label);
+      nodeDefinition = JSON.parse(nodeDataString);
+      console.log('✅ Node definition parsed:', nodeDefinition);
     } catch (error) {
-      console.error('❌ JSON parse error:', error);
+      console.error('❌ Invalid node JSON:', error);
       return;
     }
 
-    const position = reactFlowInstance.project({
-      x: event.clientX - reactFlowBounds.left,
-      y: event.clientY - reactFlowBounds.top,
-    });
-    console.log('📍 Calculated position:', position);
+    // Calculate position using ReactFlow v12's screenToFlowPosition method with fallback
+    let position;
+    try {
+      position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      console.log('✅ Position calculated with screenToFlowPosition:', position);
+    } catch (error) {
+      console.error('❌ screenToFlowPosition() failed:', error);
+      // Fallback: use raw coordinates relative to bounds
+      position = {
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      };
+      console.log('⚠️ Using fallback position:', position);
+    }
 
     const newNode: Node = {
       id: `${nodeDefinition.id}-${uuidv4()}`,
@@ -329,18 +345,38 @@ export default function WorkflowCanvas() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // ReactFlow init handler with logging
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleInit = useCallback((instance: any) => {
+  // ReactFlow init handler with comprehensive logging
+  const handleInit = useCallback((instance: ReactFlowInstance) => {
     const timestamp = new Date().toLocaleTimeString();
+    console.log('🚀 ReactFlow onInit called at', timestamp);
+    console.log('🔍 Instance type:', typeof instance);
+    console.log('🔍 Instance.screenToFlowPosition type:', typeof instance?.screenToFlowPosition);
+    
     if (instance) {
-      console.log('🚀 ReactFlow initialized successfully at', timestamp);
+      console.log('✅ ReactFlow initialized successfully');
       console.log('📊 ReactFlow instance methods:', Object.keys(instance));
+      
+      if (typeof instance.screenToFlowPosition === 'function') {
+        console.log('✅ instance.screenToFlowPosition is a function (ReactFlow v12)');
+      } else {
+        console.error('❌ screenToFlowPosition method not found');
+        console.error('❌ This may cause drag-drop issues');
+      }
+      
       setReactFlowInstance(instance);
     } else {
       console.error('❌ ReactFlow initialization failed at', timestamp);
     }
   }, []);
+
+  // Debug reactFlowInstance state changes
+  useEffect(() => {
+    console.log('🔍 reactFlowInstance state changed:', reactFlowInstance);
+    console.log('🔍 Has screenToFlowPosition method?', reactFlowInstance?.screenToFlowPosition !== undefined);
+    if (reactFlowInstance) {
+      console.log('🔍 Available instance methods:', Object.keys(reactFlowInstance));
+    }
+  }, [reactFlowInstance]);
 
   // handleSaveWorkflow moved above to fix dependency order
 

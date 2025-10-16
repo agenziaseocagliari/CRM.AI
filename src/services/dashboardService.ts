@@ -1,6 +1,60 @@
 import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
 import { supabase } from '../lib/supabaseClient';
 
+// Types for database records
+interface ContactRecord {
+    id: string;
+    created_at: string;
+}
+
+interface OpportunityRecord {
+    id: string;
+    value: number;
+    stage: string;
+    created_at: string;
+    updated_at: string;
+}
+
+interface EventRecord {
+    id: string;
+    created_at: string;
+}
+
+interface FormSubmissionRecord {
+    id: string;
+    created_at: string;
+}
+
+// Extended types for recent activity
+interface ContactActivityRecord {
+    id: string;
+    name: string;
+    email: string;
+    created_at: string;
+}
+
+interface OpportunityActivityRecord {
+    id: string;
+    name: string;
+    stage: string;
+    value: number;
+    updated_at: string;
+}
+
+interface EventActivityRecord {
+    id: string;
+    title: string;
+    start_date: string;
+    created_at: string;
+}
+
+interface FormActivityRecord {
+    id: string;
+    form_name: string;
+    data: { email?: string; name?: string };
+    created_at: string;
+}
+
 export interface DashboardStats {
     totalRevenue: number;
     monthlyRevenue: number;
@@ -32,13 +86,13 @@ export class DashboardService {
             startOfMonth.setDate(1);
             startOfMonth.setHours(0, 0, 0, 0);
 
-            // Get all data in parallel for better performance
+            // Get all data in parallel with graceful error handling
             const [
                 contactsData,
                 dealsData,
                 eventsData,
                 formsData
-            ] = await Promise.all([
+            ] = await Promise.allSettled([
                 // Total contacts and new contacts this month
                 supabase
                     .from('contacts')
@@ -64,38 +118,62 @@ export class DashboardService {
                     .eq('organization_id', organizationId)
             ]);
 
-            // Process contacts data
-            const totalContacts = contactsData.data?.length || 0;
-            const newContactsThisMonth = contactsData.data?.filter(contact =>
-                new Date(contact.created_at) >= startOfMonth
-            ).length || 0;
+            // Process contacts data with error handling
+            let totalContacts = 0;
+            let newContactsThisMonth = 0;
+            if (contactsData.status === 'fulfilled' && contactsData.value.data) {
+                totalContacts = contactsData.value.data.length;
+                newContactsThisMonth = contactsData.value.data.filter((contact: ContactRecord) =>
+                    new Date(contact.created_at) >= startOfMonth
+                ).length;
+            } else if (contactsData.status === 'rejected') {
+                console.warn('[DashboardService] Contacts query failed:', contactsData.reason);
+            }
 
-            // Process deals data
-            const deals = dealsData.data || [];
+            // Process deals data with error handling
+            let deals: OpportunityRecord[] = [];
+            if (dealsData.status === 'fulfilled' && dealsData.value.data) {
+                deals = dealsData.value.data;
+            } else if (dealsData.status === 'rejected') {
+                console.warn('[DashboardService] Opportunities query failed:', dealsData.reason);
+            }
+
             const totalDeals = deals.length;
-            const wonDeals = deals.filter(deal => deal.stage === 'Won');
-            const lostDeals = deals.filter(deal => deal.stage === 'Lost');
+            const wonDeals = deals.filter((deal: OpportunityRecord) => deal.stage === 'Won');
+            const lostDeals = deals.filter((deal: OpportunityRecord) => deal.stage === 'Lost');
 
-            const totalRevenue = wonDeals.reduce((sum, deal) => sum + (deal.value || 0), 0);
+            const totalRevenue = wonDeals.reduce((sum: number, deal: OpportunityRecord) => sum + (deal.value || 0), 0);
             const monthlyRevenue = wonDeals
-                .filter(deal => new Date(deal.updated_at) >= startOfMonth)
-                .reduce((sum, deal) => sum + (deal.value || 0), 0);
+                .filter((deal: OpportunityRecord) => new Date(deal.updated_at) >= startOfMonth)
+                .reduce((sum: number, deal: OpportunityRecord) => sum + (deal.value || 0), 0);
 
             const dealsWon = wonDeals.length;
             const dealsLost = lostDeals.length;
             const conversionRate = totalDeals > 0 ? (dealsWon / totalDeals) * 100 : 0;
 
-            // Process events data
-            const totalEvents = eventsData.data?.length || 0;
-            const eventsThisMonth = eventsData.data?.filter(event =>
-                new Date(event.created_at) >= startOfMonth
-            ).length || 0;
+            // Process events data with error handling
+            let totalEvents = 0;
+            let eventsThisMonth = 0;
+            if (eventsData.status === 'fulfilled' && eventsData.value.data) {
+                totalEvents = eventsData.value.data.length;
+                eventsThisMonth = eventsData.value.data.filter((event: EventRecord) =>
+                    new Date(event.created_at) >= startOfMonth
+                ).length;
+            } else if (eventsData.status === 'rejected') {
+                console.warn('[DashboardService] Events query failed:', eventsData.reason);
+            }
 
-            // Process forms data
-            const formSubmissions = formsData.data?.length || 0;
-            const formSubmissionsThisMonth = formsData.data?.filter(submission =>
-                new Date(submission.created_at) >= startOfMonth
-            ).length || 0;
+            // Process forms data with error handling
+            let formSubmissions = 0;
+            let formSubmissionsThisMonth = 0;
+            if (formsData.status === 'fulfilled' && formsData.value.data) {
+                formSubmissions = formsData.value.data.length;
+                formSubmissionsThisMonth = formsData.value.data.filter((submission: FormSubmissionRecord) =>
+                    new Date(submission.created_at) >= startOfMonth
+                ).length;
+            } else if (formsData.status === 'rejected') {
+                console.warn('[DashboardService] Form submissions query failed:', formsData.reason);
+            }
 
             return {
                 totalRevenue,
@@ -113,19 +191,34 @@ export class DashboardService {
             };
         } catch (error) {
             diagnosticLogger.error('[DashboardService] Failed to get dashboard stats:', error);
-            throw error;
+            // Return default values instead of throwing to prevent dashboard crash
+            console.warn('[DashboardService] Returning default stats due to error');
+            return {
+                totalRevenue: 0,
+                monthlyRevenue: 0,
+                totalContacts: 0,
+                newContactsThisMonth: 0,
+                totalDeals: 0,
+                dealsWon: 0,
+                dealsLost: 0,
+                conversionRate: 0,
+                totalEvents: 0,
+                eventsThisMonth: 0,
+                formSubmissions: 0,
+                formSubmissionsThisMonth: 0,
+            };
         }
     }
 
     static async getRecentActivity(organizationId: string, limit: number = 10): Promise<RecentActivity[]> {
         try {
-            // Get recent activities from different sources
+            // Get recent activities from different sources with graceful error handling
             const [
                 recentContacts,
                 recentDeals,
                 recentEvents,
                 recentForms
-            ] = await Promise.all([
+            ] = await Promise.allSettled([
                 // Recent contacts
                 supabase
                     .from('contacts')
@@ -161,50 +254,66 @@ export class DashboardService {
 
             const activities: RecentActivity[] = [];
 
-            // Process contacts
-            recentContacts.data?.forEach(contact => {
-                activities.push({
-                    id: `contact-${contact.id}`,
-                    type: 'contact',
-                    title: 'Nuovo contatto',
-                    description: `${contact.name} (${contact.email})`,
-                    timestamp: contact.created_at
+            // Process contacts with error handling
+            if (recentContacts.status === 'fulfilled' && recentContacts.value.data) {
+                recentContacts.value.data.forEach((contact: ContactActivityRecord) => {
+                    activities.push({
+                        id: `contact-${contact.id}`,
+                        type: 'contact',
+                        title: 'Nuovo contatto',
+                        description: `${contact.name} (${contact.email})`,
+                        timestamp: contact.created_at
+                    });
                 });
-            });
+            } else if (recentContacts.status === 'rejected') {
+                console.warn('[DashboardService] Recent contacts query failed:', recentContacts.reason);
+            }
 
-            // Process deals
-            recentDeals.data?.forEach(deal => {
-                activities.push({
-                    id: `deal-${deal.id}`,
-                    type: 'deal',
-                    title: `Deal ${deal.stage === 'Won' ? 'vinto' : 'aggiornato'}`,
-                    description: `${deal.name} - €${deal.value?.toLocaleString('it-IT')}`,
-                    timestamp: deal.updated_at
+            // Process deals with error handling
+            if (recentDeals.status === 'fulfilled' && recentDeals.value.data) {
+                recentDeals.value.data.forEach((deal: OpportunityActivityRecord) => {
+                    activities.push({
+                        id: `deal-${deal.id}`,
+                        type: 'deal',
+                        title: `Deal ${deal.stage === 'Won' ? 'vinto' : 'aggiornato'}`,
+                        description: `${deal.name} - €${deal.value?.toLocaleString('it-IT')}`,
+                        timestamp: deal.updated_at
+                    });
                 });
-            });
+            } else if (recentDeals.status === 'rejected') {
+                console.warn('[DashboardService] Recent opportunities query failed:', recentDeals.reason);
+            }
 
-            // Process events
-            recentEvents.data?.forEach(event => {
-                activities.push({
-                    id: `event-${event.id}`,
-                    type: 'event',
-                    title: 'Evento creato',
-                    description: event.title,
-                    timestamp: event.created_at
+            // Process events with error handling
+            if (recentEvents.status === 'fulfilled' && recentEvents.value.data) {
+                recentEvents.value.data.forEach((event: EventActivityRecord) => {
+                    activities.push({
+                        id: `event-${event.id}`,
+                        type: 'event',
+                        title: 'Evento creato',
+                        description: event.title,
+                        timestamp: event.created_at
+                    });
                 });
-            });
+            } else if (recentEvents.status === 'rejected') {
+                console.warn('[DashboardService] Recent events query failed:', recentEvents.reason);
+            }
 
-            // Process form submissions
-            recentForms.data?.forEach(form => {
-                const formData = form.data as { email?: string; name?: string };
-                activities.push({
-                    id: `form-${form.id}`,
-                    type: 'form',
-                    title: 'Form completato',
-                    description: `${form.form_name} - ${formData?.name || formData?.email || 'Anonimo'}`,
-                    timestamp: form.created_at
+            // Process form submissions with error handling
+            if (recentForms.status === 'fulfilled' && recentForms.value.data) {
+                recentForms.value.data.forEach((form: FormActivityRecord) => {
+                    const formData = form.data as { email?: string; name?: string };
+                    activities.push({
+                        id: `form-${form.id}`,
+                        type: 'form',
+                        title: 'Form completato',
+                        description: `${form.form_name} - ${formData?.name || formData?.email || 'Anonimo'}`,
+                        timestamp: form.created_at
+                    });
                 });
-            });
+            } else if (recentForms.status === 'rejected') {
+                console.warn('[DashboardService] Recent form submissions query failed:', recentForms.reason);
+            }
 
             // Sort by timestamp and return limited results
             return activities
@@ -213,7 +322,9 @@ export class DashboardService {
 
         } catch (error) {
             diagnosticLogger.error('[DashboardService] Failed to get recent activity:', error);
-            throw error;
+            // Return empty array instead of throwing to prevent dashboard crash
+            console.warn('[DashboardService] Returning empty activities due to error');
+            return [];
         }
     }
 }

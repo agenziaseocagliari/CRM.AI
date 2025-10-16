@@ -347,10 +347,11 @@ export default function SavedWorkflowsPanel({
               alert('🔥 DEBUG: Save button clicked!');
               handleSaveNew();
             }}
-            className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm font-medium shadow-md"
+            title="Salva il workflow corrente nel database"
           >
             <Plus className="w-4 h-4" />
-            Salva Workflow Corrente
+            💾 Salva Workflow
           </button>
         </div>
 

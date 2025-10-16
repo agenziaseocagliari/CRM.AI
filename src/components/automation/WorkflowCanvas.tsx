@@ -1,6 +1,6 @@
 import type { NodeDefinition } from '@/lib/nodes/nodeLibrary';
 import { supabase } from '@/lib/supabaseClient';
-import { useWorkflows } from '@/lib/workflowApi';
+// useWorkflows removed - using SavedWorkflowsPanel's database save instead
 import { WorkflowExecutionEngine } from '@/lib/workflowExecutionEngine';
 import { ExecutionResult, ExecutionStep, WorkflowExecutor } from '@/lib/workflowExecutor';
 import { SimulationResult, SimulationStep, WorkflowSimulator } from '@/lib/workflowSimulator';
@@ -20,7 +20,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { AlertTriangle, Beaker, Play, Redo, Save, Sparkles, Trash2, Undo } from 'lucide-react';
+import { AlertTriangle, Beaker, Play, Redo, Sparkles, Trash2, Undo } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import '../../styles/workflowCanvas.css';
@@ -98,7 +98,7 @@ const initialEdges: Edge[] = [
 export default function WorkflowCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [isSaving, setIsSaving] = useState(false);
+  // isSaving state removed - using SavedWorkflowsPanel's database save instead
   const [isExecuting, setIsExecuting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   
@@ -121,7 +121,7 @@ export default function WorkflowCanvas() {
   const [workflowsKey, setWorkflowsKey] = useState(0);
 
   // Workflow management hooks
-  const { createWorkflow } = useWorkflows();
+  // createWorkflow removed - using SavedWorkflowsPanel's database save instead
 
   // Undo/Redo functionality
   const { undo, redo, canUndo, canRedo, takeSnapshot } = useUndoRedo(nodes, edges, setNodes, setEdges);
@@ -189,34 +189,15 @@ export default function WorkflowCanvas() {
     }
   }, [setNodes, setEdges]);
 
-  // Save workflow function
-  const handleSaveWorkflow = useCallback(async () => {
-    setIsSaving(true);
-    try {
-      const workflow = await createWorkflow(
-        'My Automation Workflow',
-        'Auto-generated workflow from visual builder',
-        nodes,
-        edges
-      );
-      
-      console.log('Workflow saved:', workflow);
-      alert(`Workflow "${workflow.name}" salvato con successo!`);
-    } catch (error) {
-      console.error('Errore salvataggio workflow:', error);
-      alert('Errore salvataggio workflow: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
-    } finally {
-      setIsSaving(false);
-    }
-  }, [createWorkflow, nodes, edges]);
+  // handleSaveWorkflow removed - using SavedWorkflowsPanel's database save instead
 
   // Keyboard shortcuts with enterprise features
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl/Cmd + S = Save
+      // Ctrl/Cmd + S = Save (show hint to use panel button)
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
         event.preventDefault();
-        handleSaveWorkflow();
+        alert('💾 Usa il pulsante "Salva Workflow Corrente" nel pannello in basso per salvare nel database');
       }
       
       // Ctrl/Cmd + A = Select All
@@ -262,7 +243,7 @@ export default function WorkflowCanvas() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSaveWorkflow, nodes, edges, onNodesDelete, onEdgesDelete, setNodes, setEdges, undo, redo, takeSnapshot]);
+  }, [nodes, edges, onNodesDelete, onEdgesDelete, setNodes, setEdges, undo, redo, takeSnapshot]);
 
   // Delete node event listener for custom node X button
   useEffect(() => {
@@ -761,15 +742,6 @@ export default function WorkflowCanvas() {
               Genera con AI
             </button>
 
-            <button
-              onClick={handleSaveWorkflow}
-              disabled={isSaving}
-              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Salvataggio...' : 'Salva Workflow'}
-            </button>
-            
             <button
               onClick={handleRunWorkflow}
               disabled={isExecuting || nodes.length === 0}

@@ -38,7 +38,7 @@ function toPascalCase(str: string): string {
 
 // Fallback complete menu for Standard vertical
 const STANDARD_MENU_FALLBACK = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'Home', path: '.' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'Home', path: '' },
   { id: 'opportunities', label: 'Pipeline', icon: 'TrendingUp', path: '/opportunities' },
   { id: 'contacts', label: 'Contatti', icon: 'Users', path: '/contacts' },
   { id: 'calendar', label: 'Calendario', icon: 'Calendar', path: '/calendar' },

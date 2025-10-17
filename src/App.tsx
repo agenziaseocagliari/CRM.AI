@@ -3,6 +3,11 @@ import { HelmetProvider } from 'react-helmet-async';
 import toast, { Toaster } from 'react-hot-toast';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
+// Italian routing infrastructure
+import { RedirectHandler } from './components/RedirectHandler';
+import { InsuranceDashboardMeta, InsurancePoliciesMeta, ContactsMeta, OpportunitiesMeta } from './components/PageMeta';
+import { ROUTES } from './config/routes';
+
 
 // Lazy components for performance optimization - temporarily disabled
 // Components moved to .bak files
@@ -21,9 +26,9 @@ import { PublicPricingPage } from './components/PublicPricingPage';
 import { GoogleAuthCallback } from './components/Settings';
 
 // CRM Components - Riattivati
-import { Automations } from './components/Automations';
-import AutomationPage from './app/dashboard/automation/page';
 import AutomationDiagnostic from './app/dashboard/automation/diagnostic';
+import AutomationPage from './app/dashboard/automation/page';
+import { Automations } from './components/Automations';
 import { Calendar } from './components/Calendar';
 import { Contacts } from './components/Contacts';
 import ContactDetailView from './components/contacts/ContactDetailView';
@@ -70,15 +75,17 @@ import { useCrmData } from './hooks/useCrmData';
 import { supabase } from './lib/supabaseClient';
 
 // Vertical System
-import { VerticalProvider } from './hooks/useVertical';
 import VerticalSwitcher from './components/dev/VerticalSwitcher';
 import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
 import {
-  InsurancePoliciesPage,
   InsuranceClaimsPage,
   InsuranceCommissionsPage,
-  InsuranceRenewalsPage
+  InsurancePoliciesPage,
+  InsuranceRenewalsPage,
+  PolicyForm,
+  PolicyDetail
 } from './features/insurance';
+import { VerticalProvider } from './hooks/useVertical';
 
 
 import { diagnosticLogger } from './lib/mockDiagnosticLogger';
@@ -263,12 +270,178 @@ const App: React.FC = () => {
   return (
     <VerticalProvider>
       <HelmetProvider>
-        <Toaster position="top-center" reverseOrder={false} />
-        {/* Debug Panel - Only visible when logged in */}
-        {session && <DebugPanel />}
-        {/* Dev tool - only shows in development */}
-        <VerticalSwitcher />
-        <Routes>
+        <RedirectHandler>
+          <Toaster position="top-center" reverseOrder={false} />
+          {/* Debug Panel - Only visible when logged in */}
+          {session && <DebugPanel />}
+          {/* Dev tool - only shows in development */}
+          <VerticalSwitcher />
+          <Routes>
+            {/* ========================================== */}
+            {/* ITALIAN LOCALIZED ROUTES */}
+            {/* ========================================== */}
+            
+            {/* Home & Auth - Italian */}
+            <Route path="/" element={session ? <Navigate to={ROUTES.dashboard} replace /> : <HomePage />} />
+            <Route path={ROUTES.login} element={
+              session
+                ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : ROUTES.dashboard} replace />
+                : <Login />
+            } />
+            <Route path="/forgot-password" element={
+              session
+                ? <Navigate to={userRole === 'super_admin' ? '/super-admin/dashboard' : ROUTES.dashboard} replace />
+                : <ForgotPassword />
+            } />
+            
+            {/* Italian Insurance Routes */}
+            <Route path={ROUTES.insurance.base} element={<InsuranceAgencyLanding />} />
+            <Route path={ROUTES.insurance.dashboard} element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <MainLayout crmData={crmData} />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={
+                <>
+                  <InsuranceDashboardMeta />
+                  <Dashboard />
+                </>
+              } />
+            </Route>
+            <Route path={ROUTES.insurance.policies} element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <>
+                    <InsurancePoliciesMeta />
+                    <InsurancePoliciesPage />
+                  </>
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path={ROUTES.insurance.newPolicy} element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <PolicyForm />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path="/assicurazioni/polizze/:id" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <PolicyDetail />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path="/assicurazioni/polizze/:id/modifica" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <PolicyForm />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path={ROUTES.insurance.claims} element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <InsuranceClaimsPage />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path={ROUTES.insurance.commissions} element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <InsuranceCommissionsPage />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path={ROUTES.insurance.renewals} element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <InsuranceRenewalsPage />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            
+            {/* Italian CRM Routes */}
+            <Route path={ROUTES.dashboard} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Dashboard />} />
+            </Route>
+            
+            <Route path={ROUTES.contacts} element={
+              session ? (
+                <>
+                  <ContactsMeta />
+                  <MainLayout crmData={crmData} />
+                </>
+              ) : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Contacts />} />
+            </Route>
+            <Route path={ROUTES.contactsDetail(':id')} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<ContactDetailView />} />
+            </Route>
+            
+            <Route path={ROUTES.opportunities} element={
+              session ? (
+                <>
+                  <OpportunitiesMeta />
+                  <MainLayout crmData={crmData} />
+                </>
+              ) : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Opportunities />} />
+            </Route>
+            
+            <Route path={ROUTES.calendar} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Calendar />} />
+            </Route>
+            
+            <Route path={ROUTES.forms} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Forms />} />
+            </Route>
+            
+            <Route path={ROUTES.automations} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Automations />} />
+            </Route>
+            
+            <Route path={ROUTES.reports} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Reports />} />
+            </Route>
+            
+            <Route path={ROUTES.whatsapp} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<WhatsAppModule />} />
+            </Route>
+            
+            <Route path={ROUTES.emailMarketing} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<EmailMarketingModule />} />
+            </Route>
+            
+            <Route path={ROUTES.settings} element={
+              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<Settings />} />
+            </Route>
+
+            {/* ========================================== */}
+            {/* LEGACY ENGLISH ROUTES (for compatibility) */}
+            {/* ========================================== */}
         {/* Public Routes */}
         <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <HomePage />} />
         <Route path="/login" element={
@@ -384,6 +557,7 @@ const App: React.FC = () => {
           } replace />
         } />
       </Routes>
+      </RedirectHandler>
     </HelmetProvider>
     </VerticalProvider>
   );

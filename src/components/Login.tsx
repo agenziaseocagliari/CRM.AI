@@ -7,8 +7,8 @@ import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
 import { analyzeLoginHistory, detectLoginMethodFromUrl, generateLoginHistoryReport, getLoginHistory, recordLoginAttempt } from '../lib/loginTracker';
 import { supabase } from '../lib/supabaseClient';
 
-import { GuardianIcon } from './ui/icons';
 import { Shield } from 'lucide-react';
+import { GuardianIcon } from './ui/icons';
 
 // Maximum failed login attempts before adding delay
 const MAX_FAILED_ATTEMPTS = 3;

@@ -3,7 +3,7 @@
 -- ====================================================================
 -- Insurance CRM vertical with specialized modules for:
 -- - Policy management (/insurance/policies)
--- - Claims processing (/insurance/claims)  
+-- - Claims processing (/insurance/claims)
 -- - Commission tracking (/insurance/commissions)
 -- - Renewal scheduling (/insurance/renewals)
 -- ====================================================================
@@ -26,8 +26,8 @@ INSERT INTO vertical_configurations (
   'Soluzione completa per agenzie assicurative - Gestione polizze, sinistri, provvigioni',
   'Shield',
 
-  -- Insurance-specific sidebar (9 items)
-  '{
+-- Insurance-specific sidebar (9 items)
+'{
     "sections": [
       {"id": "dashboard", "label": "Dashboard", "icon": "Home", "path": "/dashboard"},
       {"id": "contacts", "label": "Contatti", "icon": "Users", "path": "/contacts"},
@@ -41,14 +41,14 @@ INSERT INTO vertical_configurations (
     ]
   }'::jsonb,
 
-  -- Dashboard config for Insurance
-  '{
+-- Dashboard config for Insurance
+'{
     "layout": "insurance",
     "widgets": ["policies_overview", "claims_pending", "renewals_upcoming", "commissions_monthly"]
   }'::jsonb,
 
-  -- Enabled modules (8 core Insurance modules)
-  ARRAY[
+-- Enabled modules (8 core Insurance modules)
+ARRAY[
     'contacts', 
     'policies', 
     'claims', 
@@ -59,8 +59,8 @@ INSERT INTO vertical_configurations (
     'reports'
   ]::TEXT[],
 
-  -- Active and public status
-  true,
+-- Active and public status
+true,
   true
 )
 ON CONFLICT (vertical) DO UPDATE SET
@@ -75,14 +75,14 @@ ON CONFLICT (vertical) DO UPDATE SET
 -- VERIFICATION QUERY (commented - for reference)
 -- ====================================================================
 -- Verify both Standard and Insurance configurations exist:
--- SELECT 
---   vertical, 
+-- SELECT
+--   vertical,
 --   display_name,
 --   jsonb_array_length(sidebar_config->'sections') as sidebar_items,
 --   array_length(enabled_modules, 1) as module_count,
 --   is_active,
 --   is_public
--- FROM vertical_configurations 
+-- FROM vertical_configurations
 -- ORDER BY vertical;
 --
 -- Expected result: 2 rows

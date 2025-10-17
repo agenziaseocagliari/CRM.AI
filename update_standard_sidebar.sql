@@ -20,4 +20,7 @@ SET sidebar_config = '{
 WHERE vertical = 'standard';
 
 -- Verify the update
-SELECT vertical, sidebar_config FROM vertical_configurations WHERE vertical = 'standard';
+SELECT vertical, sidebar_config
+FROM vertical_configurations
+WHERE
+    vertical = 'standard';

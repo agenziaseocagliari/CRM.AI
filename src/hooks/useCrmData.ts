@@ -15,8 +15,7 @@ import {
   Organization,
   OrganizationSettings,
   OrganizationSubscription,
-  PipelineStage,
-  Profile
+  PipelineStage
 } from '../types';
 
 // ADAPTER: Map database TEXT stages to pipeline stages
@@ -137,7 +136,7 @@ export const useCrmData = () => {
 
         // Don't throw error - let app continue, useVertical will handle its own loading
         console.warn('Profile lookup failed, app will continue loading...');
-        
+
         // Return early without blocking app initialization
         setError('Profile lookup failed');
         setLoading(false);

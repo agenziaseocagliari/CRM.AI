@@ -23,8 +23,8 @@ INSERT INTO vertical_configurations (
   'CRM completo per PMI e professionisti - Gestione contatti, pipeline, automazioni',
   'Briefcase',
 
-  -- Sidebar config (current menu structure - 11 items)
-  '{
+-- Sidebar config (current menu structure - 11 items)
+'{
     "sections": [
       {"id": "dashboard", "label": "Dashboard", "icon": "Home", "path": "/dashboard"},
       {"id": "pipeline", "label": "Pipeline", "icon": "TrendingUp", "path": "/opportunities"},
@@ -40,14 +40,14 @@ INSERT INTO vertical_configurations (
     ]
   }'::jsonb,
 
-  -- Dashboard config (simple layout for now)
-  '{
+-- Dashboard config (simple layout for now)
+'{
     "layout": "standard",
     "widgets": ["metrics", "recent_contacts", "pipeline_chart", "activities"]
   }'::jsonb,
 
-  -- Enabled modules (10 core modules)
-  ARRAY[
+-- Enabled modules (10 core modules)
+ARRAY[
     'contacts', 
     'pipeline', 
     'calendar', 
@@ -60,19 +60,17 @@ INSERT INTO vertical_configurations (
     'store'
   ]::TEXT[],
 
-  -- Active status
-  true
-)
-ON CONFLICT (vertical) DO NOTHING;
+-- Active status
+true ) ON CONFLICT (vertical) DO NOTHING;
 
 -- ====================================================================
 -- VERIFICATION QUERY (commented - for reference)
 -- ====================================================================
--- SELECT 
---   vertical, 
+-- SELECT
+--   vertical,
 --   display_name,
 --   jsonb_array_length(sidebar_config->'sections') as menu_count,
 --   array_length(enabled_modules, 1) as module_count,
 --   is_active
--- FROM vertical_configurations 
+-- FROM vertical_configurations
 -- WHERE vertical = 'standard';

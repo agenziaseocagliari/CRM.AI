@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 // Types
 export interface VerticalConfig {

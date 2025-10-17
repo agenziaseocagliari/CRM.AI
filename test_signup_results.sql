@@ -15,20 +15,21 @@
 -- ============================================================================
 -- 1. CHECK AUTH USER
 -- ============================================================================
-SELECT 
+SELECT
     'AUTH USER' as component,
     id,
     email,
     email_confirmed_at,
     raw_user_meta_data
-FROM auth.users 
-WHERE email = 'test-insurance-success@example.com'  -- Change email here
+FROM auth.users
+WHERE
+    email = 'test-insurance-success@example.com' -- Change email here
 ORDER BY created_at DESC;
 
 -- ============================================================================
 -- 2. CHECK PROFILE
 -- ============================================================================
-SELECT 
+SELECT
     'PROFILE' as component,
     id,
     name,
@@ -36,34 +37,34 @@ SELECT
     user_role,
     organization_id,
     created_at
-FROM profiles 
-WHERE id IN (
-    SELECT id FROM auth.users 
-    WHERE email = 'test-insurance-success@example.com'  -- Change email here
-);
+FROM profiles
+WHERE
+    id IN (
+        SELECT id
+        FROM auth.users
+        WHERE
+            email = 'test-insurance-success@example.com' -- Change email here
+    );
 
 -- ============================================================================
 -- 3. CHECK ORGANIZATION
 -- ============================================================================
-SELECT 
-    'ORGANIZATION' as component,
-    o.id,
-    o.name,
-    o.vertical,
-    o.created_at,
-    'linked_to_profile' as status
+SELECT 'ORGANIZATION' as component, o.id, o.name, o.vertical, o.created_at, 'linked_to_profile' as status
 FROM organizations o
-JOIN profiles p ON p.organization_id = o.id
-WHERE p.id IN (
-    SELECT id FROM auth.users 
-    WHERE email = 'test-insurance-success@example.com'  -- Change email here
-);
+    JOIN profiles p ON p.organization_id = o.id
+WHERE
+    p.id IN (
+        SELECT id
+        FROM auth.users
+        WHERE
+            email = 'test-insurance-success@example.com' -- Change email here
+    );
 
 -- ============================================================================
 -- 4. COMPLETE SIGNUP VERIFICATION
 -- ============================================================================
 -- This query shows the complete signup result in one view
-SELECT 
+SELECT
     u.email,
     u.email_confirmed_at,
     u.raw_user_meta_data,
@@ -72,40 +73,46 @@ SELECT
     p.user_role,
     o.name as org_name,
     o.vertical as org_vertical,
-    CASE 
-        WHEN p.id IS NOT NULL AND o.id IS NOT NULL THEN '✅ COMPLETE'
-        WHEN p.id IS NOT NULL AND o.id IS NULL THEN '⚠️ PROFILE ONLY'
+    CASE
+        WHEN p.id IS NOT NULL
+        AND o.id IS NOT NULL THEN '✅ COMPLETE'
+        WHEN p.id IS NOT NULL
+        AND o.id IS NULL THEN '⚠️ PROFILE ONLY'
         WHEN p.id IS NULL THEN '❌ NO PROFILE'
         ELSE '❌ UNKNOWN'
     END as signup_status
-FROM auth.users u
-LEFT JOIN profiles p ON p.id = u.id
-LEFT JOIN organizations o ON o.id = p.organization_id
-WHERE u.email = 'test-insurance-success@example.com'  -- Change email here
+FROM
+    auth.users u
+    LEFT JOIN profiles p ON p.id = u.id
+    LEFT JOIN organizations o ON o.id = p.organization_id
+WHERE
+    u.email = 'test-insurance-success@example.com' -- Change email here
 ORDER BY u.created_at DESC;
 
 -- ============================================================================
 -- 5. CHECK FOR ORPHANED DATA (CLEANUP VERIFICATION)
 -- ============================================================================
 -- Check for auth users without profiles (should be 0 for successful signups)
-SELECT 
+SELECT
     'ORPHANED AUTH USERS' as issue_type,
     COUNT(*) as count,
-    ARRAY_AGG(email) as emails
+    ARRAY_AGG (email) as emails
 FROM auth.users u
-LEFT JOIN profiles p ON p.id = u.id
-WHERE p.id IS NULL
-AND u.email LIKE 'test-%@example.com';
+    LEFT JOIN profiles p ON p.id = u.id
+WHERE
+    p.id IS NULL
+    AND u.email LIKE 'test-%@example.com';
 
 -- Check for profiles without organizations (should be 0 for successful signups)
-SELECT 
+SELECT
     'PROFILES WITHOUT ORG' as issue_type,
     COUNT(*) as count,
-    ARRAY_AGG(u.email) as emails
+    ARRAY_AGG (u.email) as emails
 FROM profiles p
-JOIN auth.users u ON u.id = p.id
-WHERE p.organization_id IS NULL
-AND u.email LIKE 'test-%@example.com';
+    JOIN auth.users u ON u.id = p.id
+WHERE
+    p.organization_id IS NULL
+    AND u.email LIKE 'test-%@example.com';
 
 -- ============================================================================
 -- EXPECTED RESULTS FOR SUCCESSFUL SIGNUP:

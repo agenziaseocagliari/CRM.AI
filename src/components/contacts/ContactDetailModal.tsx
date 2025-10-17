@@ -16,11 +16,11 @@ import {
     TrendingUp,
     X
 } from 'lucide-react'
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient'
 import { getUserOrganization } from '../../lib/organizationContext'
+import { supabase } from '../../lib/supabaseClient'
 import { Contact, Opportunity } from '../../types'
 
 interface ContactNote {

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Contact } from '../types';
 
 export interface ExportOptions {
-    contactIds?: number[];
+    contactIds?: string[];
     filters?: {
         searchQuery?: string;
         hasEmail?: boolean;
@@ -167,7 +167,7 @@ export class ExportService {
     /**
      * Export selected contacts by IDs
      */
-    static async exportSelectedContacts(contactIds: number[]): Promise<void> {
+    static async exportSelectedContacts(contactIds: string[]): Promise<void> {
         return this.exportToCSV({ contactIds });
     }
 

@@ -57,8 +57,8 @@ export default function ContactsTable({
     currentFilters
 }: ContactsTableProps) {
     // Table state
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [showActions, setShowActions] = useState<number | null>(null);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [showActions, setShowActions] = useState<string | null>(null);
     const [sortField, setSortField] = useState<SortField>('created_at');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
     const [currentPage, setCurrentPage] = useState(1);
@@ -110,7 +110,7 @@ export default function ContactsTable({
         setSelectedIds([]); // Clear selections when changing pages
     }, []);
 
-    const toggleSelection = useCallback((id: number) => {
+    const toggleSelection = useCallback((id: string) => {
         setSelectedIds(prev =>
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
         );

@@ -587,7 +587,7 @@ export class AIOrchestrator {
 
       // Use DataPizza AI agent with fallback to existing system  
       const defaultContact: Contact = {
-        id: 0, 
+        id: '', // Fixed: Changed from number to string (UUID will be assigned by database)
         organization_id: request.organizationId || '',
         name: '', 
         email: '', 

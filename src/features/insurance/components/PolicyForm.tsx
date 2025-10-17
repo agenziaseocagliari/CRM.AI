@@ -36,7 +36,7 @@ import {
 } from '../types/insurance';
 
 interface Contact {
-  id: number;
+  id: string; // Fixed: Changed from number to string (UUID)
   name: string;
   email?: string;
   phone?: string;

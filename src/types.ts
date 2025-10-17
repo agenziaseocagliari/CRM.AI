@@ -144,7 +144,7 @@ export interface EventReminder {
 export interface CrmEvent {
     id: number;
     organization_id: string;
-    contact_id: number;
+    contact_id: string; // Fixed: Changed from number to string (UUID)
     event_summary: string;
     event_description: string | null;
     event_start_time: string;

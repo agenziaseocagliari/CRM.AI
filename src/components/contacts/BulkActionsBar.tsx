@@ -25,7 +25,7 @@ export default function BulkActionsBar({
     const [confirmTitle, setConfirmTitle] = useState('');
     const [confirmMessage, setConfirmMessage] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
-    const [lastDeletedIds, setLastDeletedIds] = useState<number[]>([]);
+    const [lastDeletedIds, setLastDeletedIds] = useState<string[]>([]);
 
     const handleAction = async (action: string, needsConfirm: boolean = false) => {
         if (needsConfirm) {

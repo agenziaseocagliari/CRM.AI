@@ -12,7 +12,7 @@ export class BulkOperationsService {
     /**
      * Soft delete contacts by setting deleted_at timestamp
      */
-    static async softDeleteContacts(contactIds: number[]): Promise<BulkOperationResult> {
+    static async softDeleteContacts(contactIds: string[]): Promise<BulkOperationResult> {
         try {
             const { error, count } = await supabase
                 .from('contacts')
@@ -36,7 +36,7 @@ export class BulkOperationsService {
     /**
      * Restore soft-deleted contacts by setting deleted_at to null
      */
-    static async restoreContacts(contactIds: number[]): Promise<BulkOperationResult> {
+    static async restoreContacts(contactIds: string[]): Promise<BulkOperationResult> {
         try {
             const { error, count } = await supabase
                 .from('contacts')
@@ -60,7 +60,7 @@ export class BulkOperationsService {
     /**
      * Hard delete contacts (permanent removal)
      */
-    static async hardDeleteContacts(contactIds: number[]): Promise<BulkOperationResult> {
+    static async hardDeleteContacts(contactIds: string[]): Promise<BulkOperationResult> {
         try {
             const { error, count } = await supabase
                 .from('contacts')
@@ -96,7 +96,7 @@ export class BulkOperationsService {
     /**
      * Assign contacts to a user (placeholder for future implementation)
      */
-    static async assignContacts(contactIds: number[], userId: string): Promise<BulkOperationResult> {
+    static async assignContacts(contactIds: string[], userId: string): Promise<BulkOperationResult> {
         try {
             const { error, count } = await supabase
                 .from('contacts')
@@ -120,7 +120,7 @@ export class BulkOperationsService {
     /**
      * Add tags to contacts (placeholder for future implementation)
      */
-    static async tagContacts(contactIds: number[], tags: string[]): Promise<BulkOperationResult> {
+    static async tagContacts(contactIds: string[], tags: string[]): Promise<BulkOperationResult> {
         // Placeholder - will implement when tags table is created
         console.log('Tagging contacts:', contactIds, 'with tags:', tags);
         

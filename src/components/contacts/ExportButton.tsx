@@ -7,7 +7,7 @@ import { ExportOptions, ExportService } from '../../services/exportService';
 import { FilterState } from './ContactSearch';
 
 interface ExportButtonProps {
-    selectedIds?: number[];
+    selectedIds?: string[];
     filters?: FilterState & { searchQuery?: string };
     variant?: 'default' | 'bulk' | 'header';
     contactCount?: number;

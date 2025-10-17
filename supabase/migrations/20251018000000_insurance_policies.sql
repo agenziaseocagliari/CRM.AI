@@ -83,7 +83,7 @@ ALTER TABLE insurance_policies ENABLE ROW LEVEL SECURITY;
 CREATE POLICY IF NOT EXISTS "Users can view their organization's policies"
 ON insurance_policies
 FOR SELECT
-TO authenticated
+TO public
 USING (
     organization_id IN (
         SELECT organization_id
@@ -96,7 +96,7 @@ USING (
 CREATE POLICY IF NOT EXISTS "Users can create policies for their organization"
 ON insurance_policies
 FOR INSERT
-TO authenticated
+TO public
 WITH CHECK (
     organization_id IN (
         SELECT organization_id
@@ -109,7 +109,7 @@ WITH CHECK (
 CREATE POLICY IF NOT EXISTS "Users can update their organization's policies"
 ON insurance_policies
 FOR UPDATE
-TO authenticated
+TO public
 USING (
     organization_id IN (
         SELECT organization_id
@@ -129,7 +129,7 @@ WITH CHECK (
 CREATE POLICY IF NOT EXISTS "Users can delete their organization's policies"
 ON insurance_policies
 FOR DELETE
-TO authenticated
+TO public
 USING (
     organization_id IN (
         SELECT organization_id
@@ -159,8 +159,8 @@ CREATE TRIGGER trigger_update_insurance_policies_updated_at
 -- Permissions
 -- ================================================
 
-GRANT ALL ON insurance_policies TO authenticated;
-GRANT ALL ON insurance_policies TO service_role;
+-- Note: Table permissions are managed automatically by Supabase
+-- RLS policies above control access for authenticated users
 
 -- ================================================
 -- Sample Data for Testing (Optional)

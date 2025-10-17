@@ -38,7 +38,7 @@ function toPascalCase(str: string): string {
 
 // Fallback complete menu for Standard vertical
 const STANDARD_MENU_FALLBACK = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'Home', path: '' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'Home', path: '/dashboard' },
   { id: 'opportunities', label: 'Pipeline', icon: 'TrendingUp', path: '/opportunities' },
   { id: 'contacts', label: 'Contatti', icon: 'Users', path: '/contacts' },
   { id: 'calendar', label: 'Calendario', icon: 'Calendar', path: '/calendar' },
@@ -117,7 +117,11 @@ export const Sidebar: React.FC = () => {
             return (
               <NavItem
                 key={section.id}
-                to={section.path.startsWith('/') ? section.path.substring(1) : section.path}
+                to={
+                  section.id === 'dashboard' 
+                    ? '..' 
+                    : (section.path.startsWith('/') ? section.path.substring(1) : section.path)
+                }
                 icon={<IconComponent className="w-6 h-6" />}
                 label={section.label}
               />

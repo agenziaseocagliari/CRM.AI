@@ -55,6 +55,14 @@ export const Sidebar: React.FC = () => {
   const { isSuperAdmin } = useAuth();
   const { config, loading, vertical } = useVertical();
 
+  console.log('🔍 [Sidebar] Render');
+  console.log('🔍 [Sidebar] Vertical:', vertical);
+  console.log('🔍 [Sidebar] Config:', config);
+  console.log('🔍 [Sidebar] Loading:', loading);
+  console.log('🔍 [Sidebar] Sidebar sections:', config?.sidebarConfig?.sections);
+  console.log('🔍 [Sidebar] Menu items count:', config?.sidebarConfig?.sections?.length);
+  console.log('🔍 [Sidebar] Is Super Admin:', isSuperAdmin);
+
   if (loading) {
     return (
       <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
@@ -73,13 +81,16 @@ export const Sidebar: React.FC = () => {
 
   // Determine menu items
   let menuItems = config?.sidebarConfig?.sections || [];
+  console.log('🔍 [Sidebar] Initial menu items from config:', menuItems);
 
   // Fallback for Standard vertical if config incomplete or missing
   if (vertical === 'standard' && menuItems.length < 8) {
+    console.log('🔍 [Sidebar] Using STANDARD_MENU_FALLBACK (items < 8)');
     menuItems = STANDARD_MENU_FALLBACK;
   }
 
   if (!menuItems || menuItems.length === 0) {
+    console.log('🔍 [Sidebar] No menu items, using STANDARD_MENU_FALLBACK');
     return (
       <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
         <div className="flex items-center mb-8 px-2">
@@ -93,6 +104,9 @@ export const Sidebar: React.FC = () => {
       </aside>
     );
   }
+
+  console.log('🔍 [Sidebar] Final menu items count:', menuItems.length);
+  console.log('🔍 [Sidebar] Final menu items:', menuItems);
 
   return (
     <aside className="w-64 bg-sidebar text-white flex flex-col p-4">

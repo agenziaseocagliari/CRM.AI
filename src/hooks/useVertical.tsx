@@ -39,62 +39,84 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   const loadVerticalConfig = useCallback(async () => {
+    console.log('🔍 [loadVerticalConfig] START');
+    
     try {
       setLoading(true);
       setError(null);
 
       // Get current user's vertical (from profiles table)
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 [loadVerticalConfig] getUser result:', user);
       
       if (!user) {
-        // Not logged in, use standard
+        console.log('🔍 [loadVerticalConfig] No user, using standard');
         setVertical('standard');
         await loadConfig('standard');
         setLoading(false);
         return;
       }
 
+      console.log('🔍 [loadVerticalConfig] User ID:', user.id);
+      console.log('🔍 [loadVerticalConfig] User email:', user.email);
+      console.log('🔍 [loadVerticalConfig] User metadata:', user.user_metadata);
+
       // Get user's vertical from profile
+      console.log('🔍 [loadVerticalConfig] Querying profiles table...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('vertical')
         .eq('id', user.id)
         .single();
 
+      console.log('🔍 [loadVerticalConfig] Profile query result:', profile);
+      console.log('🔍 [loadVerticalConfig] Profile query error:', profileError);
+
       if (profileError) {
-        console.error('Error loading profile:', profileError);
+        console.error('🔍 [loadVerticalConfig] Profile error:', profileError);
         throw profileError;
       }
 
       const userVertical = profile?.vertical || 'standard';
+      console.log('🔍 [loadVerticalConfig] Determined vertical:', userVertical);
+      console.log(`🔍 [loadVerticalConfig] User ${user.email} has vertical: ${userVertical}`);
       setVertical(userVertical);
 
       // Load vertical configuration
       await loadConfig(userVertical);
 
     } catch (err) {
-      console.error('Error loading vertical config:', err);
+      console.error('🔍 [loadVerticalConfig] ERROR:', err);
       setError(err as Error);
       
       // Fallback to standard on error
+      console.log('🔍 [loadVerticalConfig] Falling back to standard due to error');
       setVertical('standard');
       try {
         await loadConfig('standard');
       } catch (fallbackErr) {
-        console.error('Fallback to standard failed:', fallbackErr);
+        console.error('🔍 [loadVerticalConfig] Fallback to standard failed:', fallbackErr);
       }
     } finally {
+      console.log('🔍 [loadVerticalConfig] COMPLETE');
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    console.log('🔍 [VerticalProvider] Mounted');
+    
     // Listen for auth state changes to properly initialize vertical
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔄 Auth state changed:', event, 'Session exists:', !!session);
+        console.log('🔍 [Auth] Event:', event);
+        console.log('🔍 [Auth] Session:', session);
+        console.log('🔍 [Auth] User:', session?.user);
+        console.log('� [Auth] User metadata:', session?.user?.user_metadata);
+        console.log('�🔄 Auth state changed:', event, 'Session exists:', !!session);
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
+          console.log('🔍 [Auth] Condition met, loading vertical config...');
           console.log('✅ Loading vertical config for authenticated user');
           loadVerticalConfig();
         } else if (event === 'SIGNED_OUT') {
@@ -115,6 +137,8 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
   }, [loadVerticalConfig]);
 
   async function loadConfig(verticalKey: string) {
+    console.log('🔍 [loadConfig] Loading config for:', verticalKey);
+    
     const { data: verticalConfig, error: configError } = await supabase
       .from('vertical_configurations')
       .select('*')
@@ -122,13 +146,16 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
       .eq('is_active', true)
       .single();
 
+    console.log('🔍 [loadConfig] Config query result:', verticalConfig);
+    console.log('🔍 [loadConfig] Config query error:', configError);
+
     if (configError) {
-      console.error('Error loading vertical config:', configError);
+      console.error('🔍 [loadConfig] Config error:', configError);
       throw configError;
     }
 
     if (verticalConfig) {
-      setConfig({
+      const config = {
         vertical: verticalConfig.vertical,
         displayName: verticalConfig.display_name,
         description: verticalConfig.description || '',
@@ -136,7 +163,11 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
         sidebarConfig: verticalConfig.sidebar_config,
         dashboardConfig: verticalConfig.dashboard_config,
         enabledModules: verticalConfig.enabled_modules || [],
-      });
+      };
+      
+      console.log('🔍 [loadConfig] Setting config:', config);
+      console.log('🔍 [loadConfig] Sidebar sections count:', config.sidebarConfig?.sections?.length);
+      setConfig(config);
     }
   }
 

@@ -670,7 +670,7 @@ export default function WorkflowCanvas() {
 
   return (
     <ReactFlowProvider>
-      <div className="flex flex-col h-screen w-screen overflow-hidden">
+      <div className="flex flex-col h-full overflow-hidden">
         {/* Top Section: Sidebar + Canvas */}
         <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
           {/* Desktop Sidebar - Independent scroll container */}
@@ -865,7 +865,7 @@ export default function WorkflowCanvas() {
         </div>
 
         {/* Bottom Panel - Responsive with proper scrolling */}
-        <div className="flex-shrink-0 h-48 lg:h-64 border-t bg-white">
+        <div className="flex-shrink-0 h-48 lg:h-64 border-t bg-white overflow-hidden">
           <SavedWorkflowsPanel
             key={workflowsKey}
             onLoadWorkflow={handleLoadWorkflow}

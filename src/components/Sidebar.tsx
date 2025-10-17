@@ -30,6 +30,12 @@ const NavItem: React.FC<{
 
 // Utility function to convert icon names to PascalCase for lucide-react
 function toPascalCase(str: string): string {
+  // CRITICAL FIX: Defensive null check for undefined icon names
+  if (!str || typeof str !== 'string') {
+    console.warn('🚨 [Sidebar] toPascalCase received invalid input:', str);
+    return 'Circle'; // Fallback icon name
+  }
+  
   return str
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -79,9 +85,41 @@ export const Sidebar: React.FC = () => {
     );
   }
 
-  // Determine menu items
-  let menuItems = config?.sidebarConfig?.sections || [];
-  console.log('🔍 [Sidebar] Initial menu items from config:', menuItems);
+  // Determine menu items - CRITICAL FIX: Extract items from sections
+  const sidebarSections = config?.sidebarConfig?.sections || [];
+  console.log('🔍 [Sidebar] Initial sections from config:', sidebarSections);
+  
+  // Transform sections structure to flat items list
+  let menuItems: { id: string; label: string; icon: string; path: string; }[] = [];
+  
+  if (sidebarSections.length > 0) {
+    // Extract all items from all sections and flatten
+    try {
+      for (const rawSection of sidebarSections) {
+        // Type assertion to access section properties
+        const section = rawSection as { items?: { name?: string; icon?: string; path?: string; }[]; };
+        
+        if (section && section.items && Array.isArray(section.items)) {
+          // Transform section items to match expected structure
+          for (const item of section.items) {
+            if (item) {
+              menuItems.push({
+                id: item.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+                label: item.name || 'Unknown',
+                icon: item.icon || 'Circle',
+                path: item.path || '/dashboard'
+              });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('🚨 [Sidebar] Error processing sections:', error);
+      menuItems = []; // Reset to empty array
+    }
+  }
+  
+  console.log('🔍 [Sidebar] Extracted menu items:', menuItems);
 
   // Fallback for Standard vertical if config incomplete or missing
   if (vertical === 'standard' && menuItems.length < 8) {
@@ -122,22 +160,28 @@ export const Sidebar: React.FC = () => {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto">
         <ul>
-          {menuItems.map((section) => {
+          {menuItems.map((item) => {
+            // CRITICAL FIX: Defensive checks for all item properties
+            const safeIcon = item.icon || 'Circle';
+            const safePath = item.path || '/dashboard';
+            const safeLabel = item.label || 'Unknown';
+            const safeId = item.id || 'unknown';
+            
             // Dynamically get icon component from lucide-react
-            const iconName = toPascalCase(section.icon);
+            const iconName = toPascalCase(safeIcon);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const IconComponent = (Icons as any)[iconName] || Icons.Circle;
 
             return (
               <NavItem
-                key={section.id}
+                key={safeId}
                 to={
-                  section.id === 'dashboard' 
+                  safeId === 'dashboard' 
                     ? '..' 
-                    : (section.path.startsWith('/') ? section.path.substring(1) : section.path)
+                    : (safePath.startsWith('/') ? safePath.substring(1) : safePath)
                 }
                 icon={<IconComponent className="w-6 h-6" />}
-                label={section.label}
+                label={safeLabel}
               />
             );
           })}

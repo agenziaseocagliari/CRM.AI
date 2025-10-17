@@ -32,7 +32,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
                 Accedi
               </Link>
               <Link 
-                to="/register?account_type=insurance_agency"
+                to="/login?vertical=insurance"
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Prova Gratis 14 Giorni
@@ -59,7 +59,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
-                to="/register?account_type=insurance_agency"
+                to="/login?vertical=insurance"
                 className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
               >
                 Inizia Gratis Oggi
@@ -197,7 +197,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
               </ul>
               
               <Link 
-                to="/register?plan=starter&account_type=insurance_agency"
+                to="/login?vertical=insurance&plan=starter"
                 className="w-full bg-gray-100 text-gray-900 py-2 px-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block text-sm"
               >
                 Inizia Gratis
@@ -234,7 +234,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
               </ul>
               
               <Link 
-                to="/register?plan=professional&account_type=insurance_agency"
+                to="/login?vertical=insurance&plan=professional"
                 className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors text-center block text-sm"
               >
                 Inizia Gratis
@@ -271,7 +271,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
               </ul>
               
               <Link 
-                to="/register?plan=premium&account_type=insurance_agency"
+                to="/login?vertical=insurance&plan=premium"
                 className="w-full bg-gray-100 text-gray-900 py-2 px-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block text-sm"
               >
                 Inizia Gratis
@@ -308,7 +308,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
               </ul>
               
               <Link 
-                to="/register?plan=advanced&account_type=insurance_agency"
+                to="/login?vertical=insurance&plan=advanced"
                 className="w-full bg-gray-100 text-gray-900 py-2 px-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block text-sm"
               >
                 Contattaci
@@ -345,7 +345,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
               </ul>
               
               <Link 
-                to="/register?plan=business&account_type=insurance_agency"
+                to="/login?vertical=insurance&plan=business"
                 className="w-full bg-gray-100 text-gray-900 py-2 px-3 rounded-lg font-medium hover:bg-gray-200 transition-colors text-center block text-sm"
               >
                 Contattaci
@@ -472,7 +472,7 @@ const InsuranceAgencyLandingPage: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
-              to="/register?account_type=insurance_agency"
+              to="/login?vertical=insurance"
               className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               Inizia la Prova Gratuita

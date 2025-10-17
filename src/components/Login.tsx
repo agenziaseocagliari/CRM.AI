@@ -1,22 +1,26 @@
 import React, { useEffect, useState } from 'react';
 // FIX: Corrected the import for useNavigate from 'react-router-dom' to resolve module export errors.
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { diagnoseJWT, JWTDiagnostics } from '../lib/jwtUtils';
 import { analyzeLoginHistory, detectLoginMethodFromUrl, generateLoginHistoryReport, getLoginHistory, recordLoginAttempt } from '../lib/loginTracker';
 import { supabase } from '../lib/supabaseClient';
 
 import { GuardianIcon } from './ui/icons';
+import { Shield } from 'lucide-react';
 
 // Maximum failed login attempts before adding delay
 const MAX_FAILED_ATTEMPTS = 3;
 const LOGIN_DELAY_MS = 2000; // 2 seconds delay after max attempts
 
 export const Login: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const vertical = searchParams.get('vertical') || 'standard';
     const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -27,6 +31,11 @@ export const Login: React.FC = () => {
     const [isDelayed, setIsDelayed] = useState(false);
     const [sessionExpired, setSessionExpired] = useState(false);
     const navigate = useNavigate();
+
+    // Log vertical info for debugging
+    useEffect(() => {
+        console.log('Signing up for vertical:', vertical);
+    }, [vertical]);
 
     // Check if redirected due to session expiry
     useEffect(() => {
@@ -147,11 +156,55 @@ export const Login: React.FC = () => {
             }
             // Il successo del login viene gestito dal listener in App.tsx che naviga alla dashboard
         } else { // signUp
-            const { error } = await supabase.auth.signUp({ email, password });
+            const { data: authData, error } = await supabase.auth.signUp({ 
+                email, 
+                password,
+                options: {
+                    data: {
+                        name: name || email.split('@')[0],
+                        vertical: vertical
+                    }
+                }
+            });
+            
             if (error) {
                 setError('Errore durante la registrazione. Riprova più tardi.');
-            } else {
+            } else if (authData.user) {
+                // Wait for confirmation, then create profile and organization
                 setMessage('Registrazione avvenuta! Controlla la tua email per il link di conferma.');
+                
+                // Update profile with vertical information
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .update({ 
+                        name: name || email.split('@')[0],
+                        vertical: vertical,
+                    })
+                    .eq('id', authData.user.id);
+                
+                if (profileError) {
+                    console.error('Error updating profile:', profileError);
+                }
+                
+                // Create organization for this vertical
+                const orgName = `${name || email.split('@')[0]}'s ${vertical === 'insurance' ? 'Agenzia' : 'Organizzazione'}`;
+                const { data: org, error: orgError } = await supabase
+                    .from('organizations')
+                    .insert({
+                        name: orgName,
+                        vertical: vertical,
+                    })
+                    .select()
+                    .single();
+
+                if (!orgError && org) {
+                    // Link user to organization
+                    await supabase
+                        .from('profiles')
+                        .update({ organization_id: org.id })
+                        .eq('id', authData.user.id);
+                }
+                
                 setMode('signIn'); // Torna al login dopo la registrazione
             }
         }
@@ -204,6 +257,17 @@ export const Login: React.FC = () => {
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    {vertical === 'insurance' && mode === 'signUp' && (
+                        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center gap-2 text-blue-800">
+                                <Shield className="w-5 h-5" />
+                                <span className="font-medium">
+                                    Stai creando un account per CRM Assicurazioni
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                    
                     {sessionExpired && (
                         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
                             <div className="flex items-start">
@@ -242,6 +306,27 @@ export const Login: React.FC = () => {
                                 />
                             </div>
                         </div>
+
+                        {mode === 'signUp' && (
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                                    Nome e Cognome
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        id="name"
+                                        name="name"
+                                        type="text"
+                                        autoComplete="name"
+                                        required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                        placeholder="Mario Rossi"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700">

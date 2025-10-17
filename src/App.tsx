@@ -297,7 +297,8 @@ const App: React.FC = () => {
         <Route path="/test/event-modal" element={<EventModalTest />} />
 
         {/* Vertical Landing Pages */}
-        <Route path="/verticals/insurance-agency" element={<InsuranceAgencyLanding />} />
+        <Route path="/assicurazioni" element={<InsuranceAgencyLanding />} />
+        <Route path="/verticals/insurance-agency" element={<Navigate to="/assicurazioni" replace />} />
         <Route path="/verticals/marketing-agency" element={<MarketingAgencyLanding />} />
 
         <Route path="/settings/oauth/google" element={session ? <GoogleAuthCallback /> : <Navigate to="/login" />} />

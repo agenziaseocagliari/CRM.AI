@@ -18,7 +18,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { AlertTriangle, Beaker, ChevronDown, Play, Redo, Sparkles, Trash2, Undo } from 'lucide-react';
+import { AlertTriangle, Beaker, Play, Redo, Sparkles, Trash2, Undo } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import '../../styles/workflowCanvas.css';
@@ -26,7 +26,7 @@ import CustomNode from './CustomNode';
 import GenerateWorkflowModal from './GenerateWorkflowModal';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import NodeConfigPanel from './NodeConfigPanel';
-import NodeSidebar from './NodeSidebar';
+import NodesBar from './NodesBar';
 import SavedWorkflowsPanel from './SavedWorkflowsPanel';
 import WorkflowSimulationPanel from './WorkflowSimulationPanel';
 
@@ -99,7 +99,6 @@ export default function WorkflowCanvas() {
   // isSaving state removed - using SavedWorkflowsPanel's database save instead
   const [isExecuting, setIsExecuting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
   // ReactFlow refs and state for drag-drop
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -671,30 +670,12 @@ export default function WorkflowCanvas() {
   return (
     <ReactFlowProvider>
       <div className="flex flex-col h-full overflow-hidden">
-        {/* Top Section: Sidebar + Canvas */}
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-          {/* Desktop Sidebar - Independent scroll container */}
-          <div className="hidden lg:flex lg:flex-col lg:w-[150px] xl:w-[180px] border-r overflow-y-auto flex-shrink-0">
-            <NodeSidebar />
-          </div>
-          
-          {/* Mobile Sidebar - Collapsible with proper height */}
-          <div className="lg:hidden flex-shrink-0">
-            <button
-              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="w-full bg-gray-100 px-4 py-3 flex items-center justify-between border-b"
-            >
-              <span className="font-medium text-sm">📋 Nodi Disponibili</span>
-              <ChevronDown className={`w-5 h-5 transition-transform ${mobileSidebarOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {mobileSidebarOpen && (
-              <div className="border-b max-h-[40vh] overflow-y-auto bg-white">
-                <NodeSidebar />
-              </div>
-            )}
-          </div>
-          
-          {/* Canvas Container - CRITICAL: Must have min-h-0 and min-w-0 */}
+        {/* NEW: Horizontal Nodes Bar */}
+        <NodesBar />
+        
+        {/* Main content - Full width (no sidebar) */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Canvas Container - Full width */}
           <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
             {/* Toolbar - MUST BE flex-shrink-0 */}
             <div className="flex-shrink-0 bg-white border-b px-2 sm:px-4 py-2 sm:py-3">
@@ -865,7 +846,7 @@ export default function WorkflowCanvas() {
         </div>
 
         {/* Bottom Panel - Responsive with proper scrolling */}
-        <div className="flex-shrink-0 h-48 lg:h-64 border-t bg-white overflow-hidden">
+        <div className="flex-shrink-0 h-64 lg:h-80 border-t bg-white overflow-auto">
           <SavedWorkflowsPanel
             key={workflowsKey}
             onLoadWorkflow={handleLoadWorkflow}
@@ -879,10 +860,10 @@ export default function WorkflowCanvas() {
         <div className="bg-blue-50 border-t border-blue-200 p-2 sm:p-3 text-xs sm:text-sm text-blue-800">
           💡 <strong className="hidden sm:inline">Suggerimenti Enterprise:</strong>
           <strong className="sm:hidden">Suggerimenti:</strong>
-          <span className="hidden lg:inline"> Trascina nodi dalla sidebar | Doppio-click per configurare | 
+          <span className="hidden lg:inline"> Seleziona categoria nodi | Doppio-click per configurare | 
           Seleziona + Canc per eliminare | Connetti trascinando dai punti di connessione | 
           Ctrl+S per salvare | Ctrl+Z/Y per annulla/ripeti | Hover sui nodi per info</span>
-          <span className="lg:hidden"> Trascina nodi | Doppio-click per configurare | Ctrl+S salva</span>
+          <span className="lg:hidden"> Scegli nodi | Doppio-click per configurare | Ctrl+S salva</span>
         </div>
       </div>
 

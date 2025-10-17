@@ -13,7 +13,7 @@ export interface Profile {
 }
 
 export interface Contact {
-    id: number;
+    id: string;
     organization_id: string;
     name: string;
     email: string;

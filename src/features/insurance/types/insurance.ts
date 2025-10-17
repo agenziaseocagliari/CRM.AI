@@ -19,7 +19,7 @@ export type PremiumFrequency = 'monthly' | 'quarterly' | 'annual';
 export interface InsurancePolicy {
   id: string;
   organization_id: string;
-  contact_id: number;
+  contact_id: string;
   
   // Policy Information
   policy_number: string;
@@ -52,7 +52,7 @@ export interface InsurancePolicy {
 
 export interface InsurancePolicyWithContact extends InsurancePolicy {
   contact: {
-    id: number;
+    id: string;
     name: string;
     email?: string;
     phone?: string;
@@ -61,7 +61,7 @@ export interface InsurancePolicyWithContact extends InsurancePolicy {
 }
 
 export interface PolicyFormData {
-  contact_id: number;
+  contact_id: string;
   policy_number: string;
   policy_type: PolicyType;
   status: PolicyStatus;
@@ -268,7 +268,7 @@ export const validatePolicyForm = (data: Partial<PolicyFormData>): Record<string
 // ================================================
 
 export const DEFAULT_POLICY_FORM: PolicyFormData = {
-  contact_id: 0,
+  contact_id: '',
   policy_number: '',
   policy_type: 'Auto',
   status: 'active',

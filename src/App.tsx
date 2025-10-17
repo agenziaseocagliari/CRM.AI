@@ -158,7 +158,7 @@ const App: React.FC = () => {
   // Performance optimization: Service Worker registration and monitoring
   useEffect(() => {
     // Register service worker for PWA functionality
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       registerSW({
         onSuccess: (_registration) => {
           diagnosticLogger.info('sw', 'Service worker registered successfully');

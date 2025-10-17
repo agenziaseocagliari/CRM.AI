@@ -50,6 +50,7 @@
     "**/__tests__/**",
     "**/*.spec.ts",
     "**/*.spec.tsx",
+    "src/test/**/*",
     "supabase/**/*",
     "minimal-csv-test.ts"
   ],

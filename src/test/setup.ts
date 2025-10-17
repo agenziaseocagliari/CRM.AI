@@ -1,6 +1,7 @@
 // File: src/test/setup.ts
 // Global test setup for Vitest
 
+// @ts-ignore - Vitest types not available in build
 import { beforeEach, vi } from 'vitest';
 
 // Mock console methods to reduce noise in tests

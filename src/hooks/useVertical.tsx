@@ -1,6 +1,7 @@
-import React, { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
+// Types
 export interface VerticalConfig {
   vertical: string;
   displayName: string;
@@ -14,7 +15,7 @@ export interface VerticalConfig {
       path: string;
     }>;
   };
-  dashboardConfig: Record<string, unknown>;
+  dashboardConfig: any;
   enabledModules: string[];
 }
 
@@ -24,40 +25,50 @@ interface VerticalContextType {
   loading: boolean;
   error: Error | null;
   hasModule: (module: string) => boolean;
-  switchVertical: (vertical: string) => Promise<void>;
-  refresh: () => Promise<void>;
+  switchVertical: (newVertical: string) => Promise<void>;
 }
 
+// Context (will be used by Provider in next task)
 const VerticalContext = createContext<VerticalContextType | null>(null);
 
-export function VerticalProvider({ children }: { children: ReactNode }): JSX.Element {
+// Provider component
+export function VerticalProvider({ children }: { children: React.ReactNode }) {
   const [vertical, setVertical] = useState<string>('standard');
   const [config, setConfig] = useState<VerticalConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const loadVerticalConfig = useCallback(async () => {
+  useEffect(() => {
+    loadVerticalConfig();
+  }, []);
+
+  async function loadVerticalConfig() {
     try {
       setLoading(true);
       setError(null);
 
-      // Get user's profile vertical
+      // Get current user's vertical (from profiles table)
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        // Not logged in, use standard
         setVertical('standard');
         await loadConfig('standard');
         setLoading(false);
         return;
       }
 
+      // Get user's vertical from profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('vertical, organization_id')
+        .select('vertical')
         .eq('id', user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error loading profile:', profileError);
+        throw profileError;
+      }
 
       const userVertical = profile?.vertical || 'standard';
       setVertical(userVertical);
@@ -68,33 +79,38 @@ export function VerticalProvider({ children }: { children: ReactNode }): JSX.Ele
     } catch (err) {
       console.error('Error loading vertical config:', err);
       setError(err as Error);
-      // Fallback to standard
+      
+      // Fallback to standard on error
       setVertical('standard');
-      await loadConfig('standard');
+      try {
+        await loadConfig('standard');
+      } catch (fallbackErr) {
+        console.error('Fallback to standard failed:', fallbackErr);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    loadVerticalConfig();
-  }, [loadVerticalConfig]);
+  }
 
   async function loadConfig(verticalKey: string) {
     const { data: verticalConfig, error: configError } = await supabase
       .from('vertical_configurations')
       .select('*')
       .eq('vertical', verticalKey)
+      .eq('is_active', true)
       .single();
 
-    if (configError) throw configError;
+    if (configError) {
+      console.error('Error loading vertical config:', configError);
+      throw configError;
+    }
 
     if (verticalConfig) {
       setConfig({
         vertical: verticalConfig.vertical,
         displayName: verticalConfig.display_name,
-        description: verticalConfig.description,
-        icon: verticalConfig.icon,
+        description: verticalConfig.description || '',
+        icon: verticalConfig.icon || 'Briefcase',
         sidebarConfig: verticalConfig.sidebar_config,
         dashboardConfig: verticalConfig.dashboard_config,
         enabledModules: verticalConfig.enabled_modules || [],
@@ -108,42 +124,33 @@ export function VerticalProvider({ children }: { children: ReactNode }): JSX.Ele
 
   async function switchVertical(newVertical: string) {
     try {
+      setLoading(true);
+      setError(null);
+      
+      // Update user's profile with new vertical
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Update profile
-      await supabase
-        .from('profiles')
-        .update({ vertical: newVertical })
-        .eq('id', user.id);
-
-      // Update organization
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (profile?.organization_id) {
-        await supabase
-          .from('organizations')
+      
+      if (user) {
+        const { error: updateError } = await supabase
+          .from('profiles')
           .update({ vertical: newVertical })
-          .eq('id', profile.organization_id);
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('Error updating profile vertical:', updateError);
+          throw updateError;
+        }
       }
 
-      // Reload config
-      await loadVerticalConfig();
-      
-      // Force page reload to apply changes
-      window.location.reload();
+      // Load new configuration
+      setVertical(newVertical);
+      await loadConfig(newVertical);
     } catch (err) {
       console.error('Error switching vertical:', err);
-      throw err;
+      setError(err as Error);
+    } finally {
+      setLoading(false);
     }
-  }
-
-  async function refresh() {
-    await loadVerticalConfig();
   }
 
   return (
@@ -153,18 +160,34 @@ export function VerticalProvider({ children }: { children: ReactNode }): JSX.Ele
       loading,
       error,
       hasModule,
-      switchVertical,
-      refresh
+      switchVertical
     }}>
       {children}
     </VerticalContext.Provider>
   );
 }
 
+// Hook for consuming context
 export function useVertical() {
   const context = useContext(VerticalContext);
   if (!context) {
     throw new Error('useVertical must be used within VerticalProvider');
   }
   return context;
+}
+
+// Utility hooks
+export function useIsInsurance() {
+  const { vertical } = useVertical();
+  return vertical === 'insurance';
+}
+
+export function useIsStandard() {
+  const { vertical } = useVertical();
+  return vertical === 'standard';
+}
+
+export function useHasModule(module: string) {
+  const { hasModule } = useVertical();
+  return hasModule(module);
 }

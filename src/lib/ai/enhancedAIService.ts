@@ -1,12 +1,12 @@
 ﻿// File: src/lib/ai/enhancedAIService.ts
 // Enhanced AI Service with Prompt Templates, Caching, and Monitoring
 
-import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
+import { GenerateContentResponse, GoogleGenAI } from '@google/genai';
 
 import { withRateLimit } from '../rateLimiter';
 
 import { getCachedAIResult, setCachedAIResult } from './aiCacheManager';
-import { getPromptTemplate, validatePromptOutput, trackTemplateUsage, type OrganizationAIContext } from './promptTemplates';
+import { getPromptTemplate, trackTemplateUsage, validatePromptOutput, type OrganizationAIContext } from './promptTemplates';
 
 import { diagnosticLogger } from '../mockDiagnosticLogger';
 export interface AIRequestConfig {
@@ -131,10 +131,10 @@ class EnhancedAIService {
         async () => {
           // 3. Get enhanced prompt template
           const template = getPromptTemplate(config.actionType, config.organizationContext);
-          
+
           // 4. Build final prompt
           const prompt = this.buildFinalPrompt(template, config.input);
-          
+
           // 5. Make AI request
           const response = await this.ai.models.generateContent({
             model,
@@ -162,7 +162,7 @@ class EnhancedAIService {
       let result: T;
       try {
         const responseText = response.text || '';
-        result = template.outputFormat === 'json' 
+        result = template.outputFormat === 'json'
           ? JSON.parse(responseText.trim())
           : responseText.trim() as T;
 
@@ -238,7 +238,7 @@ class EnhancedAIService {
       const errorTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown AI processing error';
       const errorType = error instanceof Error ? error.constructor.name : 'UnknownError';
-      
+
       // Track error metrics
       await this.trackMetrics({
         requestId,
@@ -330,7 +330,7 @@ class EnhancedAIService {
   // Utility methods
   private buildFinalPrompt(template: PromptTemplate, input: unknown): string {
     const inputStr = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
-    
+
     return `${template.systemContext}
 
 ${template.userContext}
@@ -340,11 +340,11 @@ ${inputStr}
 
 ${template.examples.length > 0 ? `
 EXAMPLES:
-${template.examples.map((ex, i: number) => 
-  `Example ${i + 1}:
+${template.examples.map((ex, i: number) =>
+      `Example ${i + 1}:
   Input: ${ex.input}
   Output: ${ex.output}`
-).join('\n\n')}
+    ).join('\n\n')}
 ` : ''}
 
 CONSTRAINTS:
@@ -386,7 +386,7 @@ Please analyze the input data and provide your response in the specified format.
           },
           required: ['score', 'category', 'reasoning']
         };
-      
+
       case 'ai_email_generation':
         return {
           type: 'object',
@@ -398,7 +398,7 @@ Please analyze the input data and provide your response in the specified format.
           },
           required: ['subject', 'body', 'cta']
         };
-      
+
       default:
         return undefined;
     }
@@ -413,7 +413,7 @@ Please analyze the input data and provide your response in the specified format.
     const responseText = response.text || '';
     const outputTokens = Math.ceil(responseText.length / 4);
     const inputTokens = Math.ceil(outputTokens * 0.7); // Estimate based on typical ratio
-    
+
     return {
       input: inputTokens,
       output: outputTokens,
@@ -423,11 +423,11 @@ Please analyze the input data and provide your response in the specified format.
 
   private calculateCost(model: string, tokenUsage: { input: number; output: number }): number {
     const modelCost = this.MODEL_COSTS[model as keyof typeof this.MODEL_COSTS];
-    if (!modelCost) {return 0;}
+    if (!modelCost) { return 0; }
 
     const inputCost = (tokenUsage.input / 1000) * modelCost.input;
     const outputCost = (tokenUsage.output / 1000) * modelCost.output;
-    
+
     return inputCost + outputCost;
   }
 
@@ -446,7 +446,7 @@ Please analyze the input data and provide your response in the specified format.
 
       // Store in database for analysis
       // await supabase.from('ai_metrics').insert(metrics);
-      
+
     } catch (error) {
       diagnosticLogger.warn('[EnhancedAI] Failed to track metrics:', error);
     }
@@ -485,7 +485,7 @@ Please analyze the input data and provide your response in the specified format.
     details: Record<string, unknown>;
   }> {
     const start = Date.now();
-    
+
     try {
       // Simple health check
       const response = await this.ai.models.generateContent({

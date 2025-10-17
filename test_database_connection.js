@@ -1,5 +1,5 @@
-import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
@@ -9,7 +9,9 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseServiceKey) {
-  console.error('❌ SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+  console.error(
+    '❌ SUPABASE_SERVICE_ROLE_KEY environment variable is required'
+  );
   process.exit(1);
 }
 
@@ -18,38 +20,46 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 async function testConnection() {
   try {
     console.log('🔍 Testing database connection...');
-    
+
     // Test basic connection
-    const { error } = await supabase
-      .from('contacts')
-      .select('id')
-      .limit(1);
-    
+    const { error } = await supabase.from('contacts').select('id').limit(1);
+
     if (error) {
       console.error('❌ Database connection failed:', error);
       return false;
     }
-    
+
     console.log('✅ Database connection successful!');
-    
+
     // Check if insurance_policies table exists
     console.log('\n🔍 Checking if insurance_policies table exists...');
-    
+
     const { data: insuranceData, error: insuranceError } = await supabase
       .from('insurance_policies')
       .select('id')
       .limit(1);
-    
+
     if (insuranceError) {
       if (insuranceError.code === 'PGRST116') {
-        console.log('📋 insurance_policies table does NOT exist - need to create it');
-        console.log('\n🔧 Please manually execute the migration SQL in Supabase dashboard:');
-        console.log('👉 Go to: https://supabase.com/dashboard/project/qjtaqrlpronohgpfdxsi/sql');
+        console.log(
+          '📋 insurance_policies table does NOT exist - need to create it'
+        );
+        console.log(
+          '\n🔧 Please manually execute the migration SQL in Supabase dashboard:'
+        );
+        console.log(
+          '👉 Go to: https://supabase.com/dashboard/project/qjtaqrlpronohgpfdxsi/sql'
+        );
         console.log('👉 Open the SQL editor and paste the contents of:');
-        console.log('   supabase/migrations/20251018000000_insurance_policies.sql');
+        console.log(
+          '   supabase/migrations/20251018000000_insurance_policies.sql'
+        );
         return false;
       } else {
-        console.error('❌ Error checking insurance_policies table:', insuranceError);
+        console.error(
+          '❌ Error checking insurance_policies table:',
+          insuranceError
+        );
         return false;
       }
     } else {
@@ -57,7 +67,6 @@ async function testConnection() {
       console.log('📊 Found data:', insuranceData);
       return true;
     }
-    
   } catch (error) {
     console.error('❌ Test failed:', error);
     return false;

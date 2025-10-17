@@ -82,7 +82,7 @@ function calculateEmailEngagement(contact: Contact): number {
     if (contact.email) score += 5;
 
     // Email domain quality
-    if (contact.email) {
+    if (contact.email && contact.email.includes('@')) {
         const domain = contact.email.split('@')[1];
         if (domain) {
             // Corporate domains get higher scores

@@ -1,9 +1,9 @@
 // AI Agents Orchestrator - Guardian AI CRM Enterprise Architecture
 // This file defines the AI Agent system that transforms Guardian AI into an enterprise platform
 
+import type { Contact } from '../../types';
 import { invokeSupabaseFunction } from '../api';
 import { getEffectiveUserTier, isDevelopmentEnterpriseUser } from '../enterpriseOverride';
-import type { Contact } from '../../types';
 
 export interface AIAgent {
   id: string;
@@ -589,24 +589,24 @@ export class AIOrchestrator {
       const defaultContact: Contact = {
         id: '', // Fixed: Changed from number to string (UUID will be assigned by database)
         organization_id: request.organizationId || '',
-        name: '', 
-        email: '', 
-        company: '', 
-        phone: '', 
+        name: '',
+        email: '',
+        company: '',
+        phone: '',
         created_at: new Date().toISOString(),
         lead_score: null,
         lead_category: null,
         lead_score_reasoning: null
       };
-      
+
       // Type guard to check if context.contact is a valid Contact
       const isContact = (obj: unknown): obj is Contact => {
-        return obj !== null && typeof obj === 'object' && 
-               'id' in obj && 'organization_id' in obj && 'name' in obj && 'email' in obj;
+        return obj !== null && typeof obj === 'object' &&
+          'id' in obj && 'organization_id' in obj && 'name' in obj && 'email' in obj;
       };
-      
-      const contact: Contact = (request.context?.contact && isContact(request.context.contact)) 
-        ? request.context.contact 
+
+      const contact: Contact = (request.context?.contact && isContact(request.context.contact))
+        ? request.context.contact
         : defaultContact;
       const scoringResult = await calculateLeadScore(
         contact,

@@ -28,15 +28,15 @@ try {
 console.log('Setting up Husky git hooks...');
 const husky = spawn('npx', ['husky'], {
   stdio: 'inherit',
-  shell: true
+  shell: true,
 });
 
-husky.on('error', (error) => {
+husky.on('error', error => {
   console.log('Failed to setup Husky:', error.message);
   process.exit(0); // Don't fail the installation
 });
 
-husky.on('close', (code) => {
+husky.on('close', code => {
   if (code === 0) {
     console.log('Husky setup completed successfully');
   } else {

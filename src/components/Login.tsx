@@ -163,7 +163,7 @@ export const Login: React.FC = () => {
                     password,
                     options: {
                         data: {
-                            name: name || email.split('@')[0],
+                            name: name || (email || '').split('@')[0] || 'User',
                             vertical: vertical,
                             user_role: 'user'
                         }
@@ -183,7 +183,7 @@ export const Login: React.FC = () => {
                     .from('profiles')
                     .insert({ 
                         id: authData.user.id, // CRITICAL: Add user ID
-                        name: name || email.split('@')[0],
+                        name: name || (email || '').split('@')[0] || 'User',
                         vertical: vertical,
                         user_role: 'user',
                     });
@@ -194,7 +194,7 @@ export const Login: React.FC = () => {
                 }
                 
                 // Step 3: Create organization
-                const orgName = `${name || email.split('@')[0]}'s ${vertical === 'insurance' ? 'Agenzia' : 'Organizzazione'}`;
+                const orgName = `${name || (email || '').split('@')[0] || 'User'}'s ${vertical === 'insurance' ? 'Agenzia' : 'Organizzazione'}`;
                 const { data: org, error: orgError } = await supabase
                     .from('organizations')
                     .insert({

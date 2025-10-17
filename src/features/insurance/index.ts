@@ -6,8 +6,8 @@ export { default as InsuranceDashboard } from './components/Dashboard';
 
 // Phase 1.1: Polizze Management - Complete Implementation
 export { PoliciesList } from './components/PoliciesList';
-export { PolicyForm } from './components/PolicyForm';
 export { PolicyDetail } from './components/PolicyDetail';
+export { PolicyForm } from './components/PolicyForm';
 
 // Page wrappers for routing - import and re-export for proper typing
 import { PoliciesList } from './components/PoliciesList';

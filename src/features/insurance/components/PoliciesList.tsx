@@ -3,41 +3,41 @@
  * Features: Table view, filters, search, pagination, CRUD actions
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Eye, 
-  Edit2, 
-  Trash2, 
-  AlertTriangle,
-  FileText,
-  Calendar,
-  Building2,
-  ChevronLeft,
-  ChevronRight
+import {
+    AlertTriangle,
+    Building2,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    Edit2,
+    Eye,
+    FileText,
+    Filter,
+    Plus,
+    Search,
+    Trash2
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
-import { supabase } from '../../../lib/supabaseClient';
-import { useCrmData } from '../../../hooks/useCrmData';
 import { InsurancePoliciesMeta } from '../../../components/PageMeta';
 import { ROUTES } from '../../../config/routes';
-import { 
-  InsurancePolicyWithContact,
-  PolicyFilters,
-  DEFAULT_POLICY_FILTERS,
-  POLICY_TYPES,
-  POLICY_STATUSES,
-  POLICY_TYPE_LABELS,
-  POLICY_STATUS_LABELS,
-  POLICY_STATUS_COLORS,
-  formatCurrency,
-  formatDate,
-  isPolicyExpiringSoon,
-  isPolicyExpired
+import { useCrmData } from '../../../hooks/useCrmData';
+import { supabase } from '../../../lib/supabaseClient';
+import {
+    DEFAULT_POLICY_FILTERS,
+    InsurancePolicyWithContact,
+    POLICY_STATUSES,
+    POLICY_STATUS_COLORS,
+    POLICY_STATUS_LABELS,
+    POLICY_TYPES,
+    POLICY_TYPE_LABELS,
+    PolicyFilters,
+    formatCurrency,
+    formatDate,
+    isPolicyExpired,
+    isPolicyExpiringSoon
 } from '../types/insurance';
 
 const ITEMS_PER_PAGE = 25;

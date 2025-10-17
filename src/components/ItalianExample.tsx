@@ -5,10 +5,10 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageMeta } from './PageMeta';
-import { ROUTES } from '../config/routes';
 import { useItalianLabels } from '../config/italian-labels';
+import { ROUTES } from '../config/routes';
 import { SEO_CONFIG } from '../config/seo';
+import { PageMeta } from './PageMeta';
 
 interface ItalianExampleProps {
   title?: string;

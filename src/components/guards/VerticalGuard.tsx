@@ -1,6 +1,6 @@
 import { useVertical } from '@/hooks/verticalUtils';
-import { Navigate } from 'react-router-dom';
 import { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 
 interface VerticalGuardProps {
   allowedVerticals: string[];

@@ -11,16 +11,18 @@
 ---
 
 ## 1. PROJECT STRUCTURE
+
 ─────────────────────────────────────────────────────────
 
 **Directory Tree** (src/):
+
 ```
 src/
 ├── app/ (specific features)
 ├── components/
 │   ├── contacts/ (4 main + 8 helper components)
 │   │   ├── ContactsTable.tsx ✓
-│   │   ├── ContactDetailModal.tsx ✓  
+│   │   ├── ContactDetailModal.tsx ✓
 │   │   ├── ContactDetailView.tsx ✓
 │   │   └── [5 more support components]
 │   ├── deals/ (4 components)
@@ -61,6 +63,7 @@ src/
 ```
 
 **Key Findings**:
+
 - ✅ **Insurance directory EXISTS** in `src/features/insurance/`
 - ✅ **Insurance types** infrastructure ready but empty
 - ✅ **Total migrations**: 12 files (including 5 vertical-specific)
@@ -69,11 +72,13 @@ src/
 ---
 
 ## 2. ROUTING ARCHITECTURE
+
 ─────────────────────────────────────────────────────────
 
 **React Router Version**: 6.23.1
 
 **Current Routing Pattern**:
+
 ```tsx
 <Routes>
   {/* Insurance routes - protected */}
@@ -94,7 +99,7 @@ src/
       )
     }
   />
-  
+
   {/* Main dashboard routes */}
   <Route path="/dashboard/*" element={<MainLayout />}>
     <Route index element={<Dashboard />} />
@@ -108,15 +113,17 @@ src/
 ```
 
 **Existing Insurance Routes**:
+
 ```tsx
 // ALREADY IMPLEMENTED - placeholders exist:
 /insurance/policies      → <InsurancePoliciesPage />
-/insurance/claims        → <InsuranceClaimsPage />  
+/insurance/claims        → <InsuranceClaimsPage />
 /insurance/commissions   → <InsuranceCommissionsPage />
 /insurance/renewals      → <InsuranceRenewalsPage />
 ```
 
 **Protected Route Implementation**:
+
 ```tsx
 // Uses InsuranceOnlyGuard component
 <InsuranceOnlyGuard>
@@ -131,6 +138,7 @@ src/
 ```
 
 **Recommendation for Phase 1.1**:
+
 ```tsx
 // Insurance policies routing (ALREADY EXISTS):
 <Route path="/insurance/policies" element={<InsurancePoliciesPage />} />
@@ -142,11 +150,13 @@ src/
 ---
 
 ## 3. UI COMPONENT PATTERNS
+
 ─────────────────────────────────────────────────────────
 
 #### **CONTACTS MODULE ANALYSIS**:
 
 **File Structure**:
+
 ```
 src/components/contacts/
 ├── ContactsTable.tsx       (main list component)
@@ -160,6 +170,7 @@ src/components/contacts/
 ```
 
 **List Component Pattern**:
+
 ```tsx
 // ContactsTable.tsx key patterns:
 import { Contact } from '../../types';
@@ -178,11 +189,11 @@ export default function ContactsTable({ contacts, onEditContact, ... }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  
+
   // Sorting + pagination logic
   const sortedContacts = useMemo(() => { ... }, [contacts, sortField, sortOrder]);
   const paginatedContacts = sortedContacts.slice(startIndex, startIndex + pageSize);
-  
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header with actions */}
@@ -194,6 +205,7 @@ export default function ContactsTable({ contacts, onEditContact, ... }) {
 ```
 
 **Detail Component Pattern**:
+
 ```tsx
 // ContactDetailModal.tsx key patterns:
 interface ContactDetailModalProps {
@@ -203,11 +215,18 @@ interface ContactDetailModalProps {
   onUpdate: (contact: Contact) => void;
 }
 
-export default function ContactDetailModal({ isOpen, onClose, contact, onUpdate }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'deals' | 'events'>('overview');
+export default function ContactDetailModal({
+  isOpen,
+  onClose,
+  contact,
+  onUpdate,
+}) {
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'activity' | 'deals' | 'events'
+  >('overview');
   const [notes, setNotes] = useState<ContactNote[]>([]);
   const [deals, setDeals] = useState<Opportunity[]>([]);
-  
+
   // Tab-based interface with lazy loading
   // CRUD operations for notes, activities
   // Integration with calendar events
@@ -215,6 +234,7 @@ export default function ContactDetailModal({ isOpen, onClose, contact, onUpdate 
 ```
 
 **Key Observations**:
+
 - **State Management**: useState (no external state library)
 - **Form Validation**: Custom validation functions + error state
 - **Data Fetching**: Direct supabase calls in components
@@ -226,6 +246,7 @@ export default function ContactDetailModal({ isOpen, onClose, contact, onUpdate 
 #### **DEALS MODULE ANALYSIS**:
 
 **File Structure**:
+
 ```
 src/components/deals/
 ├── DealModal.tsx        (form modal)
@@ -235,6 +256,7 @@ src/components/deals/
 ```
 
 **Form Component Pattern**:
+
 ```tsx
 // DealModal.tsx key patterns:
 interface DealFormData {
@@ -274,11 +296,13 @@ const validateForm = (): boolean => {
 ---
 
 ## 4. DATABASE SCHEMA
+
 ─────────────────────────────────────────────────────────
 
 **Relevant Existing Tables**:
 
 **Contact_notes table** (example of current schema patterns):
+
 ```sql
 CREATE TABLE IF NOT EXISTS contact_notes (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -291,6 +315,7 @@ CREATE TABLE IF NOT EXISTS contact_notes (
 ```
 
 **Vertical_configurations table** (multi-vertical system):
+
 ```sql
 CREATE TABLE IF NOT EXISTS vertical_configurations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -308,9 +333,10 @@ CREATE TABLE IF NOT EXISTS vertical_configurations (
 ```
 
 **RLS Policy Pattern**:
+
 ```sql
 -- Standard organization-based RLS pattern
-CREATE POLICY "Users can view notes for their organization's contacts" 
+CREATE POLICY "Users can view notes for their organization's contacts"
 ON contact_notes FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM contacts c
@@ -321,7 +347,7 @@ ON contact_notes FOR SELECT USING (
   )
 );
 
-CREATE POLICY "Users can create notes for their organization's contacts" 
+CREATE POLICY "Users can create notes for their organization's contacts"
 ON contact_notes FOR INSERT WITH CHECK (
   EXISTS (
     SELECT 1 FROM contacts c
@@ -334,6 +360,7 @@ ON contact_notes FOR INSERT WITH CHECK (
 ```
 
 **Index Pattern**:
+
 ```sql
 -- Performance indexes on foreign keys and commonly queried columns
 CREATE INDEX IF NOT EXISTS idx_contact_notes_contact_id ON contact_notes(contact_id);
@@ -341,6 +368,7 @@ CREATE INDEX IF NOT EXISTS idx_contact_notes_created_at ON contact_notes(created
 ```
 
 **Trigger Pattern**:
+
 ```sql
 -- Updated_at trigger for automatic timestamp updates
 CREATE OR REPLACE FUNCTION update_contact_notes_updated_at()
@@ -358,6 +386,7 @@ CREATE TRIGGER update_contact_notes_updated_at_trigger
 ```
 
 **Findings for Phase 1.1**:
+
 - ✅ Contact table exists (can be referenced)
 - ✅ RLS pattern identified and reusable
 - ✅ Index pattern identified (foreign key + timestamp indexes)
@@ -366,9 +395,11 @@ CREATE TRIGGER update_contact_notes_updated_at_trigger
 ---
 
 ## 5. TYPESCRIPT PATTERNS
+
 ─────────────────────────────────────────────────────────
 
 **Existing Type Files**:
+
 ```
 src/types/
 ├── types.ts          (main types - 285 lines)
@@ -376,42 +407,44 @@ src/types/
 ```
 
 **Interface Pattern**:
+
 ```typescript
 // From types.ts - consistent pattern used throughout
 export interface Contact {
-    id: number;                    // Primary key
-    organization_id: string;       // Foreign key (always present)
-    name: string;                  // Core fields
-    email: string;
-    phone: string;
-    company: string;
-    created_at: string;           // Always ISO string
-    lead_score: number | null;    // Optional fields nullable
-    lead_category: 'Hot' | 'Warm' | 'Cold' | null;
-    lead_score_reasoning: string | null;
+  id: number; // Primary key
+  organization_id: string; // Foreign key (always present)
+  name: string; // Core fields
+  email: string;
+  phone: string;
+  company: string;
+  created_at: string; // Always ISO string
+  lead_score: number | null; // Optional fields nullable
+  lead_category: 'Hot' | 'Warm' | 'Cold' | null;
+  lead_score_reasoning: string | null;
 }
 
 export interface Opportunity {
-    id: string;
-    organization_id: string;      // Required for RLS
-    contact_name: string;         // Reference to contact
-    value: number;
-    stage: PipelineStage;         // Enum reference
-    assigned_to: string;
-    close_date: string;           // ISO date string
-    created_at: string;
+  id: string;
+  organization_id: string; // Required for RLS
+  contact_name: string; // Reference to contact
+  value: number;
+  stage: PipelineStage; // Enum reference
+  assigned_to: string;
+  close_date: string; // ISO date string
+  created_at: string;
 }
 ```
 
 **Enum/Union Type Pattern**:
+
 ```typescript
 // Enums for controlled values
 export enum PipelineStage {
-    NewLead = 'New Lead',
-    Contacted = 'Contacted', 
-    ProposalSent = 'Proposal Sent',
-    Won = 'Won',
-    Lost = 'Lost',
+  NewLead = 'New Lead',
+  Contacted = 'Contacted',
+  ProposalSent = 'Proposal Sent',
+  Won = 'Won',
+  Lost = 'Lost',
 }
 
 // Union types for simple options
@@ -420,59 +453,63 @@ export type FormCreationMode = 'ai-quick' | 'ai-chat' | 'manual' | null;
 ```
 
 **Complex Interface Pattern**:
+
 ```typescript
 // Interfaces with JSONB fields and nested data
 export interface Form {
-    id: string;
-    organization_id: string;
-    name: string;
-    title: string;
-    fields: FormField[];          // Array of complex objects
-    styling?: FormStyle;          // Optional nested interface
-    privacy_policy_url?: string;
-    metadata?: FormMetadata;      // Optional nested interface
-    created_at: string;
+  id: string;
+  organization_id: string;
+  name: string;
+  title: string;
+  fields: FormField[]; // Array of complex objects
+  styling?: FormStyle; // Optional nested interface
+  privacy_policy_url?: string;
+  metadata?: FormMetadata; // Optional nested interface
+  created_at: string;
 }
 ```
 
 **Recommendation for Phase 1.1**:
+
 ```typescript
 // Following project conventions:
 export interface InsurancePolicy {
-  id: string;                    // UUID from gen_random_uuid()
-  organization_id: string;       // Required for RLS (matches pattern)
-  contact_id: number;           // FK to contacts table
-  policy_number: string;        // Business identifier
-  policy_type: PolicyType;      // Enum for controlled values
-  status: PolicyStatus;         // Enum for status
-  premium_amount: number;       // Financial data
-  start_date: string;           // ISO date string (matches pattern)
+  id: string; // UUID from gen_random_uuid()
+  organization_id: string; // Required for RLS (matches pattern)
+  contact_id: number; // FK to contacts table
+  policy_number: string; // Business identifier
+  policy_type: PolicyType; // Enum for controlled values
+  status: PolicyStatus; // Enum for status
+  premium_amount: number; // Financial data
+  start_date: string; // ISO date string (matches pattern)
   end_date: string;
-  created_at: string;           // Always present (matches pattern)
-  updated_at: string;           // Always present (matches pattern)
+  created_at: string; // Always present (matches pattern)
+  updated_at: string; // Always present (matches pattern)
 }
 
 export enum PolicyType {
   Auto = 'auto',
-  Home = 'home', 
+  Home = 'home',
   Life = 'life',
-  Health = 'health'
+  Health = 'health',
 }
 
 export enum PolicyStatus {
   Active = 'active',
   Expired = 'expired',
   Cancelled = 'cancelled',
-  Pending = 'pending'
+  Pending = 'pending',
 }
 ```
 
 ---
 
 ## 6. CUSTOM HOOKS
+
 ─────────────────────────────────────────────────────────
 
 **useAuth Hook**:
+
 ```typescript
 // From AuthContext.tsx
 export const useAuth = () => {
@@ -481,50 +518,54 @@ export const useAuth = () => {
     userRole: string | null,
     userEmail: string | null,
     userId: string | null,
-    organizationId: string | null,  // KEY: Access pattern
+    organizationId: string | null, // KEY: Access pattern
     jwtClaims: JWTClaims | null,
     loading: boolean,
     isSuperAdmin: boolean,
     isAdmin: boolean,
-    isUser: boolean
+    isUser: boolean,
   };
 };
 ```
 
 **Usage Pattern**:
+
 ```typescript
 // Standard usage across components
 import { useAuth } from '@/contexts/AuthContext';
 
 const Component = () => {
   const { session, organizationId } = useAuth();
-  
+
   // Organization ID access for queries
   const orgId = organizationId; // Direct access, no nesting
 };
 ```
 
 **useVertical Hook**:
+
 ```typescript
 // From useVertical.tsx
 export const useVertical = () => {
   return {
-    vertical: string,              // 'standard' | 'insurance'
+    vertical: string, // 'standard' | 'insurance'
     config: VerticalConfig | null, // Full configuration
     loading: boolean,
     error: Error | null,
-    hasModule: (module: string) => boolean,  // Helper function
-    switchVertical: (newVertical: string) => Promise<void>
+    hasModule: (module: string) => boolean, // Helper function
+    switchVertical: (newVertical: string) => Promise<void>,
   };
 };
 ```
 
 **Data Fetching Pattern**:
+
 - ✅ **Direct supabase calls in components** (no custom data hooks per module)
 - ✅ **useCrmData hook** for global CRM data (organizations, contacts, etc.)
 - ❌ **No React Query/SWR** used in project
 
 **Example Data Fetch**:
+
 ```typescript
 // From ContactDetailModal.tsx - standard pattern
 const fetchContactNotes = async () => {
@@ -534,7 +575,7 @@ const fetchContactNotes = async () => {
       .select('*')
       .eq('contact_id', contact.id)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     setNotes(data || []);
   } catch (error) {
@@ -547,17 +588,19 @@ const fetchContactNotes = async () => {
 ---
 
 ## 7. FORM & VALIDATION
+
 ─────────────────────────────────────────────────────────
 
 **Form Library Used**: None (vanilla React state management)
 
 **State Management Pattern**:
+
 ```typescript
 // From DealModal.tsx - standard pattern
 interface DealFormData {
   title: string;
   description: string;
-  value: string;         // String for form input, converted to number
+  value: string; // String for form input, converted to number
   currency: string;
   probability: number;
   // ... more fields
@@ -567,13 +610,14 @@ const [formData, setFormData] = useState<DealFormData>({
   title: '',
   description: '',
   value: '',
-  currency: 'EUR',     // Default values
+  currency: 'EUR', // Default values
   probability: 50,
   // ... default values for all fields
 });
 ```
 
 **Validation Pattern**:
+
 ```typescript
 // Custom validation functions returning boolean + setting errors
 const validateForm = (): boolean => {
@@ -599,7 +643,7 @@ const validateForm = (): boolean => {
     const selectedDate = new Date(formData.expected_close_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (selectedDate < today) {
       newErrors.expected_close_date = 'La data non può essere nel passato';
     }
@@ -611,11 +655,14 @@ const validateForm = (): boolean => {
 ```
 
 **Error Display Pattern**:
+
 ```jsx
 // Error rendering JSX pattern
-{errors.fieldName && (
-  <p className="text-red-500 text-sm mt-1">{errors.fieldName}</p>
-)}
+{
+  errors.fieldName && (
+    <p className="text-red-500 text-sm mt-1">{errors.fieldName}</p>
+  );
+}
 
 // Input with error styling
 <input
@@ -623,32 +670,32 @@ const validateForm = (): boolean => {
     errors.title ? 'border-red-500' : 'border-gray-300'
   }`}
   value={formData.title}
-  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-/>
+  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+/>;
 ```
 
 **Submit Handler Pattern**:
+
 ```typescript
 // Standard async submit with loading states
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  
+
   if (!validateForm()) return;
-  
+
   try {
     setIsLoading(true);
-    
+
     // Transform form data if needed
     const dealData = {
       ...formData,
-      value: parseFloat(formData.value),  // Convert strings to proper types
+      value: parseFloat(formData.value), // Convert strings to proper types
     };
-    
+
     await onSave(deal ? { ...deal, ...dealData } : dealData);
-    
+
     toast.success(deal ? 'Deal aggiornato!' : 'Deal creato!');
     onClose();
-    
   } catch (error) {
     console.error('Error saving deal:', error);
     toast.error('Errore nel salvataggio');
@@ -661,24 +708,34 @@ const handleSubmit = async (e: React.FormEvent) => {
 ---
 
 ## 8. UI/UX COMPONENTS
+
 ─────────────────────────────────────────────────────────
 
 **CSS Framework**: **Tailwind CSS** (confirmed in tailwind.config.js)
 
 **Tailwind Config** (custom theme settings):
+
 ```javascript
 // Custom theme extensions and safelist classes
 safelist: [
-  'bg-primary', 'bg-sidebar', 'bg-sidebar-hover', 'bg-background', 'bg-card',
-  'text-white', 'text-text-primary', 'text-text-secondary',
-  'dark:bg-dark-primary', 'dark:bg-dark-sidebar', // Dark mode support
+  'bg-primary',
+  'bg-sidebar',
+  'bg-sidebar-hover',
+  'bg-background',
+  'bg-card',
+  'text-white',
+  'text-text-primary',
+  'text-text-secondary',
+  'dark:bg-dark-primary',
+  'dark:bg-dark-sidebar', // Dark mode support
   // ... 100+ utility classes pre-approved
-]
+];
 ```
 
 **Icon Library**: **lucide-react** (confirmed in package.json v0.544.0)
 
 **Import Pattern**:
+
 ```typescript
 // Standard lucide-react import pattern
 import { Plus, Edit, Trash2, Calendar, Mail, Phone } from 'lucide-react';
@@ -691,9 +748,10 @@ const IconComponent = (Icons as any)[iconName] || Icons.Circle;
 **Common Component Patterns**:
 
 **Button**:
+
 ```jsx
 // Standard button pattern with variants
-<button 
+<button
   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
   disabled={isLoading}
 >
@@ -707,6 +765,7 @@ const IconComponent = (Icons as any)[iconName] || Icons.Circle;
 ```
 
 **Card**:
+
 ```jsx
 // Standard card wrapper pattern
 <div className="bg-white rounded-lg shadow border p-6">
@@ -719,6 +778,7 @@ const IconComponent = (Icons as any)[iconName] || Icons.Circle;
 ```
 
 **Table**:
+
 ```jsx
 // Table structure pattern from ContactsTable.tsx
 <div className="overflow-x-auto">
@@ -732,11 +792,9 @@ const IconComponent = (Icons as any)[iconName] || Icons.Circle;
       </tr>
     </thead>
     <tbody className="divide-y divide-gray-200">
-      {data.map((item) => (
+      {data.map(item => (
         <tr key={item.id} className="hover:bg-gray-50">
-          <td className="px-6 py-4 whitespace-nowrap">
-            {/* Cell content */}
-          </td>
+          <td className="px-6 py-4 whitespace-nowrap">{/* Cell content */}</td>
         </tr>
       ))}
     </tbody>
@@ -745,6 +803,7 @@ const IconComponent = (Icons as any)[iconName] || Icons.Circle;
 ```
 
 **Input Field**:
+
 ```jsx
 // Standard input field with label pattern
 <div className="mb-4">
@@ -755,20 +814,20 @@ const IconComponent = (Icons as any)[iconName] || Icons.Circle;
     type="text"
     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
     value={formData.field}
-    onChange={(e) => setFormData(prev => ({ ...prev, field: e.target.value }))}
+    onChange={e => setFormData(prev => ({ ...prev, field: e.target.value }))}
   />
-  {errors.field && (
-    <p className="text-red-500 text-sm mt-1">{errors.field}</p>
-  )}
+  {errors.field && <p className="text-red-500 text-sm mt-1">{errors.field}</p>}
 </div>
 ```
 
 ---
 
 ## 9. INTEGRATION POINTS
+
 ─────────────────────────────────────────────────────────
 
 **Supabase Client**:
+
 ```typescript
 // Location: src/lib/supabaseClient.ts
 // Import pattern:
@@ -784,16 +843,17 @@ const { data, error } = await supabase
 ```
 
 **Auth Context Usage**:
+
 ```typescript
 // Standard import and usage
 import { useAuth } from '../contexts/AuthContext';
 
 const Component = () => {
   const { session, organizationId, userRole } = useAuth();
-  
+
   // Check authentication
   if (!session) return <Navigate to="/login" />;
-  
+
   // Use organization for queries
   const fetchData = async () => {
     const { data } = await supabase
@@ -805,17 +865,18 @@ const Component = () => {
 ```
 
 **Vertical Context Usage**:
+
 ```typescript
 // Vertical system integration
 import { useVertical } from '../hooks/useVertical';
 
 const Component = () => {
   const { vertical, hasModule } = useVertical();
-  
+
   // Check if current vertical supports insurance
   const isInsurance = vertical === 'insurance';
   const canAccessPolicies = hasModule('policies');
-  
+
   // Conditional rendering based on vertical
   if (!isInsurance) {
     return <Navigate to="/dashboard" />;
@@ -824,21 +885,22 @@ const Component = () => {
 ```
 
 **Navigation Pattern**:
+
 ```typescript
 // React Router navigation
 import { useNavigate } from 'react-router-dom';
 
 const Component = () => {
   const navigate = useNavigate();
-  
+
   // Programmatic navigation
   const handleEdit = (policyId: string) => {
     navigate(`/insurance/policies/${policyId}/edit`);
   };
-  
+
   // Navigation with state
-  navigate('/insurance/policies/new', { 
-    state: { contactId: contact.id } 
+  navigate('/insurance/policies/new', {
+    state: { contactId: contact.id },
   });
 };
 ```
@@ -846,48 +908,58 @@ const Component = () => {
 ---
 
 ## 10. NAMING CONVENTIONS
+
 ─────────────────────────────────────────────────────────
 
 **Files**:
+
 - **Components**: **PascalCase.tsx** ✅
 - **Example**: `ContactList.tsx`, `DealModal.tsx`, `InsurancePoliciesPage.tsx`
 
 **Functions**:
+
 - **Event handlers**: **handleSubmit**, **handleClick** ✅
-- **Data fetchers**: **fetchContacts**, **loadData** ✅  
+- **Data fetchers**: **fetchContacts**, **loadData** ✅
 - **API calls**: **createPolicy**, **updateContact** ✅
 
 **Variables**:
+
 - **Collections**: **contacts**, **policies** (plural) ✅
 - **Booleans**: **isLoading**, **hasModule** (descriptive prefixes) ✅
 - **States**: Descriptive names → `formData`, `selectedIds`, `sortOrder` ✅
 
 **Components**:
+
 - **Export**: **export default Component** ✅ (default export pattern used)
 - **Interface naming**: `ComponentNameProps` ✅
 
 **Constants**:
+
 - **Enums/Constants**: **PascalCase** for enums, **SCREAMING_SNAKE_CASE** for constants ✅
 - **Example**: `PipelineStage.NewLead`, `STANDARD_MENU_FALLBACK`
 
 ---
 
 ## 11. DEPENDENCIES & CONFLICTS
+
 ─────────────────────────────────────────────────────────
 
 **Potential Conflicts**:
+
 - ✅ **NO CONFLICTS DETECTED**
 - ✅ **Insurance routes already exist** (placeholder components)
 - ✅ **No route conflicts** (routes are properly nested)
 - ✅ **No type definition conflicts** (insurance types in separate namespace)
 
-**Missing Dependencies**: 
+**Missing Dependencies**:
+
 - ✅ **All required packages installed**
 - ✅ **No missing dependencies identified**
 
 **Version Compatibility**:
+
 - **React**: 19.1.1 ✅
-- **TypeScript**: 5.9.3 ✅  
+- **TypeScript**: 5.9.3 ✅
 - **Supabase**: 2.75.0 ✅
 - **React Router**: 6.23.1 ✅
 - **Lucide React**: 0.544.0 ✅
@@ -896,11 +968,13 @@ const Component = () => {
 ---
 
 ## 12. RECOMMENDATIONS FOR PHASE 1.1
+
 ─────────────────────────────────────────────────────────
 
 Based on this audit, here are the recommendations:
 
 **File Structure to Create**:
+
 ```
 src/features/insurance/
 ├── components/
@@ -917,11 +991,13 @@ src/features/insurance/
 ```
 
 **Files to Modify**:
+
 ```
 src/features/insurance/index.ts   [UPDATE] - Add real exports
 ```
 
 **Database Migration**:
+
 ```
 supabase/migrations/
 ├── 20251018000000_insurance_policies.sql  [NEW] - Create policies table
@@ -931,23 +1007,27 @@ supabase/migrations/
 
 **Routing**: Nested routes under `/insurance/*` with protected `InsuranceOnlyGuard` ✅
 
-**Component Structure**: 
+**Component Structure**:
+
 - Main page component with state management
-- Modal/form components for CRUD operations  
+- Modal/form components for CRUD operations
 - Table component with sorting/pagination
 - Card components for list items
 
-**State Management**: 
+**State Management**:
+
 - `useState` for local component state
 - Direct Supabase calls (no global state library)
 - Loading/error states with boolean flags
 
 **Form Validation**:
+
 - Custom validation functions returning boolean
 - Error state object with field-specific messages
 - Italian error messages following project pattern
 
 **Supabase Calls**:
+
 ```typescript
 // Standard query pattern to follow:
 const { data, error } = await supabase
@@ -958,18 +1038,21 @@ const { data, error } = await supabase
 ```
 
 **TypeScript Types**:
+
 - Interface-based definitions
 - Enums for controlled values
 - Optional fields nullable (`| null`)
 - Date fields as ISO strings
 
 **UI Components**:
+
 - Tailwind CSS for styling
 - Lucide React icons
 - Standard card/table/button patterns
 - Toast notifications for user feedback
 
 **Naming Convention**:
+
 - PascalCase component files
 - handleX for event handlers
 - isX/hasX for booleans
@@ -1004,26 +1087,30 @@ const { data, error } = await supabase
 ---
 
 ## 13. READY-TO-USE CODE SNIPPETS
+
 ─────────────────────────────────────────────────────────
 
 **Supabase Query Template** (based on existing patterns):
+
 ```typescript
 const fetchPolicies = async () => {
   try {
     setLoading(true);
-    
+
     const { data, error } = await supabase
       .from('insurance_policies')
-      .select(`
+      .select(
+        `
         *,
         contact:contacts(id, name, email, phone),
         organization:organizations(id, name)
-      `)
+      `
+      )
       .eq('organization_id', organizationId)
       .order('end_date', { ascending: true });
-    
+
     if (error) throw error;
-    
+
     setPolicies(data || []);
   } catch (error) {
     console.error('Error fetching policies:', error);
@@ -1035,6 +1122,7 @@ const fetchPolicies = async () => {
 ```
 
 **Component Template** (based on existing patterns):
+
 ```typescript
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -1052,12 +1140,12 @@ interface PoliciesListProps {
 const PoliciesList: React.FC<PoliciesListProps> = () => {
   const navigate = useNavigate();
   const { organizationId } = useAuth();
-  
+
   // State following project patterns
   const [policies, setPolicies] = useState<InsurancePolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  
+
   useEffect(() => {
     fetchPolicies();
   }, [organizationId]);
@@ -1072,16 +1160,16 @@ const PoliciesList: React.FC<PoliciesListProps> = () => {
 
   const handleDelete = async (policy: InsurancePolicy) => {
     if (!confirm('Sei sicuro di voler eliminare questa polizza?')) return;
-    
+
     try {
       const { error } = await supabase
         .from('insurance_policies')
         .delete()
         .eq('id', policy.id)
         .eq('organization_id', organizationId); // RLS safety
-      
+
       if (error) throw error;
-      
+
       toast.success('Polizza eliminata con successo');
       fetchPolicies(); // Refresh list
     } catch (error) {
@@ -1200,6 +1288,7 @@ export default PoliciesList;
 ═══════════════════════════════════════════════════════════
 
 **Summary**:
+
 - **Files analyzed**: 47 files across 12 directories
 - **Patterns documented**: 15 distinct patterns identified
 - **Conflicts found**: 0 conflicts detected
@@ -1209,6 +1298,7 @@ export default PoliciesList;
 **Next Step**: Use this report to create the IMPLEMENTATION PROMPT for Phase 1.1 Polizze Management following the project's established patterns.
 
 **Key Success Factors**:
+
 1. **Multi-Vertical System**: ✅ Fully operational and ready for insurance modules
 2. **Database Foundation**: ✅ RLS patterns, indexing, and triggers established
 3. **TypeScript Architecture**: ✅ Consistent interface patterns across all modules

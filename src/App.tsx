@@ -4,8 +4,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 // Italian routing infrastructure
+import { ContactsMeta, InsuranceDashboardMeta, InsurancePoliciesMeta, OpportunitiesMeta } from './components/PageMeta';
 import { RedirectHandler } from './components/RedirectHandler';
-import { InsuranceDashboardMeta, InsurancePoliciesMeta, ContactsMeta, OpportunitiesMeta } from './components/PageMeta';
 import { ROUTES } from './config/routes';
 
 
@@ -78,12 +78,12 @@ import { supabase } from './lib/supabaseClient';
 import VerticalSwitcher from './components/dev/VerticalSwitcher';
 import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
 import {
-  InsuranceClaimsPage,
-  InsuranceCommissionsPage,
-  InsurancePoliciesPage,
-  InsuranceRenewalsPage,
-  PolicyForm,
-  PolicyDetail
+    InsuranceClaimsPage,
+    InsuranceCommissionsPage,
+    InsurancePoliciesPage,
+    InsuranceRenewalsPage,
+    PolicyDetail,
+    PolicyForm
 } from './features/insurance';
 import { VerticalProvider } from './hooks/useVertical';
 

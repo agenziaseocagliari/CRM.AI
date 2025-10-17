@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +35,10 @@ async function generateReport() {
       metrics: calculateProjectMetrics(),
     };
 
-    console.log('📊 Analysis complete:', JSON.stringify(report.metrics, null, 2));
+    console.log(
+      '📊 Analysis complete:',
+      JSON.stringify(report.metrics, null, 2)
+    );
 
     // Update documents
     updateRoadmap(report);
@@ -57,11 +60,12 @@ async function generateReport() {
 function analyzeFileStructure() {
   console.log('📁 Analyzing file structure...');
 
-  const countFiles = (pattern) => {
+  const countFiles = pattern => {
     try {
-      const cmd = process.platform === 'win32'
-        ? `dir /s /b ${pattern} 2>nul | find /c /v ""`
-        : `find . -name "${pattern}" -not -path "*/node_modules/*" | wc -l`;
+      const cmd =
+        process.platform === 'win32'
+          ? `dir /s /b ${pattern} 2>nul | find /c /v ""`
+          : `find . -name "${pattern}" -not -path "*/node_modules/*" | wc -l`;
       const output = execSync(cmd, { encoding: 'utf8', cwd: CONFIG.rootDir });
       return parseInt(output.trim()) || 0;
     } catch {
@@ -90,10 +94,13 @@ function analyzeRecentCommits() {
 
     if (!output.trim()) return [];
 
-    return output.trim().split('\n').map(line => {
-      const [hash, author, message, date] = line.split('|');
-      return { hash, author, message, date };
-    });
+    return output
+      .trim()
+      .split('\n')
+      .map(line => {
+        const [hash, author, message, date] = line.split('|');
+        return { hash, author, message, date };
+      });
   } catch (error) {
     console.warn('⚠️ Could not analyze commits:', error.message);
     return [];
@@ -108,7 +115,8 @@ function analyzeMigrations() {
   try {
     if (!fs.existsSync(migrationsDir)) return [];
 
-    const files = fs.readdirSync(migrationsDir)
+    const files = fs
+      .readdirSync(migrationsDir)
       .filter(f => f.endsWith('.sql'))
       .sort()
       .reverse()
@@ -116,8 +124,9 @@ function analyzeMigrations() {
 
     return files.map(file => {
       const content = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
-      const tables = (content.match(/CREATE TABLE\s+(\w+)/gi) || [])
-        .map(m => m.replace(/CREATE TABLE\s+/i, ''));
+      const tables = (content.match(/CREATE TABLE\s+(\w+)/gi) || []).map(m =>
+        m.replace(/CREATE TABLE\s+/i, '')
+      );
       return { file, tables, date: file.split('_')[0] };
     });
   } catch (error) {
@@ -137,8 +146,9 @@ function analyzeDependencies() {
     return {
       dependencies: Object.keys(packageJson.dependencies || {}).length,
       devDependencies: Object.keys(packageJson.devDependencies || {}).length,
-      total: Object.keys(packageJson.dependencies || {}).length + 
-             Object.keys(packageJson.devDependencies || {}).length,
+      total:
+        Object.keys(packageJson.dependencies || {}).length +
+        Object.keys(packageJson.devDependencies || {}).length,
     };
   } catch (error) {
     console.warn('⚠️ Could not analyze dependencies:', error.message);
@@ -154,9 +164,10 @@ function calculateProjectMetrics() {
   // Estimate lines of code
   let linesOfCode = 0;
   try {
-    const cmd = process.platform === 'win32'
-      ? 'powershell "(Get-ChildItem -Path src -Recurse -Include *.tsx,*.ts | Get-Content | Measure-Object -Line).Lines"'
-      : 'find src -name "*.tsx" -o -name "*.ts" | xargs wc -l 2>/dev/null | tail -1 | awk \'{print $1}\'';
+    const cmd =
+      process.platform === 'win32'
+        ? 'powershell "(Get-ChildItem -Path src -Recurse -Include *.tsx,*.ts | Get-Content | Measure-Object -Line).Lines"'
+        : 'find src -name "*.tsx" -o -name "*.ts" | xargs wc -l 2>/dev/null | tail -1 | awk \'{print $1}\'';
     const output = execSync(cmd, { encoding: 'utf8', cwd: CONFIG.rootDir });
     linesOfCode = parseInt(output.trim()) || 0;
   } catch {
@@ -200,7 +211,7 @@ function updateRoadmap(report) {
   const today = new Date().toLocaleDateString('it-IT', {
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
   });
 
   let newEntry = `\n\n### **${today}** - Automated Daily Update 🤖\n\n`;
@@ -237,7 +248,8 @@ function updateRoadmap(report) {
 
   // Insert after marker
   const insertPosition = changelogIndex + changelogMarker.length;
-  content = content.slice(0, insertPosition) + newEntry + content.slice(insertPosition);
+  content =
+    content.slice(0, insertPosition) + newEntry + content.slice(insertPosition);
 
   fs.writeFileSync(roadmapPath, content, 'utf8');
   console.log('✅ ROADMAP updated successfully');
@@ -320,16 +332,24 @@ function createDailyReport(report) {
 
 ## 📝 Recent Commits (Last 24h)
 
-${report.commits.length > 0
-  ? report.commits.map(c => `- \`${c.hash}\` ${c.author}: ${c.message} (${c.date})`).join('\n')
-  : 'No commits in the last 24 hours'
+${
+  report.commits.length > 0
+    ? report.commits
+        .map(c => `- \`${c.hash}\` ${c.author}: ${c.message} (${c.date})`)
+        .join('\n')
+    : 'No commits in the last 24 hours'
 }
 
 ## 🗄️ Recent Database Migrations
 
-${report.migrations.length > 0
-  ? report.migrations.map(m => `- **${m.file}**\n  - Tables: ${m.tables.join(', ') || 'none'}`).join('\n')
-  : 'No recent migrations'
+${
+  report.migrations.length > 0
+    ? report.migrations
+        .map(
+          m => `- **${m.file}**\n  - Tables: ${m.tables.join(', ') || 'none'}`
+        )
+        .join('\n')
+    : 'No recent migrations'
 }
 
 ## 📦 Dependencies

@@ -22,13 +22,13 @@ export const generateTimeSlots = (
 
     while (currentSlotTime < dayEnd) {
         const slotEndTime = new Date(currentSlotTime.getTime() + durationMinutes * 60000);
-        
+
         let isAvailable = true;
         // Controlla se lo slot si sovrappone con un evento occupato
         for (const busy of busySlots) {
             const busyStart = new Date(busy.start);
             const busyEnd = new Date(busy.end);
-            
+
             // Logica di sovrapposizione: (StartA < EndB) and (EndA > StartB)
             if (currentSlotTime < busyEnd && slotEndTime > busyStart) {
                 isAvailable = false;
@@ -60,14 +60,14 @@ export const combineDateAndTime = (date: Date, time: string): Date => {
         newDate.setHours(0, 0, 0, 0);
         return newDate;
     }
-    
+
     const timeParts = time.split(':');
     if (timeParts.length < 2) {
         const newDate = new Date(date);
         newDate.setHours(0, 0, 0, 0);
         return newDate;
     }
-    
+
     const [hours, minutes] = timeParts.map(Number);
     const newDate = new Date(date);
     newDate.setHours(hours, minutes, 0, 0);

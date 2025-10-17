@@ -49,25 +49,25 @@ export class ExportService {
         // Apply filters if provided
         if (options.filters) {
             const { searchQuery, hasEmail, hasPhone, hasCompany, recent } = options.filters;
-            
+
             if (searchQuery) {
                 query = query.or(
                     `name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%`
                 );
             }
-            
+
             if (hasEmail) {
                 query = query.not('email', 'is', null).neq('email', '');
             }
-            
+
             if (hasPhone) {
                 query = query.not('phone', 'is', null).neq('phone', '');
             }
-            
+
             if (hasCompany) {
                 query = query.not('company', 'is', null).neq('company', '');
             }
-            
+
             if (recent) {
                 const sevenDaysAgo = new Date();
                 sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -100,12 +100,12 @@ export class ExportService {
 
             // UTF-8 BOM for Excel compatibility
             const BOM = '\uFEFF';
-            
+
             // Italian headers for available fields
             const headers = [
                 'Nome',
                 'Email',
-                'Telefono', 
+                'Telefono',
                 'Azienda',
                 'Lead Score',
                 'Categoria Lead',
@@ -140,15 +140,15 @@ export class ExportService {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
-            
+
             link.setAttribute('href', url);
             link.setAttribute('download', filename);
             link.style.visibility = 'hidden';
-            
+
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             URL.revokeObjectURL(url);
 
             return;
@@ -190,7 +190,7 @@ export class ExportService {
     }> {
         try {
             const contacts = await this.fetchContacts(options);
-            
+
             return {
                 totalContacts: contacts.length,
                 hasEmail: contacts.filter(c => c.email && c.email.trim() !== '').length,

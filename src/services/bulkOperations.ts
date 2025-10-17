@@ -25,9 +25,9 @@ export class BulkOperationsService {
 
             return { success: true, affected: count || contactIds.length };
         } catch (error) {
-            return { 
-                success: false, 
-                affected: 0, 
+            return {
+                success: false,
+                affected: 0,
                 error: error instanceof Error ? error.message : 'Errore sconosciuto'
             };
         }
@@ -49,9 +49,9 @@ export class BulkOperationsService {
 
             return { success: true, affected: count || contactIds.length };
         } catch (error) {
-            return { 
-                success: false, 
-                affected: 0, 
+            return {
+                success: false,
+                affected: 0,
                 error: error instanceof Error ? error.message : 'Errore sconosciuto'
             };
         }
@@ -73,9 +73,9 @@ export class BulkOperationsService {
 
             return { success: true, affected: count || contactIds.length };
         } catch (error) {
-            return { 
-                success: false, 
-                affected: 0, 
+            return {
+                success: false,
+                affected: 0,
                 error: error instanceof Error ? error.message : 'Errore sconosciuto'
             };
         }
@@ -109,9 +109,9 @@ export class BulkOperationsService {
 
             return { success: true, affected: count || contactIds.length };
         } catch (error) {
-            return { 
-                success: false, 
-                affected: 0, 
+            return {
+                success: false,
+                affected: 0,
                 error: error instanceof Error ? error.message : 'Errore sconosciuto'
             };
         }
@@ -123,7 +123,7 @@ export class BulkOperationsService {
     static async tagContacts(contactIds: string[], tags: string[]): Promise<BulkOperationResult> {
         // Placeholder - will implement when tags table is created
         console.log('Tagging contacts:', contactIds, 'with tags:', tags);
-        
+
         // Simulate success for now
         return { success: true, affected: contactIds.length };
     }

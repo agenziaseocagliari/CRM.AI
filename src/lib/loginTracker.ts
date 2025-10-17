@@ -28,7 +28,7 @@ function hashEmail(email: string): string {
   if (!email || typeof email !== 'string') {
     return '***';
   }
-  
+
   // Simple hash - just take first 2 chars + @ + domain
   const parts = email.split('@');
   if (parts.length === 2) {

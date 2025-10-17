@@ -406,7 +406,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                             <input
                                 type={formData.is_all_day ? 'date' : 'datetime-local'}
                                 required
-                                value={formData.is_all_day ? formData.start_time.split('T')[0] : formData.start_time}
+                                value={formData.is_all_day ? (formData.start_time || '').split('T')[0] : formData.start_time}
                                 onChange={(e) => handleFieldChange('start_time', e.target.value)}
                                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.start_time ? 'border-red-300' : 'border-gray-300'
                                     }`}
@@ -422,7 +422,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                             <input
                                 type={formData.is_all_day ? 'date' : 'datetime-local'}
                                 required
-                                value={formData.is_all_day ? formData.end_time.split('T')[0] : formData.end_time}
+                                value={formData.is_all_day ? (formData.end_time || '').split('T')[0] : formData.end_time}
                                 onChange={(e) => handleFieldChange('end_time', e.target.value)}
                                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.end_time ? 'border-red-300' : 'border-gray-300'
                                     }`}

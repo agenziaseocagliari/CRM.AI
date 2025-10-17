@@ -3,32 +3,32 @@
  * Features: Complete policy information display, edit/delete actions, contact linking
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams, useOutletContext, Link } from 'react-router-dom';
-import { 
-  Edit, 
-  Trash2, 
-  ArrowLeft, 
-  User, 
-  Building2, 
-  FileText,
-  Calendar,
-  Euro,
-  Phone,
-  Mail,
-  ExternalLink,
-  AlertTriangle
+import {
+    AlertTriangle,
+    ArrowLeft,
+    Building2,
+    Calendar,
+    Edit,
+    Euro,
+    ExternalLink,
+    FileText,
+    Mail,
+    Phone,
+    Trash2,
+    User
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 
-import { supabase } from '../../../lib/supabaseClient';
-import { useCrmData } from '../../../hooks/useCrmData';
 import { ROUTES } from '../../../config/routes';
-import { 
-  POLICY_TYPE_LABELS,
-  POLICY_STATUS_LABELS,
-  PREMIUM_FREQUENCY_LABELS,
-  formatCurrency
+import { useCrmData } from '../../../hooks/useCrmData';
+import { supabase } from '../../../lib/supabaseClient';
+import {
+    POLICY_STATUS_LABELS,
+    POLICY_TYPE_LABELS,
+    PREMIUM_FREQUENCY_LABELS,
+    formatCurrency
 } from '../types/insurance';
 
 interface PolicyData {

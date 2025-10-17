@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { useVertical } from '@/hooks/verticalUtils';
 import { Settings, Zap } from 'lucide-react';
+import { useState } from 'react';
 
 export default function VerticalSwitcher() {
   const { vertical, config, switchVertical, loading } = useVertical();

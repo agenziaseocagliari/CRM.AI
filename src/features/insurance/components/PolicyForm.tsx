@@ -3,36 +3,36 @@
  * Features: Contact selector, validation, auto-generate policy number, Italian labels
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
-import { 
-  Save, 
-  X, 
-  RefreshCw, 
-  User, 
-  Building2, 
-  AlertCircle,
-  Calendar,
-  Euro,
-  FileText,
-  ArrowLeft
+import {
+    AlertCircle,
+    ArrowLeft,
+    Building2,
+    Calendar,
+    Euro,
+    FileText,
+    RefreshCw,
+    Save,
+    User,
+    X
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 
-import { supabase } from '../../../lib/supabaseClient';
-import { useCrmData } from '../../../hooks/useCrmData';
 import { ROUTES } from '../../../config/routes';
-import { 
-  PolicyFormData,
-  DEFAULT_POLICY_FORM,
-  POLICY_TYPES,
-  POLICY_STATUSES,
-  PREMIUM_FREQUENCIES,
-  POLICY_TYPE_LABELS,
-  POLICY_STATUS_LABELS,
-  PREMIUM_FREQUENCY_LABELS,
-  generatePolicyNumber,
-  validatePolicyForm
+import { useCrmData } from '../../../hooks/useCrmData';
+import { supabase } from '../../../lib/supabaseClient';
+import {
+    DEFAULT_POLICY_FORM,
+    POLICY_STATUSES,
+    POLICY_STATUS_LABELS,
+    POLICY_TYPES,
+    POLICY_TYPE_LABELS,
+    PREMIUM_FREQUENCIES,
+    PREMIUM_FREQUENCY_LABELS,
+    PolicyFormData,
+    generatePolicyNumber,
+    validatePolicyForm
 } from '../types/insurance';
 
 interface Contact {

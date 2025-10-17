@@ -156,38 +156,44 @@ export const Login: React.FC = () => {
             }
             // Il successo del login viene gestito dal listener in App.tsx che naviga alla dashboard
         } else { // signUp
-            const { data: authData, error } = await supabase.auth.signUp({ 
-                email, 
-                password,
-                options: {
-                    data: {
-                        name: name || email.split('@')[0],
-                        vertical: vertical,
-                        user_role: 'user'
+            try {
+                // Step 1: Auth signup
+                const { data: authData, error: authError } = await supabase.auth.signUp({ 
+                    email, 
+                    password,
+                    options: {
+                        data: {
+                            name: name || email.split('@')[0],
+                            vertical: vertical,
+                            user_role: 'user'
+                        }
                     }
-                }
-            });
-            
-            if (error) {
-                setError('Errore durante la registrazione. Riprova più tardi.');
-            } else if (authData.user) {
-                // Wait for confirmation, then create profile and organization
-                setMessage('Registrazione avvenuta! Controlla la tua email per il link di conferma.');
+                });
                 
-                // Update profile with vertical information
+                if (authError) {
+                    throw new Error(`Auth failed: ${authError.message}`);
+                }
+                
+                if (!authData.user) {
+                    throw new Error('No user returned from signup');
+                }
+
+                // Step 2: Create profile (FIX: INSERT instead of UPDATE)
                 const { error: profileError } = await supabase
                     .from('profiles')
-                    .update({ 
+                    .insert({ 
+                        id: authData.user.id, // CRITICAL: Add user ID
                         name: name || email.split('@')[0],
                         vertical: vertical,
-                    })
-                    .eq('id', authData.user.id);
+                        user_role: 'user',
+                    });
                 
                 if (profileError) {
-                    console.error('Error updating profile:', profileError);
+                    console.error('⚠️ ORPHANED AUTH USER:', authData.user.id, email);
+                    throw new Error(`Profile creation failed: ${profileError.message}`);
                 }
                 
-                // Create organization for this vertical
+                // Step 3: Create organization
                 const orgName = `${name || email.split('@')[0]}'s ${vertical === 'insurance' ? 'Agenzia' : 'Organizzazione'}`;
                 const { data: org, error: orgError } = await supabase
                     .from('organizations')
@@ -198,15 +204,38 @@ export const Login: React.FC = () => {
                     .select()
                     .single();
 
-                if (!orgError && org) {
-                    // Link user to organization
-                    await supabase
-                        .from('profiles')
-                        .update({ organization_id: org.id })
-                        .eq('id', authData.user.id);
+                if (orgError) {
+                    console.error('⚠️ CLEANUP NEEDED: Profile created but org failed for user:', authData.user.id);
+                    // TODO: In production, admin should clean up orphaned profile
+                    throw new Error(`Organization creation failed: ${orgError.message}`);
                 }
-                
+
+                if (!org) {
+                    throw new Error('No organization returned from insert');
+                }
+
+                // Step 4: Link organization to profile
+                const { error: linkError } = await supabase
+                    .from('profiles')
+                    .update({ organization_id: org.id })
+                    .eq('id', authData.user.id);
+
+                if (linkError) {
+                    console.error('⚠️ CLEANUP NEEDED: Profile and org created but linking failed for user:', authData.user.id);
+                    throw new Error(`Linking failed: ${linkError.message}`);
+                }
+
+                // SUCCESS: All steps completed
+                setMessage('Registrazione completata con successo! Controlla la tua email per il link di conferma.');
+                setError(null);
                 setMode('signIn'); // Torna al login dopo la registrazione
+
+            } catch (error: unknown) {
+                // FAILURE: Show error to user
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                console.error('Signup failed:', error);
+                setError(`Errore durante la registrazione: ${errorMessage}. Riprova.`);
+                setMessage(null);
             }
         }
         setLoading(false);
@@ -359,8 +388,16 @@ export const Login: React.FC = () => {
                             </div>
                         )}
 
-                        {message && <p className="text-green-600 text-xs text-center">{message}</p>}
-                        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+                        {message && (
+                            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-sm text-green-800">{message}</p>
+                            </div>
+                        )}
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <p className="text-sm text-red-800">{error}</p>
+                            </div>
+                        )}
 
                         <div>
                             <button

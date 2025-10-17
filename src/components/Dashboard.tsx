@@ -1,5 +1,5 @@
 ﻿import React, { Suspense, lazy } from 'react';
-import { useVertical } from '@/hooks/useVertical';
+import { useVertical } from '../hooks/useVertical';
 
 // Lazy load vertical-specific dashboards
 const StandardDashboard = lazy(() => import('./dashboards/StandardDashboard'));

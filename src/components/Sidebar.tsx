@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useVertical } from '@/hooks/useVertical';
+import { useVertical } from '../hooks/useVertical';
 import * as Icons from 'lucide-react';
 import { AdminPanelIcon, GuardianIcon } from './ui/icons';
 
@@ -36,6 +36,21 @@ function toPascalCase(str: string): string {
     .join('');
 }
 
+// Fallback complete menu for Standard vertical
+const STANDARD_MENU_FALLBACK = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'Home', path: '/dashboard' },
+  { id: 'opportunities', label: 'Pipeline', icon: 'TrendingUp', path: '/opportunities' },
+  { id: 'contacts', label: 'Contatti', icon: 'Users', path: '/contacts' },
+  { id: 'calendar', label: 'Calendario', icon: 'Calendar', path: '/calendar' },
+  { id: 'reports', label: 'Reports', icon: 'BarChart3', path: '/reports' },
+  { id: 'forms', label: 'Forms', icon: 'FileText', path: '/forms' },
+  { id: 'automation', label: 'Automazioni', icon: 'Zap', path: '/automation' },
+  { id: 'whatsapp', label: 'WhatsApp', icon: 'MessageCircle', path: '/whatsapp' },
+  { id: 'email-marketing', label: 'Email Marketing', icon: 'Mail', path: '/email-marketing' },
+  { id: 'credits', label: 'Sistema Crediti', icon: 'CreditCard', path: '/universal-credits' },
+  { id: 'store', label: 'Prezzi', icon: 'CreditCard', path: '/store' },
+];
+
 export const Sidebar: React.FC = () => {
   const { isSuperAdmin } = useAuth();
   const { config, loading, vertical } = useVertical();
@@ -56,7 +71,15 @@ export const Sidebar: React.FC = () => {
     );
   }
 
-  if (!config?.sidebarConfig?.sections) {
+  // Determine menu items
+  let menuItems = config?.sidebarConfig?.sections || [];
+
+  // Fallback for Standard vertical if config incomplete or missing
+  if (vertical === 'standard' && menuItems.length < 8) {
+    menuItems = STANDARD_MENU_FALLBACK;
+  }
+
+  if (!menuItems || menuItems.length === 0) {
     return (
       <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
         <div className="flex items-center mb-8 px-2">
@@ -78,14 +101,14 @@ export const Sidebar: React.FC = () => {
         <GuardianIcon className="w-8 h-8 text-primary" />
         <div className="ml-2">
           <h1 className="text-2xl font-bold">Guardian AI</h1>
-          <p className="text-xs text-gray-400">{config.displayName}</p>
+          <p className="text-xs text-gray-400">{config?.displayName || 'CRM'}</p>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto">
         <ul>
-          {config.sidebarConfig.sections.map((section) => {
+          {menuItems.map((section) => {
             // Dynamically get icon component from lucide-react
             const iconName = toPascalCase(section.icon);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,11 +148,11 @@ export const Sidebar: React.FC = () => {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <p className="text-xs text-gray-400 uppercase tracking-wide">
-              {config.vertical} CRM
+              {vertical} CRM
             </p>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            {config.description}
+            {config?.description || `${vertical} vertical`}
           </p>
         </div>
       </div>

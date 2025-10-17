@@ -348,6 +348,11 @@ export const ITALIAN_LABELS = {
  * Utility function to get nested label values
  */
 export const getLabel = (path: string, fallback?: string): string => {
+  // Defensive null check
+  if (!path || typeof path !== 'string') {
+    return fallback || 'N/A';
+  }
+  
   const keys = path.split('.');
   let current = ITALIAN_LABELS as Record<string, unknown>;
   

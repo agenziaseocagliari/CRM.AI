@@ -237,12 +237,15 @@ function calculateBasicScore(contact: ContactData): LeadScoringResponse {
     const breakdown = { email_quality: 0, company_fit: 0, engagement: 0, qualification: 0 };
 
     // Email scoring
-    if (contact.email && contact.email.includes('@')) {
-        const domain = contact.email.split('@')[1].toLowerCase();
-        if (['gmail.com', 'yahoo.com', 'hotmail.com'].includes(domain)) {
-            breakdown.email_quality = 10; // Personal email
-        } else {
-            breakdown.email_quality = 18; // Business email
+    if (contact.email && typeof contact.email === 'string' && contact.email.includes('@')) {
+        const parts = contact.email.split('@');
+        if (parts.length >= 2) {
+            const domain = parts[1].toLowerCase();
+            if (['gmail.com', 'yahoo.com', 'hotmail.com'].includes(domain)) {
+                breakdown.email_quality = 10; // Personal email
+            } else {
+                breakdown.email_quality = 18; // Business email
+            }
         }
     }
 

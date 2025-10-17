@@ -197,7 +197,14 @@ export default function PublicBookingPage({
                                     <div className="text-blue-700">
                                         {selectedTime} - {
                                             (() => {
-                                                const [hour, minute] = selectedTime.split(':').map(Number);
+                                                if (!selectedTime || typeof selectedTime !== 'string') {
+                                                    return '00:30';
+                                                }
+                                                const timeParts = selectedTime.split(':');
+                                                if (timeParts.length < 2) {
+                                                    return '00:30';
+                                                }
+                                                const [hour, minute] = timeParts.map(Number);
                                                 const endTime = new Date();
                                                 endTime.setHours(hour, minute + 30);
                                                 return endTime.toTimeString().substring(0, 5);

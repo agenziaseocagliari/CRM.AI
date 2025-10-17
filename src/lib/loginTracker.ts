@@ -24,6 +24,11 @@ const MAX_HISTORY_SIZE = 10;
  * Uses a simple hash to prevent storing clear text emails
  */
 function hashEmail(email: string): string {
+  // Defensive null check
+  if (!email || typeof email !== 'string') {
+    return '***';
+  }
+  
   // Simple hash - just take first 2 chars + @ + domain
   const parts = email.split('@');
   if (parts.length === 2) {

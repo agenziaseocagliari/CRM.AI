@@ -681,7 +681,7 @@ export default function EventModal({ isOpen, onClose, onSave, initialData, selec
                                 <input
                                     type="text"
                                     value={formData.attendees.join(', ')}
-                                    onChange={(e) => handleFieldChange('attendees', e.target.value.split(', ').filter(email => email.trim()))}
+                                    onChange={(e) => handleFieldChange('attendees', (e.target.value || '').split(', ').filter(email => email.trim()))}
                                     placeholder="email1@example.com, email2@example.com"
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                 />

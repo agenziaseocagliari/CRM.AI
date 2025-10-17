@@ -54,7 +54,21 @@ export const generateTimeSlots = (
 
 // Helper per combinare data e ora
 export const combineDateAndTime = (date: Date, time: string): Date => {
-    const [hours, minutes] = time.split(':').map(Number);
+    // Defensive null check
+    if (!time || typeof time !== 'string') {
+        const newDate = new Date(date);
+        newDate.setHours(0, 0, 0, 0);
+        return newDate;
+    }
+    
+    const timeParts = time.split(':');
+    if (timeParts.length < 2) {
+        const newDate = new Date(date);
+        newDate.setHours(0, 0, 0, 0);
+        return newDate;
+    }
+    
+    const [hours, minutes] = timeParts.map(Number);
     const newDate = new Date(date);
     newDate.setHours(hours, minutes, 0, 0);
     return newDate;

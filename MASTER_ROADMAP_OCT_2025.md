@@ -1,9 +1,9 @@
 # 🚀 Guardian AI CRM - MASTER ROADMAP
 
-**Last Updated**: 16 Ottobre 2025, 11:30 PM CEST  
-**Version**: 2.0.0  
-**Status**: AUTOMATION MODULE COMPLETE! 🎉  
-**Overall Completion**: 88% (realistic calculation)
+**Last Updated**: 17 Ottobre 2025, 18:50 CEST  
+**Version**: 2.1.0  
+**Status**: MULTI-VERTICAL FOUNDATION COMPLETE! 🎉  
+**Overall Completion**: 90% (Phase 0 Multi-Vertical Complete)
 
 ---
 
@@ -17,7 +17,8 @@ AI Agents:             ███████████████████
 Automations:           ██████████████████████ 100% ✅
 DataPizza AI:          ████████████████████░░ 95%
 Mobile Optimization:   ░░░░░░░░░░░░░░░░░░░░░░  0% (PLANNED)
-Modulo Assicurazioni:  ░░░░░░░░░░░░░░░░░░░░░░  0%
+Multi-Vertical System: ██████████████████████ 100% ✅ (Phase 0)
+Modulo Assicurazioni:  █████░░░░░░░░░░░░░░░░░ 25% (Foundation Ready)
 Modulo Marketing:      ░░░░░░░░░░░░░░░░░░░░░░  0%
 Reports:               ██████████████████████ 100% ✅
 Super Admin:           ████████████░░░░░░░░░░ 60%
@@ -26,7 +27,103 @@ Credits System:        ████████████████░░░
 
 ---
 
+## ✅ PHASE 0: Multi-Vertical Foundation (COMPLETED - 17 Oct 2025)
+
+**Status:** ✅ 100% COMPLETE  
+**Duration:** 1 day (17 October 2025)  
+**Effort:** ~9 hours intensive development  
+
+### Objectives Achieved
+
+#### ✅ Vertical System Architecture
+- **Database:** `vertical_configurations` table with dynamic config
+- **React Hook:** `useVertical` with auth state listener  
+- **Provider:** `VerticalProvider` for context management
+- **Dynamic sidebar:** Rendering from database configurations
+
+#### ✅ Insurance Vertical Configuration
+- **9 specialized modules** for insurance agencies
+- **SEO-optimized Italian URL:** `/assicurazioni`
+- **Insurance landing page** operational
+- **Database seeded** with insurance config
+
+#### ✅ Robust Signup Flow
+- **Profile creation:** INSERT instead of UPDATE
+- **Organization** with auto-generated slug
+- **Token metadata** includes user_role
+- **Atomic error handling** with rollback
+
+#### ✅ Critical Bug Fixes
+- **Race condition:** Auth state listener implementation
+- **406 Error:** Fixed useCrmData.ts query
+- **Query fixes:** `.single()` → `.maybeSingle()` in 4 files
+- **Vertical loading:** Proper timing with auth completion
+
+#### ✅ Production Ready
+- **Insurance user** tested and working
+- **Standard user** verified (no regression)
+- **New signup flow** tested
+- **All systems** operational
+
+### Technical Deliverables
+
+#### Database:
+- `vertical_configurations` table
+- Standard config: 11 modules
+- Insurance config: 9 modules  
+- All profiles with vertical assignment
+
+#### Frontend:
+- `src/hooks/useVertical.tsx`
+- `src/contexts/VerticalProvider.tsx`
+- Dynamic Sidebar component
+- Insurance landing page
+
+#### Routes:
+- `/assicurazioni` (Insurance landing - Italian)
+- `/signup?vertical=insurance` (Vertical-aware signup)
+- **Redirect:** `/verticals/insurance-agency` → `/assicurazioni`
+
+#### Testing:
+- **Insurance user:** Full functionality ✅
+- **Standard user:** No regression ✅
+- **New signup:** Creates correct vertical ✅
+
+### Major Commits:
+- `feat: multi-vertical database architecture`
+- `feat: Italian landing URL + vertical-aware signup`
+- `fix(auth): repair signup flow - profile INSERT`
+- `fix(vertical): Insurance users correct sidebar`
+- `fix: 406 error in useCrmData query`
+
+**Deployment:** Vercel (automatic from GitHub main branch)
+
+---
+
 ## 📝 CHANGELOG (Most Recent First)
+
+### **17 Ottobre 2025** - PHASE 0: MULTI-VERTICAL FOUNDATION COMPLETE! 🚀🎉
+
+- ✅ **MULTI-VERTICAL SYSTEM FOUNDATION COMPLETED** (0% → 100%)
+  - **Vertical Architecture:** Complete database-driven vertical system
+  - **Insurance Vertical:** 9 specialized modules for insurance agencies
+  - **Dynamic Sidebar:** Database-driven menu configuration
+  - **Italian SEO URL:** `/assicurazioni` for insurance landing page
+  - **Robust Signup:** Vertical-aware registration with proper organization setup
+  - **Race Condition Fixed:** Auth state listener for proper vertical loading
+  - **Critical 406 Error Fixed:** useCrmData.ts query resolved
+  - **Production Testing:** Insurance and Standard users verified
+
+- ✅ **TECHNICAL INFRASTRUCTURE**
+  - **Database:** `vertical_configurations` table with seeded data
+  - **Frontend:** `useVertical` hook with `VerticalProvider` context
+  - **Routes:** SEO-optimized `/assicurazioni` with redirect from old URL
+  - **Migration:** 4 database migrations for complete vertical foundation
+  - **Error Handling:** Converted `.single()` to `.maybeSingle()` in multiple files
+
+**Hours worked**: 9+ hours (intensive multi-vertical foundation development)  
+**Completion change**: 88% → 90%  
+**Current status**: PHASE 0 COMPLETE - Ready for Phase 1 Insurance Features! 🚀
 
 ### **16 Ottobre 2025** - AUTOMATION MODULE 100% COMPLETE! 🚀🎉
 

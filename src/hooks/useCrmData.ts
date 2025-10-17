@@ -118,9 +118,9 @@ export const useCrmData = () => {
       // Step 3: Query profile using JWT user.id (which matches the 'sub' claim)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('organization_id')
+        .select('organization_id, vertical')
         .eq('id', user.id)
-        .single<Pick<Profile, 'organization_id'>>();
+        .maybeSingle();
 
       // Step 4: Enhanced error handling with diagnostic information
       if (profileError || !profileData) {
@@ -135,16 +135,13 @@ export const useCrmData = () => {
           hint: profileError?.hint
         });
 
-        // Provide detailed error message with actual values used
-        const errorMsg = `Impossibile trovare il profilo dell'utente o l'organizzazione associata.\n\n` +
-          `Debug Info:\n` +
-          `- User ID (da JWT): ${user.id}\n` +
-          `- Email: ${user.email}\n` +
-          `- Errore DB: ${profileError?.message || 'Profilo non trovato'}\n` +
-          `- Codice: ${profileError?.code || 'N/A'}\n\n` +
-          `Azione suggerita: Contattare il supporto con questi dettagli o ricaricare la pagina.`;
-
-        throw new Error(errorMsg);
+        // Don't throw error - let app continue, useVertical will handle its own loading
+        console.warn('Profile lookup failed, app will continue loading...');
+        
+        // Return early without blocking app initialization
+        setError('Profile lookup failed');
+        setLoading(false);
+        return;
       }
 
       // SUPER ADMIN FIX: Se organization_id è "ALL", usa la prima organizzazione disponibile

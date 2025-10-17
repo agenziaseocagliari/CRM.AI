@@ -110,7 +110,7 @@ export default function SavedWorkflowsPanel({
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError || !profile?.organization_id) {
         console.error('Profile fetch failed:', profileError);
@@ -169,7 +169,7 @@ export default function SavedWorkflowsPanel({
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!profile) return;
 

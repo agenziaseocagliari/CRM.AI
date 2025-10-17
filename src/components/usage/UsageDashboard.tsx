@@ -207,7 +207,7 @@ export const UsageDashboard: React.FC = () => {
           .from('profiles')
           .select('organization_id')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
           
         if (data && !error) {
           setOrganizationId(data.organization_id);

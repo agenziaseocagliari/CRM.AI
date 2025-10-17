@@ -75,7 +75,6 @@ export default function ContactDetailModal({
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [activities, setActivities] = useState<ContactActivity[]>([])
   const [newNote, setNewNote] = useState('')
-  const [loading, setLoading] = useState(true)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [isCreatingDeal, setIsCreatingDeal] = useState(false)
   
@@ -84,7 +83,6 @@ export default function ContactDetailModal({
   const [editNoteText, setEditNoteText] = useState('')
 
   const loadContactData = useCallback(async () => {
-    setLoading(true)
     try {
       // Load notes from contact_notes table
       console.log('📚 Loading notes for contact:', contact.id)
@@ -145,8 +143,6 @@ export default function ContactDetailModal({
       setActivities(allActivities)
     } catch (error) {
       console.error('Error loading contact data:', error)
-    } finally {
-      setLoading(false)
     }
   }, [contact])
 

@@ -1,7 +1,5 @@
 import type { NodeDefinition } from '@/lib/nodes/nodeLibrary';
-import { supabase } from '@/lib/supabaseClient';
 // useWorkflows removed - using SavedWorkflowsPanel's database save instead
-import { WorkflowExecutionEngine } from '@/lib/workflowExecutionEngine';
 import { ExecutionResult, ExecutionStep, WorkflowExecutor } from '@/lib/workflowExecutor';
 import { SimulationResult, SimulationStep, WorkflowSimulator } from '@/lib/workflowSimulator';
 import {
@@ -552,62 +550,6 @@ export default function WorkflowCanvas() {
   };
 
   // handleClearCanvas is already defined above with useCallback
-
-  const handleExecuteWorkflow = async () => {
-    if (nodes.length === 0) {
-      alert('Canvas vuoto. Aggiungi nodi prima di eseguire.');
-      return;
-    }
-    
-    // Get user and organization ID
-    const { data: { user } } = await supabase.auth.getUser();
-    const orgId = user?.user_metadata?.organization_id || 
-                  user?.user_metadata?.org_id || 
-                  '00000000-0000-0000-0000-000000000000';
-    
-    console.log('🔍 User:', user);
-    console.log('🔍 Organization ID:', orgId);
-    
-    if (!orgId || orgId === '00000000-0000-0000-0000-000000000000') {
-      console.warn('⚠️ No valid organization ID, using mock mode');
-    }
-    
-    // Test with Silvestro Sanna contact
-    const testContact = {
-      contactId: '123', // Real ID from database
-      name: 'Silvestro Sanna',
-      email: 'silvestro.sanna@example.com',
-      phone: '+39 XXX XXX XXXX',
-    };
-    
-    try {
-      console.log('🚀 Starting workflow execution with test contact:', testContact);
-      
-      const engine = new WorkflowExecutionEngine({
-        workflowId: 'test-workflow-' + Date.now(),
-        organizationId: orgId,
-        triggerData: testContact,
-      });
-      
-      const logs = await engine.execute(nodes, edges);
-      
-      console.log('✅ Workflow execution complete:', logs);
-      
-      // Show detailed results
-      const successSteps = logs.filter(l => l.status === 'success').length;
-      const errorSteps = logs.filter(l => l.status === 'error').length;
-      
-      if (errorSteps === 0) {
-        alert(`✅ Workflow eseguito con successo!\n${successSteps} passi completati\nContatto: ${testContact.name}\nControlla console per dettagli`);
-      } else {
-        alert(`⚠️ Workflow completato con errori\n${successSteps} riusciti, ${errorSteps} falliti\nContatto: ${testContact.name}\nControlla console per dettagli`);
-      }
-      
-    } catch (error) {
-      console.error('❌ Workflow execution failed:', error);
-      alert('❌ Errore nell\'esecuzione: ' + (error instanceof Error ? error.message : 'Errore sconosciuto'));
-    }
-  };
 
   const handleGeneratedWorkflow = (nodes: Node[], edges: Edge[]) => {
     // Add generated nodes and edges to canvas

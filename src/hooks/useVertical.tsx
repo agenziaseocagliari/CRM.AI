@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 export interface VerticalConfig {
@@ -14,7 +14,7 @@ export interface VerticalConfig {
       path: string;
     }>;
   };
-  dashboardConfig: any;
+  dashboardConfig: Record<string, unknown>;
   enabledModules: string[];
 }
 
@@ -36,11 +36,7 @@ export function VerticalProvider({ children }: { children: ReactNode }): JSX.Ele
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    loadVerticalConfig();
-  }, []);
-
-  async function loadVerticalConfig() {
+  const loadVerticalConfig = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -78,7 +74,11 @@ export function VerticalProvider({ children }: { children: ReactNode }): JSX.Ele
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadVerticalConfig();
+  }, [loadVerticalConfig]);
 
   async function loadConfig(verticalKey: string) {
     const { data: verticalConfig, error: configError } = await supabase
@@ -167,20 +167,4 @@ export function useVertical() {
     throw new Error('useVertical must be used within VerticalProvider');
   }
   return context;
-}
-
-// Utility hooks
-export function useIsInsurance() {
-  const { vertical } = useVertical();
-  return vertical === 'insurance';
-}
-
-export function useIsStandard() {
-  const { vertical } = useVertical();
-  return vertical === 'standard';
-}
-
-export function useHasModule(module: string) {
-  const { hasModule } = useVertical();
-  return hasModule(module);
 }

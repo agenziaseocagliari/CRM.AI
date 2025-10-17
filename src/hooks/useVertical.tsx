@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 // Types
@@ -38,11 +38,7 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    loadVerticalConfig();
-  }, []);
-
-  async function loadVerticalConfig() {
+  const loadVerticalConfig = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -90,7 +86,33 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    // Listen for auth state changes to properly initialize vertical
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('🔄 Auth state changed:', event, 'Session exists:', !!session);
+        
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
+          console.log('✅ Loading vertical config for authenticated user');
+          loadVerticalConfig();
+        } else if (event === 'SIGNED_OUT') {
+          console.log('🚪 User signed out, resetting to standard');
+          setVertical('standard');
+          loadConfig('standard').catch(console.error);
+        }
+      }
+    );
+
+    // Also load immediately if already authenticated
+    loadVerticalConfig();
+
+    return () => {
+      console.log('🧹 Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
+  }, [loadVerticalConfig]);
 
   async function loadConfig(verticalKey: string) {
     const { data: verticalConfig, error: configError } = await supabase

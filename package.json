@@ -23,7 +23,10 @@
         "prepare": "husky",
         "build:analyze": "npm run build && node scripts/build-analyzer.js",
         "build:production": "NODE_ENV=production npm run build",
-        "performance:test": "npm run build && npm run build:analyze"
+        "performance:test": "npm run build && npm run build:analyze",
+        "docs:update": "node scripts/generate-docs-report.js",
+        "docs:manual": "bash scripts/manual-update.sh || .\\scripts\\manual-update.sh",
+        "docs:check": "git diff MASTER_ROADMAP_OCT_2025.md TECHNICAL_ARCHITECTURE.md"
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",

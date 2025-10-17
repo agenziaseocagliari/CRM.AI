@@ -102,6 +102,45 @@ Credits System:        ████████████████░░░
 
 ## 📝 CHANGELOG (Most Recent First)
 
+### **17 ottobre 2025** - Automated Daily Update 🤖
+
+- 📚 docs: update master roadmap - Phase 0 Multi-Vertical Foundation complete
+- 🔧 CRITICAL FIX: Resolve 406 error blocking vertical loading
+- 🔄 debug: add comprehensive logging to vertical system
+- 🔧 Fix: Resolve vertical loading race condition for Insurance users
+- 🔄 fix(auth): repair signup flow - profile INSERT instead of UPDATE
+- 🔧 fix: add user_role to signup metadata (fixes TOKEN DEFECT error)
+- ✅ feat: Italian landing URL + vertical-aware signup
+- ✅ feat: Phase 0 complete - vertical system integrated
+- 🔧 🚨 CRITICAL FIX: Restore sidebar with draggable nodes + keep improved saved workflows panel
+- ✅ feat: automation UX redesign - horizontal nodes bar and larger workflow panel
+- 🔧 fix: automation layout - canvas and saved workflows panel
+- 🔄 Fix dashboard double routing - use parent directory navigation
+- 🔄 Fix dashboard double routing issue
+- ✅ feat: add vertical column to organizations and profiles
+- 🔄 🧹 Lint: Risolti errori e warning definitivamente
+- 🔧 🎯 Fix: Risolti 3 problemi critici post-Phase 0
+- 🔧 fix: surgical restoration - merge original Standard CRM functionality with vertical system
+- ✅ feat: Phase 0 - Vertical foundation infrastructure
+- 🔧 fix: real responsive implementation with proper overflow handling
+- ✅ feat: production-ready automation module - full responsive design + debug cleanup
+- 🔧 fix: remove duplicate save button, use panel database save only
+- 🔄 force: redeploy with debug alerts
+- 🔄 emergency: complete system verification guide with aggressive debug alerts
+- 🔄 debug: add aggressive verification alerts and component mount checks
+- 🔄 debug: comprehensive workflow save/load logging system
+- 🔧 fix: Correct JSX indentation in WorkflowCanvas.tsx
+- ✅ feat: Convert SavedWorkflowsPanel to horizontal layout
+- ✅ 🎯 FEATURE: Saved Workflows Management Panel
+
+**Daily Metrics**:
+- Total files: 57051
+- TypeScript files: 11329
+- Lines of code: ~63.926
+- Commits today: 28
+- Recent migrations: 5
+- Dependencies: 73
+
 ### **17 Ottobre 2025** - PHASE 0: MULTI-VERTICAL FOUNDATION COMPLETE! 🚀🎉
 
 - ✅ **MULTI-VERTICAL SYSTEM FOUNDATION COMPLETED** (0% → 100%)

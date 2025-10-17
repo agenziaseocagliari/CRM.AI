@@ -162,7 +162,8 @@ export const Login: React.FC = () => {
                 options: {
                     data: {
                         name: name || email.split('@')[0],
-                        vertical: vertical
+                        vertical: vertical,
+                        user_role: 'user'
                     }
                 }
             });

@@ -922,8 +922,8 @@ export default function WorkflowCanvas() {
           </div>
         </div>
 
-        {/* Bottom Panel - MUST NOT overflow parent */}
-        <div className="flex-shrink-0 max-h-[35vh] lg:h-64 overflow-hidden">
+        {/* Bottom Panel - Responsive with proper scrolling */}
+        <div className="flex-shrink-0 h-48 lg:h-64 border-t bg-white">
           <SavedWorkflowsPanel
             key={workflowsKey}
             onLoadWorkflow={handleLoadWorkflow}

@@ -1,8 +1,9 @@
-import { BarChart3, Mail, MessageCircle } from 'lucide-react';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { AdminPanelIcon, AutomationIcon, CalendarIcon, ContactsIcon, CreditCardIcon, DashboardIcon, FormsIcon, GuardianIcon, PipelineIcon, SettingsIcon } from './ui/icons';
+import { useVertical } from '@/hooks/useVertical';
+import * as Icons from 'lucide-react';
+import { AdminPanelIcon, GuardianIcon } from './ui/icons';
 
 const NavItem: React.FC<{
   to: string;
@@ -27,101 +28,110 @@ const NavItem: React.FC<{
     );
 };
 
+// Utility function to convert icon names to PascalCase for lucide-react
+function toPascalCase(str: string): string {
+  return str
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
+}
+
 export const Sidebar: React.FC = () => {
   const { isSuperAdmin } = useAuth();
+  const { config, loading, vertical } = useVertical();
+
+  if (loading) {
+    return (
+      <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
+        <div className="flex items-center mb-8 px-2">
+          <GuardianIcon className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold ml-2">Guardian AI</h1>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-600 rounded mb-4"></div>
+          <div className="h-4 bg-gray-600 rounded mb-4"></div>
+          <div className="h-4 bg-gray-600 rounded mb-4"></div>
+        </div>
+      </aside>
+    );
+  }
+
+  if (!config?.sidebarConfig?.sections) {
+    return (
+      <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
+        <div className="flex items-center mb-8 px-2">
+          <GuardianIcon className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold ml-2">Guardian AI</h1>
+        </div>
+        <div className="text-red-400 text-sm">
+          <p>Sidebar config missing</p>
+          <p className="text-xs mt-2">Vertical: {vertical}</p>
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
+      {/* Header */}
       <div className="flex items-center mb-8 px-2">
         <GuardianIcon className="w-8 h-8 text-primary" />
-        <h1 className="text-2xl font-bold ml-2">Guardian AI</h1>
+        <div className="ml-2">
+          <h1 className="text-2xl font-bold">Guardian AI</h1>
+          <p className="text-xs text-gray-400">{config.displayName}</p>
+        </div>
       </div>
-      <nav>
-        <ul>
-          <NavItem
-            to=""
-            icon={<DashboardIcon className="w-6 h-6" />}
-            label="Dashboard"
-          />
-          <NavItem
-            to="opportunities"
-            icon={<PipelineIcon className="w-6 h-6" />}
-            label="Opportunità"
-          />
-          <NavItem
-            to="contacts"
-            icon={<ContactsIcon className="w-6 h-6" />}
-            label="Contatti"
-          />
-           <NavItem
-            to="calendar"
-            icon={<CalendarIcon className="w-6 h-6" />}
-            label="Calendario"
-          />
-          <NavItem
-            to="reports"
-            icon={<BarChart3 className="w-6 h-6" />}
-            label="Reports"
-          />
 
-          <NavItem
-            to="forms"
-            icon={<FormsIcon className="w-6 h-6" />}
-            label="Form"
-          />
-          <NavItem
-            to="automation"
-            icon={<AutomationIcon className="w-6 h-6" />}
-            label="Visual Automation"
-          />
-          
-          {/* Universal Access Modules - All Available */}
-          <div className="border-t border-gray-700 my-4 pt-4">
-            <div className="flex items-center space-x-2 px-3 mb-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <p className="text-xs text-green-400 uppercase tracking-wide font-semibold">
-                🌍 Accesso Universale
-              </p>
-            </div>
-            <NavItem
-              to="whatsapp"
-              icon={<MessageCircle className="w-6 h-6" />}
-              label="WhatsApp"
-            />
-            <NavItem
-              to="email-marketing"
-              icon={<Mail className="w-6 h-6" />}
-              label="Email Marketing"
-            />
-          </div>
-          
-          <NavItem
-            to="universal-credits"
-            icon={<CreditCardIcon className="w-6 h-6" />}
-            label="Sistema Crediti"
-          />
-          <NavItem
-            to="store"
-            icon={<CreditCardIcon className="w-6 h-6" />}
-            label="Prezzi"
-          />
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto">
+        <ul>
+          {config.sidebarConfig.sections.map((section) => {
+            // Dynamically get icon component from lucide-react
+            const iconName = toPascalCase(section.icon);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const IconComponent = (Icons as any)[iconName] || Icons.Circle;
+
+            return (
+              <NavItem
+                key={section.id}
+                to={section.path.startsWith('/') ? section.path.substring(1) : section.path}
+                icon={<IconComponent className="w-6 h-6" />}
+                label={section.label}
+              />
+            );
+          })}
         </ul>
       </nav>
+
+      {/* Footer */}
       <div className="mt-auto">
         <ul>
+          <NavItem
+            to="settings"
+            icon={<Icons.Settings className="w-6 h-6" />}
+            label="Impostazioni"
+          />
+          {isSuperAdmin && (
             <NavItem
-                to="settings"
-                icon={<SettingsIcon className="w-6 h-6" />}
-                label="Impostazioni"
+              to="/super-admin"
+              icon={<AdminPanelIcon className="w-6 h-6" />}
+              label="Super Admin"
             />
-            {isSuperAdmin && (
-              <NavItem
-                  to="/super-admin"
-                  icon={<AdminPanelIcon className="w-6 h-6" />}
-                  label="Super Admin"
-              />
-            )}
+          )}
         </ul>
+        
+        {/* Vertical indicator */}
+        <div className="mt-4 p-3 border-t border-gray-700">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <p className="text-xs text-gray-400 uppercase tracking-wide">
+              {config.vertical} CRM
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            {config.description}
+          </p>
+        </div>
       </div>
     </aside>
   );

@@ -69,6 +69,17 @@ import { useAuth } from './contexts/AuthContext';
 import { useCrmData } from './hooks/useCrmData';
 import { supabase } from './lib/supabaseClient';
 
+// Vertical System
+import { VerticalProvider } from './hooks/useVertical';
+import VerticalSwitcher from './components/dev/VerticalSwitcher';
+import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
+import {
+  InsurancePoliciesPage,
+  InsuranceClaimsPage,
+  InsuranceCommissionsPage,
+  InsuranceRenewalsPage
+} from './features/insurance';
+
 
 import { diagnosticLogger } from './lib/mockDiagnosticLogger';
 
@@ -250,11 +261,14 @@ const App: React.FC = () => {
   }
 
   return (
-    <HelmetProvider>
-      <Toaster position="top-center" reverseOrder={false} />
-      {/* Debug Panel - Only visible when logged in */}
-      {session && <DebugPanel />}
-      <Routes>
+    <VerticalProvider>
+      <HelmetProvider>
+        <Toaster position="top-center" reverseOrder={false} />
+        {/* Debug Panel - Only visible when logged in */}
+        {session && <DebugPanel />}
+        {/* Dev tool - only shows in development */}
+        <VerticalSwitcher />
+        <Routes>
         {/* Public Routes */}
         <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <HomePage />} />
         <Route path="/login" element={
@@ -319,6 +333,25 @@ const App: React.FC = () => {
           <Route path="settings/booking" element={<BookingSettings />} />
         </Route>
 
+        {/* Insurance routes - protected */}
+        <Route
+          path="/insurance/*"
+          element={
+            session ? (
+              <InsuranceOnlyGuard>
+                <Routes>
+                  <Route path="policies" element={<InsurancePoliciesPage />} />
+                  <Route path="claims" element={<InsuranceClaimsPage />} />
+                  <Route path="commissions" element={<InsuranceCommissionsPage />} />
+                  <Route path="renewals" element={<InsuranceRenewalsPage />} />
+                </Routes>
+              </InsuranceOnlyGuard>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
         {/* Super Admin Routes - RIATTIVATE */}
         <Route
           path="/super-admin/*"
@@ -351,6 +384,7 @@ const App: React.FC = () => {
         } />
       </Routes>
     </HelmetProvider>
+    </VerticalProvider>
   );
 };
 

@@ -20,7 +20,7 @@ async function testConnection() {
     console.log('🔍 Testing database connection...');
     
     // Test basic connection
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('contacts')
       .select('id')
       .limit(1);

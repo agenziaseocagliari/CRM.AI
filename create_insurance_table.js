@@ -43,7 +43,7 @@ async function executeSQL(sql) {
       
       try {
         // Use the SQL function to execute raw SQL
-        const { data, error } = await supabase.rpc('exec_sql', {
+        const { error } = await supabase.rpc('exec_sql', {
           sql: statement
         });
         
@@ -118,7 +118,7 @@ async function createInsurancePoliciesTable() {
     // Verify the table was created
     console.log('\n🔍 Verifying table creation...');
     
-    const { data: tableData, error: verifyError } = await supabase
+    const { error: verifyError } = await supabase
       .from('insurance_policies')
       .select('id')
       .limit(1);

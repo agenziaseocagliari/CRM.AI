@@ -1,5 +1,5 @@
 import React from 'react';
-import { useVertical } from '../hooks/useVertical';
+import { useVertical } from '../hooks/verticalUtils';
 import { Navigate } from 'react-router-dom';
 
 interface VerticalGuardProps {

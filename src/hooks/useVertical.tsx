@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useEffect, useState } from 'react';
 
 // Types
 export interface VerticalConfig {
@@ -15,7 +15,7 @@ export interface VerticalConfig {
       path: string;
     }>;
   };
-  dashboardConfig: any;
+  dashboardConfig: Record<string, unknown>;
   enabledModules: string[];
 }
 
@@ -220,27 +220,5 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Hook for consuming context
-export function useVertical() {
-  const context = useContext(VerticalContext);
-  if (!context) {
-    throw new Error('useVertical must be used within VerticalProvider');
-  }
-  return context;
-}
-
-// Utility hooks
-export function useIsInsurance() {
-  const { vertical } = useVertical();
-  return vertical === 'insurance';
-}
-
-export function useIsStandard() {
-  const { vertical } = useVertical();
-  return vertical === 'standard';
-}
-
-export function useHasModule(module: string) {
-  const { hasModule } = useVertical();
-  return hasModule(module);
-}
+// Export the context for use in utility functions
+export { VerticalContext };

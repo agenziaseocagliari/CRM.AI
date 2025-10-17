@@ -85,19 +85,7 @@ async function investigateContactsIdType() {
       // Try direct query approach
       console.log('4️⃣ Testing direct foreign key creation...');
       
-      // Create a test table to see what works
-      const testSQL = `
-        DROP TABLE IF EXISTS test_fk_check CASCADE;
-        
-        CREATE TABLE test_fk_check (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          test_contact_id UUID REFERENCES contacts(id),
-          test_org_id UUID REFERENCES organizations(id)
-        );
-        
-        DROP TABLE test_fk_check CASCADE;
-      `;
-      
+      // Create a test table to see what works - removed for linting compliance
       console.log('Testing UUID foreign key compatibility...');
       // We can't execute this directly, but the attempt will show us the pattern
       

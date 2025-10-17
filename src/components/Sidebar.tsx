@@ -2,7 +2,7 @@ import * as Icons from 'lucide-react';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useVertical } from '../hooks/useVertical';
+import { useVertical } from '../hooks/verticalUtils';
 import { AdminPanelIcon, GuardianIcon } from './ui/icons';
 
 const NavItem: React.FC<{

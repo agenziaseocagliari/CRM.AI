@@ -1,9 +1,11 @@
 // Quick debug script to test vertical loading behavior
 // Add this to browser console when logged in as Insurance user
+/* global supabase */
 
-// Test 1: Check current session data
-console.log('=== DEBUG: Current Session ===');
-const { data: session } = await supabase.auth.getSession();
+(async () => {
+  // Test 1: Check current session data
+  console.log('=== DEBUG: Current Session ===');
+  const { data: session } = await supabase.auth.getSession();
 console.log('User ID:', session?.user?.id);
 console.log('Email:', session?.user?.email);
 console.log('User metadata:', session?.user?.user_metadata);
@@ -48,11 +50,12 @@ if (config?.sidebar_config?.sections) {
   console.log('❌ No sidebar config sections found!');
 }
 
-// Test 5: Check what useVertical hook would return
-console.log('\n=== DEBUG: Expected Hook Behavior ===');
-console.log('Expected vertical:', vertical);
-console.log('Expected config display name:', config?.display_name);
-console.log(
-  'Expected sidebar items:',
-  config?.sidebar_config?.sections?.length || 0
-);
+  // Test 5: Check what useVertical hook would return
+  console.log('\n=== DEBUG: Expected Hook Behavior ===');
+  console.log('Expected vertical:', vertical);
+  console.log('Expected config display name:', config?.display_name);
+  console.log(
+    'Expected sidebar items:',
+    config?.sidebar_config?.sections?.length || 0
+  );
+})();

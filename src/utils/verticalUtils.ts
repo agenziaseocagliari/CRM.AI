@@ -1,4 +1,4 @@
-import { useVertical } from '../hooks/useVertical';
+import { useVertical } from '../hooks/verticalUtils';
 
 // Utility hooks for vertical-specific functionality
 export function useIsInsurance() {

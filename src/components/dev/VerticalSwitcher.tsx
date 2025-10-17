@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useVertical } from '@/hooks/useVertical';
+import { useVertical } from '@/hooks/verticalUtils';
 import { Settings, Zap } from 'lucide-react';
 
 export default function VerticalSwitcher() {

@@ -32,7 +32,7 @@ async function executeInsuranceMigration() {
     console.log('📝 Migration SQL loaded, executing...');
     
     // Execute the migration SQL using the RPC function
-    const { data, error } = await supabase.rpc('exec_sql', { 
+    const { error } = await supabase.rpc('exec_sql', { 
       sql_query: migrationSQL 
     });
     

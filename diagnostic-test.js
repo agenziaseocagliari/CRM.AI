@@ -3,6 +3,9 @@
  * This script simulates user interaction and collects diagnostic data
  */
 
+/* eslint-env browser */
+/* eslint-disable no-undef */
+
 // Test script to run in browser console
 console.log('🔬 FORENSIC DIAGNOSTIC TEST STARTING...');
 

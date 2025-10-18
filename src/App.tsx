@@ -620,6 +620,18 @@ const App: React.FC = () => {
             </Route>
 
             {/* ========================================== */}
+            {/* ENGLISH ROUTE ALIASES FOR STANDARD CRM COMPATIBILITY */}
+            {/* ========================================== */}
+            {/* Fix: Sidebar uses English paths but routes are Italian */}
+            <Route path="/automation" element={<Navigate to="/automazioni" replace />} />
+            <Route path="/opportunities" element={<Navigate to="/opportunita" replace />} />
+            <Route path="/universal-credits" element={<Navigate to="/dashboard/universal-credits" replace />} />
+            <Route path="/forms" element={<Navigate to="/moduli" replace />} />
+            <Route path="/contacts" element={<Navigate to="/contatti" replace />} />
+            <Route path="/calendar" element={<Navigate to="/calendario" replace />} />
+            <Route path="/reports" element={<Navigate to="/report" replace />} />
+
+            {/* ========================================== */}
             {/* LEGACY ENGLISH ROUTES (for compatibility) */}
             {/* ========================================== */}
         {/* Public Routes */}

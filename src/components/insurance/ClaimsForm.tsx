@@ -98,18 +98,18 @@ export default function ClaimsForm() {
       
       const { data, error } = await supabase
         .from('contacts')
-        .select('id, first_name, last_name, email, name')
+        .select('id, name, email')
         .eq('organization_id', organizationId)
-        .order('last_name');
+        .order('name');
 
       console.log('Contacts response:', { count: data?.length, error });
 
       if (error) throw error;
 
       setContacts(
-        data?.map((c: {id: string, name?: string, first_name?: string, last_name?: string, email: string}) => ({
+        data?.map((c: {id: string, name: string, email: string}) => ({
           id: c.id,
-          name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.email,
+          name: c.name,
           email: c.email
         })) || []
       );

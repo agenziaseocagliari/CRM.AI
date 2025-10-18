@@ -114,6 +114,70 @@ Credits System:        ████████████████░░░
 
 ### **18 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔄 Merge remote changes with debug logs implementation
+- 🔄 debug: Add component identification logs for Forms vs FormsInsurance verification
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 merge: Merge remote changes with useVertical critical fix
+- 🔧 🚨 CRITICAL FIX: Fix useVertical hook order error
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 merge: Merge remote changes with local FormsInsurance routing updates
+- ✅ feat: Add vertical-aware routing for FormsInsurance
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 clone: Create FormsInsurance.tsx base from Forms.tsx
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔧 fix: Update Standard CRM sidebar fallback - Prezzi → Crediti Extra
+- ✅ feat: Complete Standard CRM sidebar fixes - add Sistema Crediti module
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 fix(routes): separate public pricing from internal credits
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔧 fix: point /pricing route to ExtraCreditsStore for credits purchase
+- 🔧 fix: point /pricing to credits purchase module (ExtraCreditsStore) instead of subscription plans
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔧 fix: resolve pricing route conflicts - VERIFIED WORKING
+- ✅ feat: complete CRM system - all modules operational
+- 🔄 fix(automation): restore advanced WorkflowCanvas builder at /automazioni
+- 🔄 fix(routes): add English route aliases for Standard CRM modules
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 fix(insurance): settings absolute path + UX improvement
+- 🔄 🎊 CLEANUP: Insurance vertical production-ready
+- 🔧 🔥 CRITICAL FIX: Add missing /dashboard/assicurazioni/polizze route
+- 🔄 🔬 AUDIT: Add emergency debug logging to PoliciesList
+- 🔄 EMERGENCY: Add visible markers to debug Outlet
+- 🔄 EMERGENCY TEST: Add test route to verify deployment
+- 🔧 🔥 ULTIMATE FIX: Aggiunto MainLayout a tutti i route insurance
+- 🔄 🔄 Trigger GitHub Actions for route fix verification
+- 🔧 🚨 CRITICAL FIX: Risolto route /assicurazioni/polizze duplicato
+- 🔧 🔧 FIX: Resolve ESLint errors in diagnostic-test.js
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔧 🚨 CRITICAL FIX: Add missing /assicurazioni/polizze route
+- 🔄 FORENSIC: Complete diagnostic system for insurance vertical debugging
+- 🔧 FINAL FIX: Insurance route mismatch resolved completely
+- 🔄 fix(insurance): resolve vertical-specific split() crash
+- 🔧 CRITICAL FIX: Resolve runtime split() errors
+- 🔧 CRITICAL PRODUCTION FIX: Add defensive null checks for .split() operations
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 🔧 🔧 DEFINITIVE FIX: Production initialization error
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 🔧 🚨 CRITICAL FIX: Route integration - Polizze module loading
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 🔄 🔧 TYPESCRIPT: Complete UUID migration fixes - All build errors resolved
+- 🔄 🔧 PRODUCTION: Fix CI/CD build failures and Husky production issues
+- 🔄 🔒 SECURITY: Fix database role and RLS policy security issues
+- 🔄 🧹 LINT: Fix all ESLint errors and warnings
+- 🔄 🎉 PHASE 1.1 COMPLETE: Insurance Policies Management System
+- 🔄 ✅ PHASE 1.1 COMPLETE: Insurance Policies Management System
+
+**Daily Metrics**:
+- Total files: 2258
+- TypeScript files: 318
+- Lines of code: ~75,587
+- Commits today: 53
+- Recent migrations: 5
+- Dependencies: 75
+
+### **18 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔄 merge: Merge remote changes with useVertical critical fix
 - 🔧 🚨 CRITICAL FIX: Fix useVertical hook order error
 - 📚 docs: automated daily update 2025-10-18 [skip ci]

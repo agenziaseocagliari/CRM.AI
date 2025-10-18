@@ -112,6 +112,54 @@ Credits System:        ████████████████░░░
 
 ## 📝 CHANGELOG (Most Recent First)
 
+### **18 ottobre 2025** - Automated Daily Update 🤖
+
+- 🔧 🚨 CRITICAL FIX: Add missing /assicurazioni/polizze route
+- 🔄 FORENSIC: Complete diagnostic system for insurance vertical debugging
+- 🔧 FINAL FIX: Insurance route mismatch resolved completely
+- 🔄 fix(insurance): resolve vertical-specific split() crash
+- 🔧 CRITICAL FIX: Resolve runtime split() errors
+- 🔧 CRITICAL PRODUCTION FIX: Add defensive null checks for .split() operations
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 🔧 🔧 DEFINITIVE FIX: Production initialization error
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 🔧 🚨 CRITICAL FIX: Route integration - Polizze module loading
+- 📚 docs: automated daily update 2025-10-17 [skip ci]
+- 🔄 🔧 TYPESCRIPT: Complete UUID migration fixes - All build errors resolved
+- 🔄 🔧 PRODUCTION: Fix CI/CD build failures and Husky production issues
+- 🔄 🔒 SECURITY: Fix database role and RLS policy security issues
+- 🔄 🧹 LINT: Fix all ESLint errors and warnings
+- 🔄 🎉 PHASE 1.1 COMPLETE: Insurance Policies Management System
+- 🔄 ✅ PHASE 1.1 COMPLETE: Insurance Policies Management System
+- 📚 docs: automated documentation updates and forensic analysis
+- ✅ feat: complete automated documentation system
+- 📚 docs: update master roadmap - Phase 0 Multi-Vertical Foundation complete
+- 🔧 CRITICAL FIX: Resolve 406 error blocking vertical loading
+- 🔄 debug: add comprehensive logging to vertical system
+- 🔧 Fix: Resolve vertical loading race condition for Insurance users
+- 🔄 fix(auth): repair signup flow - profile INSERT instead of UPDATE
+- 🔧 fix: add user_role to signup metadata (fixes TOKEN DEFECT error)
+- ✅ feat: Italian landing URL + vertical-aware signup
+- ✅ feat: Phase 0 complete - vertical system integrated
+- 🔧 🚨 CRITICAL FIX: Restore sidebar with draggable nodes + keep improved saved workflows panel
+- ✅ feat: automation UX redesign - horizontal nodes bar and larger workflow panel
+- 🔧 fix: automation layout - canvas and saved workflows panel
+- 🔄 Fix dashboard double routing - use parent directory navigation
+- 🔄 Fix dashboard double routing issue
+- ✅ feat: add vertical column to organizations and profiles
+- 🔄 🧹 Lint: Risolti errori e warning definitivamente
+- 🔧 🎯 Fix: Risolti 3 problemi critici post-Phase 0
+- 🔧 fix: surgical restoration - merge original Standard CRM functionality with vertical system
+
+**Daily Metrics**:
+- Total files: 2244
+- TypeScript files: 316
+- Lines of code: ~73,992
+- Commits today: 37
+- Recent migrations: 5
+- Dependencies: 75
+
 ### **17 ottobre 2025** - Automated Daily Update 🤖
 
 - 🔧 🔧 DEFINITIVE FIX: Production initialization error

@@ -42,8 +42,9 @@ import ContactDetailView from './components/contacts/ContactDetailView';
 import { Dashboard } from './components/Dashboard';
 import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
-import { FormsInsurance } from './components/insurance/FormsInsurance';
 import ClaimsList from './components/insurance/ClaimsList';
+import ClaimsForm from './components/insurance/ClaimsForm';
+import { FormsInsurance } from './components/insurance/FormsInsurance';
 import { Opportunities } from './components/Opportunities';
 import { Reports } from './components/Reports';
 import { ReportsTest } from './components/ReportsTest';
@@ -372,6 +373,20 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
+            <Route path="/insurance/claims/new" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <ClaimsForm />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path="/insurance/claims/:id/edit" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <ClaimsForm />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
             <Route path="/insurance/commissions" element={
               session ? (
                 <InsuranceOnlyGuard>
@@ -426,6 +441,20 @@ const App: React.FC = () => {
               session ? (
                 <InsuranceOnlyGuard>
                   <ClaimsList />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path="/dashboard/insurance/claims/new" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <ClaimsForm />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path="/dashboard/insurance/claims/:id/edit" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <ClaimsForm />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
@@ -535,6 +564,8 @@ const App: React.FC = () => {
               ) : <Navigate to={ROUTES.login} replace />
             }>
               <Route index element={<ClaimsList />} />
+              <Route path="new" element={<ClaimsForm />} />
+              <Route path=":id/edit" element={<ClaimsForm />} />
             </Route>
             <Route path={ROUTES.insurance.commissions} element={
               session ? (
@@ -743,6 +774,8 @@ const App: React.FC = () => {
                 <Routes>
                   <Route path="policies" element={<InsurancePoliciesPage />} />
                   <Route path="claims" element={<ClaimsList />} />
+                  <Route path="claims/new" element={<ClaimsForm />} />
+                  <Route path="claims/:id/edit" element={<ClaimsForm />} />
                   <Route path="commissions" element={<InsuranceCommissionsPage />} />
                   <Route path="renewals" element={<InsuranceRenewalsPage />} />
                 </Routes>

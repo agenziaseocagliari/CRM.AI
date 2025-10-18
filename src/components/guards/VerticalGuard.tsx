@@ -1,6 +1,7 @@
 import { useVertical } from '@/hooks/verticalUtils';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
+import { diagnostics } from '../../utils/diagnostics';
 
 interface VerticalGuardProps {
   allowedVerticals: string[];
@@ -15,7 +16,21 @@ export default function VerticalGuard({
 }: VerticalGuardProps) {
   const { vertical, loading } = useVertical();
 
+  useEffect(() => {
+    diagnostics.log('auth', 'VerticalGuard', {
+      evaluating: true,
+      allowedVerticals,
+      currentVertical: vertical,
+      loading,
+      location: window.location.pathname
+    });
+  }, [allowedVerticals, vertical, loading]);
+
   if (loading) {
+    diagnostics.log('auth', 'VerticalGuard', {
+      action: 'waiting for vertical',
+      state: 'loading'
+    });
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
@@ -27,9 +42,22 @@ export default function VerticalGuard({
   }
 
   if (!allowedVerticals.includes(vertical)) {
+    diagnostics.log('auth', 'VerticalGuard', {
+      action: 'redirect',
+      reason: 'vertical not allowed',
+      currentVertical: vertical,
+      allowedVerticals,
+      redirectTo: fallback
+    });
     console.warn(`Access denied: vertical "${vertical}" not in allowed list [${allowedVerticals.join(', ')}]`);
     return <Navigate to={fallback} replace />;
   }
+
+  diagnostics.log('auth', 'VerticalGuard', {
+    action: 'allow',
+    vertical,
+    allowedVerticals
+  });
 
   return <>{children}</>;
 }

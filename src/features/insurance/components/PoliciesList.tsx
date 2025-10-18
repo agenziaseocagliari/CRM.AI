@@ -18,6 +18,7 @@ import {
     Trash2
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { diagnostics } from '../../../utils/diagnostics';
 import toast from 'react-hot-toast';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
@@ -43,6 +44,13 @@ import {
 const ITEMS_PER_PAGE = 25;
 
 export const PoliciesList: React.FC = () => {
+  // Diagnostic logging
+  diagnostics.log('component', 'PoliciesList', {
+    mounting: true,
+    timestamp: new Date().toISOString(),
+    location: window.location.pathname
+  });
+
   const navigate = useNavigate();
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
   const { organization } = contextData || {};
@@ -202,6 +210,16 @@ export const PoliciesList: React.FC = () => {
     fetchPolicies();
   }, [fetchPolicies]);
 
+  useEffect(() => {
+    diagnostics.log('component', 'PoliciesList.useEffect', {
+      mounted: true,
+      organizationId: organization?.id,
+      location: window.location.pathname,
+      policiesCount: policies.length,
+      loading
+    });
+  }, [organization?.id, policies.length, loading]);
+
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -259,8 +277,18 @@ export const PoliciesList: React.FC = () => {
   };
 
   // Render
+  diagnostics.log('render', 'PoliciesList', { 
+    rendering: true, 
+    policies: policies.length,
+    loading,
+    organization: organization?.id 
+  });
+
   return (
     <>
+      <div style={{ display: 'none' }} data-diagnostic="PoliciesList">
+        PoliciesList Mounted
+      </div>
       <InsurancePoliciesMeta />
       
       <div className="p-6">

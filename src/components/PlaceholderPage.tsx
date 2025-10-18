@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { diagnostics } from '../utils/diagnostics';
 
 interface PlaceholderPageProps {
   title: string;
@@ -6,8 +7,23 @@ interface PlaceholderPageProps {
 }
 
 const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, description }) => {
+  useEffect(() => {
+    diagnostics.log('component', `PlaceholderPage:${title}`, {
+      title,
+      description,
+      mounted: true,
+      timestamp: new Date().toISOString(),
+      location: window.location.pathname
+    });
+  }, [title, description]);
+
+  diagnostics.log('render', `PlaceholderPage:${title}`, { rendering: true });
+
   return (
     <div className="p-8">
+      <div style={{ display: 'none' }} data-diagnostic={`PlaceholderPage-${title}`}>
+        PlaceholderPage: {title}
+      </div>
       <h1 className="text-3xl font-bold mb-4">{title}</h1>
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
         <p className="text-blue-700">

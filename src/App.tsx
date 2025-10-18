@@ -3,6 +3,11 @@ import { HelmetProvider } from 'react-helmet-async';
 import toast, { Toaster } from 'react-hot-toast';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
+// Diagnostic imports
+import DiagnosticDashboard from './components/DiagnosticDashboard';
+import RouteDebug from './components/RouteDebug';
+import { diagnostics } from './utils/diagnostics';
+
 // Italian routing infrastructure
 import { ContactsMeta, InsuranceDashboardMeta, InsurancePoliciesMeta, OpportunitiesMeta } from './components/PageMeta';
 import { RedirectHandler } from './components/RedirectHandler';
@@ -99,6 +104,18 @@ const App: React.FC = () => {
   const crmData = useCrmData();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Diagnostic logging for App component
+  useEffect(() => {
+    diagnostics.log('component', 'App', {
+      mounted: true,
+      session: !!session,
+      userRole,
+      loading,
+      location: window.location.href,
+      pathname: location.pathname
+    });
+  }, [session, userRole, loading, location.pathname]);
 
   // JWT Health Check - warn if user_role is missing and force logout
   useEffect(() => {
@@ -272,6 +289,9 @@ const App: React.FC = () => {
       <HelmetProvider>
         <RedirectHandler>
           <Toaster position="top-center" reverseOrder={false} />
+          {/* Diagnostic Components - Only in development */}
+          <RouteDebug />
+          {import.meta.env.DEV && <DiagnosticDashboard />}
           {/* Debug Panel - Only visible when logged in */}
           {session && <DebugPanel />}
           {/* Dev tool - only shows in development */}

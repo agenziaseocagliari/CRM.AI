@@ -54,7 +54,7 @@ const STANDARD_MENU_FALLBACK = [
   { id: 'whatsapp', label: 'WhatsApp', icon: 'MessageCircle', path: '/whatsapp' },
   { id: 'email-marketing', label: 'Email Marketing', icon: 'Mail', path: '/email-marketing' },
   { id: 'credits', label: 'Sistema Crediti', icon: 'CreditCard', path: '/universal-credits' },
-  { id: 'store', label: 'Prezzi', icon: 'CreditCard', path: '/store' },
+  { id: 'store', label: 'Crediti Extra', icon: 'ShoppingBag', path: '/crediti-extra' },
 ];
 
 export const Sidebar: React.FC = () => {

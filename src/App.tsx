@@ -469,13 +469,6 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
-            <Route path={ROUTES.insurance.policies} element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <InsurancePoliciesPage />
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            } />
             <Route path={ROUTES.insurance.newPolicy} element={
               session ? (
                 <InsuranceOnlyGuard>

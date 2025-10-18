@@ -35,11 +35,15 @@ export default function ClaimsList() {
     try {
       setLoading(true);
 
+      // DEBUG
+      console.log('=== FETCHING CLAIMS ===');
+      console.log('Organization ID:', organizationId);
+
       let query = supabase
         .from('insurance_claims')
         .select(`
           *,
-          contact:contacts(first_name, last_name, email),
+          contact:contacts(name, email),
           policy:insurance_policies(policy_number)
         `)
         .eq('organization_id', organizationId)
@@ -51,9 +55,18 @@ export default function ClaimsList() {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      console.log('Claims query response:', { 
+        count: data?.length, 
+        error,
+        organizationId 
+      });
 
-      // Format data
+      if (error) {
+        console.error('Query error:', error);
+        throw error;
+      }
+
+      // Format data - FIX contact name mapping
       const formattedClaims = data?.map((claim: {
         id: string;
         claim_number: string;
@@ -66,15 +79,15 @@ export default function ClaimsList() {
         report_date: string;
         contact_id: string;
         policy_id: string | null;
-        contact?: { first_name?: string; last_name?: string; email?: string } | null;
+        contact?: { name?: string; email?: string } | null;
         policy?: { policy_number?: string } | null;
       }) => ({
         ...claim,
-        contact_name: claim.contact 
-          ? `${claim.contact.first_name || ''} ${claim.contact.last_name || ''}`.trim() || claim.contact.email || 'N/A'
-          : 'N/A',
+        contact_name: claim.contact?.name || 'N/A',  // ← FIXED: use 'name' not 'first_name'
         policy_number: claim.policy?.policy_number || 'N/A'
       })) || [];
+
+      console.log('Formatted claims:', formattedClaims);
 
       setClaims(formattedClaims);
     } catch (error) {
@@ -158,13 +171,25 @@ export default function ClaimsList() {
           <h1 className="text-2xl font-bold text-gray-900">Sinistri</h1>
           <p className="text-gray-600">Gestione sinistri assicurativi</p>
         </div>
-        <button
-          onClick={() => navigate('/assicurazioni/sinistri/new')}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Nuovo Sinistro</span>
-        </button>
+        <div className="flex space-x-2">
+          {/* DEBUG: Refresh button */}
+          <button
+            onClick={() => {
+              console.log('Force refresh clicked');
+              fetchClaims();
+            }}
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            🔄 Ricarica
+          </button>
+          <button
+            onClick={() => navigate('/assicurazioni/sinistri/new')}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Nuovo Sinistro</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

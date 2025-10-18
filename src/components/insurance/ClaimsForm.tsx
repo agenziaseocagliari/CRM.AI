@@ -211,6 +211,12 @@ export default function ClaimsForm() {
     setSaving(true);
 
     try {
+      // DEBUG: Log what we're about to save
+      console.log('=== SAVING CLAIM ===');
+      console.log('Organization ID:', organizationId);
+      console.log('User ID:', userId);
+      console.log('Form Data:', formData);
+
       const claimData = {
         ...formData,
         organization_id: organizationId,
@@ -224,38 +230,47 @@ export default function ClaimsForm() {
         }]
       };
 
+      console.log('Claim data to insert:', claimData);
+
       if (isEdit) {
         // Update
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('insurance_claims')
           .update({
             ...claimData,
             updated_by: userId
           })
-          .eq('id', id);
+          .eq('id', id)
+          .select(); // ← ADD .select() to get returned data
 
+        console.log('Update response:', { data, error });
         if (error) throw error;
 
         alert('Sinistro aggiornato con successo!');
       } else {
         // Create
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('insurance_claims')
           .insert([{
             ...claimData,
             claim_number: generateClaimNumber(),
             created_by: userId
-          }]);
+          }])
+          .select(); // ← ADD .select() to get returned data
 
+        console.log('Insert response:', { data, error });
         if (error) throw error;
 
         alert('Sinistro creato con successo!');
       }
 
+      // Wait a moment before redirect to ensure DB write completes
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       navigate('/assicurazioni/sinistri');
     } catch (error) {
       console.error('Error saving claim:', error);
-      alert('Errore nel salvare il sinistro. Riprova.');
+      alert('Errore nel salvare il sinistro: ' + (error as Error).message);
     } finally {
       setSaving(false);
     }

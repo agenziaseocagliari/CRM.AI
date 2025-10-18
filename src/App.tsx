@@ -108,14 +108,6 @@ const VerticalAwareRoute: React.FC<{
 }> = ({ standardComponent, insuranceComponent }) => {
   const { vertical } = useVertical(); // ✅ Safe - inside provider
   
-  // ======================================
-  // 🔀 DEBUG: Routing Decision
-  // ======================================
-  console.log('%c🔀 ROUTING DECISION', 'background: #cc6600; color: white; font-size: 14px; padding: 4px 8px;');
-  console.log('Current vertical:', vertical);
-  console.log('Will load:', vertical === 'insurance' ? 'FormsInsurance' : 'Forms');
-  console.log('───────────────────────────────────');
-  
   return vertical === 'insurance' ? insuranceComponent : standardComponent;
 };
 

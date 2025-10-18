@@ -325,11 +325,10 @@ const FormCard: React.FC<FormCardProps> = ({ form, onEdit, onDelete, onPreview, 
 
 
 export const FormsInsurance: React.FC = () => {
-    // Update document title for verification
+    // Update document title
     React.useEffect(() => {
-        document.title = '🟢 Insurance Forms | CRM';
-        console.log('🟢 INSURANCE FORMS COMPONENT MOUNTED');
-        console.log('File: FormsInsurance.tsx');
+        document.title = 'Moduli | Guardian AI CRM';
+        console.log('FormsInsurance component loaded');
     }, []);
 
     // ======================================
@@ -1155,24 +1154,7 @@ ${kadenceCode.shortcode}
 
     return (
         <>
-            {/* DEBUG: Visual confirmation this is FormsInsurance */}
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                background: '#00cc66',
-                color: 'white',
-                padding: '8px',
-                textAlign: 'center',
-                fontWeight: 'bold',
-                zIndex: 9999
-            }}>
-                🟢 INSURANCE FORMS (FormsInsurance.tsx)
-            </div>
-            
-            {/* Original content */}
-            <div className="space-y-6" style={{ marginTop: '40px' }}>
+            <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold text-text-primary">I Tuoi Form</h1>
                     {forms.length > 0 && (<button onClick={handleOpenCreateModal} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2"> <PlusIcon className="w-5 h-5" /> <span>Crea Nuovo Form</span> </button>)}

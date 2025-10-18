@@ -325,7 +325,15 @@ const FormCard: React.FC<FormCardProps> = ({ form, onEdit, onDelete, onPreview, 
 
 
 export const Forms: React.FC = () => {
-    console.log('📋 Forms component is rendering');
+    // ======================================
+    // 🔵 DEBUG: Standard Forms Component
+    // ======================================
+    console.log('%c� STANDARD FORMS LOADED', 'background: #0066cc; color: white; font-size: 16px; padding: 4px 8px; border-radius: 4px;');
+    console.log('Component: Forms.tsx (Standard CRM)');
+    console.log('Location: src/components/Forms.tsx');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('======================================');
+
     const { forms, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
     console.log('📋 Forms data:', { forms, organization });
 

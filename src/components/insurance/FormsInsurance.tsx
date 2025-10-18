@@ -325,7 +325,15 @@ const FormCard: React.FC<FormCardProps> = ({ form, onEdit, onDelete, onPreview, 
 
 
 export const FormsInsurance: React.FC = () => {
-    console.log('📋 FormsInsurance component is rendering');
+    // ======================================
+    // 🟢 DEBUG: Insurance Forms Component
+    // ======================================
+    console.log('%c� INSURANCE FORMS LOADED', 'background: #00cc66; color: white; font-size: 16px; padding: 4px 8px; border-radius: 4px;');
+    console.log('Component: FormsInsurance.tsx (Insurance CRM)');
+    console.log('Location: src/components/insurance/FormsInsurance.tsx');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('======================================');
+
     const { forms, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
     console.log('📋 FormsInsurance data:', { forms, organization });
 

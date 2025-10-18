@@ -65,6 +65,14 @@ export default function ClaimsForm() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof ClaimFormData, string>>>({});
 
+  // DEBUG LOGGING
+  useEffect(() => {
+    console.log('=== ClaimsForm Debug ===');
+    console.log('Organization ID:', organizationId);
+    console.log('User ID:', userId);
+    console.log('JWT Claims:', jwtClaims);
+  }, [organizationId]);
+
   useEffect(() => {
     fetchContacts();
     fetchPolicies();
@@ -86,11 +94,15 @@ export default function ClaimsForm() {
 
   const fetchContacts = async () => {
     try {
+      console.log('Fetching contacts for org:', organizationId);
+      
       const { data, error } = await supabase
         .from('contacts')
         .select('id, first_name, last_name, email, name')
         .eq('organization_id', organizationId)
         .order('last_name');
+
+      console.log('Contacts response:', { count: data?.length, error });
 
       if (error) throw error;
 
@@ -108,10 +120,14 @@ export default function ClaimsForm() {
 
   const fetchPolicies = async () => {
     try {
+      console.log('Fetching policies for org:', organizationId);
+      
       const { data, error } = await supabase
         .from('insurance_policies')
         .select('id, policy_number, policy_type, contact_id, status')
         .eq('organization_id', organizationId);
+
+      console.log('Policies response:', { count: data?.length, error });
 
       if (error) throw error;
 

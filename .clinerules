@@ -1,0 +1,53 @@
+# Guardian AI CRM - Persistent Context
+
+project: Guardian AI CRM
+repo: https://github.com/agenziaseocagliari/CRM.AI
+framework: React + TypeScript + Vite
+database: Supabase PostgreSQL
+
+# Database Credentials (READ-ONLY - For Context)
+db_url: postgresql://postgres.qjtaqrlpronohgpfdxsi:WebProSEO%401980%23@aws-1-eu-west-3.pooler.supabase.com:6543/postgres
+
+# Test Accounts
+standard_user: webproseoid@gmail.com
+insurance_user: primassicurazionibari@gmail.com
+production_url: https://crm-ai-rho.vercel.app
+
+# Architecture
+verticals:
+  standard: General CRM features
+  insurance: Insurance-specific modules (Polizze, Sinistri, Provvigioni, Scadenzario)
+
+# Current Phase
+phase: Dashboard Insurance Development
+sprint: Sprint 2 - Dashboard KPI & Charts
+
+# Key Components
+src/components/Forms.tsx → Standard CRM
+src/components/insurance/FormsInsurance.tsx → Insurance CRM
+src/App.tsx → Routing with vertical logic
+src/hooks/useVertical.tsx → Vertical context provider
+
+# Completed Work
+✅ Forms clone (FormsInsurance.tsx)
+✅ Vertical-aware routing
+✅ Production tested & verified
+✅ Standard: Uses Forms.tsx
+✅ Insurance: Uses FormsInsurance.tsx
+
+# Next Steps
+⏳ Add Forms to Insurance sidebar
+⏳ Dashboard Insurance development (KPI cards, charts, activity feed)
+⏳ Forms Phase 2 (file upload, templates, API integrations)
+
+# Common Commands
+build: npm run build
+dev: npm run dev
+test: npm test
+deploy: git push origin main (auto-deploys via Vercel)
+
+# Database Tables Reference
+vertical_configurations → Sidebar config per vertical
+insurance_policies → Polizze data
+contacts → Clienti
+forms → Form definitions

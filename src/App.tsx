@@ -12,6 +12,7 @@ import { diagnostics } from './utils/diagnostics';
 import { ContactsMeta, InsuranceDashboardMeta, InsurancePoliciesMeta, OpportunitiesMeta } from './components/PageMeta';
 import { RedirectHandler } from './components/RedirectHandler';
 import { ROUTES } from './config/routes';
+import TestRoute from './TestRoute';
 
 
 // Lazy components for performance optimization - temporarily disabled
@@ -297,6 +298,10 @@ const App: React.FC = () => {
           {/* Dev tool - only shows in development */}
           <VerticalSwitcher />
           <Routes>
+            {/* EMERGENCY TEST - DELETE AFTER VERIFICATION */}
+            <Route path="/test-emergency" element={
+              <TestRoute />
+            } />
             {/* ========================================== */}
             {/* ITALIAN LOCALIZED ROUTES */}
             {/* ========================================== */}

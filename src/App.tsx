@@ -25,10 +25,10 @@ import { HomePage } from './components/HomePage';
 import { Login } from './components/Login';
 import { MainLayout } from './components/MainLayout';
 // import { PrivacyPolicy } from './components/PrivacyPolicy'; // Moved to .bak
+import PricingPage from './components/pricing/PricingPage';
 import PublicBookingPage from './components/PublicBookingPage';
 import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
-import PricingPage from './components/pricing/PricingPage';
 // import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
 
@@ -43,6 +43,7 @@ import { Dashboard } from './components/Dashboard';
 import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
 import { FormsInsurance } from './components/insurance/FormsInsurance';
+import ClaimsList from './components/insurance/ClaimsList';
 import { Opportunities } from './components/Opportunities';
 import { Reports } from './components/Reports';
 import { ReportsTest } from './components/ReportsTest';
@@ -85,12 +86,11 @@ import { supabase } from './lib/supabaseClient';
 // Vertical System
 import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
 import {
-  InsuranceClaimsPage,
-  InsuranceCommissionsPage,
-  InsurancePoliciesPage,
-  InsuranceRenewalsPage,
-  PolicyDetail,
-  PolicyForm
+    InsuranceCommissionsPage,
+    InsurancePoliciesPage,
+    InsuranceRenewalsPage,
+    PolicyDetail,
+    PolicyForm
 } from './features/insurance';
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 
@@ -368,7 +368,7 @@ const App: React.FC = () => {
             <Route path="/insurance/claims" element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <InsuranceClaimsPage />
+                  <ClaimsList />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
@@ -425,7 +425,7 @@ const App: React.FC = () => {
             <Route path="/dashboard/insurance/claims" element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <InsuranceClaimsPage />
+                  <ClaimsList />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
@@ -534,7 +534,7 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             }>
-              <Route index element={<InsuranceClaimsPage />} />
+              <Route index element={<ClaimsList />} />
             </Route>
             <Route path={ROUTES.insurance.commissions} element={
               session ? (
@@ -742,7 +742,7 @@ const App: React.FC = () => {
               <InsuranceOnlyGuard>
                 <Routes>
                   <Route path="policies" element={<InsurancePoliciesPage />} />
-                  <Route path="claims" element={<InsuranceClaimsPage />} />
+                  <Route path="claims" element={<ClaimsList />} />
                   <Route path="commissions" element={<InsuranceCommissionsPage />} />
                   <Route path="renewals" element={<InsuranceRenewalsPage />} />
                 </Routes>

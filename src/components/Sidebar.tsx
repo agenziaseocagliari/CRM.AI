@@ -178,7 +178,7 @@ export const Sidebar: React.FC = () => {
                 to={
                   safeId === 'dashboard' 
                     ? '..' 
-                    : (safePath.startsWith('/') ? safePath.substring(1) : safePath)
+                    : safePath
                 }
                 icon={<IconComponent className="w-6 h-6" />}
                 label={safeLabel}

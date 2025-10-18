@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { diagnostics } from '../utils/diagnostics';
 
 const DiagnosticDashboard: React.FC = () => {

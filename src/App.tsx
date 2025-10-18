@@ -81,7 +81,6 @@ import { useCrmData } from './hooks/useCrmData';
 import { supabase } from './lib/supabaseClient';
 
 // Vertical System
-import VerticalSwitcher from './components/dev/VerticalSwitcher';
 import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
 import {
   InsuranceClaimsPage,
@@ -295,8 +294,6 @@ const App: React.FC = () => {
           {import.meta.env.DEV && <DiagnosticDashboard />}
           {/* Debug Panel - Only visible when logged in */}
           {session && <DebugPanel />}
-          {/* Dev tool - only shows in development */}
-          <VerticalSwitcher />
           <Routes>
             {/* EMERGENCY TEST - DELETE AFTER VERIFICATION */}
             <Route path="/test-emergency" element={

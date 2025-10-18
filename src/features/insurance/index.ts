@@ -15,17 +15,17 @@ import { PoliciesList } from './components/PoliciesList';
 export const InsurancePoliciesPage = PoliciesList;
 
 // Placeholder exports for future phases with professional UI
-export const InsuranceClaimsPage = () => React.createElement(PlaceholderPage, { 
-  title: 'Sinistri', 
-  description: 'Gestione completa dei sinistri assicurativi con tracking status e documentazione.' 
+export const InsuranceClaimsPage = () => React.createElement(PlaceholderPage, {
+    title: 'Sinistri',
+    description: 'Gestione completa dei sinistri assicurativi con tracking status e documentazione.'
 });
 
-export const InsuranceCommissionsPage = () => React.createElement(PlaceholderPage, { 
-  title: 'Provvigioni', 
-  description: 'Calcolo automatico e tracking delle provvigioni su polizze attive e rinnovate.' 
+export const InsuranceCommissionsPage = () => React.createElement(PlaceholderPage, {
+    title: 'Provvigioni',
+    description: 'Calcolo automatico e tracking delle provvigioni su polizze attive e rinnovate.'
 });
 
-export const InsuranceRenewalsPage = () => React.createElement(PlaceholderPage, { 
-  title: 'Scadenzario', 
-  description: 'Gestione scadenze polizze con promemoria automatici e workflow di rinnovo.' 
+export const InsuranceRenewalsPage = () => React.createElement(PlaceholderPage, {
+    title: 'Scadenzario',
+    description: 'Gestione scadenze polizze con promemoria automatici e workflow di rinnovo.'
 });

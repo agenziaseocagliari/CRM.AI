@@ -44,18 +44,6 @@ import {
 const ITEMS_PER_PAGE = 25;
 
 export const PoliciesList: React.FC = () => {
-  // 🔥 EMERGENCY DEBUG LOGGING
-  console.error('🔥 POLICES LIST - EXECUTING');
-  console.error('🔥 Window location:', window.location.pathname);
-  console.error('🔥 Timestamp:', new Date().toISOString());
-
-  // Diagnostic logging
-  diagnostics.log('component', 'PoliciesList', {
-    mounting: true,
-    timestamp: new Date().toISOString(),
-    location: window.location.pathname
-  });
-
   const navigate = useNavigate();
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
   
@@ -308,28 +296,8 @@ export const PoliciesList: React.FC = () => {
     organization: organization?.id 
   });
 
-  console.error('🔥 ABOUT TO RETURN JSX');
-  console.error('🔥 Render timestamp:', new Date().toISOString());
-
   return (
     <>
-      {/* 🔥 EMERGENCY VISIBLE MARKER */}
-      <div style={{
-        background: 'red',
-        color: 'white',
-        padding: '20px',
-        fontSize: '24px',
-        textAlign: 'center',
-        border: '5px solid yellow'
-      }}>
-        🔥 POLICES LIST RENDERED AT {new Date().toISOString()}
-        <br />
-        Organization ID: {organization?.id || 'MISSING'}
-      </div>
-      
-      <div style={{ display: 'none' }} data-diagnostic="PoliciesList">
-        PoliciesList Mounted
-      </div>
       <InsurancePoliciesMeta />
       
       <div className="p-6">

@@ -9,7 +9,7 @@
 // Test script to run in browser console
 console.log('🔬 FORENSIC DIAGNOSTIC TEST STARTING...');
 
-// Step 1: Check initial state 
+// Step 1: Check initial state
 console.log('📊 INITIAL STATE CHECK:');
 console.log('URL:', window.location.href);
 console.log('Local Storage:', Object.keys(localStorage));
@@ -26,12 +26,17 @@ if (window.diagnostics) {
 // Step 3: Check DOM structure
 console.log('📄 DOM STRUCTURE:');
 console.log('Root element:', document.getElementById('root'));
-console.log('Diagnostic markers:', document.querySelectorAll('[data-diagnostic]').length);
+console.log(
+  'Diagnostic markers:',
+  document.querySelectorAll('[data-diagnostic]').length
+);
 console.log('Main content:', document.querySelector('main'));
 
 // Step 4: Check for errors
 console.log('🚨 ERROR CHECK:');
-const errorEvents = window.diagnostics ? window.diagnostics.getErrorEvents() : [];
+const errorEvents = window.diagnostics
+  ? window.diagnostics.getErrorEvents()
+  : [];
 console.log('Error events:', errorEvents.length);
 if (errorEvents.length > 0) {
   console.error('Found errors:', errorEvents);
@@ -39,7 +44,9 @@ if (errorEvents.length > 0) {
 
 // Step 5: Check route history
 console.log('🗺️ ROUTE HISTORY:');
-const routeEvents = window.diagnostics ? window.diagnostics.getRouteEvents() : [];
+const routeEvents = window.diagnostics
+  ? window.diagnostics.getRouteEvents()
+  : [];
 console.log('Route changes:', routeEvents.length);
 routeEvents.forEach((event, i) => {
   console.log(`${i + 1}. ${event.timestamp}: ${event.data.pathname}`);
@@ -47,9 +54,11 @@ routeEvents.forEach((event, i) => {
 
 // Step 6: Check component mounts
 console.log('🧩 COMPONENT MOUNTS:');
-const componentEvents = window.diagnostics ? window.diagnostics.getComponentEvents() : [];
+const componentEvents = window.diagnostics
+  ? window.diagnostics.getComponentEvents()
+  : [];
 console.log('Component events:', componentEvents.length);
-componentEvents.forEach((event) => {
+componentEvents.forEach(event => {
   console.log(`- ${event.location}: ${JSON.stringify(event.data)}`);
 });
 
@@ -65,5 +74,5 @@ console.log('📊 Summary:', {
   errors: errorEvents.length,
   routes: routeEvents.length,
   components: componentEvents.length,
-  diagnosticMarkers: document.querySelectorAll('[data-diagnostic]').length
+  diagnosticMarkers: document.querySelectorAll('[data-diagnostic]').length,
 });

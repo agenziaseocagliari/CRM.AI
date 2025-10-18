@@ -46,28 +46,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ crmData }) => {
                     onLogout={handleLogout}
                 />
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
-                    {/* EMERGENCY VISIBLE MARKER */}
-                    <div style={{
-                        background: 'lime',
-                        padding: '20px',
-                        fontSize: '24px',
-                        border: '5px solid red',
-                        marginBottom: '20px'
-                    }}>
-                        🟢 MAIN LAYOUT RENDERED - Outlet below:
-                    </div>
-                    
                     {/* L'Outlet renderizzerÃ  il componente della rotta figlia e passerÃ  crmData tramite context */}
                     <Outlet context={crmData} />
-                    
-                    {/* EMERGENCY FALLBACK */}
-                    <div style={{
-                        background: 'yellow',
-                        padding: '20px',
-                        marginTop: '20px'
-                    }}>
-                        🟡 After Outlet - If you only see this yellow box, Outlet is empty
-                    </div>
                 </main>
             </div>
         </div>

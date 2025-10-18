@@ -53,12 +53,12 @@ async function debugInsuranceSidebar() {
       console.log(`  ${j + 1}. ${item.name}`);
       console.log(`     Path: ${item.path || '❌ UNDEFINED'}`);
       console.log(`     Icon: ${item.icon || '❌ UNDEFINED'}`);
-      
+
       // CHECK FOR UNDEFINED PATH
       if (!item.path) {
         console.error(`     ⚠️ FOUND IT! Item "${item.name}" has NO PATH!`);
       }
-      
+
       // CHECK FOR SPLIT USAGE
       if (item.path && typeof item.path === 'string') {
         console.log(`     Split test: ${item.path.split('/').length} segments`);

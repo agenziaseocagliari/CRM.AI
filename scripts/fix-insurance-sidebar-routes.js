@@ -14,61 +14,61 @@ async function fixSidebarRoutes() {
   const correctConfig = {
     sections: [
       {
-        title: "Gestione",
+        title: 'Gestione',
         items: [
           {
-            name: "Dashboard",
-            path: "/assicurazioni/dashboard", // REMOVED /dashboard prefix
-            icon: "LayoutDashboard"
+            name: 'Dashboard',
+            path: '/assicurazioni/dashboard', // REMOVED /dashboard prefix
+            icon: 'LayoutDashboard',
           },
           {
-            name: "Polizze",
-            path: "/assicurazioni/polizze", // CORRECT
-            icon: "FileText"
+            name: 'Polizze',
+            path: '/assicurazioni/polizze', // CORRECT
+            icon: 'FileText',
           },
           {
-            name: "Sinistri",
-            path: "/assicurazioni/sinistri", // CORRECT
-            icon: "AlertCircle"
+            name: 'Sinistri',
+            path: '/assicurazioni/sinistri', // CORRECT
+            icon: 'AlertCircle',
           },
           {
-            name: "Provvigioni",
-            path: "/assicurazioni/provvigioni", // CORRECT
-            icon: "DollarSign"
+            name: 'Provvigioni',
+            path: '/assicurazioni/provvigioni', // CORRECT
+            icon: 'DollarSign',
           },
           {
-            name: "Scadenzario",
-            path: "/assicurazioni/scadenzario", // CORRECT
-            icon: "Calendar"
-          }
-        ]
+            name: 'Scadenzario',
+            path: '/assicurazioni/scadenzario', // CORRECT
+            icon: 'Calendar',
+          },
+        ],
       },
       {
-        title: "Strumenti",
+        title: 'Strumenti',
         items: [
           {
-            name: "Contatti",
-            path: "/contatti", // REMOVED /dashboard prefix
-            icon: "Users"
+            name: 'Contatti',
+            path: '/contatti', // REMOVED /dashboard prefix
+            icon: 'Users',
           },
           {
-            name: "Calendario",
-            path: "/calendario", // REMOVED /dashboard prefix
-            icon: "CalendarDays"
+            name: 'Calendario',
+            path: '/calendario', // REMOVED /dashboard prefix
+            icon: 'CalendarDays',
           },
           {
-            name: "Automazioni",
-            path: "/automazioni", // REMOVED /dashboard prefix
-            icon: "Zap"
+            name: 'Automazioni',
+            path: '/automazioni', // REMOVED /dashboard prefix
+            icon: 'Zap',
           },
           {
-            name: "Report",
-            path: "/report", // REMOVED /dashboard prefix
-            icon: "BarChart"
-          }
-        ]
-      }
-    ]
+            name: 'Report',
+            path: '/report', // REMOVED /dashboard prefix
+            icon: 'BarChart',
+          },
+        ],
+      },
+    ],
   };
 
   const { data, error } = await supabase

@@ -84,12 +84,12 @@ import { supabase } from './lib/supabaseClient';
 import VerticalSwitcher from './components/dev/VerticalSwitcher';
 import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
 import {
-    InsuranceClaimsPage,
-    InsuranceCommissionsPage,
-    InsurancePoliciesPage,
-    InsuranceRenewalsPage,
-    PolicyDetail,
-    PolicyForm
+  InsuranceClaimsPage,
+  InsuranceCommissionsPage,
+  InsurancePoliciesPage,
+  InsuranceRenewalsPage,
+  PolicyDetail,
+  PolicyForm
 } from './features/insurance';
 import { VerticalProvider } from './hooks/useVertical';
 
@@ -464,6 +464,21 @@ const App: React.FC = () => {
                 </>
               } />
             </Route>
+            
+            {/* 🔥 EMERGENCY FIX: Dashboard-prefixed insurance routes */}
+            <Route path="/dashboard/assicurazioni/polizze" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <>
+                    <InsurancePoliciesMeta />
+                    <MainLayout crmData={crmData} />
+                  </>
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            }>
+              <Route index element={<InsurancePoliciesPage />} />
+            </Route>
+            
             <Route path={ROUTES.insurance.policies} element={
               session ? (
                 <InsuranceOnlyGuard>

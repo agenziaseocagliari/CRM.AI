@@ -28,6 +28,7 @@ import { MainLayout } from './components/MainLayout';
 import PublicBookingPage from './components/PublicBookingPage';
 import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
+import PricingPage from './components/pricing/PricingPage';
 // import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
 
@@ -613,7 +614,8 @@ const App: React.FC = () => {
               <Route index element={<EmailMarketingModule />} />
             </Route>
             
-            <Route path={ROUTES.pricing} element={
+            {/* CREDITI EXTRA - Internal authenticated route for buying credits */}
+            <Route path="/crediti-extra" element={
               session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
             }>
               <Route index element={<ExtraCreditsStore />} />
@@ -632,6 +634,7 @@ const App: React.FC = () => {
             <Route path="/automation" element={<Navigate to="/automazioni" replace />} />
             <Route path="/opportunities" element={<Navigate to="/opportunita" replace />} />
             <Route path="/universal-credits" element={<Navigate to="/dashboard/universal-credits" replace />} />
+            <Route path="/extra-credits" element={<Navigate to="/crediti-extra" replace />} />
             <Route path="/forms" element={<Navigate to="/moduli" replace />} />
             <Route path="/contacts" element={<Navigate to="/contatti" replace />} />
             <Route path="/calendar" element={<Navigate to="/calendario" replace />} />
@@ -660,6 +663,10 @@ const App: React.FC = () => {
         } />
 
         <Route path="/form/:formId" element={<PublicForm />} />
+        
+        {/* PUBLIC PRICING - Subscription plans landing page */}
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/prezzi" element={<Navigate to="/pricing" replace />} />
         <Route path="/public-pricing" element={<PublicPricingPage />} />
 
         {/* Public Booking Page */}

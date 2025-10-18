@@ -44,6 +44,7 @@ import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
 import ClaimsList from './components/insurance/ClaimsList';
 import ClaimsForm from './components/insurance/ClaimsForm';
+import ClaimDetail from './components/insurance/ClaimDetail';
 import { FormsInsurance } from './components/insurance/FormsInsurance';
 import { Opportunities } from './components/Opportunities';
 import { Reports } from './components/Reports';
@@ -380,6 +381,13 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
+            <Route path="/insurance/claims/:id" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <ClaimDetail />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
             <Route path="/insurance/claims/:id/edit" element={
               session ? (
                 <InsuranceOnlyGuard>
@@ -448,6 +456,13 @@ const App: React.FC = () => {
               session ? (
                 <InsuranceOnlyGuard>
                   <ClaimsForm />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path="/dashboard/insurance/claims/:id" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <ClaimDetail />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
@@ -565,6 +580,7 @@ const App: React.FC = () => {
             }>
               <Route index element={<ClaimsList />} />
               <Route path="new" element={<ClaimsForm />} />
+              <Route path=":id" element={<ClaimDetail />} />
               <Route path=":id/edit" element={<ClaimsForm />} />
             </Route>
             <Route path={ROUTES.insurance.commissions} element={
@@ -775,6 +791,7 @@ const App: React.FC = () => {
                   <Route path="policies" element={<InsurancePoliciesPage />} />
                   <Route path="claims" element={<ClaimsList />} />
                   <Route path="claims/new" element={<ClaimsForm />} />
+                  <Route path="claims/:id" element={<ClaimDetail />} />
                   <Route path="claims/:id/edit" element={<ClaimsForm />} />
                   <Route path="commissions" element={<InsuranceCommissionsPage />} />
                   <Route path="renewals" element={<InsuranceRenewalsPage />} />

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { useAuth } from '../../contexts/useAuth';
-import { AlertCircle, Plus, Search, Eye, Edit2, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Edit2, Eye, FileText, Plus, Search, XCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/useAuth';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Claim {
   id: string;

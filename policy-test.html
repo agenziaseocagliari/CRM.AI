@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+  <head>
+    <title>PolicyForm Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+      }
+      .test-link {
+        display: block;
+        margin: 20px 0;
+        padding: 10px;
+        background: #f0f0f0;
+        border-radius: 5px;
+        text-decoration: none;
+        color: #333;
+      }
+      .test-link:hover {
+        background: #e0e0e0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PolicyForm Functionality Test</h1>
+    <p>Click the links below to test the PolicyForm functionality:</p>
+
+    <a
+      href="http://localhost:5174/insurance/policies/new"
+      target="_blank"
+      class="test-link"
+    >
+      🆕 Test Create Policy Form
+    </a>
+
+    <a
+      href="http://localhost:5174/insurance/policies"
+      target="_blank"
+      class="test-link"
+    >
+      📋 Test Policies List Page
+    </a>
+
+    <div
+      style="
+        margin-top: 40px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 5px;
+      "
+    >
+      <h3>Test Checklist:</h3>
+      <ul>
+        <li>✅ Does the Create Policy page load without errors?</li>
+        <li>✅ Are all form fields visible (Company, Policy Number, etc.)?</li>
+        <li>✅ Does the Contact dropdown populate with sample contacts?</li>
+        <li>✅ Can you fill out and submit the form?</li>
+        <li>✅ Does the Policies List show existing policies?</li>
+      </ul>
+    </div>
+
+    <script>
+      console.log('PolicyForm Test Page Loaded');
+      console.log('Server should be running on: http://localhost:5174');
+    </script>
+  </body>
+</html>

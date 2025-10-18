@@ -1,4 +1,5 @@
 import React from 'react';
+import PlaceholderPage from '../../components/PlaceholderPage';
 
 // Insurance vertical module - Phase 1.1 Complete Implementation
 
@@ -13,7 +14,18 @@ export { PolicyForm } from './components/PolicyForm';
 import { PoliciesList } from './components/PoliciesList';
 export const InsurancePoliciesPage = PoliciesList;
 
-// Placeholder exports for future phases
-export const InsuranceClaimsPage = () => React.createElement('div', null, 'Claims - Coming in Phase 2');
-export const InsuranceCommissionsPage = () => React.createElement('div', null, 'Commissions - Coming in Phase 2');
-export const InsuranceRenewalsPage = () => React.createElement('div', null, 'Renewals - Coming in Phase 2');
+// Placeholder exports for future phases with professional UI
+export const InsuranceClaimsPage = () => React.createElement(PlaceholderPage, { 
+  title: 'Sinistri', 
+  description: 'Gestione completa dei sinistri assicurativi con tracking status e documentazione.' 
+});
+
+export const InsuranceCommissionsPage = () => React.createElement(PlaceholderPage, { 
+  title: 'Provvigioni', 
+  description: 'Calcolo automatico e tracking delle provvigioni su polizze attive e rinnovate.' 
+});
+
+export const InsuranceRenewalsPage = () => React.createElement(PlaceholderPage, { 
+  title: 'Scadenzario', 
+  description: 'Gestione scadenze polizze con promemoria automatici e workflow di rinnovo.' 
+});

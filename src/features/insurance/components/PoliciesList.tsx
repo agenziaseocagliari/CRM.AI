@@ -18,9 +18,9 @@ import {
     Trash2
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { diagnostics } from '../../../utils/diagnostics';
 import toast from 'react-hot-toast';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { diagnostics } from '../../../utils/diagnostics';
 
 import { InsurancePoliciesMeta } from '../../../components/PageMeta';
 import { ROUTES } from '../../../config/routes';
@@ -44,6 +44,11 @@ import {
 const ITEMS_PER_PAGE = 25;
 
 export const PoliciesList: React.FC = () => {
+  // 🔥 EMERGENCY DEBUG LOGGING
+  console.error('🔥 POLICES LIST - EXECUTING');
+  console.error('🔥 Window location:', window.location.pathname);
+  console.error('🔥 Timestamp:', new Date().toISOString());
+
   // Diagnostic logging
   diagnostics.log('component', 'PoliciesList', {
     mounting: true,
@@ -53,7 +58,18 @@ export const PoliciesList: React.FC = () => {
 
   const navigate = useNavigate();
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
+  
+  // 🔥 EMERGENCY DEBUG - CONTEXT DATA
+  console.error('🔥 Context Data:', contextData);
+  console.error('🔥 Organization:', contextData?.organization);
+  console.error('🔥 Organization ID:', contextData?.organization?.id);
+  
   const { organization } = contextData || {};
+  
+  // 🔥 EMERGENCY DEBUG - ORGANIZATION CHECK
+  console.error('🔥 Organization extracted:', organization);
+  console.error('🔥 Organization ID check:', organization?.id);
+  console.error('🔥 Will return early?', !organization?.id);
   
   // State Management
   const [policies, setPolicies] = useState<InsurancePolicyWithContact[]>([]);
@@ -65,7 +81,15 @@ export const PoliciesList: React.FC = () => {
   
   // Fetch policies from database
   const fetchPolicies = useCallback(async () => {
-    if (!organization?.id) return;
+    console.error('🔥 FETCH POLICIES - Entry point');
+    console.error('🔥 Organization ID for fetch:', organization?.id);
+    
+    if (!organization?.id) {
+      console.error('🔥 FETCH POLICIES - EARLY RETURN! No organization ID');
+      return;
+    }
+    
+    console.error('🔥 FETCH POLICIES - Proceeding with fetch');
     
     setLoading(true);
     try {
@@ -284,8 +308,25 @@ export const PoliciesList: React.FC = () => {
     organization: organization?.id 
   });
 
+  console.error('🔥 ABOUT TO RETURN JSX');
+  console.error('🔥 Render timestamp:', new Date().toISOString());
+
   return (
     <>
+      {/* 🔥 EMERGENCY VISIBLE MARKER */}
+      <div style={{
+        background: 'red',
+        color: 'white',
+        padding: '20px',
+        fontSize: '24px',
+        textAlign: 'center',
+        border: '5px solid yellow'
+      }}>
+        🔥 POLICES LIST RENDERED AT {new Date().toISOString()}
+        <br />
+        Organization ID: {organization?.id || 'MISSING'}
+      </div>
+      
       <div style={{ display: 'none' }} data-diagnostic="PoliciesList">
         PoliciesList Mounted
       </div>

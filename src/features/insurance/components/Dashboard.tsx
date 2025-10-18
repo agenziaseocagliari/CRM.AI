@@ -8,6 +8,19 @@ import {
   DollarSign,
   Calendar
 } from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid
+} from 'recharts';
 
 interface InsurancePolicy {
   id: string;
@@ -17,6 +30,8 @@ interface InsurancePolicy {
   created_at: string;
   premium_frequency: string;
   end_date: string;
+  policy_type?: string;
+  policy_number?: string;
 }
 
 interface DashboardStats {
@@ -46,6 +61,34 @@ export default function InsuranceDashboard() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [revenueByType, setRevenueByType] = useState<Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>>([]);
+  const [policiesTrend, setPoliciesTrend] = useState<Array<{
+    month: string;
+    count: number;
+  }>>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{
+    id: string;
+    type: 'policy_created' | 'policy_expiring' | 'policy_renewed';
+    title: string;
+    subtitle: string;
+    date: Date;
+    icon: React.ElementType;
+    iconColor: string;
+  }>>([]);
+
+  // Define chart colors
+  const CHART_COLORS = [
+    '#3b82f6', // blue
+    '#10b981', // green
+    '#f59e0b', // amber
+    '#ef4444', // red
+    '#8b5cf6', // purple
+    '#06b6d4'  // cyan
+  ];
 
   useEffect(() => {
     if (organizationId) {
@@ -62,11 +105,17 @@ export default function InsuranceDashboard() {
       const [
         policiesData,
         expiringData,
-        revenueData
+        revenueData,
+        chartData,
+        trendData,
+        activityData
       ] = await Promise.all([
         fetchPoliciesStats(),
         fetchExpiringPolicies(),
-        fetchRevenueStats()
+        fetchRevenueStats(),
+        fetchRevenueByType(),
+        fetchPoliciesTrend(),
+        fetchRecentActivity()
       ]);
 
       setStats({
@@ -74,6 +123,9 @@ export default function InsuranceDashboard() {
         ...expiringData,
         ...revenueData
       });
+      setRevenueByType(chartData);
+      setPoliciesTrend(trendData);
+      setRecentActivity(activityData);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -166,6 +218,134 @@ export default function InsuranceDashboard() {
     };
   };
 
+  const fetchRevenueByType = async () => {
+    const { data, error } = await supabase
+      .from('insurance_policies')
+      .select('policy_type, premium_amount, premium_frequency')
+      .eq('organization_id', organizationId)
+      .eq('status', 'active') as { data: InsurancePolicy[] | null; error: unknown };
+
+    if (error) throw error;
+
+    // Group by policy type and calculate monthly revenue
+    const typeMap = new Map();
+
+    data?.forEach((policy: InsurancePolicy) => {
+      const type = policy.policy_type || 'Altro';
+      const premium = policy.premium_amount || 0;
+
+      // Convert to monthly
+      let monthlyPremium = premium;
+      if (policy.premium_frequency === 'quarterly') monthlyPremium = premium / 3;
+      if (policy.premium_frequency === 'annual') monthlyPremium = premium / 12;
+
+      typeMap.set(type, (typeMap.get(type) || 0) + monthlyPremium);
+    });
+
+    // Convert to chart format
+    const chartData = Array.from(typeMap.entries()).map(([name, value], index) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value: Math.round(value as number),
+      color: CHART_COLORS[index % CHART_COLORS.length]
+    }));
+
+    return chartData;
+  };
+
+  const fetchPoliciesTrend = async () => {
+    const { data, error } = await supabase
+      .from('insurance_policies')
+      .select('created_at')
+      .eq('organization_id', organizationId)
+      .gte('created_at', new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: true }) as { data: InsurancePolicy[] | null; error: unknown };
+
+    if (error) throw error;
+
+    // Group by month
+    const monthMap = new Map();
+    const now = new Date();
+    
+    // Initialize last 6 months with 0
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = date.toISOString().slice(0, 7); // YYYY-MM
+      const monthName = date.toLocaleDateString('it-IT', { month: 'short', year: '2-digit' });
+      monthMap.set(key, { month: monthName, count: 0 });
+    }
+
+    // Count policies per month
+    data?.forEach((policy: InsurancePolicy) => {
+      const key = policy.created_at.slice(0, 7);
+      if (monthMap.has(key)) {
+        monthMap.get(key).count++;
+      }
+    });
+
+    return Array.from(monthMap.values());
+  };
+
+  const fetchRecentActivity = async () => {
+    const { data, error } = await supabase
+      .from('insurance_policies')
+      .select('id, policy_number, policy_type, status, created_at, end_date')
+      .eq('organization_id', organizationId)
+      .order('created_at', { ascending: false })
+      .limit(10) as { data: InsurancePolicy[] | null; error: unknown };
+
+    if (error) throw error;
+
+    const activities: Array<{
+      id: string;
+      type: 'policy_created' | 'policy_expiring' | 'policy_renewed';
+      title: string;
+      subtitle: string;
+      date: Date;
+      icon: React.ElementType;
+      iconColor: string;
+    }> = [];
+    const now = new Date();
+
+    data?.forEach((policy: InsurancePolicy) => {
+      // Recent creations (last 30 days)
+      const createdDate = new Date(policy.created_at);
+      if ((now.getTime() - createdDate.getTime()) < 30 * 24 * 60 * 60 * 1000) {
+        activities.push({
+          id: policy.id,
+          type: 'policy_created',
+          title: `Nuova polizza ${policy.policy_type}`,
+          subtitle: `N. ${policy.policy_number}`,
+          date: createdDate,
+          icon: FileText,
+          iconColor: 'bg-blue-500'
+        });
+      }
+
+      // Expiring soon (next 30 days)
+      if (policy.status === 'active' && policy.end_date) {
+        const endDate = new Date(policy.end_date);
+        const daysUntil = Math.ceil((endDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+        
+        if (daysUntil > 0 && daysUntil <= 30) {
+          activities.push({
+            id: `${policy.id}-expiring`,
+            type: 'policy_expiring',
+            title: `Scadenza polizza ${policy.policy_type}`,
+            subtitle: `In scadenza tra ${daysUntil} giorni`,
+            date: endDate,
+            icon: Calendar,
+            iconColor: 'bg-orange-500'
+          });
+        }
+      }
+    });
+
+    // Sort by date descending
+    activities.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    return activities.slice(0, 10);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -235,35 +415,131 @@ export default function InsuranceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Revenue per Tipo Polizza</h3>
-          <div className="h-64 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <TrendingUp className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p>Chart - Coming in next task</p>
+          {revenueByType.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={revenueByType}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {revenueByType.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+              <FileText className="w-12 h-12 mb-2" />
+              <p>Nessuna polizza attiva</p>
+              <p className="text-sm">Aggiungi polizze per visualizzare i dati</p>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Trend Polizze (6 mesi)</h3>
-          <div className="h-64 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p>Chart - Coming in next task</p>
+          
+          {policiesTrend.length > 0 && policiesTrend.some(d => d.count > 0) ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={policiesTrend}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#3b82f6', r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+              <TrendingUp className="w-12 h-12 mb-2" />
+              <p>Dati insufficienti</p>
+              <p className="text-sm">Aggiungi polizze per vedere il trend</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Activity Feed - Placeholder */}
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <QuickActionButton
+          title="Nuova Polizza"
+          subtitle="Aggiungi polizza"
+          icon={FileText}
+          onClick={() => window.location.href = '/assicurazioni/polizze/new'}
+          color="blue"
+        />
+        
+        <QuickActionButton
+          title="Registra Sinistro"
+          subtitle="Nuovo sinistro"
+          icon={AlertCircle}
+          onClick={() => window.location.href = '/assicurazioni/sinistri/new'}
+          color="red"
+        />
+        
+        <QuickActionButton
+          title="Scadenzario"
+          subtitle="Vedi scadenze"
+          icon={Calendar}
+          onClick={() => window.location.href = '/assicurazioni/scadenzario'}
+          color="orange"
+        />
+        
+        <QuickActionButton
+          title="Report"
+          subtitle="Provvigioni"
+          icon={DollarSign}
+          onClick={() => window.location.href = '/assicurazioni/provvigioni'}
+          color="green"
+        />
+      </div>
+
+      {/* Activity Feed */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4">Attività Recenti</h3>
-        <div className="text-gray-400 text-center py-8">
-          <div className="text-center">
-            <AlertCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p>Activity feed - Coming in next task</p>
-            <p className="text-sm mt-2">Visualizzerà nuove polizze, scadenze, rinnovi</p>
+        
+        {recentActivity.length > 0 ? (
+          <div className="space-y-4">
+            {recentActivity.map((activity) => (
+              <div key={activity.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition">
+                <div className={`${activity.iconColor} p-2 rounded-lg`}>
+                  <activity.icon className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                  <p className="text-xs text-gray-500">{activity.subtitle}</p>
+                </div>
+                <span className="text-xs text-gray-400">
+                  {activity.date.toLocaleDateString('it-IT', { 
+                    day: 'numeric', 
+                    month: 'short' 
+                  })}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="text-gray-400 text-center py-8">
+            <AlertCircle className="w-12 h-12 mx-auto mb-2" />
+            <p>Nessuna attività recente</p>
+            <p className="text-sm">Le attività appariranno qui</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -317,5 +593,34 @@ function KPICard({
         </p>
       )}
     </div>
+  );
+}
+
+// Quick Action Button Component
+interface QuickActionButtonProps {
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+  onClick: () => void;
+  color: 'blue' | 'red' | 'orange' | 'green';
+}
+
+function QuickActionButton({ title, subtitle, icon: Icon, onClick, color }: QuickActionButtonProps) {
+  const colors = {
+    blue: 'bg-blue-500 hover:bg-blue-600',
+    red: 'bg-red-500 hover:bg-red-600',
+    orange: 'bg-orange-500 hover:bg-orange-600',
+    green: 'bg-green-500 hover:bg-green-600'
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`${colors[color]} text-white rounded-lg p-4 text-left hover:shadow-lg transition-all`}
+    >
+      <Icon className="w-6 h-6 mb-2" />
+      <p className="font-semibold">{title}</p>
+      <p className="text-sm opacity-90">{subtitle}</p>
+    </button>
   );
 }

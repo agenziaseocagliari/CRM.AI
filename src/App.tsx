@@ -592,7 +592,7 @@ const App: React.FC = () => {
             <Route path={ROUTES.automations} element={
               session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
             }>
-              <Route index element={<Automations />} />
+              <Route index element={<AutomationPage />} />
             </Route>
             
             <Route path={ROUTES.reports} element={
@@ -630,6 +630,7 @@ const App: React.FC = () => {
             <Route path="/contacts" element={<Navigate to="/contatti" replace />} />
             <Route path="/calendar" element={<Navigate to="/calendario" replace />} />
             <Route path="/reports" element={<Navigate to="/report" replace />} />
+            <Route path="/pricing" element={<Navigate to="/prezzi" replace />} />
 
             {/* ========================================== */}
             {/* LEGACY ENGLISH ROUTES (for compatibility) */}

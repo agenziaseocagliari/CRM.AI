@@ -1,5 +1,5 @@
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { createContext, useCallback, useEffect, useState } from 'react';
 
 // Types
 export interface VerticalConfig {
@@ -218,6 +218,15 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
       {children}
     </VerticalContext.Provider>
   );
+}
+
+// Hook to use the vertical context
+export function useVertical() {
+  const context = useContext(VerticalContext);
+  if (!context) {
+    throw new Error('useVertical must be used within a VerticalProvider');
+  }
+  return context;
 }
 
 // Export the context for use in utility functions

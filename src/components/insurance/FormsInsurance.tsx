@@ -3,19 +3,19 @@
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
 
-import { useCrmData } from '../hooks/useCrmData';
-import { supabase, supabaseAdmin } from '../lib/supabaseClient';
-import { Form, FormField, FormStyle } from '../types';
-import { UniversalAIChat } from './ai/UniversalAIChat';
+import { useCrmData } from '../../hooks/useCrmData';
+import { supabase, supabaseAdmin } from '../../lib/supabaseClient';
+import { Form, FormField, FormStyle } from '../../types';
+import { UniversalAIChat } from '../ai/UniversalAIChat';
 
-import { CodeIcon, EyeIcon, PencilIcon, PlusIcon, SparklesIcon, TrashIcon } from './ui/icons';
-import { Modal } from './ui/Modal';
+import { CodeIcon, EyeIcon, PencilIcon, PlusIcon, SparklesIcon, TrashIcon } from '../ui/icons';
+import { Modal } from '../ui/Modal';
 
-import { diagnosticLogger } from '../lib/mockDiagnosticLogger';
-import { InputValidator, SecureLogger } from '../lib/security/securityUtils';
-import { generateKadenceForm } from '../lib/wordpress/WordPressKadenceGenerator';
-import { PostAIEditor } from './forms/PostAIEditor';
-import { InteractiveAIQuestionnaire } from './InteractiveAIQuestionnaire';
+import { diagnosticLogger } from '../../lib/mockDiagnosticLogger';
+import { InputValidator, SecureLogger } from '../../lib/security/securityUtils';
+import { generateKadenceForm } from '../../lib/wordpress/WordPressKadenceGenerator';
+import { PostAIEditor } from '../forms/PostAIEditor';
+import { InteractiveAIQuestionnaire } from '../InteractiveAIQuestionnaire';
 
 // Error interface for proper typing
 interface ApiError {
@@ -324,10 +324,10 @@ const FormCard: React.FC<FormCardProps> = ({ form, onEdit, onDelete, onPreview, 
 };
 
 
-export const Forms: React.FC = () => {
-    console.log('📋 Forms component is rendering');
+export const FormsInsurance: React.FC = () => {
+    console.log('📋 FormsInsurance component is rendering');
     const { forms, organization, refetch: refetchData } = useOutletContext<ReturnType<typeof useCrmData>>();
-    console.log('📋 Forms data:', { forms, organization });
+    console.log('📋 FormsInsurance data:', { forms, organization });
 
     // Stati per le modali
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);

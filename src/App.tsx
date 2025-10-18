@@ -42,6 +42,7 @@ import ContactDetailView from './components/contacts/ContactDetailView';
 import { Dashboard } from './components/Dashboard';
 import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
+import { FormsInsurance } from './components/insurance/FormsInsurance';
 import { Opportunities } from './components/Opportunities';
 import { Reports } from './components/Reports';
 import { ReportsTest } from './components/ReportsTest';
@@ -91,7 +92,7 @@ import {
   PolicyDetail,
   PolicyForm
 } from './features/insurance';
-import { VerticalProvider } from './hooks/useVertical';
+import { VerticalProvider, useVertical } from './hooks/useVertical';
 
 
 import { diagnosticLogger } from './lib/mockDiagnosticLogger';
@@ -102,6 +103,7 @@ import { checkForUpdates, register as registerSW } from './lib/serviceWorkerRegi
 
 const App: React.FC = () => {
   const { session, userRole, loading, jwtClaims } = useAuth();
+  const { vertical } = useVertical();
   const crmData = useCrmData();
   const navigate = useNavigate();
   const location = useLocation();
@@ -587,7 +589,7 @@ const App: React.FC = () => {
             <Route path={ROUTES.forms} element={
               session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
             }>
-              <Route index element={<Forms />} />
+              <Route index element={vertical === 'insurance' ? <FormsInsurance /> : <Forms />} />
             </Route>
             
             <Route path={ROUTES.automations} element={
@@ -697,7 +699,7 @@ const App: React.FC = () => {
           <Route path="reports" element={<Reports />} />
           <Route path="reports-test" element={<ReportsTest />} />
 
-          <Route path="forms" element={<Forms />} />
+          <Route path="forms" element={vertical === 'insurance' ? <FormsInsurance /> : <Forms />} />
           <Route path="automations" element={<Automations />} />
           <Route path="automation" element={<AutomationPage />} />
           <Route path="automation/diagnostic" element={<AutomationDiagnostic />} />

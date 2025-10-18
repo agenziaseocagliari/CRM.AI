@@ -101,9 +101,17 @@ import { diagnosticLogger } from './lib/mockDiagnosticLogger';
 import { performanceMonitor } from './lib/performanceMonitoring';
 import { checkForUpdates, register as registerSW } from './lib/serviceWorkerRegistration';
 
+// Helper component that safely uses vertical hook inside provider
+const VerticalAwareRoute: React.FC<{
+  standardComponent: React.ReactNode;
+  insuranceComponent: React.ReactNode;
+}> = ({ standardComponent, insuranceComponent }) => {
+  const { vertical } = useVertical(); // ✅ Safe - inside provider
+  return vertical === 'insurance' ? insuranceComponent : standardComponent;
+};
+
 const App: React.FC = () => {
   const { session, userRole, loading, jwtClaims } = useAuth();
-  const { vertical } = useVertical();
   const crmData = useCrmData();
   const navigate = useNavigate();
   const location = useLocation();
@@ -589,7 +597,12 @@ const App: React.FC = () => {
             <Route path={ROUTES.forms} element={
               session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
             }>
-              <Route index element={vertical === 'insurance' ? <FormsInsurance /> : <Forms />} />
+              <Route index element={
+                <VerticalAwareRoute
+                  standardComponent={<Forms />}
+                  insuranceComponent={<FormsInsurance />}
+                />
+              } />
             </Route>
             
             <Route path={ROUTES.automations} element={
@@ -699,7 +712,12 @@ const App: React.FC = () => {
           <Route path="reports" element={<Reports />} />
           <Route path="reports-test" element={<ReportsTest />} />
 
-          <Route path="forms" element={vertical === 'insurance' ? <FormsInsurance /> : <Forms />} />
+          <Route path="forms" element={
+            <VerticalAwareRoute
+              standardComponent={<Forms />}
+              insuranceComponent={<FormsInsurance />}
+            />
+          } />
           <Route path="automations" element={<Automations />} />
           <Route path="automation" element={<AutomationPage />} />
           <Route path="automation/diagnostic" element={<AutomationDiagnostic />} />

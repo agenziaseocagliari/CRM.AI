@@ -637,7 +637,7 @@ const App: React.FC = () => {
             <Route path="/contacts" element={<Navigate to="/contatti" replace />} />
             <Route path="/calendar" element={<Navigate to="/calendario" replace />} />
             <Route path="/reports" element={<Navigate to="/report" replace />} />
-            <Route path="/pricing" element={<Navigate to="/prezzi" replace />} />
+
 
             {/* ========================================== */}
             {/* LEGACY ENGLISH ROUTES (for compatibility) */}
@@ -661,7 +661,7 @@ const App: React.FC = () => {
         } />
 
         <Route path="/form/:formId" element={<PublicForm />} />
-        <Route path="/pricing" element={<PublicPricingPage />} />
+        <Route path="/public-pricing" element={<PublicPricingPage />} />
 
         {/* Public Booking Page */}
         <Route path="/book/:username" element={<PublicBookingPage />} />

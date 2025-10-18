@@ -28,7 +28,6 @@ import { MainLayout } from './components/MainLayout';
 import PublicBookingPage from './components/PublicBookingPage';
 import { PublicForm } from './components/PublicForm';
 import { PublicPricingPage } from './components/PublicPricingPage';
-import PricingPage from './components/pricing/PricingPage';
 // import { ResetPassword } from './components/ResetPassword'; // Moved to .bak
 import { GoogleAuthCallback } from './components/Settings';
 
@@ -617,7 +616,7 @@ const App: React.FC = () => {
             <Route path={ROUTES.pricing} element={
               session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
             }>
-              <Route index element={<PricingPage />} />
+              <Route index element={<ExtraCreditsStore />} />
             </Route>
 
             <Route path={ROUTES.settings} element={

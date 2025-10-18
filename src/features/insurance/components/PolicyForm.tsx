@@ -345,10 +345,19 @@ export const PolicyForm: React.FC = () => {
               )}
             </div>
             {errors.contact_id && (
-              <p className="text-red-600 text-sm mt-1 flex items-center">
-                <AlertCircle className="w-4 h-4 mr-1" />
-                {errors.contact_id}
-              </p>
+              <div className="mt-2">
+                <p className="text-red-600 text-sm flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.contact_id}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/contatti/nuovo')}
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  → Crea un nuovo cliente prima di creare la polizza
+                </button>
+              </div>
             )}
           </div>
         </div>

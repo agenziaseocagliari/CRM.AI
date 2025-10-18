@@ -192,7 +192,7 @@ export const Sidebar: React.FC = () => {
       <div className="mt-auto">
         <ul>
           <NavItem
-            to="settings"
+            to="/dashboard/settings"
             icon={<Icons.Settings className="w-6 h-6" />}
             label="Impostazioni"
           />

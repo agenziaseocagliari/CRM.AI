@@ -23,10 +23,10 @@ INSERT INTO vertical_configurations (
   -- Vertical identification
   'insurance',
   'CRM Assicurazioni',
-  'Soluzione completa per agenzie assicurative - Gestione polizze, sinistri, provvigioni',
+  'Soluzione completa per agenzie assicurative - Gestione polizze, sinistri, provvigioni, WhatsApp, Email Marketing',
   'Shield',
 
--- Insurance-specific sidebar (9 items)
+-- Insurance-specific sidebar (11 items - added WhatsApp and Email Marketing)
 '{
     "sections": [
       {"id": "dashboard", "label": "Dashboard", "icon": "Home", "path": "/dashboard"},
@@ -37,6 +37,8 @@ INSERT INTO vertical_configurations (
       {"id": "renewals", "label": "Scadenzario", "icon": "Calendar", "path": "/insurance/renewals"},
       {"id": "calendar", "label": "Calendario", "icon": "Calendar", "path": "/calendar"},
       {"id": "automation", "label": "Automazioni", "icon": "Zap", "path": "/automation"},
+      {"id": "whatsapp", "label": "WhatsApp", "icon": "MessageCircle", "path": "/whatsapp"},
+      {"id": "email", "label": "Email Marketing", "icon": "Mail", "path": "/email-marketing"},
       {"id": "reports", "label": "Reports", "icon": "BarChart", "path": "/reports"}
     ]
   }'::jsonb,
@@ -47,7 +49,7 @@ INSERT INTO vertical_configurations (
     "widgets": ["policies_overview", "claims_pending", "renewals_upcoming", "commissions_monthly"]
   }'::jsonb,
 
--- Enabled modules (8 core Insurance modules)
+-- Enabled modules (10 core Insurance modules - added WhatsApp and Email Marketing)
 ARRAY[
     'contacts', 
     'policies', 
@@ -56,6 +58,8 @@ ARRAY[
     'renewals', 
     'calendar', 
     'automation', 
+    'whatsapp', 
+    'email', 
     'reports'
   ]::TEXT[],
 

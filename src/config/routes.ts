@@ -102,6 +102,9 @@ export const ROUTES = {
     // Store (universal)
     store: '/store',
 
+    // Prezzi (Pricing)
+    pricing: '/prezzi',
+
     // ==========================================
     // AUTH & SETTINGS
     // ==========================================

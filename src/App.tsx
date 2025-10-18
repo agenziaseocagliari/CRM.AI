@@ -464,53 +464,67 @@ const App: React.FC = () => {
                 <InsuranceOnlyGuard>
                   <>
                     <InsurancePoliciesMeta />
-                    <InsurancePoliciesPage />
+                    <MainLayout crmData={crmData} />
                   </>
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
-            } />
+            }>
+              <Route index element={<InsurancePoliciesPage />} />
+            </Route>
             <Route path={ROUTES.insurance.newPolicy} element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <PolicyForm />
+                  <MainLayout crmData={crmData} />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
-            } />
+            }>
+              <Route index element={<PolicyForm />} />
+            </Route>
             <Route path="/assicurazioni/polizze/:id" element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <PolicyDetail />
+                  <MainLayout crmData={crmData} />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
-            } />
+            }>
+              <Route index element={<PolicyDetail />} />
+            </Route>
             <Route path="/assicurazioni/polizze/:id/modifica" element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <PolicyForm />
+                  <MainLayout crmData={crmData} />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
-            } />
+            }>
+              <Route index element={<PolicyForm />} />
+            </Route>
             <Route path={ROUTES.insurance.claims} element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <InsuranceClaimsPage />
+                  <MainLayout crmData={crmData} />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
-            } />
+            }>
+              <Route index element={<InsuranceClaimsPage />} />
+            </Route>
             <Route path={ROUTES.insurance.commissions} element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <InsuranceCommissionsPage />
+                  <MainLayout crmData={crmData} />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
-            } />
+            }>
+              <Route index element={<InsuranceCommissionsPage />} />
+            </Route>
             <Route path={ROUTES.insurance.renewals} element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <InsuranceRenewalsPage />
+                  <MainLayout crmData={crmData} />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
-            } />
+            }>
+              <Route index element={<InsuranceRenewalsPage />} />
+            </Route>
             
             {/* Italian CRM Routes */}
             <Route path={ROUTES.dashboard} element={

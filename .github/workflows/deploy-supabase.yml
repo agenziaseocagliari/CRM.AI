@@ -45,6 +45,9 @@ jobs:
       - name: Audit Migration Idempotence
         run: bash scripts/audit-migration-idempotence.sh
 
+      - name: Check Migration Versions
+        run: bash scripts/check-migration-versions.sh
+
       - name: Verify API role usage
         run: npm run verify:role
 

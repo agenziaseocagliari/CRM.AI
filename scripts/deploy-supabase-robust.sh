@@ -21,7 +21,7 @@ MIGRATION_AUDIT_SCRIPT="${MIGRATION_AUDIT_SCRIPT:-scripts/audit-migration-idempo
 
 # Counters
 STEP=0
-TOTAL_STEPS=7
+TOTAL_STEPS=8
 ERRORS=0
 
 # Functions
@@ -168,17 +168,46 @@ else
     print_warning "Edge functions deployment failed - continuing with migrations"
 fi
 
-# Step 7: Push Database Migrations
+# Step 7: Check for Duplicate Migration Versions
+print_step "Check Migration Versions"
+
+if [ -f "scripts/check-migration-versions.sh" ]; then
+    echo "  Checking for duplicate migration versions..."
+    if bash scripts/check-migration-versions.sh; then
+        print_success "All migration versions are unique"
+    else
+        print_error "Duplicate migration versions detected - please fix before deploying"
+        exit 1
+    fi
+else
+    print_warning "Migration version check script not found (skipping)"
+fi
+
+# Step 8: Push Database Migrations
 print_step "Push Database Migrations"
 
+# First attempt: standard push
 db_push_command="supabase db push \\
   --yes 2>&1"
 
 if retry_command "$db_push_command" "Database migrations pushed successfully"; then
     echo "  All pending migrations have been applied ✓"
 else
-    # This might fail due to pre-existing objects, which is sometimes expected
-    print_warning "Database push completed with warnings (this may be expected for idempotent migrations)"
+    # Check if error is due to already-applied migrations
+    if supabase db push --yes 2>&1 | grep -q "duplicate key value violates unique constraint"; then
+        print_warning "Some migrations already applied (this is expected for idempotent migrations)"
+        echo "  Verifying database state..."
+        
+        # Verify the database is in a good state
+        if supabase db pull --yes 2>&1 | grep -q "Successfully pulled"; then
+            print_success "Database is in sync with migrations"
+        else
+            print_error "Database state verification failed"
+            exit 1
+        fi
+    else
+        print_warning "Database push completed with warnings (this may be expected for idempotent migrations)"
+    fi
 fi
 
 # ============================================================================

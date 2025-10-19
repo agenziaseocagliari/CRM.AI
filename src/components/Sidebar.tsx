@@ -93,24 +93,33 @@ export const Sidebar: React.FC = () => {
   let menuItems: { id: string; label: string; icon: string; path: string; }[] = [];
   
   if (sidebarSections.length > 0) {
-    // Extract all items from all sections and flatten
+    // Process sections - each section is a menu item directly
     try {
       for (const rawSection of sidebarSections) {
-        // Type assertion to access section properties
-        const section = rawSection as { items?: { name?: string; icon?: string; path?: string; }[]; };
+        // Type assertion to access section properties - sections are direct menu items
+        const item = rawSection as { id?: string; label?: string; icon?: string; path?: string; };
         
-        if (section && section.items && Array.isArray(section.items)) {
-          // Transform section items to match expected structure
-          for (const item of section.items) {
-            if (item) {
-              menuItems.push({
-                id: item.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
-                label: item.name || 'Unknown',
-                icon: item.icon || 'Circle',
-                path: item.path || '/dashboard'
-              });
-            }
-          }
+        if (item && item.label) {
+          // Transform section to match expected menu item structure
+          menuItems.push({
+            id: item.id || item.label?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+            label: item.label || 'Unknown',
+            icon: item.icon || 'Circle',
+            path: item.path || '/dashboard'
+          });
+        }
+      }
+      
+      // Add "Calcola Nuova Provvigione" after "Provvigioni" for insurance vertical
+      if (vertical === 'insurance') {
+        const commissionsIndex = menuItems.findIndex(item => item.id === 'commissions');
+        if (commissionsIndex !== -1) {
+          menuItems.splice(commissionsIndex + 1, 0, {
+            id: 'commissions-new',
+            label: 'Calcola Nuova Provvigione',
+            icon: 'FilePlus',
+            path: '/assicurazioni/provvigioni/new'
+          });
         }
       }
     } catch (error) {

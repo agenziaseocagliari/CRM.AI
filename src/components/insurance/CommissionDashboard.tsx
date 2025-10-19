@@ -2,6 +2,7 @@
 // Sprint 2 Session 2 - UI Implementation
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../contexts/useAuth";
 import {
@@ -16,7 +17,7 @@ import {
   CartesianGrid,
   ResponsiveContainer
 } from 'recharts';
-import { Euro, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Euro, TrendingUp, Clock, CheckCircle, List } from 'lucide-react';
 
 // TypeScript Interfaces
 interface KPIStats {
@@ -65,6 +66,9 @@ interface CommissionData {
 }
 
 const CommissionDashboard: React.FC = () => {
+  // Navigation
+  const navigate = useNavigate();
+  
   // State Management
   const [kpiStats, setKpiStats] = useState<KPIStats>({
     mtdAmount: 0,
@@ -319,12 +323,32 @@ const CommissionDashboard: React.FC = () => {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Dashboard Provvigioni
-        </h1>
-        <p className="text-gray-600">
-          Monitora le performance delle tue provvigioni assicurative
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Dashboard Provvigioni
+            </h1>
+            <p className="text-gray-600">
+              Monitora le performance delle tue provvigioni assicurative
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => navigate('/assicurazioni/provvigioni/new')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+            >
+              <Euro className="h-4 w-4 mr-2" />
+              Calcola Nuova Provvigione
+            </button>
+            <button
+              onClick={() => navigate('/assicurazioni/provvigioni/list')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <List className="h-4 w-4 mr-2" />
+              Vai alla Lista Provvigioni
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}

@@ -91,6 +91,8 @@ ALTER VIEW dashboard_events SET(security_invoker = true);
 -- =======================
 
 -- Update timestamp trigger for form_submissions
+DROP TRIGGER IF EXISTS form_submissions_updated_at ON form_submissions;
+DROP FUNCTION IF EXISTS update_form_submissions_updated_at();
 CREATE OR REPLACE FUNCTION update_form_submissions_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

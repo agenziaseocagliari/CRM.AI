@@ -87,6 +87,8 @@ CREATE POLICY "own_workflows_delete" ON workflows FOR DELETE TO public USING (cr
 -- =======================
 
 -- Update timestamp trigger for workflows
+DROP TRIGGER IF EXISTS workflows_updated_at ON workflows;
+DROP FUNCTION IF EXISTS update_workflows_updated_at();
 CREATE OR REPLACE FUNCTION update_workflows_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

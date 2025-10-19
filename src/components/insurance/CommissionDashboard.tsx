@@ -59,12 +59,6 @@ interface CommissionFilters {
   status: 'all' | 'pending' | 'calculated' | 'paid' | 'cancelled';
 }
 
-interface CommissionData {
-  commission_amount: string;
-  commission_type: string;
-  calculation_date: string;
-}
-
 const CommissionDashboard: React.FC = () => {
   // Navigation
   const navigate = useNavigate();

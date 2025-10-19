@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -125,14 +125,7 @@ describe('RenewalCalendar Dettagli Button Tests', () => {
       </AuthWrapper>
     );
 
-    // Look for data-testid pattern that would be used for detail buttons
-    // Even if no buttons are rendered due to empty data, 
-    // we test that the component structure is correct
-    const testPattern = '[data-testid^="open-detail-"]';
-    const selector = container.querySelector(testPattern);
-    
-    // This is OK if no buttons exist when no data is loaded
-    // The test verifies the component renders without errors
+    // Test that component renders without errors
     expect(container).toBeTruthy();
   });
 

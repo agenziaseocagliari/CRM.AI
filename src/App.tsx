@@ -98,7 +98,8 @@ import {
   PolicyDetail,
   PolicyForm
 } from './features/insurance';
-import { VerticalProvider, useVertical } from './hooks/useVertical';
+import { VerticalProvider } from './hooks/useVertical';
+import { useVertical } from './hooks/useVerticalHook';
 
 
 import { diagnosticLogger } from './lib/mockDiagnosticLogger';

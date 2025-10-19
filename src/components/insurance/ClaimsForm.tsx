@@ -7,7 +7,7 @@ import {
     Save,
     X
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
@@ -66,14 +66,6 @@ export default function ClaimsForm() {
   const [errors, setErrors] = useState<Partial<Record<keyof ClaimFormData, string>>>({});
 
   useEffect(() => {
-    fetchContacts();
-    fetchPolicies();
-    if (isEdit && id) {
-      fetchClaim();
-    }
-  }, [id, isEdit]);
-
-  useEffect(() => {
     // Filter policies by selected contact
     if (formData.contact_id) {
       setFilteredPolicies(
@@ -84,7 +76,7 @@ export default function ClaimsForm() {
     }
   }, [formData.contact_id, policies]);
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('contacts')
@@ -104,9 +96,9 @@ export default function ClaimsForm() {
     } catch (error) {
       console.error('Error fetching contacts:', error);
     }
-  };
+  }, [organizationId]);
 
-  const fetchPolicies = async () => {
+  const fetchPolicies = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('insurance_policies')
@@ -120,9 +112,9 @@ export default function ClaimsForm() {
     } catch (error) {
       console.error('Error fetching policies:', error);
     }
-  };
+  }, [organizationId]);
 
-  const fetchClaim = async () => {
+  const fetchClaim = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -152,7 +144,16 @@ export default function ClaimsForm() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchContacts();
+    fetchPolicies();
+    if (isEdit && id) {
+      fetchClaim();
+    }
+  }, [id, isEdit, fetchContacts, fetchPolicies, fetchClaim]);
 
   const generateClaimNumber = () => {
     const year = new Date().getFullYear();
@@ -210,7 +211,7 @@ export default function ClaimsForm() {
 
       if (isEdit) {
         // Update
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('insurance_claims')
           .update({
             ...claimData,
@@ -224,7 +225,7 @@ export default function ClaimsForm() {
         alert('Sinistro aggiornato con successo!');
       } else {
         // Create
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('insurance_claims')
           .insert([{
             ...claimData,

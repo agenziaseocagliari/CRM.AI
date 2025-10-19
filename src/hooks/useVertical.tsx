@@ -1,35 +1,6 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-
-// Types
-export interface VerticalConfig {
-  vertical: string;
-  displayName: string;
-  description: string;
-  icon: string;
-  sidebarConfig: {
-    sections: Array<{
-      id: string;
-      label: string;
-      icon: string;
-      path: string;
-    }>;
-  };
-  dashboardConfig: Record<string, unknown>;
-  enabledModules: string[];
-}
-
-interface VerticalContextType {
-  vertical: string;
-  config: VerticalConfig | null;
-  loading: boolean;
-  error: Error | null;
-  hasModule: (module: string) => boolean;
-  switchVertical: (newVertical: string) => Promise<void>;
-}
-
-// Context (will be used by Provider in next task)
-const VerticalContext = createContext<VerticalContextType | null>(null);
+import { VerticalContext, VerticalConfig } from '@/contexts/VerticalContext';
 
 // Provider component
 export function VerticalProvider({ children }: { children: React.ReactNode }) {
@@ -220,14 +191,5 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Hook to use the vertical context
-export function useVertical() {
-  const context = useContext(VerticalContext);
-  if (!context) {
-    throw new Error('useVertical must be used within a VerticalProvider');
-  }
-  return context;
-}
-
-// Export the context for use in utility functions
-export { VerticalContext };
+// Set display name for React DevTools and Fast Refresh
+VerticalProvider.displayName = 'VerticalProvider';

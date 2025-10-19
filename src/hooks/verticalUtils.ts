@@ -2,7 +2,7 @@
 // Separated from useVertical.tsx to avoid React refresh warnings
 
 import { useContext } from 'react';
-import { VerticalContext } from './useVertical';
+import { VerticalContext } from '@/contexts/VerticalContext';
 
 // Main hook for consuming context
 export function useVertical() {

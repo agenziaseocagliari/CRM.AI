@@ -3,11 +3,11 @@
  * Verifica che la navigazione dal calendario rinnovi funzioni correttamente
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../../contexts/AuthContext';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import RenewalCalendar from '../../components/insurance/RenewalCalendar';
+import { AuthProvider } from '../../contexts/AuthContext';
 
 // Mock Supabase
 const mockSupabase = {

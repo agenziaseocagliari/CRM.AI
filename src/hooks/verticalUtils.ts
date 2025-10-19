@@ -1,8 +1,8 @@
 // Utility functions and hooks for vertical management
 // Separated from useVertical.tsx to avoid React refresh warnings
 
-import { useContext } from 'react';
 import { VerticalContext } from '@/contexts/VerticalContext';
+import { useContext } from 'react';
 
 // Main hook for consuming context
 export function useVertical() {

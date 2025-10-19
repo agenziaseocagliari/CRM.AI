@@ -1,10 +1,10 @@
 /**
  * @vitest-environment jsdom
  */
-import React from 'react';
 import { render } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthContext } from '../../contexts/AuthContext';
 
 // Mock the actual component with navigation logic

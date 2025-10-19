@@ -1,14 +1,14 @@
 /**
  * @vitest-environment jsdom
  */
-import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import RenewalCalendar from './RenewalCalendar';
+import { vi } from 'vitest';
 import { AuthContext } from '../../contexts/AuthContext';
+import RenewalCalendar from './RenewalCalendar';
 
 // Mock dependencies using vi.doMock since vi globals may not be available
 beforeEach(() => {

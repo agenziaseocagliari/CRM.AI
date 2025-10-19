@@ -1,5 +1,5 @@
-import { useContext } from 'react';
 import { VerticalContext } from '@/contexts/VerticalContext';
+import { useContext } from 'react';
 
 // Hook to use the vertical context
 export function useVertical() {

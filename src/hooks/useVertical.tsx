@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { VerticalConfig, VerticalContext } from '@/contexts/VerticalContext';
 import { supabase } from '@/lib/supabaseClient';
-import { VerticalContext, VerticalConfig } from '@/contexts/VerticalContext';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // Provider component
 export function VerticalProvider({ children }: { children: React.ReactNode }) {
@@ -32,23 +32,54 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
       console.log('🔍 [loadVerticalConfig] User email:', user.email);
       console.log('🔍 [loadVerticalConfig] User metadata:', user.user_metadata);
 
-      // Get user's vertical from profile
+      // Get user's vertical from profile with multi-tenancy validation
       console.log('🔍 [loadVerticalConfig] Querying profiles table...');
+      
+      // Get organization_id from JWT claims
+      const organizationId = user.user_metadata?.organization_id;
+      console.log('🔍 [loadVerticalConfig] Organization ID from JWT:', organizationId);
+      
+      if (!organizationId) {
+        console.error('🔍 [loadVerticalConfig] No organization_id in JWT claims');
+        throw new Error('Organization ID not found in authentication claims');
+      }
+
+      // Fetch profile with organization_id for multi-tenant validation
+      // CRITICAL: Query must validate BOTH user.id AND organization_id to prevent cross-org access
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('vertical')
+        .select('vertical, organization_id')
         .eq('id', user.id)
+        .eq('organization_id', organizationId)
         .single();
 
       console.log('🔍 [loadVerticalConfig] Profile query result:', profile);
       console.log('🔍 [loadVerticalConfig] Profile query error:', profileError);
 
-      if (profileError) {
-        console.error('🔍 [loadVerticalConfig] Profile error:', profileError);
-        throw profileError;
+      // Handle specific error cases
+      if (profileError?.code === 'PGRST116') {
+        // Profile not found - use fallback
+        console.warn('🔍 [loadVerticalConfig] Profile not found, using default vertical');
+        setVertical('standard');
+        await loadConfig('standard');
+        setLoading(false);
+        return;
       }
 
-      const userVertical = profile?.vertical || 'standard';
+      if (profileError) {
+        console.error('🔍 [loadVerticalConfig] Profile error:', profileError);
+        throw new Error(`Profile lookup failed: ${profileError.message}`);
+      }
+
+      if (!profile) {
+        console.warn('🔍 [loadVerticalConfig] Profile is null, using default vertical');
+        setVertical('standard');
+        await loadConfig('standard');
+        setLoading(false);
+        return;
+      }
+
+      const userVertical = profile.vertical || 'standard';
       console.log('🔍 [loadVerticalConfig] Determined vertical:', userVertical);
       console.log(`🔍 [loadVerticalConfig] User ${user.email} has vertical: ${userVertical}`);
       setVertical(userVertical);

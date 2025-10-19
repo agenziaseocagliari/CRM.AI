@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { FileText, Download, Filter, BarChart3, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -26,6 +26,17 @@ interface CommissionData {
   commission_amount: number;
   status: string;
   calculation_date: string;
+}
+
+// Type for raw data from Supabase query
+interface RawCommissionData {
+  id: string;
+  commission_type: string;
+  commission_amount: number;
+  status: string;
+  calculation_date: string;
+  policy: Array<{ policy_number: string }>;
+  contact: Array<{ name: string }>;
 }
 
 const CommissionReports: React.FC = () => {
@@ -108,12 +119,28 @@ const CommissionReports: React.FC = () => {
 
       if (error) throw error;
 
-      const commissionsData = data || [];
+      const rawData = data || [];
+      
+      // Transform raw data to match CommissionData interface
+      const commissionsData: CommissionData[] = rawData.map((item: RawCommissionData) => ({
+        id: item.id,
+        policy: {
+          policy_number: item.policy[0]?.policy_number || 'N/A'
+        },
+        contact: {
+          name: item.contact[0]?.name || 'N/A'
+        },
+        commission_type: item.commission_type,
+        commission_amount: item.commission_amount,
+        status: item.status,
+        calculation_date: item.calculation_date
+      }));
+      
       setCommissions(commissionsData);
 
       // Calculate summary statistics
       const totalCommissions = commissionsData.length;
-      const totalAmount = commissionsData.reduce((sum, comm) => sum + comm.commission_amount, 0);
+      const totalAmount = commissionsData.reduce((sum: number, comm: CommissionData) => sum + comm.commission_amount, 0);
       const averageAmount = totalCommissions > 0 ? totalAmount / totalCommissions : 0;
 
       setSummaryStats({

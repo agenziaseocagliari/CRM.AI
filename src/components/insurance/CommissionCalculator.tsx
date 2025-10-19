@@ -43,7 +43,7 @@ interface ValidationErrors {
 const CommissionCalculator: React.FC = () => {
   // Navigation and Auth
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, organizationId } = useAuth();
 
   // Form State
   const [form, setForm] = useState<CommissionForm>({
@@ -90,24 +90,13 @@ const CommissionCalculator: React.FC = () => {
         setDataLoading(true);
         setError(null);
 
-        // Get JWT claims for organization_id
-        const token = session.access_token;
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        const jwtClaims = JSON.parse(jsonPayload);
-
-        if (!jwtClaims.organization_id) {
-          throw new Error('Organization ID not found in JWT');
-        }
+        console.log('🔍 [CommissionCalculator] Loading data for organization:', organizationId);
 
         // Load Policies
         const { data: policiesData, error: policiesError } = await supabase
           .from('insurance_policies')
           .select('id, policy_number, policy_type')
-          .eq('organization_id', jwtClaims.organization_id)
+          .eq('organization_id', organizationId)
           .order('policy_number');
 
         if (policiesError) throw policiesError;
@@ -116,7 +105,7 @@ const CommissionCalculator: React.FC = () => {
         const { data: contactsData, error: contactsError } = await supabase
           .from('contacts')
           .select('id, name, company')
-          .eq('organization_id', jwtClaims.organization_id)
+          .eq('organization_id', organizationId)
           .order('name');
 
         if (contactsError) throw contactsError;
@@ -133,7 +122,7 @@ const CommissionCalculator: React.FC = () => {
     };
 
     loadInitialData();
-  }, [session?.user, session?.access_token]);
+  }, [session?.user, organizationId]);
 
   // Real-time Commission Calculation
   useEffect(() => {
@@ -211,24 +200,13 @@ const CommissionCalculator: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Get JWT claims for organization_id
-      const token = session.access_token;
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      const jwtClaims = JSON.parse(jsonPayload);
-
-      if (!jwtClaims.organization_id) {
-        throw new Error('Organization ID not found in JWT');
-      }
+      console.log('🔍 [CommissionCalculator] Saving commission for organization:', organizationId);
 
       // Insert commission into database
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('insurance_commissions')
         .insert({
-          organization_id: jwtClaims.organization_id,
+          organization_id: organizationId,
           policy_id: form.policy_id,
           contact_id: form.contact_id,
           base_premium: form.base_premium,
@@ -275,6 +253,21 @@ const CommissionCalculator: React.FC = () => {
       }));
     }
   };
+
+  // Early return if organization_id is not available
+  if (!organizationId) {
+    console.error('❌ [CommissionCalculator] Organization ID not found - redirecting to dashboard');
+    navigate('/dashboard');
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Accesso Negato</h2>
+          <p className="text-gray-600">Organization ID non trovato. Reindirizzamento in corso...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

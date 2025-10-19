@@ -1,11 +1,12 @@
 {
-  "buildCommand": "npm install --legacy-peer-deps && npm run build",
-  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm install --legacy-peer-deps --include=optional && npm run build",
+  "installCommand": "npm install --legacy-peer-deps --include=optional",
   "framework": null,
   "outputDirectory": "dist",
   "env": {
     "NODE_VERSION": "20.19.0",
-    "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+    "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+    "NPM_CONFIG_OPTIONAL": "true"
   },
   "build": {
     "env": {

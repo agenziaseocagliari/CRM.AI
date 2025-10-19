@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { useAuth } from '../../contexts/AuthContext';
-import { FileText, Download, Filter, BarChart3, AlertCircle } from 'lucide-react';
+import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { AlertCircle, BarChart3, Download, FileText, Filter } from 'lucide-react';
 import Papa from 'papaparse';
-import { saveAs } from 'file-saver';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabaseClient';
 
 interface ReportFilters {
   startDate: string;

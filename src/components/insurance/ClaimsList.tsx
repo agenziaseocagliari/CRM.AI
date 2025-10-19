@@ -35,10 +35,6 @@ export default function ClaimsList() {
     try {
       setLoading(true);
 
-      // DEBUG
-      console.log('=== FETCHING CLAIMS ===');
-      console.log('Organization ID:', organizationId);
-
       let query = supabase
         .from('insurance_claims')
         .select(`
@@ -54,12 +50,6 @@ export default function ClaimsList() {
       }
 
       const { data, error } = await query;
-
-      console.log('Claims query response:', { 
-        count: data?.length, 
-        error,
-        organizationId 
-      });
 
       if (error) {
         console.error('Query error:', error);
@@ -83,11 +73,9 @@ export default function ClaimsList() {
         policy?: { policy_number?: string } | null;
       }) => ({
         ...claim,
-        contact_name: claim.contact?.name || 'N/A',  // ← FIXED: use 'name' not 'first_name'
+        contact_name: claim.contact?.name || 'N/A',
         policy_number: claim.policy?.policy_number || 'N/A'
       })) || [];
-
-      console.log('Formatted claims:', formattedClaims);
 
       setClaims(formattedClaims);
     } catch (error) {
@@ -172,16 +160,6 @@ export default function ClaimsList() {
           <p className="text-gray-600">Gestione sinistri assicurativi</p>
         </div>
         <div className="flex space-x-2">
-          {/* DEBUG: Refresh button */}
-          <button
-            onClick={() => {
-              console.log('Force refresh clicked');
-              fetchClaims();
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            🔄 Ricarica
-          </button>
           <button
             onClick={() => navigate('/assicurazioni/sinistri/new')}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"

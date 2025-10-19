@@ -40,8 +40,7 @@ interface Claim {
   }>;
   // Relations
   contact?: {
-    first_name: string;
-    last_name: string;
+    name: string; // ← FIXED
     email: string;
     phone: string;
   };
@@ -74,23 +73,27 @@ export default function ClaimDetail() {
   const fetchClaim = async () => {
     try {
       setLoading(true);
+
       const { data, error } = await supabase
         .from('insurance_claims')
         .select(`
           *,
-          contact:contacts(first_name, last_name, email, phone),
+          contact:contacts(name, email, phone),
           policy:insurance_policies(policy_number, policy_type, insurance_company)
         `)
         .eq('id', id)
         .eq('organization_id', organizationId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Fetch error:', error);
+        throw error;
+      }
 
       setClaim(data);
     } catch (error) {
       console.error('Error fetching claim:', error);
-      alert('Errore nel caricamento del sinistro');
+      alert('Errore nel caricamento del sinistro: ' + (error as Error).message);
       navigate('/assicurazioni/sinistri');
     } finally {
       setLoading(false);
@@ -227,9 +230,7 @@ export default function ClaimDetail() {
     );
   }
 
-  const contactName = claim.contact
-    ? `${claim.contact.first_name} ${claim.contact.last_name}`.trim()
-    : 'N/A';
+  const contactName = claim.contact?.name || 'N/A';
 
   return (
     <div className="max-w-6xl mx-auto py-6 space-y-6">

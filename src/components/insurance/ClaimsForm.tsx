@@ -65,14 +65,6 @@ export default function ClaimsForm() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof ClaimFormData, string>>>({});
 
-  // DEBUG LOGGING
-  useEffect(() => {
-    console.log('=== ClaimsForm Debug ===');
-    console.log('Organization ID:', organizationId);
-    console.log('User ID:', userId);
-    console.log('JWT Claims:', jwtClaims);
-  }, [organizationId]);
-
   useEffect(() => {
     fetchContacts();
     fetchPolicies();
@@ -94,15 +86,11 @@ export default function ClaimsForm() {
 
   const fetchContacts = async () => {
     try {
-      console.log('Fetching contacts for org:', organizationId);
-      
       const { data, error } = await supabase
         .from('contacts')
         .select('id, name, email')
         .eq('organization_id', organizationId)
         .order('name');
-
-      console.log('Contacts response:', { count: data?.length, error });
 
       if (error) throw error;
 
@@ -120,14 +108,10 @@ export default function ClaimsForm() {
 
   const fetchPolicies = async () => {
     try {
-      console.log('Fetching policies for org:', organizationId);
-      
       const { data, error } = await supabase
         .from('insurance_policies')
         .select('id, policy_number, policy_type, contact_id, status')
         .eq('organization_id', organizationId);
-
-      console.log('Policies response:', { count: data?.length, error });
 
       if (error) throw error;
 
@@ -211,12 +195,6 @@ export default function ClaimsForm() {
     setSaving(true);
 
     try {
-      // DEBUG: Log what we're about to save
-      console.log('=== SAVING CLAIM ===');
-      console.log('Organization ID:', organizationId);
-      console.log('User ID:', userId);
-      console.log('Form Data:', formData);
-
       const claimData = {
         ...formData,
         organization_id: organizationId,
@@ -230,8 +208,6 @@ export default function ClaimsForm() {
         }]
       };
 
-      console.log('Claim data to insert:', claimData);
-
       if (isEdit) {
         // Update
         const { data, error } = await supabase
@@ -241,9 +217,8 @@ export default function ClaimsForm() {
             updated_by: userId
           })
           .eq('id', id)
-          .select(); // ← ADD .select() to get returned data
+          .select();
 
-        console.log('Update response:', { data, error });
         if (error) throw error;
 
         alert('Sinistro aggiornato con successo!');
@@ -256,9 +231,7 @@ export default function ClaimsForm() {
             claim_number: generateClaimNumber(),
             created_by: userId
           }])
-          .select(); // ← ADD .select() to get returned data
-
-        console.log('Insert response:', { data, error });
+          .select();
         if (error) throw error;
 
         alert('Sinistro creato con successo!');

@@ -142,7 +142,7 @@ INDUSTRY-SPECIFIC ADJUSTMENTS:
 
   outputFormat: 'json',
   version: '2.0',
-  lastUpdated: new Date('2025-10-03')
+  lastUpdated: new Date('2025-01-19')
 };
 
 // Enhanced Email Generation Prompt Template
@@ -212,7 +212,7 @@ PERSONALIZATION ELEMENTS:
 
   outputFormat: 'json',
   version: '2.0',
-  lastUpdated: new Date('2025-10-03')
+  lastUpdated: new Date('2025-01-19')
 };
 
 // WhatsApp Message Generation Prompt Template
@@ -281,7 +281,7 @@ Reply STOP to opt out anytime.`
 
   outputFormat: 'text',
   version: '2.0',
-  lastUpdated: new Date('2025-10-03')
+  lastUpdated: new Date('2025-01-19')
 };
 
 // Dynamic Context Injection Functions

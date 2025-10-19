@@ -61,21 +61,63 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
       console.log('🔍 [loadVerticalConfig] User email:', user.email);
       console.log('🔍 [loadVerticalConfig] User metadata:', user.user_metadata);
 
-      // Get user's vertical from profile
+      // Get user's vertical from profile with enhanced error handling
       console.log('🔍 [loadVerticalConfig] Querying profiles table...');
+      
+      // Use maybeSingle() instead of single() to avoid errors if no profile exists
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('vertical')
+        .select('vertical, organization_id, user_role, full_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       console.log('🔍 [loadVerticalConfig] Profile query result:', profile);
       console.log('🔍 [loadVerticalConfig] Profile query error:', profileError);
 
+      // Enhanced error handling with Italian messages
       if (profileError) {
-        console.error('🔍 [loadVerticalConfig] Profile error:', profileError);
-        throw profileError;
+        console.error('🔍 [loadVerticalConfig] Errore durante il recupero del profilo:', {
+          code: profileError.code,
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          userId: user.id,
+          userEmail: user.email
+        });
+        
+        // If it's an RLS policy error, provide helpful context
+        if (profileError.code === 'PGRST116' || profileError.message?.includes('policy')) {
+          console.error('❌ [loadVerticalConfig] RLS POLICY BLOCKED: Il profilo utente non è accessibile. Verificare le policy RLS.');
+        }
+        
+        // Don't throw - fall back to standard vertical
+        console.warn('⚠️ [loadVerticalConfig] Fallback a vertical standard per errore profilo');
+        setVertical('standard');
+        await loadConfig('standard');
+        setLoading(false);
+        return;
       }
+
+      // Handle missing profile gracefully
+      if (!profile) {
+        console.warn('⚠️ [loadVerticalConfig] Profilo non trovato per utente:', {
+          userId: user.id,
+          email: user.email
+        });
+        console.log('🔍 [loadVerticalConfig] Utilizzo vertical standard per profilo mancante');
+        setVertical('standard');
+        await loadConfig('standard');
+        setLoading(false);
+        return;
+      }
+
+      // Log successful profile retrieval
+      console.log('✅ [loadVerticalConfig] Profilo recuperato con successo:', {
+        vertical: profile.vertical,
+        organizationId: profile.organization_id,
+        userRole: profile.user_role,
+        fullName: profile.full_name
+      });
 
       const userVertical = profile?.vertical || 'standard';
       console.log('🔍 [loadVerticalConfig] Determined vertical:', userVertical);

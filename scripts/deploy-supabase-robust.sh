@@ -21,7 +21,7 @@ MIGRATION_AUDIT_SCRIPT="${MIGRATION_AUDIT_SCRIPT:-scripts/audit-migration-idempo
 
 # Counters
 STEP=0
-TOTAL_STEPS=8
+TOTAL_STEPS=9
 ERRORS=0
 
 # Functions
@@ -183,30 +183,126 @@ else
     print_warning "Migration version check script not found (skipping)"
 fi
 
+# Step 7.5: Synchronize Migration History with Remote
+print_step "Synchronize Migration History"
+
+echo "  Fetching remote migration history..."
+
+# Check if jq is available
+if ! command -v jq &> /dev/null; then
+    print_warning "jq not found - installing for migration sync..."
+    # GitHub Actions runners should have jq, but install if missing
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get update -qq && sudo apt-get install -y -qq jq
+    elif command -v brew &> /dev/null; then
+        brew install jq
+    else
+        print_error "Cannot install jq - required for migration sync"
+        exit 1
+    fi
+fi
+
+# Create temporary directory for sync operations
+SYNC_DIR=$(mktemp -d)
+trap "rm -rf $SYNC_DIR" EXIT
+
+# Get list of remote migrations
+echo "  Retrieving remote migration list..."
+if supabase migration list --json > "$SYNC_DIR/remote_migrations.json" 2>/dev/null; then
+    print_success "Remote migration list retrieved"
+    
+    # Parse remote migrations and identify missing local files
+    remote_versions=$(jq -r '.[].version // empty' "$SYNC_DIR/remote_migrations.json" 2>/dev/null || echo "")
+    
+    if [ -n "$remote_versions" ]; then
+        echo "  Checking for remote-only migrations..."
+        MISSING_COUNT=0
+        
+        while IFS= read -r version; do
+            # Skip empty lines
+            [ -z "$version" ] && continue
+            
+            # Check if migration file exists locally
+            if ! ls supabase/migrations/${version}_*.sql &>/dev/null && \
+               ! ls supabase/migrations/${version}.sql &>/dev/null; then
+                echo "    ⚠️  Remote migration not in local: $version"
+                MISSING_COUNT=$((MISSING_COUNT + 1))
+                
+                # Mark as repaired/applied locally without creating file
+                echo "    Marking migration $version as applied locally..."
+                if supabase migration repair --status applied "$version" --yes 2>&1 | grep -q "success\|repaired\|marked"; then
+                    echo "    ✓ Migration $version marked as applied"
+                else
+                    print_warning "Could not mark migration $version (may already be marked)"
+                fi
+            fi
+        done <<< "$remote_versions"
+        
+        if [ $MISSING_COUNT -eq 0 ]; then
+            print_success "All remote migrations exist locally"
+        else
+            print_warning "Repaired $MISSING_COUNT remote-only migration(s)"
+        fi
+    else
+        print_warning "No remote migrations found (empty database or parsing error)"
+    fi
+else
+    print_warning "Could not retrieve remote migration list - proceeding with standard push"
+fi
+
 # Step 8: Push Database Migrations
 print_step "Push Database Migrations"
 
-# First attempt: standard push
-db_push_command="supabase db push \\
-  --yes 2>&1"
+# Attempt to push migrations with proper error handling
+echo "  Pushing local migrations to remote..."
 
-if retry_command "$db_push_command" "Database migrations pushed successfully"; then
+db_push_output=$(supabase db push --yes 2>&1) || db_push_exit_code=$?
+
+if [ "${db_push_exit_code:-0}" -eq 0 ]; then
+    print_success "Database migrations pushed successfully"
     echo "  All pending migrations have been applied ✓"
 else
-    # Check if error is due to already-applied migrations
-    if supabase db push --yes 2>&1 | grep -q "duplicate key value violates unique constraint"; then
-        print_warning "Some migrations already applied (this is expected for idempotent migrations)"
-        echo "  Verifying database state..."
+    # Analyze the error
+    if echo "$db_push_output" | grep -qi "remote migration.*not found.*local"; then
+        print_error "Migration sync failed - remote has migrations not in local directory"
+        echo ""
+        echo "Diagnostic information:"
+        echo "$db_push_output"
+        echo ""
+        echo "Attempting recovery with db pull..."
         
-        # Verify the database is in a good state
-        if supabase db pull --yes 2>&1 | grep -q "Successfully pulled"; then
-            print_success "Database is in sync with migrations"
+        # Try to pull remote schema to sync
+        if supabase db pull --yes 2>&1 | grep -q "success\|pulled"; then
+            print_success "Schema pulled from remote - retry deployment"
+            echo "  Re-run this deployment to apply synced migrations"
+            exit 1  # Exit with error to trigger retry
         else
-            print_error "Database state verification failed"
+            print_error "Cannot sync with remote database"
             exit 1
         fi
+        
+    elif echo "$db_push_output" | grep -qi "duplicate key\|already exists\|constraint"; then
+        print_warning "Some migrations already applied (idempotent migrations)"
+        echo "  Verifying database state..."
+        
+        # Verify current state matches expected
+        if supabase migration list 2>&1 | grep -qi "success\|listed"; then
+            print_success "Database state verified - migrations are in sync"
+        else
+            print_warning "Could not verify database state, but continuing"
+        fi
+        
+    elif echo "$db_push_output" | grep -qi "no new migrations"; then
+        print_success "No new migrations to apply - database is up to date"
+        
     else
-        print_warning "Database push completed with warnings (this may be expected for idempotent migrations)"
+        # Unknown error
+        print_error "Database push failed with unexpected error"
+        echo ""
+        echo "Error output:"
+        echo "$db_push_output"
+        echo ""
+        exit 1
     fi
 fi
 

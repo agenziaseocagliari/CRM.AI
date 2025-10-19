@@ -72,6 +72,13 @@ jobs:
         with:
           version: latest
 
+      - name: Install jq for migration sync
+        run: |
+          echo "Installing jq for JSON parsing..."
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq
+          jq --version
+
       - name: Make deployment script executable
         run: chmod +x scripts/deploy-supabase-robust.sh
 

@@ -38,13 +38,14 @@ jobs:
       - name: Lint for API role patterns
         run: npm run lint:role
 
-  # ✅ ENABLED: Deploy Edge Functions with proper secret validation
-  deploy-edge-functions:
-    name: Deploy Edge Functions to Supabase
+  # ✅ ENABLED: Unified Supabase Deployment (Edge Functions + Migrations)
+  deploy-supabase:
+    name: Deploy to Supabase (Edge Functions + Migrations)
     runs-on: ubuntu-latest
     needs: lint-and-typecheck
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
+      SUPABASE_PROJECT_REF: qjtaqrlpronohgpfdxsi
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
       - name: Checkout code
@@ -55,58 +56,14 @@ jobs:
         with:
           version: latest
 
-      - name: Link to Supabase Project
-        run: |
-          echo "🔗 Linking to Supabase project: qjtaqrlpronohgpfdxsi"
-          supabase link --project-ref "qjtaqrlpronohgpfdxsi" --yes 2>&1 || {
-            echo "❌ Failed to link Supabase project"
-            exit 1
-          }
-          echo "✅ Successfully linked to Supabase project"
+      - name: Make deployment script executable
+        run: chmod +x scripts/deploy-supabase-robust.sh
 
-      - name: Deploy Edge Functions
-        run: |
-          echo "📤 Deploying edge functions..."
-          supabase functions deploy --no-verify-jwt 2>&1 || {
-            echo "❌ Failed to deploy edge functions"
-            exit 1
-          }
-          echo "✅ Edge functions deployed successfully!"
-
-  # ✅ ENABLED: Sync Database Migrations with proper validation
-  sync-database-migrations:
-    name: Sync Database Migrations
-    runs-on: ubuntu-latest
-    needs: lint-and-typecheck
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Link to Supabase Project
-        run: |
-          echo "🔗 Linking to Supabase project: qjtaqrlpronohgpfdxsi"
-          supabase link --project-ref "qjtaqrlpronohgpfdxsi" --yes 2>&1 || {
-            echo "❌ Failed to link Supabase project"
-            exit 1
-          }
-          echo "✅ Successfully linked to Supabase project"
-
-      - name: Push Database Migrations
-        run: |
-          echo "📤 Pushing database migrations to remote..."
-          supabase db push 2>&1 || {
-            echo "❌ Failed to push database migrations"
-            exit 1
-          }
-          echo "✅ Database migrations synced successfully!"
+      - name: Run Robust Deployment
+        run: bash scripts/deploy-supabase-robust.sh
+        env:
+          SUPABASE_PROJECT_REF: qjtaqrlpronohgpfdxsi
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
   verify-deployment:
     name: Verify Deployment

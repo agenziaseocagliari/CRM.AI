@@ -64,6 +64,8 @@ get-*.mjs
 investigate-*.mjs
 final-*.mjs
 deploy-*.sh
+# ✅ EXCEPTION: Allow deployment automation scripts
+!scripts/deploy-supabase-robust.sh
 *.access.log
 EXECUTE_*.mjs
 

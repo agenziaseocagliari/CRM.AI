@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - rollback/stable-615ec3b
   pull_request:
     branches:
       - main
+      - rollback/stable-615ec3b
   workflow_dispatch:
 
 jobs:

@@ -2,7 +2,9 @@ name: Deploy Database Changes
 
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - rollback/stable-615ec3b
     paths:
       - 'supabase/migrations/**'
   workflow_dispatch:

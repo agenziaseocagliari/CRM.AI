@@ -114,6 +114,76 @@ Credits System:        ████████████████░░░
 
 ### **19 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔄 Merge: RenewalCalendar System + Remote Updates
+- ✅ ✨ FEATURE: Complete RenewalCalendar System Implementation
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 🔍 DEBUG: Add extensive logging to CommissionReports for Supabase query analysis
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 🐛 FIX: CommissionReports - Fix Supabase query joins for Policy & Client data
+- 🔄 📊 FINAL REPORT: Sprint 2 Session 5 - CommissionReports verification complete with full documentation
+- 🔄 Merge remote changes with CommissionReports verification complete
+- 🔄 ✅ SPRINT 2 SESSION 5 VERIFICA: CommissionReports testing complete with demo scenarios and edge case validation
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- ✅ feat: Add navigation to CommissionReports
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- 🔧 🔧 FIX: CommissionReports TypeScript errors
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge remote changes with CommissionReports implementation
+- ✅ feat: Add CommissionReports component with PDF/CSV export
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 fix: Remove duplicate 'Calcola Nuova Provvigione' sidebar item
+- 🔧 fix: Ensure organization_id is read from JWT in CommissionCalculator
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 fix: Correct sidebar config for insurance vertical
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 fix: Add navigation to CommissionCalculator with sidebar processing fix
+- 🔄 🔒 SECURITY: Protect credentials + ✅ DEMO DATA: Commission seeding complete
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 ✅ SPRINT 2 SESSION 3: CommissionsList complete
+- 🔄 🎯 SPRINT 2: Commission Tracking - Database Foundation
+- 🔄 🐛 FIX 2: Claims list now shows created claims + Debug tools
+- 🔧 ✅ BUG FIX: ClaimsForm dropdowns now working!
+- 🔄 🐛 DEBUG: Add logging to ClaimsForm for dropdown issue investigation
+- 🔄 🚀 SPRINT 1 SESSION 3 COMPLETE: ClaimDetail Component + Timeline
+- 📚 docs: Update roadmap
+- ✅ feat: Add Claims Create/Edit form
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- ✅ feat: Add Claims List component and database
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- ✅ feat: Add charts and activity feed to Insurance Dashboard
+- ✅ feat: Add charts and activity feed to Insurance Dashboard
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- ✅ feat: Add Insurance Dashboard with real-time KPIs
+- ✅ feat: Add project context files and complete Forms integration
+- ✅ feat: Add project context files for persistent AI assistance
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 cleanup: Remove debug visual indicators, keep clean code
+- 🔄 debug: Add document title and visual indicators for component verification
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 Merge remote changes with debug logs implementation
+- 🔄 debug: Add component identification logs for Forms vs FormsInsurance verification
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 merge: Merge remote changes with useVertical critical fix
+- 🔧 🚨 CRITICAL FIX: Fix useVertical hook order error
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 merge: Merge remote changes with local FormsInsurance routing updates
+- ✅ feat: Add vertical-aware routing for FormsInsurance
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 clone: Create FormsInsurance.tsx base from Forms.tsx
+
+**Daily Metrics**:
+- Total files: 2296
+- TypeScript files: 329
+- Lines of code: ~80,684
+- Commits today: 59
+- Recent migrations: 5
+- Dependencies: 83
+
+### **19 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔄 🔍 DEBUG: Add extensive logging to CommissionReports for Supabase query analysis
 - 📚 docs: automated daily update 2025-10-19 [skip ci]
 - 🔧 🐛 FIX: CommissionReports - Fix Supabase query joins for Policy & Client data

@@ -3,6 +3,7 @@ import { it } from 'date-fns/locale';
 import { AlertTriangle, Calendar as CalendarIcon, Eye, Mail, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -120,29 +121,8 @@ const useQuickActions = () => {
     }
   }, []);
 
-  const openPolicyDetailAction = useCallback(async (policyId: string) => {
-    try {
-      // Call Supabase Edge Function for opening policy detail
-      const { data, error } = await supabase.functions.invoke('openPolicyDetail', {
-        body: { policyId }
-      });
-
-      if (error) throw error;
-
-      // Navigate to policy detail (assuming React Router)
-      window.location.href = `/insurance/policies/${policyId}`;
-      
-      return data;
-    } catch (error) {
-      console.error('❌ [RenewalCalendar] Error opening policy detail:', error);
-      toast.error('Impossibile aprire i dettagli della polizza');
-      throw error;
-    }
-  }, []);
-
   return {
-    sendReminder: sendReminderAction,
-    openPolicyDetail: openPolicyDetailAction
+    sendReminder: sendReminderAction
   };
 };
 
@@ -251,6 +231,7 @@ const CustomCalendar: React.FC<{
 // Main Component
 const RenewalCalendar: React.FC = () => {
   const { organizationId } = useAuth();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   
@@ -317,9 +298,15 @@ const RenewalCalendar: React.FC = () => {
     refetch(); // Refresh data after action
   }, [quickActions, refetch]);
 
-  const handleOpenPolicyDetail = useCallback(async (reminder: RenewalReminder) => {
-    await quickActions.openPolicyDetail(reminder.policy_id);
-  }, [quickActions]);
+  const handleOpenPolicyDetail = useCallback((reminder: RenewalReminder) => {
+    try {
+      // Navigate directly to policy detail page using Italian routing
+      navigate(`/assicurazioni/polizze/${reminder.policy_id}`);
+    } catch (error) {
+      console.error('❌ [RenewalCalendar] Error navigating to policy detail:', error);
+      toast.error('Impossibile aprire i dettagli della polizza');
+    }
+  }, [navigate]);
 
   if (error) {
     return (

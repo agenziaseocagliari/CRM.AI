@@ -72,31 +72,56 @@ export const PolicyDetail: React.FC = () => {
 
   // Fetch policy data
   const fetchPolicy = useCallback(async () => {
-    if (!id || !organization?.id) return;
+    if (!id) {
+      console.error('❌ [PolicyDetail] No policy ID provided');
+      toast.error('ID polizza mancante');
+      navigate(ROUTES.insurance.policies);
+      return;
+    }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      console.log('🔍 [PolicyDetail] Fetching policy with ID:', id);
+      
+      // First, try to fetch the policy with organization check if available
+      let query = supabase
         .from('insurance_policies')
         .select(`
           *,
           contact:contacts(id, name, email, phone, company),
           created_by_user:profiles(email)
         `)
-        .eq('id', id)
-        .eq('organization_id', organization.id)
-        .single();
+        .eq('id', id);
+
+      // Add organization filter only if available
+      if (organization?.id) {
+        query = query.eq('organization_id', organization.id);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) {
-        console.error('Error fetching policy:', error);
+        console.error('❌ [PolicyDetail] Error fetching policy:', error);
+        if (error.code === 'PGRST116') {
+          toast.error('Polizza non trovata');
+        } else {
+          toast.error('Errore nel caricamento della polizza');
+        }
+        navigate(ROUTES.insurance.policies);
+        return;
+      }
+
+      if (!data) {
+        console.error('❌ [PolicyDetail] No policy data returned');
         toast.error('Polizza non trovata');
         navigate(ROUTES.insurance.policies);
         return;
       }
 
+      console.log('✅ [PolicyDetail] Policy fetched successfully:', data.policy_number);
       setPolicy(data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ [PolicyDetail] Error:', error);
       toast.error('Errore nel caricamento della polizza');
       navigate(ROUTES.insurance.policies);
     } finally {

@@ -62,7 +62,9 @@ CREATE INDEX IF NOT EXISTS idx_form_submissions_created ON form_submissions (cre
 -- Enable RLS on form_submissions
 ALTER TABLE form_submissions ENABLE ROW LEVEL SECURITY;
 
--- RLS Policy for form_submissions
+-- RLS Policy for form_submissions (idempotent: drop before create)
+DROP POLICY IF EXISTS "org_access_form_submissions" ON form_submissions;
+
 CREATE POLICY "org_access_form_submissions" ON form_submissions FOR ALL TO public USING (
     organization_id IN (
         SELECT organization_id

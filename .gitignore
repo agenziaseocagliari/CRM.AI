@@ -66,6 +66,7 @@ final-*.mjs
 deploy-*.sh
 # ✅ EXCEPTION: Allow deployment automation scripts
 !scripts/deploy-supabase-robust.sh
+!scripts/audit-migration-idempotence.sh
 *.access.log
 EXECUTE_*.mjs
 

@@ -32,6 +32,9 @@ jobs:
       - name: Verify PostgreSQL role references
         run: bash scripts/verify-role-cleanup.sh
 
+      - name: Audit Migration Idempotence
+        run: bash scripts/audit-migration-idempotence.sh
+
       - name: Verify API role usage
         run: npm run verify:role
 

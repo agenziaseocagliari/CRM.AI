@@ -17,10 +17,11 @@ PROJECT_REF="${SUPABASE_PROJECT_REF:-qjtaqrlpronohgpfdxsi}"
 ACCESS_TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
 MAX_RETRIES=3
 RETRY_DELAY=5
+MIGRATION_AUDIT_SCRIPT="${MIGRATION_AUDIT_SCRIPT:-scripts/audit-migration-idempotence.sh}"
 
 # Counters
 STEP=0
-TOTAL_STEPS=6
+TOTAL_STEPS=7
 ERRORS=0
 
 # Functions
@@ -122,7 +123,23 @@ unset SUPABASE_DB_PASSWORD || true
 
 print_success "Previous session cleaned up"
 
-# Step 4: Link to Supabase Project (with retry logic)
+# Step 4: Audit migrations for idempotence
+print_step "Audit Migrations for Idempotence"
+
+if [ -f "$MIGRATION_AUDIT_SCRIPT" ]; then
+    echo "  Running migration idempotence audit..."
+    if bash "$MIGRATION_AUDIT_SCRIPT" 2>&1 | grep -q "ALL MIGRATIONS ARE IDEMPOTENT"; then
+        print_success "Migration audit passed - all migrations are idempotent"
+    else
+        print_warning "Migration audit completed - review output above"
+        echo "  (Continuing anyway - audit is advisory)"
+    fi
+else
+    print_warning "Migration audit script not found at $MIGRATION_AUDIT_SCRIPT"
+    echo "  (Skipping idempotence check)"
+fi
+
+# Step 5: Link to Supabase Project (with retry logic)
 print_step "Link to Supabase Project"
 
 link_command="supabase link \\
@@ -139,7 +156,7 @@ else
     exit 1
 fi
 
-# Step 5: Deploy Edge Functions
+# Step 6: Deploy Edge Functions
 print_step "Deploy Edge Functions"
 
 edge_deploy_command="supabase functions deploy \\
@@ -151,7 +168,7 @@ else
     print_warning "Edge functions deployment failed - continuing with migrations"
 fi
 
-# Step 6: Push Database Migrations
+# Step 7: Push Database Migrations
 print_step "Push Database Migrations"
 
 db_push_command="supabase db push \\

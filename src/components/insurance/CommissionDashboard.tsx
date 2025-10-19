@@ -347,6 +347,12 @@ const CommissionDashboard: React.FC = () => {
               <List className="h-4 w-4 mr-2" />
               Vai alla Lista Provvigioni
             </button>
+            <button
+              onClick={() => navigate('/assicurazioni/provvigioni/reports')}
+              className="ml-4 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+            >
+              Report Provvigioni
+            </button>
           </div>
         </div>
       </div>

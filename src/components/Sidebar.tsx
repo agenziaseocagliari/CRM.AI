@@ -148,6 +148,7 @@ export const Sidebar: React.FC = () => {
         { id: 'claims', label: 'Sinistri', icon: 'AlertTriangle', path: '/assicurazioni/sinistri' },
         { id: 'commissions', label: 'Dashboard Provvigioni', icon: 'BarChart', path: '/assicurazioni/provvigioni' },
         { id: 'calc-commission', label: 'Calcola Nuova Provvigione', icon: 'Calculator', path: '/assicurazioni/provvigioni/new' },
+        { id: 'commission-reports', label: 'Report Provvigioni', icon: 'FileText', path: '/assicurazioni/provvigioni/reports' },
         { id: 'contacts', label: 'Contatti', icon: 'Users', path: '/contatti' }
       ];
     } else {

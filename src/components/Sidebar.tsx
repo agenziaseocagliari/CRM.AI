@@ -115,52 +115,21 @@ export const Sidebar: React.FC = () => {
         }
       }
       
-      // Add "Calcola Nuova Provvigione" after "Dashboard Provvigioni" for insurance vertical
-      if (vertical === 'insurance') {
-        const dashboardProvIndex = menuItems.findIndex(item => item.label === 'Dashboard Provvigioni');
-        const listaProvIndex = menuItems.findIndex(item => item.label === 'Lista Provvigioni');
-        
-        // Insert between Dashboard Provvigioni and Lista Provvigioni if both exist
-        if (dashboardProvIndex !== -1 && listaProvIndex !== -1) {
-          menuItems.splice(listaProvIndex, 0, {
-            id: 'calcola-nuova-provvigione',
-            label: 'Calcola Nuova Provvigione',
-            icon: 'Calculator',
-            path: '/assicurazioni/provvigioni/new'
-          });
-        } 
-        // Otherwise add after Dashboard Provvigioni
-        else if (dashboardProvIndex !== -1) {
-          menuItems.splice(dashboardProvIndex + 1, 0, {
-            id: 'calcola-nuova-provvigione',
-            label: 'Calcola Nuova Provvigione',
-            icon: 'Calculator',
-            path: '/assicurazioni/provvigioni/new'
-          });
-        }
-        // Fallback: add after any commission-related item
-        else {
-          const anyCommissionIndex = menuItems.findIndex(item => 
-            item.label.toLowerCase().includes('provvigion') || 
-            item.path.includes('provvigioni')
-          );
-          if (anyCommissionIndex !== -1) {
-            menuItems.splice(anyCommissionIndex + 1, 0, {
-              id: 'calcola-nuova-provvigione',
-              label: 'Calcola Nuova Provvigione',
-              icon: 'Calculator',
-              path: '/assicurazioni/provvigioni/new'
-            });
-          }
-        }
-      }
+      // REMOVED: Manual addition of "Calcola Nuova Provvigione" 
+      // This item is now properly configured in the database via vertical_configurations
+      // No need to manually add it here to avoid duplicates
     } catch (error) {
       console.error('🚨 [Sidebar] Error processing sections:', error);
       menuItems = []; // Reset to empty array
     }
   }
   
-  console.log('🔍 [Sidebar] Extracted menu items:', menuItems);
+  // CRITICAL FIX: Remove duplicates based on path to avoid duplicate sidebar entries
+  const uniqueItems = Array.from(new Map(menuItems.map(item => [item.path, item])).values());
+  menuItems = uniqueItems;
+  
+  console.log('🔍 [Sidebar] Extracted menu items (before deduplication):', menuItems.length);
+  console.log('🔍 [Sidebar] Unique menu items (after deduplication):', menuItems.length);
 
   // Fallback for Standard vertical if config incomplete or missing
   if (vertical === 'standard' && menuItems.length < 8) {

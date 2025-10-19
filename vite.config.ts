@@ -9,6 +9,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['jspdf', 'html2canvas', 'jspdf-autotable', 'dompurify'],
+  },
   test: {
     environment: 'jsdom',
     globals: true,
@@ -22,7 +25,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'js',
+    commonjsOptions: {
+      include: [/jspdf/, /html2canvas/, /dompurify/, /node_modules/],
+      transformMixedEsModules: true,
+    },
     rollupOptions: {
+      external: ['canvg'],
       output: {
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name?.split('.') || [];

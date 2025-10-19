@@ -53,9 +53,5 @@ ORDER BY
 -- CREATE INDEX IF NOT EXISTS idx_insurance_policies_end_date ON insurance_policies(end_date);
 CREATE INDEX IF NOT EXISTS idx_insurance_policies_org_end_date ON insurance_policies(organization_id, end_date);
 
--- Grant permissions
-GRANT SELECT ON renewal_reminders TO authenticated;
-GRANT SELECT ON renewal_reminders TO service_role;
-
 -- Add comment for documentation
 COMMENT ON VIEW renewal_reminders IS 'View for calculating policy renewal reminders with priority levels and status indicators. Filters policies expiring within 90 days or expired within last 30 days.';

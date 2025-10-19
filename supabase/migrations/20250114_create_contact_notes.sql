@@ -24,7 +24,7 @@ ALTER TABLE contact_notes ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for contact_notes
 CREATE POLICY "Users can view notes for their organization's contacts" ON contact_notes FOR
-SELECT USING (
+SELECT TO public USING (
         EXISTS (
             SELECT 1
             FROM contacts c
@@ -40,7 +40,7 @@ SELECT USING (
     );
 
 CREATE POLICY "Users can create notes for their organization's contacts" ON contact_notes FOR
-INSERT
+INSERT TO public
 WITH
     CHECK (
         EXISTS (
@@ -58,9 +58,9 @@ WITH
     );
 
 CREATE POLICY "Users can update their own notes" ON contact_notes FOR
-UPDATE USING (created_by = auth.uid ());
+UPDATE TO public USING (created_by = auth.uid ());
 
-CREATE POLICY "Users can delete their own notes" ON contact_notes FOR DELETE USING (created_by = auth.uid ());
+CREATE POLICY "Users can delete their own notes" ON contact_notes FOR DELETE TO public USING (created_by = auth.uid ());
 
 -- Update trigger for updated_at
 CREATE OR REPLACE FUNCTION update_contact_notes_updated_at()

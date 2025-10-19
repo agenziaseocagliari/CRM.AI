@@ -70,7 +70,7 @@ ALTER TABLE insurance_commissions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Users can only see commissions from their organization
 CREATE POLICY "insurance_commissions_select_org" ON insurance_commissions FOR
-SELECT USING (
+SELECT TO public USING (
         organization_id IN (
             SELECT organization_id
             FROM profiles
@@ -81,7 +81,7 @@ SELECT USING (
 
 -- RLS Policy: Users can only insert commissions for their organization
 CREATE POLICY "insurance_commissions_insert_org" ON insurance_commissions FOR
-INSERT
+INSERT TO public
 WITH
     CHECK (
         organization_id IN (
@@ -94,7 +94,7 @@ WITH
 
 -- RLS Policy: Users can only update commissions from their organization
 CREATE POLICY "insurance_commissions_update_org" ON insurance_commissions FOR
-UPDATE USING (
+UPDATE TO public USING (
     organization_id IN (
         SELECT organization_id
         FROM profiles
@@ -113,7 +113,7 @@ WITH
     );
 
 -- RLS Policy: Users can only delete commissions from their organization
-CREATE POLICY "insurance_commissions_delete_org" ON insurance_commissions FOR DELETE USING (
+CREATE POLICY "insurance_commissions_delete_org" ON insurance_commissions FOR DELETE TO public USING (
     organization_id IN (
         SELECT organization_id
         FROM profiles

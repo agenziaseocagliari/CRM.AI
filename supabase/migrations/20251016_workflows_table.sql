@@ -45,7 +45,7 @@ ALTER TABLE workflows ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "org_workflows_select" ON workflows;
 
 CREATE POLICY "org_workflows_select" ON workflows FOR
-SELECT USING (
+SELECT TO public USING (
         organization_id IN (
             SELECT organization_id
             FROM profiles
@@ -58,7 +58,7 @@ SELECT USING (
 DROP POLICY IF EXISTS "org_workflows_insert" ON workflows;
 
 CREATE POLICY "org_workflows_insert" ON workflows FOR
-INSERT
+INSERT TO public
 WITH
     CHECK (
         organization_id IN (
@@ -74,12 +74,12 @@ WITH
 DROP POLICY IF EXISTS "own_workflows_update" ON workflows;
 
 CREATE POLICY "own_workflows_update" ON workflows FOR
-UPDATE USING (created_by = auth.uid ());
+UPDATE TO public USING (created_by = auth.uid ());
 
 -- Policy for DELETE: Users can only delete their own workflows
 DROP POLICY IF EXISTS "own_workflows_delete" ON workflows;
 
-CREATE POLICY "own_workflows_delete" ON workflows FOR DELETE USING (created_by = auth.uid ());
+CREATE POLICY "own_workflows_delete" ON workflows FOR DELETE TO public USING (created_by = auth.uid ());
 
 -- =======================
 -- TRIGGER FOR AUTO-UPDATING

@@ -15,6 +15,8 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_REF="${SUPABASE_PROJECT_REF:-qjtaqrlpronohgpfdxsi}"
 ACCESS_TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
+SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
+SUPABASE_URL="${SUPABASE_URL:-https://${PROJECT_REF}.supabase.co}"
 MAX_RETRIES=3
 RETRY_DELAY=5
 MIGRATION_AUDIT_SCRIPT="${MIGRATION_AUDIT_SCRIPT:-scripts/audit-migration-idempotence.sh}"
@@ -202,52 +204,145 @@ if ! command -v jq &> /dev/null; then
     fi
 fi
 
+# Check if curl is available (should be on all systems)
+if ! command -v curl &> /dev/null; then
+    print_error "curl not found - required for REST API fallback"
+    exit 1
+fi
+
 # Create temporary directory for sync operations
 SYNC_DIR=$(mktemp -d)
 trap "rm -rf $SYNC_DIR" EXIT
 
-# Get list of remote migrations
-echo "  Retrieving remote migration list..."
-if supabase migration list --json > "$SYNC_DIR/remote_migrations.json" 2>/dev/null; then
-    print_success "Remote migration list retrieved"
-    
-    # Parse remote migrations and identify missing local files
-    remote_versions=$(jq -r '.[].version // empty' "$SYNC_DIR/remote_migrations.json" 2>/dev/null || echo "")
-    
-    if [ -n "$remote_versions" ]; then
-        echo "  Checking for remote-only migrations..."
-        MISSING_COUNT=0
-        
-        while IFS= read -r version; do
-            # Skip empty lines
-            [ -z "$version" ] && continue
-            
-            # Check if migration file exists locally
-            if ! ls supabase/migrations/${version}_*.sql &>/dev/null && \
-               ! ls supabase/migrations/${version}.sql &>/dev/null; then
-                echo "    ⚠️  Remote migration not in local: $version"
-                MISSING_COUNT=$((MISSING_COUNT + 1))
-                
-                # Mark as repaired/applied locally without creating file
-                echo "    Marking migration $version as applied locally..."
-                if supabase migration repair --status applied "$version" --yes 2>&1 | grep -q "success\|repaired\|marked"; then
-                    echo "    ✓ Migration $version marked as applied"
-                else
-                    print_warning "Could not mark migration $version (may already be marked)"
-                fi
-            fi
-        done <<< "$remote_versions"
-        
-        if [ $MISSING_COUNT -eq 0 ]; then
-            print_success "All remote migrations exist locally"
-        else
-            print_warning "Repaired $MISSING_COUNT remote-only migration(s)"
-        fi
+# Method 1: Try Supabase CLI migration list
+echo "  [Method 1] Attempting CLI: supabase migration list..."
+CLI_SUCCESS=false
+
+if supabase migration list --json > "$SYNC_DIR/remote_migrations.json" 2>"$SYNC_DIR/cli_error.log"; then
+    # Verify the JSON is valid and not empty
+    if jq -e 'type == "array"' "$SYNC_DIR/remote_migrations.json" &>/dev/null; then
+        print_success "Remote migration list retrieved via CLI"
+        CLI_SUCCESS=true
     else
-        print_warning "No remote migrations found (empty database or parsing error)"
+        print_warning "CLI returned invalid JSON, will try fallback"
+        echo "  CLI output: $(cat "$SYNC_DIR/remote_migrations.json" 2>/dev/null || echo 'empty')"
     fi
 else
-    print_warning "Could not retrieve remote migration list - proceeding with standard push"
+    print_warning "CLI method failed, will try REST API fallback"
+    if [ -f "$SYNC_DIR/cli_error.log" ]; then
+        echo "  CLI error: $(head -n 3 "$SYNC_DIR/cli_error.log")"
+    fi
+fi
+
+# Method 2: Fallback to REST API if CLI failed
+if [ "$CLI_SUCCESS" = false ]; then
+    echo "  [Method 2] Attempting REST API fallback..."
+    
+    # Check if we have service role key for REST API
+    if [ -z "$SERVICE_ROLE_KEY" ]; then
+        print_warning "SUPABASE_SERVICE_ROLE_KEY not set, trying with ACCESS_TOKEN"
+        AUTH_HEADER="Authorization: Bearer $ACCESS_TOKEN"
+        API_KEY="$ACCESS_TOKEN"
+    else
+        AUTH_HEADER="Authorization: Bearer $SERVICE_ROLE_KEY"
+        API_KEY="$SERVICE_ROLE_KEY"
+    fi
+    
+    # Attempt 1: Try RPC function (if migration was applied)
+    echo "  Trying RPC endpoint: get_migration_history..."
+    HTTP_CODE=$(curl -s -w "%{http_code}" -o "$SYNC_DIR/rpc_response.json" \
+        "${SUPABASE_URL}/rest/v1/rpc/get_migration_history" \
+        -H "apikey: $API_KEY" \
+        -H "$AUTH_HEADER" \
+        -H "Content-Type: application/json")
+    
+    if [ "$HTTP_CODE" = "200" ] && jq -e 'type == "array"' "$SYNC_DIR/rpc_response.json" &>/dev/null; then
+        # Transform RPC response to match CLI format
+        jq 'map({version: .version, name: .name})' "$SYNC_DIR/rpc_response.json" > "$SYNC_DIR/remote_migrations.json"
+        print_success "Remote migrations retrieved via RPC endpoint"
+        CLI_SUCCESS=true
+    else
+        echo "  RPC endpoint returned HTTP $HTTP_CODE or invalid data"
+        
+        # Attempt 2: Direct query to schema_migrations table via PostgREST
+        echo "  Trying direct table query..."
+        HTTP_CODE=$(curl -s -w "%{http_code}" -o "$SYNC_DIR/table_response.json" \
+            "${SUPABASE_URL}/rest/v1/schema_migrations?select=version,name&order=version.asc" \
+            -H "apikey: $API_KEY" \
+            -H "$AUTH_HEADER" \
+            -H "Content-Type: application/json")
+        
+        if [ "$HTTP_CODE" = "200" ] && jq -e 'type == "array"' "$SYNC_DIR/table_response.json" &>/dev/null; then
+            cp "$SYNC_DIR/table_response.json" "$SYNC_DIR/remote_migrations.json"
+            print_success "Remote migrations retrieved via direct table query"
+            CLI_SUCCESS=true
+        else
+            echo "  Direct query returned HTTP $HTTP_CODE or invalid data"
+            
+            # Attempt 3: Query supabase_migrations schema via PostgREST
+            echo "  Trying supabase_migrations schema query..."
+            
+            # Note: This may fail if PostgREST doesn't expose supabase_migrations schema
+            # In that case, we'll proceed with empty list (no remote migrations to sync)
+            HTTP_CODE=$(curl -s -w "%{http_code}" -o "$SYNC_DIR/schema_response.json" \
+                "${SUPABASE_URL}/rest/v1/supabase_migrations.schema_migrations?select=version,name&order=version.asc" \
+                -H "apikey: $API_KEY" \
+                -H "$AUTH_HEADER" \
+                -H "Content-Type: application/json")
+            
+            if [ "$HTTP_CODE" = "200" ] && jq -e 'type == "array"' "$SYNC_DIR/schema_response.json" &>/dev/null; then
+                cp "$SYNC_DIR/schema_response.json" "$SYNC_DIR/remote_migrations.json"
+                print_success "Remote migrations retrieved via schema query"
+                CLI_SUCCESS=true
+            else
+                print_warning "All REST API methods failed (HTTP $HTTP_CODE)"
+                echo "  Creating empty migrations list - will proceed without remote sync"
+                echo "[]" > "$SYNC_DIR/remote_migrations.json"
+            fi
+        fi
+    fi
+fi
+
+# Parse remote migrations and identify missing local files
+remote_versions=$(jq -r '.[].version // empty' "$SYNC_DIR/remote_migrations.json" 2>/dev/null || echo "")
+
+if [ -n "$remote_versions" ]; then
+    echo "  Checking for remote-only migrations..."
+    MISSING_COUNT=0
+    REPAIRED_COUNT=0
+    
+    while IFS= read -r version; do
+        # Skip empty lines
+        [ -z "$version" ] && continue
+        
+        # Check if migration file exists locally
+        if ! ls supabase/migrations/${version}_*.sql &>/dev/null && \
+           ! ls supabase/migrations/${version}.sql &>/dev/null; then
+            echo "    ⚠️  Remote migration not in local: $version"
+            MISSING_COUNT=$((MISSING_COUNT + 1))
+            
+            # Mark as repaired/applied locally without creating file
+            echo "    Marking migration $version as applied locally..."
+            repair_output=$(supabase migration repair --status applied "$version" --yes 2>&1)
+            repair_exit_code=$?
+            
+            if [ $repair_exit_code -eq 0 ] || echo "$repair_output" | grep -q "success\|repaired\|marked\|already"; then
+                echo "    ✓ Migration $version marked as applied"
+                REPAIRED_COUNT=$((REPAIRED_COUNT + 1))
+            else
+                print_warning "Could not mark migration $version: $repair_output"
+            fi
+        fi
+    done <<< "$remote_versions"
+    
+    if [ $MISSING_COUNT -eq 0 ]; then
+        print_success "All remote migrations exist locally"
+    else
+        print_success "Repaired $REPAIRED_COUNT of $MISSING_COUNT remote-only migration(s)"
+    fi
+else
+    print_warning "No remote migrations found (new database or all methods failed)"
+    echo "  This is normal for a new project - proceeding with migration push"
 fi
 
 # Step 8: Push Database Migrations

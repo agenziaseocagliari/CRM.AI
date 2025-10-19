@@ -36,7 +36,7 @@ DROP POLICY IF EXISTS "Users can manage profiles" ON profiles;
 -- Policy 1: SELECT - Allow users to view their own profile OR profiles in their organization OR super_admin can view all
 CREATE POLICY "profiles_select_policy" ON profiles
   FOR SELECT
-  TO authenticated
+  TO public
   USING (
     -- User can always view their own profile
     auth.uid() = id
@@ -61,7 +61,7 @@ CREATE POLICY "profiles_select_policy" ON profiles
 -- Policy 2: INSERT - Allow users to insert their own profile OR super_admin can insert any
 CREATE POLICY "profiles_insert_policy" ON profiles
   FOR INSERT
-  TO authenticated
+  TO public
   WITH CHECK (
     -- User can insert their own profile
     auth.uid() = id
@@ -76,7 +76,7 @@ CREATE POLICY "profiles_insert_policy" ON profiles
 -- Policy 3: UPDATE - Allow users to update their own profile OR super_admin can update any
 CREATE POLICY "profiles_update_policy" ON profiles
   FOR UPDATE
-  TO authenticated
+  TO public
   USING (
     -- User can update their own profile
     auth.uid() = id
@@ -100,7 +100,7 @@ CREATE POLICY "profiles_update_policy" ON profiles
 -- Policy 4: DELETE - Only super_admin can delete profiles (users cannot delete their own)
 CREATE POLICY "profiles_delete_policy" ON profiles
   FOR DELETE
-  TO authenticated
+  TO public
   USING (
     COALESCE(
       auth.jwt() ->> 'user_role',

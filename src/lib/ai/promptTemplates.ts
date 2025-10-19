@@ -300,9 +300,9 @@ Key Products: ${orgContext.keyProducts.join(', ')}
 
 ${orgContext.previousConversions ? `
 HISTORICAL CONVERSION PATTERNS:
-${orgContext.previousConversions.map(pattern => 
-  `- ${pattern.industry}: ${pattern.score}+ score = ${pattern.conversionRate}% conversion`
-).join('\n')}
+${orgContext.previousConversions.map(pattern =>
+    `- ${pattern.industry}: ${pattern.score}+ score = ${pattern.conversionRate}% conversion`
+  ).join('\n')}
 ` : ''}
 
 Use this context to personalize analysis and content generation for maximum relevance and effectiveness.`;
@@ -311,11 +311,11 @@ Use this context to personalize analysis and content generation for maximum rele
 }
 
 export function getPromptTemplate(
-  actionType: string,  
+  actionType: string,
   organizationContext?: OrganizationAIContext
 ): PromptTemplate {
   let template: PromptTemplate;
-  
+
   switch (actionType) {
     case 'ai_lead_scoring':
       template = leadScoringPrompt;
@@ -329,7 +329,7 @@ export function getPromptTemplate(
     default:
       throw new Error(`No template found for action type: ${actionType}`);
   }
-  
+
   // Inject organization context if provided
   if (organizationContext) {
     template = {
@@ -337,7 +337,7 @@ export function getPromptTemplate(
       userContext: injectOrganizationContext(template.userContext, organizationContext)
     };
   }
-  
+
   return template;
 }
 
@@ -347,7 +347,7 @@ export function validatePromptOutput(
   template: PromptTemplate
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
-  
+
   try {
     // Check output format
     if (template.outputFormat === 'json') {
@@ -355,7 +355,7 @@ export function validatePromptOutput(
         errors.push('Output must be valid JSON object');
       }
     }
-    
+
     // Validate specific constraints based on action type
     if (template === leadScoringPrompt) {
       const leadOutput = output as { score?: number; category?: string; reasoning?: string };
@@ -369,12 +369,12 @@ export function validatePromptOutput(
         errors.push('Reasoning must be 1-150 characters');
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors
     };
-    
+
   } catch (error) {
     return {
       isValid: false,

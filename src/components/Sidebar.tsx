@@ -85,7 +85,7 @@ export const Sidebar: React.FC = () => {
     );
   }
 
-  // Determine menu items - CRITICAL FIX: Extract items from sections
+  // Determine menu items - FIXED: Process sections.items structure correctly
   const sidebarSections = config?.sidebarConfig?.sections || [];
   console.log('🔍 [Sidebar] Initial sections from config:', sidebarSections);
   
@@ -93,33 +93,65 @@ export const Sidebar: React.FC = () => {
   let menuItems: { id: string; label: string; icon: string; path: string; }[] = [];
   
   if (sidebarSections.length > 0) {
-    // Process sections - each section is a menu item directly
+    // Process sections - each section contains items array
     try {
-      for (const rawSection of sidebarSections) {
-        // Type assertion to access section properties - sections are direct menu items
-        const item = rawSection as { id?: string; label?: string; icon?: string; path?: string; };
+      for (const section of sidebarSections) {
+        // Type assertion to access section properties
+        const sectionData = section as { title?: string; items?: Array<{ name?: string; icon?: string; path?: string; }> };
         
-        if (item && item.label) {
-          // Transform section to match expected menu item structure
-          menuItems.push({
-            id: item.id || item.label?.toLowerCase().replace(/\s+/g, '-') || 'unknown',
-            label: item.label || 'Unknown',
-            icon: item.icon || 'Circle',
-            path: item.path || '/dashboard'
-          });
+        if (sectionData.items && Array.isArray(sectionData.items)) {
+          // Process items within each section
+          for (const item of sectionData.items) {
+            if (item && item.name) {
+              // Transform item to match expected menu item structure
+              menuItems.push({
+                id: item.name.toLowerCase().replace(/\s+/g, '-'),
+                label: item.name,
+                icon: item.icon || 'Circle',
+                path: item.path || '/dashboard'
+              });
+            }
+          }
         }
       }
       
-      // Add "Calcola Nuova Provvigione" after "Provvigioni" for insurance vertical
+      // Add "Calcola Nuova Provvigione" after "Dashboard Provvigioni" for insurance vertical
       if (vertical === 'insurance') {
-        const commissionsIndex = menuItems.findIndex(item => item.id === 'commissions');
-        if (commissionsIndex !== -1) {
-          menuItems.splice(commissionsIndex + 1, 0, {
-            id: 'commissions-new',
+        const dashboardProvIndex = menuItems.findIndex(item => item.label === 'Dashboard Provvigioni');
+        const listaProvIndex = menuItems.findIndex(item => item.label === 'Lista Provvigioni');
+        
+        // Insert between Dashboard Provvigioni and Lista Provvigioni if both exist
+        if (dashboardProvIndex !== -1 && listaProvIndex !== -1) {
+          menuItems.splice(listaProvIndex, 0, {
+            id: 'calcola-nuova-provvigione',
             label: 'Calcola Nuova Provvigione',
-            icon: 'FilePlus',
+            icon: 'Calculator',
             path: '/assicurazioni/provvigioni/new'
           });
+        } 
+        // Otherwise add after Dashboard Provvigioni
+        else if (dashboardProvIndex !== -1) {
+          menuItems.splice(dashboardProvIndex + 1, 0, {
+            id: 'calcola-nuova-provvigione',
+            label: 'Calcola Nuova Provvigione',
+            icon: 'Calculator',
+            path: '/assicurazioni/provvigioni/new'
+          });
+        }
+        // Fallback: add after any commission-related item
+        else {
+          const anyCommissionIndex = menuItems.findIndex(item => 
+            item.label.toLowerCase().includes('provvigion') || 
+            item.path.includes('provvigioni')
+          );
+          if (anyCommissionIndex !== -1) {
+            menuItems.splice(anyCommissionIndex + 1, 0, {
+              id: 'calcola-nuova-provvigione',
+              label: 'Calcola Nuova Provvigione',
+              icon: 'Calculator',
+              path: '/assicurazioni/provvigioni/new'
+            });
+          }
         }
       }
     } catch (error) {
@@ -138,18 +170,20 @@ export const Sidebar: React.FC = () => {
 
   if (!menuItems || menuItems.length === 0) {
     console.log('🔍 [Sidebar] No menu items, using STANDARD_MENU_FALLBACK');
-    return (
-      <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
-        <div className="flex items-center mb-8 px-2">
-          <GuardianIcon className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold ml-2">Guardian AI</h1>
-        </div>
-        <div className="text-red-400 text-sm">
-          <p>Sidebar config missing</p>
-          <p className="text-xs mt-2">Vertical: {vertical}</p>
-        </div>
-      </aside>
-    );
+    // For insurance vertical, show a specific message and fallback
+    if (vertical === 'insurance') {
+      console.warn('🚨 [Sidebar] Insurance vertical has no menu items - using fallback');
+      menuItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: 'Home', path: '/' },
+        { id: 'policies', label: 'Polizze', icon: 'FileText', path: '/assicurazioni/polizze' },
+        { id: 'claims', label: 'Sinistri', icon: 'AlertTriangle', path: '/assicurazioni/sinistri' },
+        { id: 'commissions', label: 'Dashboard Provvigioni', icon: 'BarChart', path: '/assicurazioni/provvigioni' },
+        { id: 'calc-commission', label: 'Calcola Nuova Provvigione', icon: 'Calculator', path: '/assicurazioni/provvigioni/new' },
+        { id: 'contacts', label: 'Contatti', icon: 'Users', path: '/contatti' }
+      ];
+    } else {
+      menuItems = STANDARD_MENU_FALLBACK;
+    }
   }
 
   console.log('🔍 [Sidebar] Final menu items count:', menuItems.length);

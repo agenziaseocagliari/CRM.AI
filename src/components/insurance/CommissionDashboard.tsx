@@ -1,23 +1,23 @@
 // CommissionDashboard.tsx - Commission Tracking Dashboard
 // Sprint 2 Session 2 - UI Implementation
 
-import React, { useState, useEffect } from "react";
+import { CheckCircle, Clock, Euro, List, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../lib/supabaseClient";
-import { useAuth } from "../../contexts/useAuth";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer
+    CartesianGrid,
+    Cell,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis
 } from 'recharts';
-import { Euro, TrendingUp, Clock, CheckCircle, List } from 'lucide-react';
+import { useAuth } from "../../contexts/useAuth";
+import { supabase } from "../../lib/supabaseClient";
 
 // TypeScript Interfaces
 interface KPIStats {

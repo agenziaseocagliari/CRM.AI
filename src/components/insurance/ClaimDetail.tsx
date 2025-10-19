@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { useAuth } from '../../contexts/useAuth';
-import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
-  Edit2,
-  Loader2,
-  AlertCircle,
-  FileText,
-  Calendar,
-  MapPin,
-  DollarSign,
-  User,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Phone,
-  Mail
+    AlertCircle,
+    AlertTriangle,
+    ArrowLeft,
+    Calendar,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Edit2,
+    FileText,
+    Loader2,
+    Mail,
+    MapPin,
+    Phone,
+    User,
+    XCircle
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/useAuth';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Claim {
   id: string;

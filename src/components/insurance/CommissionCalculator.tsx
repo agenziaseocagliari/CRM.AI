@@ -1,11 +1,11 @@
 // CommissionCalculator.tsx - Real-time Commission Calculator
 // Sprint 2 Session 4 - Commission Calculation Form
 
-import React, { useState, useEffect, FormEvent } from 'react';
+import { AlertCircle, Calculator, CheckCircle, Euro, FileText } from 'lucide-react';
+import React, { FormEvent, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
-import { useNavigate } from 'react-router-dom';
-import { Calculator, Euro, FileText, Users, AlertCircle, CheckCircle } from 'lucide-react';
 
 // TypeScript Interfaces
 interface CommissionForm {

@@ -42,12 +42,12 @@ import ContactDetailView from './components/contacts/ContactDetailView';
 import { Dashboard } from './components/Dashboard';
 import EmailMarketingModule from './components/EmailMarketingModule';
 import { Forms } from './components/Forms';
-import ClaimsList from './components/insurance/ClaimsList';
-import ClaimsForm from './components/insurance/ClaimsForm';
 import ClaimDetail from './components/insurance/ClaimDetail';
+import ClaimsForm from './components/insurance/ClaimsForm';
+import ClaimsList from './components/insurance/ClaimsList';
+import CommissionCalculator from './components/insurance/CommissionCalculator';
 import CommissionDashboard from './components/insurance/CommissionDashboard';
 import CommissionsList from './components/insurance/CommissionsList';
-import CommissionCalculator from './components/insurance/CommissionCalculator';
 import { FormsInsurance } from './components/insurance/FormsInsurance';
 import { Opportunities } from './components/Opportunities';
 import { Reports } from './components/Reports';
@@ -91,11 +91,11 @@ import { supabase } from './lib/supabaseClient';
 // Vertical System
 import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
 import {
-    InsuranceCommissionsPage,
-    InsurancePoliciesPage,
-    InsuranceRenewalsPage,
-    PolicyDetail,
-    PolicyForm
+  InsuranceCommissionsPage,
+  InsurancePoliciesPage,
+  InsuranceRenewalsPage,
+  PolicyDetail,
+  PolicyForm
 } from './features/insurance';
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 

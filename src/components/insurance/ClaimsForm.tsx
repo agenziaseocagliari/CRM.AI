@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { useAuth } from '../../contexts/useAuth';
-import { useNavigate, useParams } from 'react-router-dom';
 import {
-  X,
-  Save,
-  Loader2,
-  AlertCircle,
-  Calendar,
-  MapPin,
-  DollarSign
+    AlertCircle,
+    Calendar,
+    DollarSign,
+    Loader2,
+    MapPin,
+    Save,
+    X
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/useAuth';
+import { supabase } from '../../lib/supabaseClient';
 
 interface ClaimFormData {
   contact_id: string;

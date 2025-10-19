@@ -112,6 +112,69 @@ Credits System:        ████████████████░░░
 
 ## 📝 CHANGELOG (Most Recent First)
 
+### **19 ottobre 2025** - Automated Daily Update 🤖
+
+- 🔄 ✅ SPRINT 2 SESSION 3: CommissionsList complete
+- 🔄 🎯 SPRINT 2: Commission Tracking - Database Foundation
+- 🔄 🐛 FIX 2: Claims list now shows created claims + Debug tools
+- 🔧 ✅ BUG FIX: ClaimsForm dropdowns now working!
+- 🔄 🐛 DEBUG: Add logging to ClaimsForm for dropdown issue investigation
+- 🔄 🚀 SPRINT 1 SESSION 3 COMPLETE: ClaimDetail Component + Timeline
+- 📚 docs: Update roadmap
+- ✅ feat: Add Claims Create/Edit form
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- ✅ feat: Add Claims List component and database
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- ✅ feat: Add charts and activity feed to Insurance Dashboard
+- ✅ feat: Add charts and activity feed to Insurance Dashboard
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- ✅ feat: Add Insurance Dashboard with real-time KPIs
+- ✅ feat: Add project context files and complete Forms integration
+- ✅ feat: Add project context files for persistent AI assistance
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 cleanup: Remove debug visual indicators, keep clean code
+- 🔄 debug: Add document title and visual indicators for component verification
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 Merge remote changes with debug logs implementation
+- 🔄 debug: Add component identification logs for Forms vs FormsInsurance verification
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 merge: Merge remote changes with useVertical critical fix
+- 🔧 🚨 CRITICAL FIX: Fix useVertical hook order error
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 merge: Merge remote changes with local FormsInsurance routing updates
+- ✅ feat: Add vertical-aware routing for FormsInsurance
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 clone: Create FormsInsurance.tsx base from Forms.tsx
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔧 fix: Update Standard CRM sidebar fallback - Prezzi → Crediti Extra
+- ✅ feat: Complete Standard CRM sidebar fixes - add Sistema Crediti module
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 fix(routes): separate public pricing from internal credits
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔧 fix: point /pricing route to ExtraCreditsStore for credits purchase
+- 🔧 fix: point /pricing to credits purchase module (ExtraCreditsStore) instead of subscription plans
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔧 fix: resolve pricing route conflicts - VERIFIED WORKING
+- ✅ feat: complete CRM system - all modules operational
+- 🔄 fix(automation): restore advanced WorkflowCanvas builder at /automazioni
+- 🔄 fix(routes): add English route aliases for Standard CRM modules
+- 📚 docs: automated daily update 2025-10-18 [skip ci]
+- 🔄 fix(insurance): settings absolute path + UX improvement
+- 🔄 🎊 CLEANUP: Insurance vertical production-ready
+- 🔧 🔥 CRITICAL FIX: Add missing /dashboard/assicurazioni/polizze route
+- 🔄 🔬 AUDIT: Add emergency debug logging to PoliciesList
+- 🔄 EMERGENCY: Add visible markers to debug Outlet
+- 🔄 EMERGENCY TEST: Add test route to verify deployment
+
+**Daily Metrics**:
+- Total files: 2280
+- TypeScript files: 323
+- Lines of code: ~78,818
+- Commits today: 52
+- Recent migrations: 5
+- Dependencies: 79
+
 ### **18 ottobre 2025** - Automated Daily Update 🤖
 
 - 📚 docs: automated daily update 2025-10-18 [skip ci]

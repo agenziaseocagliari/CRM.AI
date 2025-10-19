@@ -32,7 +32,7 @@ import {
 } from '../types/insurance';
 
 interface PolicyData {
-  id: number;
+  id: string;
   policy_number: string;
   policy_type: string;
   status: string;
@@ -46,15 +46,16 @@ interface PolicyData {
   notes?: string | null;
   created_at: string;
   updated_at?: string;
-  contact: {
-    id: number;
+  contacts?: {
+    id: string;
     name: string;
     email?: string;
     phone?: string;
     company?: string;
   } | null;
-  created_by_user?: {
-    email: string;
+  profiles?: {
+    id: string;
+    full_name?: string;
   } | null;
 }
 
@@ -88,24 +89,37 @@ export const PolicyDetail: React.FC = () => {
         .from('insurance_policies')
         .select(`
           *,
-          contact:contacts(id, name, email, phone, company),
-          created_by_user:profiles(email)
+          contacts!contact_id(id, name, email, phone, company),
+          profiles!created_by(id, full_name)
         `)
         .eq('id', id);
 
       // Add organization filter only if available
       if (organization?.id) {
+        console.log('🏢 [PolicyDetail] Filtering by organization ID:', organization.id);
         query = query.eq('organization_id', organization.id);
+      } else {
+        console.log('⚠️ [PolicyDetail] No organization context available, fetching without org filter');
       }
 
+      console.log('🚀 [PolicyDetail] Executing Supabase query...');
       const { data, error } = await query.single();
+
+      console.log('📊 [PolicyDetail] Query result:', { data, error });
 
       if (error) {
         console.error('❌ [PolicyDetail] Error fetching policy:', error);
+        console.error('❌ [PolicyDetail] Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
         if (error.code === 'PGRST116') {
-          toast.error('Polizza non trovata');
+          toast.error('Polizza non trovata o non hai i permessi per visualizzarla');
         } else {
-          toast.error('Errore nel caricamento della polizza');
+          toast.error(`Errore nel caricamento della polizza: ${error.message}`);
         }
         navigate(ROUTES.insurance.policies);
         return;
@@ -118,14 +132,58 @@ export const PolicyDetail: React.FC = () => {
         return;
       }
 
-      console.log('✅ [PolicyDetail] Policy fetched successfully:', data.policy_number);
+      console.log('✅ [PolicyDetail] Policy data received:', data);
+      console.log('🔧 [PolicyDetail] Validating policy data structure...');
+      
+      // Detailed validation of required fields
+      const requiredFields = ['id', 'policy_number', 'policy_type', 'insurance_company', 'start_date', 'end_date', 'premium_amount', 'premium_frequency', 'status'];
+      const missingFields = requiredFields.filter(field => !data[field]);
+      
+      if (missingFields.length > 0) {
+        console.error('❌ [PolicyDetail] Missing required fields:', missingFields);
+        console.error('📋 [PolicyDetail] Available fields:', Object.keys(data));
+        toast.error(`Dati polizza incompleti. Campi mancanti: ${missingFields.join(', ')}`);
+        navigate(ROUTES.insurance.policies);
+        return;
+      }
+
+      // Validate dates
+      console.log('📅 [PolicyDetail] Validating dates:', { start_date: data.start_date, end_date: data.end_date });
+      const startDate = new Date(data.start_date);
+      const endDate = new Date(data.end_date);
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.error('❌ [PolicyDetail] Invalid dates:', { start_date: data.start_date, end_date: data.end_date });
+        toast.error('Date della polizza non valide');
+        navigate(ROUTES.insurance.policies);
+        return;
+      }
+
+      // Validate premium amount
+      console.log('💰 [PolicyDetail] Validating premium amount:', data.premium_amount);
+      if (typeof data.premium_amount !== 'number' || data.premium_amount < 0) {
+        console.error('❌ [PolicyDetail] Invalid premium amount:', data.premium_amount);
+        toast.error('Premio assicurativo non valido');
+        navigate(ROUTES.insurance.policies);
+        return;
+      }
+
+      // Log contact information
+      console.log('👤 [PolicyDetail] Contact information:', data.contact);
+      console.log('👥 [PolicyDetail] Created by user:', data.created_by_user);
+
+      console.log('✅ [PolicyDetail] All validations passed, setting policy data');
+      console.log('📋 [PolicyDetail] Final policy object:', JSON.stringify(data, null, 2));
+      
       setPolicy(data);
+      console.log('🎯 [PolicyDetail] Policy state set successfully');
     } catch (error) {
-      console.error('❌ [PolicyDetail] Error:', error);
-      toast.error('Errore nel caricamento della polizza');
+      console.error('💥 [PolicyDetail] Unexpected error:', error);
+      console.error('💥 [PolicyDetail] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      toast.error(`Errore imprevisto nel caricamento della polizza: ${error instanceof Error ? error.message : 'Unknown error'}`);
       navigate(ROUTES.insurance.policies);
     } finally {
       setLoading(false);
+      console.log('🏁 [PolicyDetail] fetchPolicy completed');
     }
   }, [id, organization?.id, navigate]);
 
@@ -228,23 +286,27 @@ export const PolicyDetail: React.FC = () => {
     }
   };
 
-  return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={handleBack}
-          className="inline-flex items-center text-gray-600 hover:text-gray-700 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Torna alle polizze
-        </button>
-        
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Polizza {policy.policy_number}
-            </h1>
+  // Safe rendering with error boundary
+  try {
+    console.log('🎨 [PolicyDetail] Starting render with policy:', policy?.policy_number);
+    
+    return (
+      <div className="p-6 max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center text-gray-600 hover:text-gray-700 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Torna alle polizze
+          </button>
+          
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Polizza {policy.policy_number}
+              </h1>
             <p className="text-gray-600 mt-1 flex items-center">
               <span className={getStatusBadge(policy.status)}>
                 {POLICY_STATUS_LABELS[policy.status as keyof typeof POLICY_STATUS_LABELS] || policy.status}
@@ -388,7 +450,7 @@ export const PolicyDetail: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Client Information */}
-          {policy.contact && (
+          {policy.contacts && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2" />
@@ -397,42 +459,42 @@ export const PolicyDetail: React.FC = () => {
 
               <div className="space-y-3">
                 <div>
-                  <p className="font-semibold text-gray-900">{policy.contact.name}</p>
-                  {policy.contact.company && (
+                  <p className="font-semibold text-gray-900">{policy.contacts.name}</p>
+                  {policy.contacts.company && (
                     <p className="text-sm text-gray-600 flex items-center mt-1">
                       <Building2 className="w-3 h-3 mr-1" />
-                      {policy.contact.company}
+                      {policy.contacts.company}
                     </p>
                   )}
                 </div>
 
-                {policy.contact.email && (
+                {policy.contacts.email && (
                   <div className="flex items-center text-sm text-gray-600">
                     <Mail className="w-4 h-4 mr-2" />
                     <a 
-                      href={`mailto:${policy.contact.email}`}
+                      href={`mailto:${policy.contacts.email}`}
                       className="hover:text-blue-600 transition-colors"
                     >
-                      {policy.contact.email}
+                      {policy.contacts.email}
                     </a>
                   </div>
                 )}
 
-                {policy.contact.phone && (
+                {policy.contacts.phone && (
                   <div className="flex items-center text-sm text-gray-600">
                     <Phone className="w-4 h-4 mr-2" />
                     <a 
-                      href={`tel:${policy.contact.phone}`}
+                      href={`tel:${policy.contacts.phone}`}
                       className="hover:text-blue-600 transition-colors"
                     >
-                      {policy.contact.phone}
+                      {policy.contacts.phone}
                     </a>
                   </div>
                 )}
 
                 <div className="pt-2 border-t border-gray-200">
                   <Link
-                    to={ROUTES.contactsDetail(policy.contact.id.toString())}
+                    to={ROUTES.contactsDetail(policy.contacts.id.toString())}
                     className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 transition-colors"
                   >
                     Vedi profilo cliente
@@ -499,10 +561,10 @@ export const PolicyDetail: React.FC = () => {
                   {new Date(policy.updated_at).toLocaleTimeString('it-IT')}
                 </div>
               )}
-              {policy.created_by_user && (
+              {policy.profiles && (
                 <div>
                   <span className="font-medium">Creata da:</span>{' '}
-                  {policy.created_by_user.email}
+                  {policy.profiles.full_name || 'Utente sconosciuto'}
                 </div>
               )}
             </div>
@@ -558,4 +620,30 @@ export const PolicyDetail: React.FC = () => {
       )}
     </div>
   );
+  } catch (renderError) {
+    console.error('💥 [PolicyDetail] Rendering error:', renderError);
+    console.error('💥 [PolicyDetail] Policy data during error:', policy);
+    
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Errore di visualizzazione</h2>
+          <p className="text-gray-600 mb-4">
+            Si è verificato un errore durante la visualizzazione della polizza.
+          </p>
+          <div className="text-sm text-gray-500 mb-4">
+            <strong>Errore:</strong> {renderError instanceof Error ? renderError.message : 'Unknown error'}
+          </div>
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Torna alle polizze
+          </button>
+        </div>
+      </div>
+    );
+  }
 };

@@ -31,12 +31,14 @@ interface CommissionData {
 // Type for raw data from Supabase query
 interface RawCommissionData {
   id: string;
+  policy_id: string;
+  contact_id: string;
   commission_type: string;
   commission_amount: number;
   status: string;
   calculation_date: string;
-  policy: Array<{ policy_number: string }>;
-  contact: Array<{ name: string }>;
+  insurance_policies: Array<{ policy_number: string }>;
+  contacts: Array<{ name: string }>;
 }
 
 const CommissionReports: React.FC = () => {
@@ -94,12 +96,14 @@ const CommissionReports: React.FC = () => {
         .from('insurance_commissions')
         .select(`
           id,
-          policy:insurance_policies(policy_number),
-          contact:contacts(name),
+          policy_id,
+          contact_id,
           commission_type,
           commission_amount,
           status,
-          calculation_date
+          calculation_date,
+          insurance_policies!policy_id(policy_number),
+          contacts!contact_id(name)
         `)
         .eq('organization_id', organizationId)
         .gte('calculation_date', filters.startDate)
@@ -118,23 +122,37 @@ const CommissionReports: React.FC = () => {
       const { data, error } = await query;
 
       if (error) throw error;
+      
+      console.log('🔍 [CommissionReports] Raw data from Supabase:', data);
 
       const rawData = data || [];
       
       // Transform raw data to match CommissionData interface
-      const commissionsData: CommissionData[] = rawData.map((item: RawCommissionData) => ({
-        id: item.id,
-        policy: {
-          policy_number: item.policy[0]?.policy_number || 'N/A'
-        },
-        contact: {
-          name: item.contact[0]?.name || 'N/A'
-        },
-        commission_type: item.commission_type,
-        commission_amount: item.commission_amount,
-        status: item.status,
-        calculation_date: item.calculation_date
-      }));
+      const commissionsData: CommissionData[] = rawData.map((item: RawCommissionData) => {
+        // Extract policy number from joined insurance_policies
+        const policyNumber = item.insurance_policies && item.insurance_policies.length > 0 
+          ? item.insurance_policies[0].policy_number 
+          : 'N/A';
+        
+        // Extract contact name from joined contacts
+        const contactName = item.contacts && item.contacts.length > 0
+          ? item.contacts[0].name
+          : 'N/A';
+
+        return {
+          id: item.id,
+          policy: {
+            policy_number: policyNumber
+          },
+          contact: {
+            name: contactName
+          },
+          commission_type: item.commission_type,
+          commission_amount: item.commission_amount,
+          status: item.status,
+          calculation_date: item.calculation_date
+        };
+      });
       
       setCommissions(commissionsData);
 

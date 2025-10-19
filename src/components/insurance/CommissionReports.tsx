@@ -28,7 +28,7 @@ interface CommissionData {
   calculation_date: string;
 }
 
-// Type for raw data from Supabase query
+// Type for raw data from Supabase query (using unknown for debugging)
 interface RawCommissionData {
   id: string;
   policy_id: string;
@@ -37,8 +37,8 @@ interface RawCommissionData {
   commission_amount: number;
   status: string;
   calculation_date: string;
-  insurance_policies: Array<{ policy_number: string }>;
-  contacts: Array<{ name: string }>;
+  insurance_policies: unknown;
+  contacts: unknown;
 }
 
 const CommissionReports: React.FC = () => {
@@ -102,8 +102,8 @@ const CommissionReports: React.FC = () => {
           commission_amount,
           status,
           calculation_date,
-          insurance_policies!policy_id(policy_number),
-          contacts!contact_id(name)
+          insurance_policies(policy_number),
+          contacts(name)
         `)
         .eq('organization_id', organizationId)
         .gte('calculation_date', filters.startDate)
@@ -121,23 +121,31 @@ const CommissionReports: React.FC = () => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [CommissionReports] Supabase query error:', error);
+        throw error;
+      }
       
       console.log('🔍 [CommissionReports] Raw data from Supabase:', data);
+      console.log('🔍 [CommissionReports] Query used:', query);
 
       const rawData = data || [];
+      console.log('🔍 [CommissionReports] rawData length:', rawData.length);
       
       // Transform raw data to match CommissionData interface
-      const commissionsData: CommissionData[] = rawData.map((item: RawCommissionData) => {
+      const commissionsData: CommissionData[] = rawData.map((item: RawCommissionData, index: number) => {
+        console.log(`🔍 [CommissionReports] Processing item ${index}:`, item);
+        console.log(`🔍 [CommissionReports] Item ${index} - insurance_policies:`, item.insurance_policies);
+        console.log(`🔍 [CommissionReports] Item ${index} - contacts:`, item.contacts);
+        
         // Extract policy number from joined insurance_policies
-        const policyNumber = item.insurance_policies && item.insurance_policies.length > 0 
-          ? item.insurance_policies[0].policy_number 
-          : 'N/A';
+        const policyNumber = (item.insurance_policies as { policy_number?: string })?.policy_number || 'N/A';
         
         // Extract contact name from joined contacts
-        const contactName = item.contacts && item.contacts.length > 0
-          ? item.contacts[0].name
-          : 'N/A';
+        const contactName = (item.contacts as { name?: string })?.name || 'N/A';
+
+        console.log(`🔍 [CommissionReports] Item ${index} - Extracted policyNumber:`, policyNumber);
+        console.log(`🔍 [CommissionReports] Item ${index} - Extracted contactName:`, contactName);
 
         return {
           id: item.id,

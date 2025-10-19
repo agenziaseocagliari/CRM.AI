@@ -24,7 +24,17 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          # Use npm install instead of npm ci for better compatibility
+          # Retry logic for network resilience
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt to install dependencies..."
+            npm install --legacy-peer-deps --no-fund --no-audit && break
+            if [ $attempt -lt 3 ]; then
+              echo "Install failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
 
       - name: Run TypeScript lint
         run: npm run lint

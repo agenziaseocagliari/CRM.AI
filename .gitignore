@@ -28,6 +28,8 @@ dist-ssr
 .env.*
 
 # 🔒 SECURITY: Debug and test files with hardcoded secrets
+MEMORIZED_CREDENTIALS.md
+.credentials_protected
 
 # Python Virtual Environments
 python-services/*/venv/

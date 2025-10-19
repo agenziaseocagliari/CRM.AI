@@ -45,6 +45,8 @@ import { Forms } from './components/Forms';
 import ClaimsList from './components/insurance/ClaimsList';
 import ClaimsForm from './components/insurance/ClaimsForm';
 import ClaimDetail from './components/insurance/ClaimDetail';
+import CommissionDashboard from './components/insurance/CommissionDashboard';
+import CommissionsList from './components/insurance/CommissionsList';
 import { FormsInsurance } from './components/insurance/FormsInsurance';
 import { Opportunities } from './components/Opportunities';
 import { Reports } from './components/Reports';
@@ -590,7 +592,8 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             }>
-              <Route index element={<InsuranceCommissionsPage />} />
+              <Route index element={<CommissionDashboard />} />
+              <Route path="list" element={<CommissionsList />} />
             </Route>
             <Route path={ROUTES.insurance.renewals} element={
               session ? (

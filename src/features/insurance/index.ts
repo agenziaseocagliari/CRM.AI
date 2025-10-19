@@ -1,5 +1,6 @@
 import React from 'react';
 import PlaceholderPage from '../../components/PlaceholderPage';
+import RenewalCalendar from '../../components/insurance/RenewalCalendar';
 
 // Insurance vertical module - Phase 1.1 Complete Implementation
 
@@ -25,7 +26,4 @@ export const InsuranceCommissionsPage = () => React.createElement(PlaceholderPag
     description: 'Calcolo automatico e tracking delle provvigioni su polizze attive e rinnovate.'
 });
 
-export const InsuranceRenewalsPage = () => React.createElement(PlaceholderPage, {
-    title: 'Scadenzario',
-    description: 'Gestione scadenze polizze con promemoria automatici e workflow di rinnovo.'
-});
+export const InsuranceRenewalsPage = () => React.createElement(RenewalCalendar);

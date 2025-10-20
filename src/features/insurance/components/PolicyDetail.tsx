@@ -89,7 +89,7 @@ export const PolicyDetail: React.FC = () => {
         .from('insurance_policies')
         .select(`
           *,
-          contacts!contact_id(id, name, email, phone, company),
+          contacts!fk_insurance_policies_contact(id, name, email, phone, company),
           profiles!created_by(id, full_name)
         `)
         .eq('id', id);

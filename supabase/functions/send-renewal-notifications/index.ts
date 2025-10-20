@@ -16,7 +16,7 @@ interface PolicyRenewalData {
   policy_number: string;
   contact_name: string;
   contact_email: string;
-  expiration_date: string;
+  end_date: string;
   days_until_expiry: number;
   organization_id: string;
   notification_email: string;
@@ -60,7 +60,7 @@ function generateEmailHTML(policy: PolicyRenewalData): string {
               <strong>Numero Polizza:</strong> ${policy.policy_number}
             </p>
             <p style="margin: 5px 0; color: #6B7280;">
-              <strong>Data Scadenza:</strong> ${new Date(policy.expiration_date).toLocaleDateString('it-IT', { 
+              <strong>Data Scadenza:</strong> ${new Date(policy.end_date).toLocaleDateString('it-IT', { 
                 day: '2-digit', 
                 month: 'long', 
                 year: 'numeric' 

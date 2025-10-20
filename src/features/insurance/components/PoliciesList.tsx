@@ -85,7 +85,7 @@ export const PoliciesList: React.FC = () => {
         .from('insurance_policies')
         .select(`
           *,
-          contact:contacts(
+          contact:contacts!fk_insurance_policies_contact(
             id,
             name,
             email,

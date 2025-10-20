@@ -132,7 +132,8 @@
     "overrides": {
         "esbuild": "0.21.5",
         "@rollup/rollup-linux-x64-gnu": "4.52.5",
-        "@rollup/rollup-win32-x64-msvc": "4.52.5"
+        "@rollup/rollup-win32-x64-msvc": "4.52.5",
+        "@csstools/css-color-parser": "^3.0.9"
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.52.5",

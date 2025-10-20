@@ -88,10 +88,7 @@ CREATE TABLE IF NOT EXISTS insurance_risk_profiles (
   
   -- Audit
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
-  -- Constraints
-  CONSTRAINT unique_contact_active_profile UNIQUE (contact_id, organization_id) WHERE is_active = true
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Indexes for performance
@@ -102,6 +99,11 @@ CREATE INDEX IF NOT EXISTS idx_risk_profiles_risk_category ON insurance_risk_pro
 CREATE INDEX IF NOT EXISTS idx_risk_profiles_total_risk_score ON insurance_risk_profiles(total_risk_score);
 CREATE INDEX IF NOT EXISTS idx_risk_profiles_assessment_date ON insurance_risk_profiles(assessment_date DESC);
 CREATE INDEX IF NOT EXISTS idx_risk_profiles_active ON insurance_risk_profiles(is_active) WHERE is_active = true;
+
+-- Unique constraint for one active profile per contact per organization (partial index)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_contact_active_profile 
+  ON insurance_risk_profiles(contact_id, organization_id) 
+  WHERE is_active = true;
 
 -- Comments
 COMMENT ON TABLE insurance_risk_profiles IS 'Comprehensive risk assessment profiles for insurance contacts';
@@ -165,6 +167,14 @@ ALTER TABLE insurance_risk_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE risk_assessment_history ENABLE ROW LEVEL SECURITY;
 
 -- Policies for insurance_risk_profiles
+
+-- Drop existing policies if they exist (idempotent migration)
+DROP POLICY IF EXISTS "risk_profiles_select" ON insurance_risk_profiles;
+DROP POLICY IF EXISTS "risk_profiles_insert" ON insurance_risk_profiles;
+DROP POLICY IF EXISTS "risk_profiles_update" ON insurance_risk_profiles;
+DROP POLICY IF EXISTS "risk_profiles_delete" ON insurance_risk_profiles;
+DROP POLICY IF EXISTS "risk_history_select" ON risk_assessment_history;
+DROP POLICY IF EXISTS "risk_history_insert" ON risk_assessment_history;
 
 -- SELECT: Users can view risk profiles in their organization
 CREATE POLICY "risk_profiles_select" ON insurance_risk_profiles
@@ -250,6 +260,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_risk_profiles_updated_at ON insurance_risk_profiles;
 CREATE TRIGGER update_risk_profiles_updated_at
   BEFORE UPDATE ON insurance_risk_profiles
   FOR EACH ROW
@@ -322,6 +333,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS create_risk_history_on_change ON insurance_risk_profiles;
 CREATE TRIGGER create_risk_history_on_change
   AFTER INSERT OR UPDATE OF total_risk_score ON insurance_risk_profiles
   FOR EACH ROW
@@ -347,6 +359,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS deactivate_old_profiles_trigger ON insurance_risk_profiles;
 CREATE TRIGGER deactivate_old_profiles_trigger
   AFTER INSERT ON insurance_risk_profiles
   FOR EACH ROW

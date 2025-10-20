@@ -98,6 +98,10 @@ import {
     PolicyDetail,
     PolicyForm
 } from './features/insurance';
+
+// Risk Profiling System (Phase 2)
+import RiskAssessment from './components/insurance/RiskAssessment';
+import RiskProfileView from './components/insurance/RiskProfileView';
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 
 
@@ -435,6 +439,23 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
+            
+            {/* Risk Profiling Routes (Phase 2) */}
+            <Route path="/dashboard/assicurazioni/valutazione-rischio/:contactId" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <RiskAssessment />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            <Route path="/dashboard/assicurazioni/valutazione-rischio/view/:profileId" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <RiskProfileView />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            
             <Route path="/dashboard/insurance/dashboard" element={
               session ? (
                 <InsuranceOnlyGuard>

@@ -15,7 +15,7 @@ import {
     User,
     XCircle
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
@@ -64,13 +64,7 @@ export default function ClaimDetail() {
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  useEffect(() => {
-    if (id && organizationId) {
-      fetchClaim();
-    }
-  }, [id, organizationId]);
-
-  const fetchClaim = async () => {
+  const fetchClaim = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -98,7 +92,13 @@ export default function ClaimDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, organizationId, navigate]);
+
+  useEffect(() => {
+    if (id && organizationId) {
+      fetchClaim();
+    }
+  }, [id, organizationId, fetchClaim]);
 
   const updateClaimStatus = async (newStatus: string) => {
     if (!claim) return;

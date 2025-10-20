@@ -60,12 +60,14 @@ async function testProfileLookup(testUser) {
   colorLog('bright', `Testing: ${testUser.name} (${testUser.email})`);
   colorLog('cyan', '='.repeat(80));
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Note: supabase client prepared for future authentication tests
+  // const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   try {
     // Step 1: Sign in to get real JWT
     colorLog('blue', '\n📝 Step 1: Authenticating...');
-    const password = process.env[`PASSWORD_${testUser.email.split('@')[0].toUpperCase()}`] || 'test-password';
+    // Note: password variable prepared for future authentication flow
+    // const password = process.env[`PASSWORD_${testUser.email.split('@')[0].toUpperCase()}`] || 'test-password';
     
     // For automated testing, we'll query directly with service role
     // In real scenario, user would sign in with password

@@ -1,3 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
+// Note: This file intentionally exports both components (VerticalProvider), hooks (useVertical),
+// and types/context. Splitting would break the cohesive context pattern.
+
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 

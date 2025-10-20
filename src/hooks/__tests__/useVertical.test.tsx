@@ -4,6 +4,9 @@
  * Tests profile retrieval, vertical configuration, and error handling
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Note: 'any' types are acceptable in test mocks for flexibility
+
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

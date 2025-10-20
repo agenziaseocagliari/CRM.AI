@@ -66,11 +66,14 @@ export default function ClaimsForm() {
   const [errors, setErrors] = useState<Partial<Record<keyof ClaimFormData, string>>>({});
 
   useEffect(() => {
+    // Fetch functions are defined below and stable - no need to include in deps
+    // Adding them would cause unnecessary re-renders
     fetchContacts();
     fetchPolicies();
     if (isEdit && id) {
       fetchClaim();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEdit]);
 
   useEffect(() => {
@@ -210,7 +213,7 @@ export default function ClaimsForm() {
 
       if (isEdit) {
         // Update
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('insurance_claims')
           .update({
             ...claimData,
@@ -224,7 +227,7 @@ export default function ClaimsForm() {
         alert('Sinistro aggiornato con successo!');
       } else {
         // Create
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('insurance_claims')
           .insert([{
             ...claimData,

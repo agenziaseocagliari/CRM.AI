@@ -114,6 +114,98 @@ Credits System:        ████████████████░░░
 
 ### **20 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔧 🔧 FIX: Insurance Policies Schema Relationships + FK Constraints + PostgREST Cache Reload
+- 📚 📝 DOCS: Add VerticalProvider context mismatch fix documentation
+- 🔧 🔧 CRITICAL FIX: Resolve VerticalProvider context mismatch error
+- 📚 📝 DOCS: Add NPM CI error fix documentation
+- 🔧 🔧 FIX: Resolve npm ci error - Fix @csstools/css-color-parser dependency issue
+- 📚 📝 DOCS: Add role cleanup fixes documentation
+- 🔄 🔧 DATABASE: Fix role references in migrations (TO public instead of TO authenticated/service_role)
+- 🔄 🔧 CI/CD: Add automated lint check workflow
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 Merge branch 'rollback/stable-615ec3b' into main
+- 🔄 🔧 LINT: Fix all 50 ESLint errors and warnings
+- 📚 📚 DOCS: Production Testing Guide & Complete Delivery Report
+- 🔧 🔥 CRITICAL FIX: Eliminate Circular Dependency in RLS SELECT Policy
+- 🔄 📋 DIAGNOSTICS: Guida completa troubleshooting Profile Lookup
+- 🔧 🔧 CI/CD FIX: Corretto comando 'supabase link --project-ref' con argomento
+- 🔧 🔒 SECURITY FIX: Corretto RLS policies da 'TO authenticated' a 'TO public'
+- 🔧 ✅ FIX: Risolto 'Profile lookup failed' con error handling robusto e RLS ottimizzato
+- 🔄 UPDATE: CI/CD workflows to deploy from rollback/stable-615ec3b branch
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 🔄 ROBUST FIX: Add triple fallback for migration history retrieval
+- 🔧 🔄 FIX: Add migration sync logic to resolve remote/local divergence
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 ✅ FIX: Remove duplicate migration 20251016_workflows_table.sql
+- 🔧 ✅ MIGRATION FIX: All 7 migrations now have unique versions - duplicate resolved
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 🔧 FIX: Resolve duplicate migration version 20251016 + comprehensive docs
+- 🔧 ✅ FIX: jsPDF import resolution + html2canvas/dompurify integration
+- 🔧 ✅ FIX: Rollup native module resolution for Linux CI/CD
+- 🔧 ✅ FIX: Force esbuild 0.21.5 for Vite compatibility + Vercel build config
+- 🔄 📚 Add comprehensive NPM engine solution documentation
+- 🔧 ✅ DEFINITIVE NPM FIX: Use npm install with retry logic, add .npmrc config for stability, regenerate package-lock.json
+- 🔄 📚 Add comprehensive final solution documentation
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 ✅ DEFINITIVE FIX: All 7 migration files now fully idempotent - added DROP IF EXISTS for all POLICY, TRIGGER, and FUNCTION statements
+- 📚 📚 DOCS: Advanced Migration Idempotence Solution Guide
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 🚀 ADVANCED SOLUTION: Migration Idempotence Fix + Pre-Flight Audit
+- 📚 📚 DOCS: Comprehensive Deployment Solution Documentation
+- 🔄 🏗️ REFACTOR: Unified Supabase Deployment Strategy - Robust & Definitive
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 🔐 FIX: RLS Policies - Change TO authenticated to TO public for compliance
+- 🔧 🔧 FIX: GitHub Workflow - Supabase link command with proper project-ref configuration
+- ✅ 🔐 FEAT: Multi-tenancy - Fix profile lookup with organization_id validation
+- 🔄 🔧 ESLINT CLEANUP: Fix all linting errors and warnings definitively
+- 🔄 🔧 FIX CRITICO: Supabase Nested Query - Risolto errore 400 Bad Request
+- 🔧 ✅ COMPLETE FIX: 'Polizza non trovata' - PolicyDetail migliorato + Edge Function + Test integrazione
+- 🔧 🐛 FIX: PolicyDetail - Migliore gestione caricamento polizza e logging dettagliato per debug errore 'Polizza non trovata'
+- 🔄 🔧 ✅ POSTGRESQL ROLE CLEANUP: Fixed all problematic role references
+- 🔧 🔧 ✅ RENEWAL CALENDAR FIX: Risolto pulsante Dettagli - Navigazione corretta
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI.git
+- 🔧 ✅ FIX: Correzione schema renewal_reminders - Risolto errore produzione
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- 🔄 🚀 URGENT: Add renewal_reminders view migration + GitHub Actions auto-deploy
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- 🔄 🚀 ACTIVATION: RenewalCalendar Live in Production
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge: RenewalCalendar System + Remote Updates
+- ✅ ✨ FEATURE: Complete RenewalCalendar System Implementation
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 🔍 DEBUG: Add extensive logging to CommissionReports for Supabase query analysis
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 🐛 FIX: CommissionReports - Fix Supabase query joins for Policy & Client data
+- 🔄 📊 FINAL REPORT: Sprint 2 Session 5 - CommissionReports verification complete with full documentation
+- 🔄 Merge remote changes with CommissionReports verification complete
+- 🔄 ✅ SPRINT 2 SESSION 5 VERIFICA: CommissionReports testing complete with demo scenarios and edge case validation
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- ✅ feat: Add navigation to CommissionReports
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- 🔧 🔧 FIX: CommissionReports TypeScript errors
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔄 Merge remote changes with CommissionReports implementation
+- ✅ feat: Add CommissionReports component with PDF/CSV export
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 fix: Remove duplicate 'Calcola Nuova Provvigione' sidebar item
+- 🔧 fix: Ensure organization_id is read from JWT in CommissionCalculator
+- 📚 docs: automated daily update 2025-10-19 [skip ci]
+- 🔧 fix: Correct sidebar config for insurance vertical
+
+**Daily Metrics**:
+- Total files: 2352
+- TypeScript files: 335
+- Lines of code: ~82,289
+- Commits today: 81
+- Recent migrations: 5
+- Dependencies: 86
+
+### **20 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔄 Merge branch 'rollback/stable-615ec3b' into main
 - 🔄 🔧 LINT: Fix all 50 ESLint errors and warnings
 - 📚 📚 DOCS: Production Testing Guide & Complete Delivery Report

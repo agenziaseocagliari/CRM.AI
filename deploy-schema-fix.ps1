@@ -67,10 +67,10 @@ Write-Host ""
 
 # Step 4: Force PostgREST schema cache reload
 Write-Host "🔄 Step 4: Reloading PostgREST schema cache..." -ForegroundColor Cyan
+# Method 1: Via SQL NOTIFY
+Write-Host "   Method 1: Sending NOTIFY pgrst to database..." -ForegroundColor Gray
+$notifyCommand = "NOTIFY pgrst, 'reload schema';"
 try {
-    # Method 1: Via SQL NOTIFY
-    Write-Host "   Method 1: Sending NOTIFY pgrst to database..." -ForegroundColor Gray
-    $notifyCommand = "NOTIFY pgrst, 'reload schema';"
     npx supabase db execute --sql $notifyCommand
     
     if ($LASTEXITCODE -eq 0) {
@@ -78,11 +78,6 @@ try {
     } else {
         Write-Host "   ⚠️  NOTIFY command failed (might not be supported)" -ForegroundColor Yellow
     }
-    
-    # Method 2: Restart PostgREST via API (requires service role key)
-    Write-Host "   Method 2: Attempting API-based restart..." -ForegroundColor Gray
-    Write-Host "   ℹ️  Manual restart may be required via Supabase Dashboard" -ForegroundColor Yellow
-    
 } catch {
     Write-Host "   ⚠️  Schema cache reload failed: $_" -ForegroundColor Yellow
     Write-Host "   📝 Manual action required:" -ForegroundColor Yellow
@@ -90,6 +85,10 @@ try {
     Write-Host "      2. Navigate to Database → API Settings" -ForegroundColor Gray
     Write-Host "      3. Click 'Reload Schema Cache' button" -ForegroundColor Gray
 }
+
+# Method 2: Restart PostgREST via API (requires service role key)
+Write-Host "   Method 2: Attempting API-based restart..." -ForegroundColor Gray
+Write-Host "   ℹ️  Manual restart may be required via Supabase Dashboard" -ForegroundColor Yellow
 Write-Host ""
 
 # Step 5: Verify foreign keys were created
@@ -157,11 +156,11 @@ Write-Host "   API Settings: https://supabase.com/dashboard/project/$SUPABASE_PR
 Write-Host ""
 
 # Optional: Run integration test
-$runTests = Read-Host "🧪 Run integration tests now? (y/n)"
+$runTests = Read-Host "Run integration tests now? (y/n)"
 if ($runTests -eq 'y' -or $runTests -eq 'Y') {
     Write-Host ""
-    Write-Host "🧪 Running integration tests..." -ForegroundColor Cyan
+    Write-Host "Running integration tests..." -ForegroundColor Cyan
     npm run test -- --testPathPattern="RenewalCalendar" --silent=false
 }
 
-Write-Host "✨ Done!" -ForegroundColor Green
+Write-Host "Done!" -ForegroundColor Green

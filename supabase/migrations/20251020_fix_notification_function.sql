@@ -55,9 +55,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Grant permissions
-GRANT EXECUTE ON FUNCTION get_policies_needing_notification() TO authenticated;
-GRANT EXECUTE ON FUNCTION get_policies_needing_notification() TO service_role;
+-- Grant permissions to public (authenticated users inherit from public)
+GRANT EXECUTE ON FUNCTION get_policies_needing_notification() TO public;
 
 -- Add comment
 COMMENT ON FUNCTION get_policies_needing_notification() IS 

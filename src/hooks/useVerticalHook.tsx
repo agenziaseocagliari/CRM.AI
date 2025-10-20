@@ -1,11 +1,5 @@
-import { VerticalContext } from '@/contexts/VerticalContext';
-import { useContext } from 'react';
+// DEPRECATED: This file is kept for backward compatibility only
+// All new code should import from './useVertical' directly
 
-// Hook to use the vertical context
-export function useVertical() {
-  const context = useContext(VerticalContext);
-  if (!context) {
-    throw new Error('useVertical must be used within a VerticalProvider');
-  }
-  return context;
-}
+// Re-export from the main file
+export { useVertical } from './useVertical';

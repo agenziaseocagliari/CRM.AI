@@ -1,30 +1,24 @@
 // Utility functions and hooks for vertical management
 // Separated from useVertical.tsx to avoid React refresh warnings
 
-import { VerticalContext } from '@/contexts/VerticalContext';
-import { useContext } from 'react';
+// Re-export the main hook from useVertical.tsx
+export { useVertical } from './useVertical';
 
-// Main hook for consuming context
-export function useVertical() {
-    const context = useContext(VerticalContext);
-    if (!context) {
-        throw new Error('useVertical must be used within VerticalProvider');
-    }
-    return context;
-}
+// Import for utility hooks
+import { useVertical as useVerticalHook } from './useVertical';
 
 // Utility hooks
 export function useIsInsurance() {
-    const { vertical } = useVertical();
+    const { vertical } = useVerticalHook();
     return vertical === 'insurance';
 }
 
 export function useIsStandard() {
-    const { vertical } = useVertical();
+    const { vertical } = useVerticalHook();
     return vertical === 'standard';
 }
 
 export function useHasModule(module: string) {
-    const { hasModule } = useVertical();
+    const { hasModule } = useVerticalHook();
     return hasModule(module);
 }

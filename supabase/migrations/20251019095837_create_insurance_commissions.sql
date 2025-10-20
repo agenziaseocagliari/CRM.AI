@@ -70,6 +70,7 @@ ALTER TABLE insurance_commissions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Users can only see commissions from their organization
 DROP POLICY IF EXISTS "insurance_commissions_select_org" ON insurance_commissions;
+
 CREATE POLICY "insurance_commissions_select_org" ON insurance_commissions FOR
 SELECT TO public USING (
         organization_id IN (
@@ -82,6 +83,7 @@ SELECT TO public USING (
 
 -- RLS Policy: Users can only insert commissions for their organization
 DROP POLICY IF EXISTS "insurance_commissions_insert_org" ON insurance_commissions;
+
 CREATE POLICY "insurance_commissions_insert_org" ON insurance_commissions FOR
 INSERT
     TO public
@@ -97,6 +99,7 @@ WITH
 
 -- RLS Policy: Users can only update commissions from their organization
 DROP POLICY IF EXISTS "insurance_commissions_update_org" ON insurance_commissions;
+
 CREATE POLICY "insurance_commissions_update_org" ON insurance_commissions FOR
 UPDATE TO public USING (
     organization_id IN (
@@ -118,6 +121,7 @@ WITH
 
 -- RLS Policy: Users can only delete commissions from their organization
 DROP POLICY IF EXISTS "insurance_commissions_delete_org" ON insurance_commissions;
+
 CREATE POLICY "insurance_commissions_delete_org" ON insurance_commissions FOR DELETE TO public USING (
     organization_id IN (
         SELECT organization_id
@@ -129,7 +133,9 @@ CREATE POLICY "insurance_commissions_delete_org" ON insurance_commissions FOR DE
 
 -- Create function to automatically update updated_at timestamp
 DROP TRIGGER IF EXISTS insurance_commissions_updated_at_trigger ON insurance_commissions;
-DROP FUNCTION IF EXISTS update_insurance_commissions_updated_at();
+
+DROP FUNCTION IF EXISTS update_insurance_commissions_updated_at ();
+
 CREATE OR REPLACE FUNCTION update_insurance_commissions_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

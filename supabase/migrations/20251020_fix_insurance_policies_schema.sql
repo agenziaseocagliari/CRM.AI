@@ -82,18 +82,15 @@ END $$;
 -- 2. Create helpful indexes for performance (idempotent)
 -- ========================================================
 
-CREATE INDEX IF NOT EXISTS idx_insurance_policies_contact_id 
-ON insurance_policies(contact_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_contact_id ON insurance_policies (contact_id);
 
-CREATE INDEX IF NOT EXISTS idx_insurance_policies_organization_id 
-ON insurance_policies(organization_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_organization_id ON insurance_policies (organization_id);
 
-CREATE INDEX IF NOT EXISTS idx_insurance_policies_created_by 
-ON insurance_policies(created_by) 
-WHERE created_by IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_created_by ON insurance_policies (created_by)
+WHERE
+    created_by IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_insurance_policies_status_end_date 
-ON insurance_policies(status, end_date);
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_status_end_date ON insurance_policies (status, end_date);
 
 -- 3. Verify relationships are properly defined
 -- ==============================================
@@ -139,6 +136,7 @@ COMMENT ON TABLE insurance_policies IS 'Insurance policies table with FK constra
 
 -- Add helpful documentation
 COMMENT ON CONSTRAINT fk_insurance_policies_contact ON insurance_policies IS 'Links policy to contact (policyholder)';
+
 COMMENT ON CONSTRAINT fk_insurance_policies_organization ON insurance_policies IS 'Links policy to organization (multi-tenancy)';
 
 -- Verify view dependencies

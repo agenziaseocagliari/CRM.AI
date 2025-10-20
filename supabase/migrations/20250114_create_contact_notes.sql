@@ -24,6 +24,7 @@ ALTER TABLE contact_notes ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for contact_notes
 DROP POLICY IF EXISTS "Users can view notes for their organization's contacts" ON contact_notes;
+
 CREATE POLICY "Users can view notes for their organization's contacts" ON contact_notes FOR
 SELECT TO public USING (
         EXISTS (
@@ -41,6 +42,7 @@ SELECT TO public USING (
     );
 
 DROP POLICY IF EXISTS "Users can create notes for their organization's contacts" ON contact_notes;
+
 CREATE POLICY "Users can create notes for their organization's contacts" ON contact_notes FOR
 INSERT
     TO public
@@ -61,15 +63,19 @@ WITH
     );
 
 DROP POLICY IF EXISTS "Users can update their own notes" ON contact_notes;
+
 CREATE POLICY "Users can update their own notes" ON contact_notes FOR
 UPDATE TO public USING (created_by = auth.uid ());
 
 DROP POLICY IF EXISTS "Users can delete their own notes" ON contact_notes;
+
 CREATE POLICY "Users can delete their own notes" ON contact_notes FOR DELETE TO public USING (created_by = auth.uid ());
 
 -- Update trigger for updated_at
 DROP TRIGGER IF EXISTS update_contact_notes_updated_at ON contact_notes;
-DROP FUNCTION IF EXISTS update_contact_notes_updated_at();
+
+DROP FUNCTION IF EXISTS update_contact_notes_updated_at ();
+
 CREATE OR REPLACE FUNCTION update_contact_notes_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

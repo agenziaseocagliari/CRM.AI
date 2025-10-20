@@ -1,11 +1,13 @@
 import { addDays, addMonths, endOfMonth, format, getDay, getDaysInMonth, parseISO, startOfMonth, subMonths } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertTriangle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Eye, Mail } from 'lucide-react';
+import { AlertTriangle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Eye, Mail, Settings, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
+import { BulkRenewalActions } from './BulkRenewalActions';
+import { ReminderSettings } from './ReminderSettings';
 
 // Types
 interface RenewalReminder {
@@ -234,6 +236,8 @@ const RenewalCalendar: React.FC = () => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [selectedPolicies, setSelectedPolicies] = useState<string[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
   
   const quickActions = useQuickActions();
   const { data: renewalReminders, isLoading, error, refetch } = useRenewalReminders(organizationId);
@@ -337,10 +341,41 @@ const RenewalCalendar: React.FC = () => {
           <CalendarIcon size={28} className="text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900">Calendario Scadenze Rinnovi</h2>
         </div>
-        <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-          {renewalReminders?.length || 0} scadenze nei prossimi 90 giorni
+        <div className="flex gap-2 items-center">
+          <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            {renewalReminders?.length || 0} scadenze nei prossimi 90 giorni
+          </div>
+          <button
+            onClick={() => refetch()}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            title="Aggiorna calendario"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Settings className="h-4 w-4" />
+            Impostazioni
+          </button>
         </div>
       </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <ReminderSettings />
+      )}
+
+      {/* Bulk Actions */}
+      <BulkRenewalActions
+        selectedPolicies={selectedPolicies}
+        onRenewalComplete={() => {
+          refetch();
+          setSelectedPolicies([]);
+        }}
+        onClearSelection={() => setSelectedPolicies([])}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
@@ -363,23 +398,47 @@ const RenewalCalendar: React.FC = () => {
             <p className="text-gray-500 italic">Nessuna scadenza per questa data</p>
           ) : (
             <div className="space-y-3">
-              {selectedDateReminders.map((reminder) => (
-                <div key={reminder.policy_id} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-semibold text-gray-900">{reminder.policy_number}</p>
-                      <p className="text-sm text-gray-600">{reminder.client_name}</p>
-                      <p className="text-xs text-gray-500">{reminder.policy_type}</p>
+              {selectedDateReminders.map((reminder) => {
+                const isSelected = selectedPolicies.includes(reminder.policy_id);
+                return (
+                  <div 
+                    key={reminder.policy_id} 
+                    className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                      isSelected 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      setSelectedPolicies(prev => 
+                        prev.includes(reminder.policy_id)
+                          ? prev.filter(id => id !== reminder.policy_id)
+                          : [...prev, reminder.policy_id]
+                      );
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <div>
+                          <p className="font-semibold text-gray-900">{reminder.policy_number}</p>
+                          <p className="text-sm text-gray-600">{reminder.client_name}</p>
+                          <p className="text-xs text-gray-500">{reminder.policy_type}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(reminder.renewal_status)}`}>
+                        {reminder.days_to_renewal > 0 
+                          ? `${reminder.days_to_renewal} giorni`
+                          : reminder.days_to_renewal === 0 
+                            ? 'Oggi'
+                            : `Scaduta ${Math.abs(reminder.days_to_renewal)} giorni fa`
+                        }
+                      </span>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(reminder.renewal_status)}`}>
-                      {reminder.days_to_renewal > 0 
-                        ? `${reminder.days_to_renewal} giorni`
-                        : reminder.days_to_renewal === 0 
-                          ? 'Oggi'
-                          : `Scaduta ${Math.abs(reminder.days_to_renewal)} giorni fa`
-                      }
-                    </span>
-                  </div>
 
                   <p className="text-sm text-gray-700 mb-3">
                     Premio: €{reminder.premium_amount.toLocaleString('it-IT', { 
@@ -388,27 +447,34 @@ const RenewalCalendar: React.FC = () => {
                     })}
                   </p>
 
-                  {/* Quick Actions */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleSendReminder(reminder)}
-                      className="flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200 transition-colors"
-                      data-testid={`send-reminder-${reminder.policy_id}`}
-                    >
-                      <Mail size={14} />
-                      <span>Invia Promemoria</span>
-                    </button>
-                    <button
-                      onClick={() => handleOpenPolicyDetail(reminder)}
-                      className="flex items-center space-x-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
-                      data-testid={`open-detail-${reminder.policy_id}`}
-                    >
-                      <Eye size={14} />
-                      <span>Dettagli</span>
-                    </button>
+                    {/* Quick Actions */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSendReminder(reminder);
+                        }}
+                        className="flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200 transition-colors"
+                        data-testid={`send-reminder-${reminder.policy_id}`}
+                      >
+                        <Mail size={14} />
+                        <span>Invia Promemoria</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenPolicyDetail(reminder);
+                        }}
+                        className="flex items-center space-x-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
+                        data-testid={`open-detail-${reminder.policy_id}`}
+                      >
+                        <Eye size={14} />
+                        <span>Dettagli</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

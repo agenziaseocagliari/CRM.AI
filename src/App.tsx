@@ -92,11 +92,11 @@ import { supabase } from './lib/supabaseClient';
 // Vertical System
 import { InsuranceOnlyGuard } from './components/guards/VerticalGuard';
 import {
-  InsuranceCommissionsPage,
-  InsurancePoliciesPage,
-  InsuranceRenewalsPage,
-  PolicyDetail,
-  PolicyForm
+    InsuranceCommissionsPage,
+    InsurancePoliciesPage,
+    InsuranceRenewalsPage,
+    PolicyDetail,
+    PolicyForm
 } from './features/insurance';
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 

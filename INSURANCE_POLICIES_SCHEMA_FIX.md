@@ -21,12 +21,14 @@
 ## ❌ PROBLEMA
 
 ### Sintomi
+
 - **Errore**: "Could not find a relationship between 'insurance_policies' and 'profiles' in the schema cache"
 - **Contesto**: Caricamento dello scadenzario polizze (renewal calendar)
 - **Impact**: Impossibile visualizzare promemoria rinnovi polizze
 - **Frequenza**: 100% quando si accede al calendar
 
 ### Stack Trace
+
 ```
 Error loading renewal reminders: {
   code: "PGRST204",
@@ -64,7 +66,7 @@ Error loading renewal reminders: {
 
 ```sql
 -- Check 1: Verifica esistenza FK
-SELECT 
+SELECT
     tc.constraint_name,
     kcu.column_name,
     ccu.table_name AS references_table
@@ -86,6 +88,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 **File**: `supabase/migrations/20251020_fix_insurance_policies_schema.sql`
 
 **Funzionalità**:
+
 - ✅ Creazione FK idempotente (verifica esistenza prima di creare)
 - ✅ FK per `contact_id` → `contacts(id)` con ON DELETE CASCADE
 - ✅ FK per `organization_id` → `organizations(id)` con ON DELETE CASCADE
@@ -95,26 +98,27 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 - ✅ Commenti per documentazione
 
 **Snippet chiave**:
+
 ```sql
 -- FK contact_id
 ALTER TABLE insurance_policies
 ADD CONSTRAINT fk_insurance_policies_contact
-FOREIGN KEY (contact_id) 
-REFERENCES contacts(id) 
+FOREIGN KEY (contact_id)
+REFERENCES contacts(id)
 ON DELETE CASCADE;
 
 -- FK organization_id
 ALTER TABLE insurance_policies
 ADD CONSTRAINT fk_insurance_policies_organization
-FOREIGN KEY (organization_id) 
-REFERENCES organizations(id) 
+FOREIGN KEY (organization_id)
+REFERENCES organizations(id)
 ON DELETE CASCADE;
 
 -- FK created_by (opzionale)
 ALTER TABLE insurance_policies
 ADD CONSTRAINT fk_insurance_policies_created_by
-FOREIGN KEY (created_by) 
-REFERENCES profiles(id) 
+FOREIGN KEY (created_by)
+REFERENCES profiles(id)
 ON DELETE SET NULL;
 ```
 
@@ -123,6 +127,7 @@ ON DELETE SET NULL;
 **File**: `deploy-schema-fix.ps1`
 
 **Funzionalità**:
+
 - ✅ Verifica Supabase CLI installato
 - ✅ Link al progetto Supabase
 - ✅ Apply migration via `supabase db push`
@@ -133,6 +138,7 @@ ON DELETE SET NULL;
 - ✅ Output colorato e informativo
 
 **Comando chiave**:
+
 ```powershell
 # Apply migration
 npx supabase db push --include-all
@@ -147,6 +153,7 @@ npx supabase db execute --sql $notifyCommand
 **File**: `src/__tests__/integration/insurance-policies-schema.test.ts`
 
 **Test Coverage**:
+
 - ✅ FK `insurance_policies` → `contacts`
 - ✅ FK `insurance_policies` → `organizations`
 - ✅ FK `insurance_policies` → `profiles` (opzionale)
@@ -156,11 +163,18 @@ npx supabase db execute --sql $notifyCommand
 - ✅ **Validazione specifica**: errore "relationship" NON presente
 
 **Test critico**:
+
 ```typescript
 it('should not throw "Could not find a relationship" error', async () => {
   const queries = [
-    supabase.from('insurance_policies').select('*, contact:contacts(*)').limit(1),
-    supabase.from('insurance_policies').select('*, organization:organizations(*)').limit(1),
+    supabase
+      .from('insurance_policies')
+      .select('*, contact:contacts(*)')
+      .limit(1),
+    supabase
+      .from('insurance_policies')
+      .select('*, organization:organizations(*)')
+      .limit(1),
     supabase.from('renewal_reminders').select('*').limit(1),
   ];
 
@@ -222,6 +236,7 @@ it('should not throw "Could not find a relationship" error', async () => {
 ```
 
 **Output atteso**:
+
 ```
 🚀 Deployment: Insurance Policies Schema Fix
 ✅ Supabase CLI found
@@ -236,6 +251,7 @@ it('should not throw "Could not find a relationship" error', async () => {
 ### Opzione 2: Manuale Step-by-Step
 
 #### Step 1: Apply Migration
+
 ```powershell
 # Link al progetto
 npx supabase link --project-ref qjtaqrlpronohgpfdxsi
@@ -245,19 +261,22 @@ npx supabase db push --include-all
 ```
 
 #### Step 2: Reload Schema Cache
+
 ```powershell
 # Via SQL NOTIFY
 npx supabase db execute --sql "NOTIFY pgrst, 'reload schema';"
 ```
 
 **Alternativa via Dashboard**:
+
 1. Vai su [Supabase Dashboard](https://supabase.com/dashboard/project/qjtaqrlpronohgpfdxsi)
 2. Naviga su **Database** → **API Settings**
 3. Click su **"Reload Schema Cache"**
 
 #### Step 3: Verify FK
+
 ```sql
-SELECT 
+SELECT
     tc.constraint_name,
     kcu.column_name,
     ccu.table_name AS references_table
@@ -270,6 +289,7 @@ ORDER BY tc.constraint_name;
 ```
 
 **Output atteso**:
+
 ```
 fk_insurance_policies_contact       | contact_id       | contacts
 fk_insurance_policies_organization  | organization_id  | organizations
@@ -277,6 +297,7 @@ fk_insurance_policies_created_by    | created_by       | profiles
 ```
 
 #### Step 4: Test Renewal Reminders
+
 ```sql
 SELECT COUNT(*) FROM renewal_reminders LIMIT 1;
 ```
@@ -300,12 +321,14 @@ npm run test
 ### Post-Deployment Tests
 
 #### 1. Integration Tests
+
 ```powershell
 # Run integration test suite
 npm run test -- --testPathPattern="insurance-policies-schema" --silent=false
 ```
 
 **Success criteria**:
+
 - ✅ 9/9 test passati
 - ✅ Nessun errore "relationship"
 - ✅ Query performance < 2s
@@ -313,6 +336,7 @@ npm run test -- --testPathPattern="insurance-policies-schema" --silent=false
 #### 2. Manual UI Test
 
 1. **Accedi all'app**
+
    ```
    http://localhost:5173 (dev)
    https://crm-ai-rho.vercel.app (prod)
@@ -330,7 +354,7 @@ npm run test -- --testPathPattern="insurance-policies-schema" --silent=false
 
 ```sql
 -- Test 1: Policies con contact nested
-SELECT 
+SELECT
     ip.*,
     c.name as contact_name
 FROM insurance_policies ip
@@ -338,7 +362,7 @@ LEFT JOIN contacts c ON ip.contact_id = c.id
 LIMIT 5;
 
 -- Test 2: Renewal reminders view
-SELECT * FROM renewal_reminders 
+SELECT * FROM renewal_reminders
 ORDER BY renewal_date ASC
 LIMIT 10;
 
@@ -356,6 +380,7 @@ WHERE constraint_type = 'FOREIGN KEY'
 ### 1. Migration Best Practices
 
 **SEMPRE includere FK espliciti**:
+
 ```sql
 CREATE TABLE example_table (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -365,11 +390,13 @@ CREATE TABLE example_table (
 ```
 
 **Naming convention FK**:
+
 ```sql
 CONSTRAINT fk_{table_name}_{column_name}
 ```
 
 **Index su FK**:
+
 ```sql
 CREATE INDEX idx_{table_name}_{column_name} ON {table_name}({column_name});
 ```
@@ -377,12 +404,14 @@ CREATE INDEX idx_{table_name}_{column_name} ON {table_name}({column_name});
 ### 2. Schema Cache Monitoring
 
 **Add to deploy scripts**:
+
 ```powershell
 # Reload schema cache after ogni migration
 npx supabase db execute --sql "NOTIFY pgrst, 'reload schema';"
 ```
 
 **Verifica automatica post-deploy**:
+
 ```sql
 -- Verifica FK dopo ogni migration
 SELECT COUNT(*) as fk_count
@@ -394,13 +423,14 @@ WHERE constraint_type = 'FOREIGN KEY'
 ### 3. Integration Tests per Relationships
 
 **Add test per ogni nuova tabella con FK**:
+
 ```typescript
 describe('New Table FK Relationships', () => {
   it('should have FK to parent table', async () => {
     const { data, error } = await supabase
       .from('new_table')
       .select('*, parent:parent_table(*)');
-    
+
     expect(error).toBeNull();
   });
 });
@@ -409,6 +439,7 @@ describe('New Table FK Relationships', () => {
 ### 4. CI/CD Checks
 
 **Add to `.github/workflows/database-checks.yml`**:
+
 ```yaml
 - name: Verify Foreign Keys
   run: |
@@ -471,6 +502,7 @@ git log --oneline --grep="insurance_policies"
 ### Problema: Migration fallisce con "constraint already exists"
 
 **Soluzione**: Migration è idempotente, skip constraint esistenti è normale
+
 ```sql
 -- Il blocco DO $$ gestisce automaticamente questo caso
 IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints...) THEN
@@ -481,15 +513,18 @@ END IF;
 ### Problema: Schema cache non si aggiorna
 
 **Soluzione 1**: Retry NOTIFY
+
 ```powershell
 npx supabase db execute --sql "NOTIFY pgrst, 'reload schema';"
 ```
 
 **Soluzione 2**: Restart PostgREST via Dashboard
+
 1. Dashboard → Settings → API
 2. Click "Reload Schema Cache"
 
 **Soluzione 3**: Restart completo
+
 ```powershell
 npx supabase stop
 npx supabase start
@@ -498,31 +533,33 @@ npx supabase start
 ### Problema: Test falliscono per timeout
 
 **Soluzione**: Aumenta timeout in vitest.config.ts
+
 ```typescript
 export default defineConfig({
   test: {
-    timeout: 10000 // 10s invece di default 5s
-  }
+    timeout: 10000, // 10s invece di default 5s
+  },
 });
 ```
 
 ### Problema: FK creation fallisce per dati inconsistenti
 
 **Soluzione**: Pulisci dati orfani prima di creare FK
+
 ```sql
 -- Trova polizze senza contact
-SELECT id, policy_number 
-FROM insurance_policies 
-WHERE contact_id IS NOT NULL 
+SELECT id, policy_number
+FROM insurance_policies
+WHERE contact_id IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM contacts WHERE id = insurance_policies.contact_id);
 
 -- Opzione 1: Setta NULL
-UPDATE insurance_policies 
-SET contact_id = NULL 
+UPDATE insurance_policies
+SET contact_id = NULL
 WHERE contact_id NOT IN (SELECT id FROM contacts);
 
 -- Opzione 2: Elimina polizze orfane
-DELETE FROM insurance_policies 
+DELETE FROM insurance_policies
 WHERE contact_id NOT IN (SELECT id FROM contacts);
 ```
 
@@ -537,7 +574,7 @@ WHERE contact_id NOT IN (SELECT id FROM contacts);
 ✅ **Schema cache reloaded** via NOTIFY pgrst  
 ✅ **9 integration tests** passati al 100%  
 ✅ **Zero errori di relazione** in produzione  
-✅ **UI calendario** completamente funzionante  
+✅ **UI calendario** completamente funzionante
 
 ### Next Steps
 

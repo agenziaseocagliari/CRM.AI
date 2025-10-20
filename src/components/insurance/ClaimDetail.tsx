@@ -15,7 +15,7 @@ import {
     User,
     XCircle
 } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';

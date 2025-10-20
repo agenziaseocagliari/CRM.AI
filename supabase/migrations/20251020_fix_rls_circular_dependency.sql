@@ -47,21 +47,21 @@ CREATE POLICY "profiles_select_policy" ON profiles
 -- ============================================================================
 
 -- Verify the new policy was created
-SELECT 
-  schemaname,
-  tablename,
-  policyname,
-  permissive,
-  roles,
-  cmd,
-  qual AS using_clause
-FROM pg_policies 
-WHERE tablename = 'profiles' 
-  AND policyname = 'profiles_select_policy';
+SELECT
+    schemaname,
+    tablename,
+    policyname,
+    permissive,
+    roles,
+    cmd,
+    qual AS using_clause
+FROM pg_policies
+WHERE
+    tablename = 'profiles'
+    AND policyname = 'profiles_select_policy';
 
 -- Test policy logic explanation
-COMMENT ON POLICY "profiles_select_policy" ON profiles IS 
-  'Fixed RLS policy without circular dependency. Users can read: (1) own profile via auth.uid(), (2) all profiles if super_admin, (3) same-org profiles via JWT organization_id claim (no subquery).';
+COMMENT ON POLICY "profiles_select_policy" ON profiles IS 'Fixed RLS policy without circular dependency. Users can read: (1) own profile via auth.uid(), (2) all profiles if super_admin, (3) same-org profiles via JWT organization_id claim (no subquery).';
 
 -- ============================================================================
 -- ROLLBACK SCRIPT (if needed)

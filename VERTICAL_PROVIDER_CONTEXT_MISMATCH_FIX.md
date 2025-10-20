@@ -10,12 +10,15 @@
 ## Problem Summary
 
 ### User Impact
+
 **Symptom**: Application completely crashes on load with error:
+
 ```
 Error: useVertical must be used within VerticalProvider
 ```
 
-**Affected Users**: 
+**Affected Users**:
+
 - ✅ ALL users (100% crash rate)
 - ✅ Claudio Comunale (Insurance vertical) - Cannot access account
 - ✅ All verticals affected (insurance, standard, etc.)
@@ -31,6 +34,7 @@ Error: useVertical must be used within VerticalProvider
 The application had **THREE separate implementations** of the VerticalContext/useVertical system:
 
 #### 1. Main Implementation: `src/hooks/useVertical.tsx`
+
 ```typescript
 // Creates VerticalContext internally
 const VerticalContext = createContext<VerticalContextType | null>(null);
@@ -46,12 +50,14 @@ export function useVertical() {
 ```
 
 #### 2. Separate Context: `src/contexts/VerticalContext.tsx`
+
 ```typescript
 // DUPLICATE - Different context instance!
 export const VerticalContext = createContext<VerticalContextType | null>(null);
 ```
 
 #### 3. Alternative Hook: `src/hooks/useVerticalHook.tsx`
+
 ```typescript
 // Uses the WRONG context!
 import { VerticalContext } from '@/contexts/VerticalContext';
@@ -63,6 +69,7 @@ export function useVertical() {
 ```
 
 #### 4. Utility Re-export: `src/hooks/verticalUtils.ts`
+
 ```typescript
 // Also used WRONG context!
 import { VerticalContext } from '@/contexts/VerticalContext';
@@ -114,6 +121,7 @@ Error: useVertical must be used within VerticalProvider
 ```
 
 **Component Stack**:
+
 ```
 at b0                    // Likely Dashboard or MainLayout
 at div
@@ -133,60 +141,69 @@ The error occurs immediately during initial render when any component tries to a
 ## Solution Implemented
 
 ### 1. Fixed App.tsx Import
+
 **Before**:
+
 ```typescript
 import { VerticalProvider } from './hooks/useVertical';
-import { useVertical } from './hooks/useVerticalHook';  // ❌ Wrong source
+import { useVertical } from './hooks/useVerticalHook'; // ❌ Wrong source
 ```
 
 **After**:
+
 ```typescript
-import { VerticalProvider, useVertical } from './hooks/useVertical';  // ✅ Same source
+import { VerticalProvider, useVertical } from './hooks/useVertical'; // ✅ Same source
 ```
 
 ### 2. Updated verticalUtils.ts to Re-export
+
 **Before**:
+
 ```typescript
-import { VerticalContext } from '@/contexts/VerticalContext';  // ❌ Wrong context
+import { VerticalContext } from '@/contexts/VerticalContext'; // ❌ Wrong context
 import { useContext } from 'react';
 
 export function useVertical() {
-    const context = useContext(VerticalContext);  // ❌ Different instance
-    // ...
-}
-```
-
-**After**:
-```typescript
-// Re-export from the canonical source
-export { useVertical } from './useVertical';  // ✅ Correct context
-
-// Use the re-exported hook for utilities
-import { useVertical as useVerticalHook } from './useVertical';
-
-export function useIsInsurance() {
-    const { vertical } = useVerticalHook();
-    return vertical === 'insurance';
-}
-```
-
-### 3. Converted useVerticalHook.tsx to Re-export
-**Before**:
-```typescript
-import { VerticalContext } from '@/contexts/VerticalContext';
-import { useContext } from 'react';
-
-export function useVertical() {
-  const context = useContext(VerticalContext);  // ❌ Wrong context
+  const context = useContext(VerticalContext); // ❌ Different instance
   // ...
 }
 ```
 
 **After**:
+
+```typescript
+// Re-export from the canonical source
+export { useVertical } from './useVertical'; // ✅ Correct context
+
+// Use the re-exported hook for utilities
+import { useVertical as useVerticalHook } from './useVertical';
+
+export function useIsInsurance() {
+  const { vertical } = useVerticalHook();
+  return vertical === 'insurance';
+}
+```
+
+### 3. Converted useVerticalHook.tsx to Re-export
+
+**Before**:
+
+```typescript
+import { VerticalContext } from '@/contexts/VerticalContext';
+import { useContext } from 'react';
+
+export function useVertical() {
+  const context = useContext(VerticalContext); // ❌ Wrong context
+  // ...
+}
+```
+
+**After**:
+
 ```typescript
 // DEPRECATED: Kept for backward compatibility only
 // Re-export from the main file
-export { useVertical } from './useVertical';  // ✅ Correct context
+export { useVertical } from './useVertical'; // ✅ Correct context
 ```
 
 ---
@@ -194,7 +211,9 @@ export { useVertical } from './useVertical';  // ✅ Correct context
 ## Files Modified
 
 ### 1. `src/App.tsx`
+
 **Change**: Import both VerticalProvider and useVertical from same source
+
 ```diff
 - import { VerticalProvider } from './hooks/useVertical';
 - import { useVertical } from './hooks/useVerticalHook';
@@ -202,11 +221,13 @@ export { useVertical } from './useVertical';  // ✅ Correct context
 ```
 
 ### 2. `src/hooks/verticalUtils.ts`
+
 **Change**: Re-export from useVertical.tsx instead of creating new context consumer
+
 ```diff
 - import { VerticalContext } from '@/contexts/VerticalContext';
 - import { useContext } from 'react';
-- 
+-
 - export function useVertical() {
 -     const context = useContext(VerticalContext);
 -     if (!context) {
@@ -216,17 +237,19 @@ export { useVertical } from './useVertical';  // ✅ Correct context
 - }
 + // Re-export the main hook from useVertical.tsx
 + export { useVertical } from './useVertical';
-+ 
++
 + // Import for utility hooks
 + import { useVertical as useVerticalHook } from './useVertical';
 ```
 
 ### 3. `src/hooks/useVerticalHook.tsx`
+
 **Change**: Convert to simple re-export for backward compatibility
+
 ```diff
 - import { VerticalContext } from '@/contexts/VerticalContext';
 - import { useContext } from 'react';
-- 
+-
 - export function useVertical() {
 -   const context = useContext(VerticalContext);
 -   if (!context) {
@@ -236,7 +259,7 @@ export { useVertical } from './useVertical';  // ✅ Correct context
 - }
 + // DEPRECATED: This file is kept for backward compatibility only
 + // All new code should import from './useVertical' directly
-+ 
++
 + // Re-export from the main file
 + export { useVertical } from './useVertical';
 ```
@@ -246,6 +269,7 @@ export { useVertical } from './useVertical';  // ✅ Correct context
 ## Verification
 
 ### Build Test
+
 ```bash
 npm run build
 # ✅ Completed successfully in 1m 6s
@@ -254,6 +278,7 @@ npm run build
 ```
 
 ### Context Flow (After Fix)
+
 ```
 1. App.tsx imports { VerticalProvider, useVertical } from './hooks/useVertical'
    ↓
@@ -271,12 +296,14 @@ npm run build
 ## Impact Assessment
 
 ### Before Fix
+
 - ❌ **100% crash rate** - App unusable
 - ❌ **0 successful logins** - All users blocked
 - ❌ **Production down** - Complete service outage
 - ❌ **Claudio Comunale blocked** - Cannot access insurance vertical
 
 ### After Fix
+
 - ✅ **0% crash rate** - App loads normally
 - ✅ **100% successful logins** - All users can access
 - ✅ **Production restored** - Service fully operational
@@ -287,7 +314,9 @@ npm run build
 ## Prevention Measures
 
 ### 1. Consolidate Context Architecture
+
 **Rule**: One context, one source of truth
+
 ```
 ✅ DO:    import { VerticalProvider, useVertical } from './hooks/useVertical'
 ❌ DON'T: Create multiple context definitions
@@ -295,39 +324,48 @@ npm run build
 ```
 
 ### 2. Linting Rule
+
 Add ESLint rule to detect multiple context imports:
+
 ```json
 {
   "rules": {
-    "no-restricted-imports": ["error", {
-      "patterns": [
-        {
-          "group": ["@/contexts/VerticalContext"],
-          "message": "Import from './hooks/useVertical' instead"
-        }
-      ]
-    }]
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["@/contexts/VerticalContext"],
+            "message": "Import from './hooks/useVertical' instead"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
 
 ### 3. Documentation
+
 **File Header in useVertical.tsx**:
+
 ```typescript
 /**
  * CANONICAL SOURCE for Vertical Context
- * 
+ *
  * ⚠️ WARNING: Always import from this file!
- * 
+ *
  * ✅ DO:    import { VerticalProvider, useVertical } from './hooks/useVertical'
  * ❌ DON'T: Import from useVerticalHook, verticalUtils, or VerticalContext
- * 
+ *
  * All other files should re-export from here.
  */
 ```
 
 ### 4. Remove Duplicate Files
+
 **Future Cleanup** (non-urgent):
+
 - Consider removing `src/contexts/VerticalContext.tsx` entirely
 - Keep `useVerticalHook.tsx` only for backward compatibility
 - Keep `verticalUtils.ts` as utility functions wrapper
@@ -339,12 +377,14 @@ Add ESLint rule to detect multiple context imports:
 ### Similar Context Mismatch Risks
 
 Monitor these patterns in other contexts:
+
 - ✅ `AuthContext` - Currently uses single source pattern (good)
 - ⚠️ Check for any other context duplications
 
 ### Files Using Vertical Context
 
 All these now use the correct context:
+
 - `src/App.tsx`
 - `src/components/Sidebar.tsx`
 - `src/components/Dashboard.tsx`
@@ -357,6 +397,7 @@ All these now use the correct context:
 ## Testing Checklist
 
 ### Manual Testing
+
 - [x] App loads without crash
 - [x] Login successful
 - [x] Dashboard displays correct vertical
@@ -366,6 +407,7 @@ All these now use the correct context:
 - [x] Standard vertical accessible
 
 ### Automated Testing
+
 - [x] `npm run build` - Success
 - [x] `npm run lint` - No new errors
 - [x] TypeScript compilation - No errors
@@ -376,6 +418,7 @@ All these now use the correct context:
 ## Deployment Notes
 
 ### Vercel Deployment
+
 ```bash
 # Automatic deployment triggered by push to main
 git push origin main
@@ -393,6 +436,7 @@ git push origin main
 ```
 
 ### Rollback Plan (if needed)
+
 ```bash
 # Revert to previous commit
 git revert bf407f4
@@ -408,17 +452,20 @@ git revert bf407f4
 ## Key Learnings
 
 ### 1. React Context Gotchas
+
 - Context instances are **identity-based**, not value-based
 - Two `createContext()` calls create **different contexts**
 - Provider/Consumer must use the **exact same instance**
 - No compile-time checking for this error
 
 ### 2. Import Organization
+
 - Always import related exports from same source
 - Re-exports should be clearly marked as such
 - Avoid circular dependencies
 
 ### 3. Refactoring Risks
+
 - Splitting exports for "React Refresh" warnings can introduce bugs
 - Test thoroughly after context refactoring
 - Use single source of truth pattern
@@ -441,7 +488,7 @@ e2cece1 🔧 FIX: Resolve npm ci error - Fix @csstools/css-color-parser dependen
 ✅ **All users can now access application**  
 ✅ **Claudio Comunale can access insurance vertical**  
 ✅ **Context architecture consolidated**  
-✅ **Prevention measures documented**  
+✅ **Prevention measures documented**
 
 This was a **critical architecture bug** caused by having multiple context definitions. The fix ensures all components use the same VerticalContext instance by importing from a single canonical source.
 
@@ -459,6 +506,7 @@ This was a **critical architecture bug** caused by having multiple context defin
 ### Future Improvements
 
 1. Add runtime validation in development:
+
 ```typescript
 if (import.meta.env.DEV) {
   // Warn if multiple VerticalContext instances detected
@@ -471,19 +519,20 @@ if (import.meta.env.DEV) {
 ```
 
 2. Add integration test:
+
 ```typescript
 test('VerticalProvider provides context to useVertical', () => {
   const TestComponent = () => {
     const { vertical } = useVertical();
     return <div>{vertical}</div>;
   };
-  
+
   render(
     <VerticalProvider>
       <TestComponent />
     </VerticalProvider>
   );
-  
+
   // Should not throw error
   expect(screen.getByText(/insurance|standard/)).toBeInTheDocument();
 });

@@ -37,12 +37,23 @@ jobs:
         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     
     - name: Link project
-      run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+      run: |
+        # Use secret if available, otherwise fallback to hardcoded value
+        PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
+        if [ -z "$PROJECT_REF" ]; then
+          PROJECT_REF="qjtaqrlpronohgpfdxsi"
+          echo "⚠️ Using fallback project ref (secret not configured)"
+        fi
+        echo "🔗 Linking to Supabase project: $PROJECT_REF"
+        supabase link --project-ref "$PROJECT_REF"
       env:
         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     
     - name: Push database changes
-      run: supabase db push
+      run: |
+        echo "📤 Pushing database migrations..."
+        supabase db push
+        echo "✅ Database push completed"
       env:
         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     

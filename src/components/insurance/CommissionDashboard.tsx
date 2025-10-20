@@ -59,6 +59,13 @@ interface CommissionFilters {
   status: 'all' | 'pending' | 'calculated' | 'paid' | 'cancelled';
 }
 
+// Removed unused CommissionData interface - not referenced in code
+// interface CommissionData {
+//   commission_amount: string;
+//   commission_type: string;
+//   calculation_date: string;
+// }
+
 const CommissionDashboard: React.FC = () => {
   // Navigation
   const navigate = useNavigate();

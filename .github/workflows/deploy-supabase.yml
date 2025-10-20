@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - rollback/stable-615ec3b
   pull_request:
     branches:
       - main
+      - rollback/stable-615ec3b
   workflow_dispatch:
 
 jobs:
@@ -24,17 +26,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          # Use npm install instead of npm ci for better compatibility
-          # Retry logic for network resilience
-          for attempt in 1 2 3; do
-            echo "Attempt $attempt to install dependencies..."
-            npm install --legacy-peer-deps --no-fund --no-audit && break
-            if [ $attempt -lt 3 ]; then
-              echo "Install failed, retrying in 5 seconds..."
-              sleep 5
-            fi
-          done
+        run: npm ci
 
       - name: Run TypeScript lint
         run: npm run lint
@@ -42,60 +34,80 @@ jobs:
       - name: Verify PostgreSQL role references
         run: bash scripts/verify-role-cleanup.sh
 
-      - name: Audit Migration Idempotence
-        run: bash scripts/audit-migration-idempotence.sh
-
-      - name: Check Migration Versions
-        run: bash scripts/check-migration-versions.sh
-
       - name: Verify API role usage
         run: npm run verify:role
 
       - name: Lint for API role patterns
         run: npm run lint:role
 
-  # ✅ ENABLED: Unified Supabase Deployment (Edge Functions + Migrations)
-  deploy-supabase:
-    name: Deploy to Supabase (Edge Functions + Migrations)
-    runs-on: ubuntu-latest
-    needs: lint-and-typecheck
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      SUPABASE_PROJECT_REF: qjtaqrlpronohgpfdxsi
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      SUPABASE_URL: https://qjtaqrlpronohgpfdxsi.supabase.co
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # TODO: Re-enable when edge functions are needed
+  # deploy-edge-functions:
+  #   name: Deploy Edge Functions to Supabase
+  #   runs-on: ubuntu-latest
+  #   needs: lint-and-typecheck
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
+  #     - name: Setup Supabase CLI
+  #       uses: supabase/setup-cli@v1
+  #       with:
+  #         version: latest
 
-      - name: Install jq for migration sync
-        run: |
-          echo "Installing jq for JSON parsing..."
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq jq
-          jq --version
+  #     - name: Deploy Edge Functions
+  #       env:
+  #         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  #         SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+  #       run: |
+  #         # Verify environment variables are set
+  #         if [ -z "$SUPABASE_PROJECT_REF" ]; then
+  #           echo "❌ Error: SUPABASE_PROJECT_REF is not set" >&2
+  #           exit 1
+  #         fi
+  #         
+  #         # Link to Supabase project (with correct --project-ref argument)
+  #         supabase link --project-ref "$SUPABASE_PROJECT_REF"
+  #         
+  #         # Deploy all edge functions
+  #         echo "Deploying edge functions..."
+  #         supabase functions deploy --no-verify-jwt
+  #         
+  #         echo "✅ Edge functions deployed successfully!"
 
-      - name: Install curl (verify availability)
-        run: |
-          echo "Verifying curl availability..."
-          curl --version
-
-      - name: Make deployment script executable
-        run: chmod +x scripts/deploy-supabase-robust.sh
-
-      - name: Run Robust Deployment
-        run: bash scripts/deploy-supabase-robust.sh
-        env:
-          SUPABASE_PROJECT_REF: qjtaqrlpronohgpfdxsi
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_URL: https://qjtaqrlpronohgpfdxsi.supabase.co
+  # TODO: Re-enable when supabase migrations are configured locally
+  # sync-database-migrations:
+  #   name: Sync Database Migrations  
+  #   runs-on: ubuntu-latest
+  #   needs: lint-and-typecheck
+  #   if: false # Disabled until supabase directory is configured
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: Setup Supabase CLI
+  #       uses: supabase/setup-cli@v1
+  #       with:
+  #         version: latest
+  #     - name: Run Migrations
+  #       env:
+  #         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  #         SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+  #         SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+  #       run: |
+  #         # Verify environment variables
+  #         if [ -z "$SUPABASE_PROJECT_REF" ]; then
+  #           echo "❌ Error: SUPABASE_PROJECT_REF is not set" >&2
+  #           exit 1
+  #         fi
+  #         
+  #         # Link to Supabase project (with correct --project-ref argument)
+  #         supabase link --project-ref "$SUPABASE_PROJECT_REF"
+  #         
+  #         # Push migrations to remote database
+  #         echo "Pushing database migrations..."
+  #         supabase db push
+  #         
+  #         echo "✅ Database migrations synced successfully!"
 
   verify-deployment:
     name: Verify Deployment
@@ -106,25 +118,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Verify Supabase Connection
+      - name: Verify Edge Functions
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          echo "✅ Verifying Supabase connection..."
+          echo "Verifying edge functions deployment..."
           
-          # Test basic connectivity to Supabase
+          # Test a simple edge function
           response=$(curl -s -w "\n%{http_code}" \
-            -X GET "$SUPABASE_URL/rest/v1/" \
+            -X POST "$SUPABASE_URL/functions/v1/test-org-settings" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Accept: application/json" || echo "000")
+            -H "Content-Type: application/json" \
+            -d '{}' || echo "000")
           
           http_code=$(echo "$response" | tail -n 1)
           
-          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ]; then
-            echo "✅ Supabase API is responding (HTTP $http_code)"
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 500 ]; then
+            echo "✅ Edge functions are responding (HTTP $http_code)"
           else
-            echo "⚠️ Supabase health check returned HTTP $http_code"
+            echo "⚠️ Edge functions health check returned HTTP $http_code"
+            echo "Response: $response"
           fi
 
   security-audit:

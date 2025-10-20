@@ -70,7 +70,7 @@ export default [
   },
   // CommonJS files configuration  
   {
-    files: ['**/*.{cjs}'],
+    files: ['**/*.cjs'],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: 'script',
@@ -91,8 +91,9 @@ export default [
       },
     },
     rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-console': 'off',
+      'no-undef': 'off', // Node.js globals are defined above
       'prefer-const': 'warn',
     },
   },

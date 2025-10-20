@@ -1,14 +1,34 @@
 /**
  * @vitest-environment jsdom
  */
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import React from 'react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { vi } from 'vitest';
-import { AuthContext } from '../../contexts/AuthContext';
 import RenewalCalendar from './RenewalCalendar';
+import { AuthContext } from '../../contexts/AuthContext';
+
+// Mock supabase - Not currently used; mocking happens via vi.doMock in beforeEach
+// const mockSupabase = {
+//   from: () => ({
+//     select: () => ({
+//       eq: () => ({
+//         order: () => Promise.resolve({ data: [], error: null })
+//       })
+//     })
+//   }),
+//   functions: {
+//     invoke: () => Promise.resolve({ data: { success: true }, error: null })
+//   }
+// };
+
+// Mock react-hot-toast - Not currently used; mocking happens via vi.doMock in beforeEach
+// const mockToast = {
+//   success: () => {},
+//   error: () => {}
+// };
 
 // Mock dependencies using vi.doMock since vi globals may not be available
 beforeEach(() => {
@@ -176,6 +196,8 @@ describe('RenewalCalendar Component Tests', () => {
       </AuthWrapper>
     );
 
+    // const today = format(new Date(), 'dd MMMM yyyy', { locale: it });
+    // Variable not used - test directly checks for Italian month formatting below
     // Should contain components of Italian date formatting
     expect(container.innerHTML).toContain(format(new Date(), 'MMMM', { locale: it }));
   });
@@ -216,7 +238,22 @@ describe('RenewalCalendar Component Tests', () => {
       </BrowserRouter>
     );
 
-    // Test would mock a reminder with test data if needed for future tests
+    // Mock a reminder with test data - Not currently used in this test
+    // const mockReminderData = [{
+    //   policy_id: 'POL-2025-001',
+    //   user_id: 'user-1',
+    //   policy_number: 'POL-2025-001',
+    //   renewal_date: '2025-11-15',
+    //   client_name: 'Mario Rossi',
+    //   policy_type: 'Auto',
+    //   premium_amount: 850.00,
+    //   organization_id: 'org-1',
+    //   days_to_renewal: 6,
+    //   priority_level: 'critical' as const,
+    //   renewal_status: 'urgent' as const,
+    //   created_at: '2025-10-19T10:00:00Z',
+    //   updated_at: '2025-10-19T10:00:00Z'
+    // }];
 
     // Test that detail button exists (when reminders are present)
     // Note: This test assumes the component renders detail buttons

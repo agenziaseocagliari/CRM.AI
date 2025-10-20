@@ -7,7 +7,7 @@ import {
     Save,
     X
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
@@ -66,6 +66,17 @@ export default function ClaimsForm() {
   const [errors, setErrors] = useState<Partial<Record<keyof ClaimFormData, string>>>({});
 
   useEffect(() => {
+    // Fetch functions are defined below and stable - no need to include in deps
+    // Adding them would cause unnecessary re-renders
+    fetchContacts();
+    fetchPolicies();
+    if (isEdit && id) {
+      fetchClaim();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEdit]);
+
+  useEffect(() => {
     // Filter policies by selected contact
     if (formData.contact_id) {
       setFilteredPolicies(
@@ -76,7 +87,7 @@ export default function ClaimsForm() {
     }
   }, [formData.contact_id, policies]);
 
-  const fetchContacts = useCallback(async () => {
+  const fetchContacts = async () => {
     try {
       const { data, error } = await supabase
         .from('contacts')
@@ -96,9 +107,9 @@ export default function ClaimsForm() {
     } catch (error) {
       console.error('Error fetching contacts:', error);
     }
-  }, [organizationId]);
+  };
 
-  const fetchPolicies = useCallback(async () => {
+  const fetchPolicies = async () => {
     try {
       const { data, error } = await supabase
         .from('insurance_policies')
@@ -112,9 +123,9 @@ export default function ClaimsForm() {
     } catch (error) {
       console.error('Error fetching policies:', error);
     }
-  }, [organizationId]);
+  };
 
-  const fetchClaim = useCallback(async () => {
+  const fetchClaim = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -144,16 +155,7 @@ export default function ClaimsForm() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
-
-  // Load data on component mount
-  useEffect(() => {
-    fetchContacts();
-    fetchPolicies();
-    if (isEdit && id) {
-      fetchClaim();
-    }
-  }, [id, isEdit, fetchContacts, fetchPolicies, fetchClaim]);
+  };
 
   const generateClaimNumber = () => {
     const year = new Date().getFullYear();

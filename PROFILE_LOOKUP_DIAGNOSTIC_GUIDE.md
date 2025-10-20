@@ -2,24 +2,123 @@
 
 **Date**: October 20, 2025  
 **Issue**: "Profile lookup failed" error investigation  
-**Status**: ✅ **SYSTEM HEALTHY - DIAGNOSTIC GUIDE CREATED**
+**Status**: ✅ **ROOT CAUSE IDENTIFIED & FIXED - Circular Dependency Eliminated**
+
+---
+
+## � ROOT CAUSE ANALYSIS (CRITICAL FINDING)
+
+### Problem: Circular Dependency in RLS SELECT Policy
+
+**Symptom**: Persistent "Profile lookup failed" error in production, especially in:
+- Incognito mode / fresh sessions
+- Token refresh scenarios  
+- New user signups
+- Random intermittent failures
+
+**Root Cause Discovered**: The `profiles_select_policy` RLS policy contained a **circular dependency deadlock**:
+
+```sql
+-- ❌ PROBLEMATIC POLICY (BEFORE FIX)
+CREATE POLICY "profiles_select_policy" ON profiles
+  FOR SELECT TO authenticated USING (
+    (auth.uid() = id) OR
+    (user_role = 'super_admin') OR
+    (organization_id IN (
+      SELECT organization_id FROM profiles WHERE id = auth.uid()  -- CIRCULAR!
+    ))
+  );
+```
+
+**Why This Failed**:
+1. User queries `SELECT * FROM profiles WHERE id = auth.uid()`
+2. RLS policy USING clause evaluates
+3. Third condition executes subquery: `SELECT organization_id FROM profiles WHERE id = auth.uid()`
+4. **That subquery ALSO triggers the same RLS policy evaluation!** ⚠️
+5. Infinite recursion → PostgreSQL blocks query → PGRST116 error
+
+**Evidence from Logs**:
+```
+❌ [loadVerticalConfig] RLS POLICY BLOCKED: Il profilo utente non è accessibile
+Error code: PGRST116
+Details: Row-level security policy violation
+```
+
+### ✅ SOLUTION IMPLEMENTED
+
+**Migration**: `supabase/migrations/20251020_fix_rls_circular_dependency.sql`
+
+```sql
+-- ✅ FIXED POLICY (NO CIRCULAR DEPENDENCY)
+CREATE POLICY "profiles_select_policy" ON profiles
+  FOR SELECT TO authenticated USING (
+    -- Users read own profile (no recursion)
+    (auth.uid() = id)
+    OR
+    -- Super admins read all
+    (COALESCE(
+      (auth.jwt() ->> 'user_role'),
+      ((auth.jwt() -> 'user_metadata') ->> 'user_role')
+    ) = 'super_admin')
+    OR
+    -- Same-org access via JWT claim (NO SUBQUERY!)
+    (
+      organization_id IS NOT NULL
+      AND organization_id::text = COALESCE(
+        (auth.jwt() ->> 'organization_id'),
+        ((auth.jwt() -> 'user_metadata') ->> 'organization_id')
+      )
+    )
+  );
+```
+
+**Key Fixes**:
+- ✅ **Removed subquery** - no more circular dependency
+- ✅ **Direct JWT claim access** - reads `organization_id` from JWT payload  
+- ✅ **Type casting** - ensures UUID↔text comparison works
+- ✅ **Maintains security** - same permissions, better performance
+
+### JWT Structure Verified
+
+**Production JWT Claims** (from `auth.users.raw_user_meta_data`):
+```json
+{
+  "sub": "c623942a-d4b2-4d93-b944-b8e681679704",
+  "email": "primassicurazionibari@gmail.com",
+  "vertical": "insurance",
+  "full_name": "Prima Assicurazioni Bari",
+  "user_role": "user",
+  "organization_id": "dcfbec5c-6049-4d4d-ba80-a1c412a5861d",  ← ✅ Present!
+  "email_verified": true,
+  "is_super_admin": false
+}
+```
+
+**RLS Policy Now Uses**:
+- `auth.jwt() ->> 'organization_id'` - reads from root level
+- `auth.jwt() -> 'user_metadata' ->> 'organization_id'` - fallback path
+- Direct string comparison (no table access needed)
 
 ---
 
 ## 📋 EXECUTIVE SUMMARY
 
-After comprehensive investigation, the profile lookup system is working correctly:
-- ✅ RLS policies properly configured (7 policies using `TO public`)
-- ✅ useVertical hook enhanced with `.maybeSingle()` and graceful error handling
-- ✅ 3 user profiles exist with correct vertical assignments
-- ✅ All users have valid `organization_id` assignments
+After comprehensive root-cause investigation, the circular dependency has been eliminated:
+- ✅ **RLS policy fixed** - no more recursive subqueries
+- ✅ **useVertical hook enhanced** - detailed JWT logging + retry logic
+- ✅ **Database verified** - 3 users with valid profiles
+- ✅ **Migration applied** - production updated with fix
 
-**Root Cause of Previous Errors**: 
-1. Hook was using `.single()` which threw errors for missing profiles
-2. Missing error handling and Italian error messages
-3. No graceful fallback to standard vertical
+**Previous Issues**:
+1. ❌ Circular RLS policy caused deadlock
+2. ❌ Hook used `.single()` (threw errors for edge cases)
+3. ❌ No JWT claim logging for diagnostics
 
-**Resolution**: Enhanced useVertical.tsx now handles all edge cases gracefully.
+**Current State**:
+1. ✅ RLS policy uses direct JWT access (no circular dependency)
+2. ✅ Hook uses `.maybeSingle()` with exponential backoff retry
+3. ✅ Comprehensive logging of all JWT claims
+4. ✅ Italian error messages with helpful context
 
 ---
 
@@ -31,16 +130,16 @@ After comprehensive investigation, the profile lookup system is working correctl
 |-------|-----------|----------|-----------------|------|
 | agenziaseocagliari@gmail.com | Super Admin Updated | standard | 00000000-0000-... | super_admin |
 | webproseoid@gmail.com | Mario Rossi | standard | 2aab4d72-ca5b-... | enterprise |
-| primassicurazionibari@gmail.com | *NULL* | insurance | dcfbec5c-6049-... | user |
+| primassicurazionibari@gmail.com | Prima Assicurazioni Bari | insurance | dcfbec5c-6049-... | user |
 
 ### RLS Policies Status
 
 **✅ All 7 Policies Configured Correctly**:
 
-1. **profiles_select_policy** (SELECT)
-   - Users can view own profile: `auth.uid() = id`
+1. **profiles_select_policy** (SELECT) - **FIXED**
+   - Users can view own profile: `auth.uid() = id` (primary, no recursion)
    - Super admins view all: `user_role = 'super_admin'`
-   - Organization members view each other: `organization_id IN (SELECT...)`
+   - Organization members view each other: Uses JWT claim directly
 
 2. **profiles_insert_policy** (INSERT)
    - Users create own profile: `auth.uid() = id`

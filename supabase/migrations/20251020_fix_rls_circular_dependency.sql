@@ -18,7 +18,7 @@ DROP POLICY IF EXISTS "profiles_select_policy" ON profiles;
 --   3. Profiles in their organization (uses app_metadata.organization_id from JWT, not subquery)
 CREATE POLICY "profiles_select_policy" ON profiles
   FOR SELECT
-  TO authenticated
+  TO public
   USING (
     -- Allow users to see their own profile (primary condition, no recursion)
     (auth.uid() = id)
@@ -69,7 +69,7 @@ COMMENT ON POLICY "profiles_select_policy" ON profiles IS
 -- To rollback, restore the old policy with circular dependency:
 -- DROP POLICY IF EXISTS "profiles_select_policy" ON profiles;
 -- CREATE POLICY "profiles_select_policy" ON profiles
---   FOR SELECT TO authenticated USING (
+--   FOR SELECT TO public USING (
 --     (auth.uid() = id) OR
 --     (COALESCE((auth.jwt() ->> 'user_role'), ((auth.jwt() -> 'user_metadata') ->> 'user_role')) = 'super_admin') OR
 --     (organization_id IS NOT NULL AND organization_id IN (

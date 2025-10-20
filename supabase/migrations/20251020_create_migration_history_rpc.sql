@@ -18,9 +18,9 @@ AS $$
   ORDER BY version ASC;
 $$;
 
--- Grant execute permission to authenticated users and service role
-GRANT EXECUTE ON FUNCTION public.get_migration_history() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_migration_history() TO service_role;
+-- Grant execute permission to public (all users)
+-- Note: Function uses SECURITY DEFINER so it runs with creator's privileges
+GRANT EXECUTE ON FUNCTION public.get_migration_history() TO public;
 
 COMMENT ON FUNCTION public.get_migration_history() IS 
   'Returns the complete migration history from schema_migrations table. Used by CI/CD for migration synchronization.';

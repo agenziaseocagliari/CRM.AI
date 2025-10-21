@@ -640,9 +640,18 @@ const App: React.FC = () => {
               <Contacts />
             </>
           } />
+          <Route path="contatti" element={
+            <>
+              <ContactsMeta />
+              <Contacts />
+            </>
+          } />
           <Route path="contacts/:id" element={<ContactDetailView />} />
+          <Route path="contatti/:id" element={<ContactDetailView />} />
           <Route path="calendar" element={<Calendar />} />
+          <Route path="calendario" element={<Calendar />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="report" element={<Reports />} />
           <Route path="reports-test" element={<ReportsTest />} />
 
           <Route path="forms" element={
@@ -651,7 +660,14 @@ const App: React.FC = () => {
               insuranceComponent={<FormsInsurance />}
             />
           } />
+          <Route path="moduli" element={
+            <VerticalAwareRoute
+              standardComponent={<Forms />}
+              insuranceComponent={<FormsInsurance />}
+            />
+          } />
           <Route path="automations" element={<Automations />} />
+          <Route path="automazioni" element={<Automations />} />
           <Route path="automation" element={<AutomationPage />} />
           <Route path="automation/diagnostic" element={<AutomationDiagnostic />} />
 
@@ -662,6 +678,7 @@ const App: React.FC = () => {
           <Route path="test" element={<TestComponent />} />
           <Route path="universal-credits" element={<UniversalCreditDashboard />} />
           <Route path="store" element={<ExtraCreditsStore />} />
+          <Route path="crediti-extra" element={<ExtraCreditsStore />} />
           <Route path="settings" element={<Settings />} />
           <Route path="settings/booking" element={<BookingSettings />} />
 

@@ -567,6 +567,63 @@ export default function ContactDetailView() {
                         </div>
                     </div>
                 </div>
+
+                {/* 🔴 DEBUG MARKER - ALWAYS VISIBLE */}
+                <div className="mt-8 p-8 bg-red-500 text-white font-bold text-center text-2xl">
+                    🔴 DEBUG: END OF GRID - DOCUMENTS BELOW
+                </div>
+
+                {/* 📋 FULL-WIDTH DOCUMENTS SECTION (DEBUG VERSION) */}
+                <div className="mt-8 border-8 border-green-500 p-12 bg-green-50">
+                    <h2 className="text-4xl font-bold text-green-900 mb-6 text-center">
+                        📋 DOCUMENTI CONTATTO (DEBUG GIANT BOX - FULL WIDTH)
+                    </h2>
+                    
+                    {organizationId ? (
+                        <div>
+                            <p className="mb-6 text-green-700 text-2xl font-bold text-center">
+                                ✅ Organization ID: {organizationId}
+                            </p>
+                            <p className="mb-6 text-blue-700 text-xl text-center">
+                                Contact ID: {contact.id}
+                            </p>
+                            
+                            <div className="bg-white p-6 rounded-lg shadow-xl">
+                                <h3 className="text-2xl font-bold mb-4">📤 Upload Documenti</h3>
+                                <DocumentUploader
+                                    organizationId={organizationId}
+                                    category="contact"
+                                    entityType="contact"
+                                    entityId={contact.id}
+                                    onUploadComplete={() => {
+                                        console.log('[CONTACT-DEBUG] Document uploaded to contact:', contact.id);
+                                        setDocumentsRefreshKey(prev => prev + 1);
+                                    }}
+                                />
+                            </div>
+                            
+                            <div className="mt-8 bg-white p-6 rounded-lg shadow-xl">
+                                <h3 className="text-2xl font-bold mb-4">📁 Galleria Documenti</h3>
+                                <DocumentGallery
+                                    key={documentsRefreshKey}
+                                    organizationId={organizationId}
+                                    category="contact"
+                                    entityType="contact"
+                                    entityId={contact.id}
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center">
+                            <p className="text-red-600 font-bold text-3xl mb-4">
+                                ❌ Organization ID MISSING
+                            </p>
+                            <p className="text-gray-700 text-xl">
+                                Contact data: {JSON.stringify(contact, null, 2)}
+                            </p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

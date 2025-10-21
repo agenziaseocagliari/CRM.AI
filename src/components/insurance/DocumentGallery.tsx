@@ -137,15 +137,25 @@ export default function DocumentGallery({
   };
 
   const handleImageClick = (docId: string) => {
+    console.log('🔍 [LIGHTBOX] Click detected, docId:', docId);
     const imageDocuments = documents.filter(d => d.file_type === 'image');
+    console.log('🔍 [LIGHTBOX] Total image documents:', imageDocuments.length);
+    console.log('🔍 [LIGHTBOX] Image documents:', imageDocuments.map(d => ({ id: d.id, filename: d.original_filename })));
+    
     const index = imageDocuments.findIndex(d => d.id === docId);
-    if (index !== -1) {
-      setCurrentImageIndex(index);
-      setLightboxOpen(true);
-      console.log('[GALLERY] Opening lightbox for image:', docId, 'at index:', index);
-    } else {
-      console.warn('[GALLERY] Image not found in documents:', docId);
+    console.log('🔍 [LIGHTBOX] Found index:', index);
+    
+    if (index === -1) {
+      console.error('❌ [LIGHTBOX] Document not found in imageDocuments!');
+      console.error('❌ [LIGHTBOX] Looking for:', docId);
+      console.error('❌ [LIGHTBOX] Available IDs:', imageDocuments.map(d => d.id));
+      return;
     }
+    
+    setCurrentImageIndex(index);
+    console.log('🔍 [LIGHTBOX] Setting index to:', index);
+    setLightboxOpen(true);
+    console.log('🔍 [LIGHTBOX] lightboxOpen set to TRUE');
   };
 
   const handlePreview = (doc: DocumentMetadata) => {
@@ -283,15 +293,23 @@ export default function DocumentGallery({
               {/* Preview */}
               <div 
                 className="aspect-video bg-gray-100 flex items-center justify-center relative group cursor-pointer"
-                onClick={() => handlePreview(doc)}
+                onClick={() => {
+                  console.log('🖱️ [GALLERY] Card clicked, docId:', doc.id, 'type:', doc.file_type);
+                  handlePreview(doc);
+                }}
               >
-                {doc.file_type === 'image' && doc.public_url ? (
+                {doc.file_type === 'image' && (imageUrls[doc.id] || doc.public_url) ? (
                   <>
                     <img
-                      src={imageUrls[doc.id] || doc.public_url}
+                      src={imageUrls[doc.id] || doc.public_url || ''}
                       alt={doc.original_filename}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('🖱️ [IMG] Direct image click, docId:', doc.id);
+                        handleImageClick(doc.id);
+                      }}
                     />
                     {/* Hover overlay - pointer-events-none allows clicks to pass through */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center pointer-events-none">

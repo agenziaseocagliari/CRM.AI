@@ -114,6 +114,83 @@ Credits System:        ████████████████░░░
 
 ### **21 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔧 fix: Add uploaded_by field to document INSERT - fixes RLS policy violation
+- 📚 docs: Add comprehensive urgent fix report for PoliciesList navigation
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: Restore navigation in PoliciesList - enable access to Document Management
+- 📚 docs: Add Document Management System executive summary
+- ✅ feat: Storage RLS Policies - 100% Autonomous Setup Complete
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: Document Management System - Complete Setup
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: Complete Document Management System for Insurance vertical
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: Correct Dashboard button navigation in RiskProfileView
+- 📚 docs: Add comprehensive incident completion and project status reports
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: Complete RiskProfileView rebuild with Recharts - resolves Chart.js undefined.color issue
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: STEPS 3&4 COMPLETE - Recharts radar chart + polished UI + risk badges + recommended products
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 REBUILD: v7.0-STEP2 - Add Supabase data fetch to RiskProfileViewNew (with loading/error states, contact info, scores display)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 REBUILD: v7.0-STEP1 - New minimal RiskProfileViewNew (no Chart.js, no complex logic)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 NUCLEAR: v6.0 - Route disabled, source maps enabled, global error logging added
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 DEBUG: v5.0 - ALL Chart.js disabled (Reports + RiskProfileView) to isolate error
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 DEBUG: Force cache bust v4.0 - chart disabled, version marker added, top-level logs
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 FIX: Chart.js comprehensive error handling + SafeRadarChart wrapper + extensive debug logging (Phase 3f-v2)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 FIX: RiskProfileView Chart.js undefined.color error - defensive null checks (Phase 3f)
+- 🔄 Completion report - RiskProfileView fix
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 FIX: RiskProfileView contact name query - same pattern as Polizze fix
+- 🔄 Phase 3d completion report - Standard vertical fix
+- 🔧 FIX: Standard vertical demo data seeding - Pipeline & Reports
+- 🔄 Phase 3c completion report - Polizze module fix
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 CRITICAL FIX: Polizze module context routing
+- 🔄 Final summary report - 100% incident resolution complete
+- 🔄 Phase 3b: Database fixes - 100% COMPLETE
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 Phase 3: Fix Automazioni component + Database diagnostic tools
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: add Italian path routes for sidebar navigation - Phase 2
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: resolve production routing issue - consolidate duplicate routes
+- 📚 docs: Add incident resolution report INC-2025-10-21-001
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(critical): Correct Supabase query in RiskAssessmentList - use 'name' instead of 'first_name/last_name'
+- 📚 docs: Add comprehensive sidebar navigation fix report
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(routing): Add base route for Risk Assessment list and fix sidebar path prefix
+- 🔄 docs(phase-2): Add comprehensive completion report (100%)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(phase-2): Fix TypeScript errors in RiskAssessment and RiskProfileView (95%)
+- 🔄 feat(phase-2): Add Risk Profiling to sidebar menu (90%)
+- 🔄 feat(phase-2): Add RiskProfileView and RecommendedProducts with routing (65% → 85%)
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 feat(phase-2): Add RiskAssessment component and fix migration - database applied successfully, multi-step form complete
+- 🔄 fix(ci): Add fail-safe fallback for SUPABASE_PROJECT_REF - prevents GitHub Actions failures when secret not configured
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 feat(phase-2): Implement Risk Profiling System (0% → 50%)
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 fix(auth): Resolve circular dependency in profiles RLS policy
+
+**Daily Metrics**:
+- Total files: 2429
+- TypeScript files: 348
+- Lines of code: ~88,090
+- Commits today: 66
+- Recent migrations: 5
+- Dependencies: 86
+
+### **21 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔧 fix: Restore navigation in PoliciesList - enable access to Document Management
 - 📚 docs: Add Document Management System executive summary
 - ✅ feat: Storage RLS Policies - 100% Autonomous Setup Complete

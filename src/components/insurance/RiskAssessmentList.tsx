@@ -15,8 +15,7 @@ interface RiskProfile {
   id: string;
   contact_id: string;
   contact: {
-    first_name: string;
-    last_name: string;
+    name: string;
     email: string;
   };
   total_risk_score: number;
@@ -72,7 +71,7 @@ export default function RiskAssessmentList() {
           assessment_date,
           valid_until,
           is_active,
-          contact:contacts!inner(first_name, last_name, email)
+          contacts!contact_id(name, email)
         `)
         .eq('organization_id', organizationId)
         .eq('is_active', true)
@@ -84,7 +83,7 @@ export default function RiskAssessmentList() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const typedData = (data || []).map((profile: any) => ({
         ...profile,
-        contact: Array.isArray(profile.contact) ? profile.contact[0] : profile.contact
+        contact: Array.isArray(profile.contacts) ? profile.contacts[0] : profile.contacts
       })) as RiskProfile[];
       
       setProfiles(typedData);
@@ -102,9 +101,9 @@ export default function RiskAssessmentList() {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(profile => {
-        const fullName = `${profile.contact?.first_name} ${profile.contact?.last_name}`.toLowerCase();
+        const name = profile.contact?.name?.toLowerCase() || '';
         const email = profile.contact?.email?.toLowerCase() || '';
-        return fullName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+        return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
       });
     }
 
@@ -298,7 +297,7 @@ export default function RiskAssessmentList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {profile.contact?.first_name} {profile.contact?.last_name}
+                          {profile.contact?.name}
                         </div>
                         <div className="text-sm text-gray-500">{profile.contact?.email}</div>
                       </div>

@@ -114,6 +114,55 @@ Credits System:        ████████████████░░░
 
 ### **21 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔧 fix: add Italian path routes for sidebar navigation - Phase 2
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: resolve production routing issue - consolidate duplicate routes
+- 📚 docs: Add incident resolution report INC-2025-10-21-001
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(critical): Correct Supabase query in RiskAssessmentList - use 'name' instead of 'first_name/last_name'
+- 📚 docs: Add comprehensive sidebar navigation fix report
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(routing): Add base route for Risk Assessment list and fix sidebar path prefix
+- 🔄 docs(phase-2): Add comprehensive completion report (100%)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(phase-2): Fix TypeScript errors in RiskAssessment and RiskProfileView (95%)
+- 🔄 feat(phase-2): Add Risk Profiling to sidebar menu (90%)
+- 🔄 feat(phase-2): Add RiskProfileView and RecommendedProducts with routing (65% → 85%)
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 feat(phase-2): Add RiskAssessment component and fix migration - database applied successfully, multi-step form complete
+- 🔄 fix(ci): Add fail-safe fallback for SUPABASE_PROJECT_REF - prevents GitHub Actions failures when secret not configured
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 feat(phase-2): Implement Risk Profiling System (0% → 50%)
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 fix(auth): Resolve circular dependency in profiles RLS policy
+- 📚 docs: Add comprehensive PostgreSQL role cleanup strategy documentation
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 fix(migrations): Replace all deprecated PostgreSQL roles with public
+- 📚 docs: Add comprehensive Phase 1.2 execution checklist
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 migration: Add SQL migration for fixed notification function
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 PHASE 1.2 100% COMPLETE: All blockers resolved
+- 📚 docs: Add comprehensive Resend API setup guide
+- 🔄 PHASE 1.2 95% COMPLETE: Edge Function + Completion Report
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔄 ✅ PHASE 1.2 COMPLETE: Renewal Settings + Bulk Actions + Email Notifications
+- 🔄 🔧 UPDATE: Deploy scripts for insurance schema fix
+- 📚 📝 DOCS: Add deployment checklist and quick start guide for insurance schema fix
+- 📚 docs: automated daily update 2025-10-20 [skip ci]
+- 🔧 🔧 FIX: Insurance Policies Schema Relationships + FK Constraints + PostgREST Cache Reload
+
+**Daily Metrics**:
+- Total files: 2396
+- TypeScript files: 344
+- Lines of code: ~86,127
+- Commits today: 38
+- Recent migrations: 5
+- Dependencies: 86
+
+### **21 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔧 fix: resolve production routing issue - consolidate duplicate routes
 - 📚 docs: Add incident resolution report INC-2025-10-21-001
 - 📚 docs: automated daily update 2025-10-21 [skip ci]

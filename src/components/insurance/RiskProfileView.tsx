@@ -94,7 +94,7 @@ const RISK_CATEGORY_CONFIG = {
 export default function RiskProfileView() {
   const { profileId } = useParams<{ profileId: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { organizationId } = useAuth();
   
   const [riskProfile, setRiskProfile] = useState<RiskProfile | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -102,12 +102,12 @@ export default function RiskProfileView() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profileId && profile?.organization_id) {
+    if (profileId && organizationId) {
       fetchRiskProfile();
       fetchHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileId, profile?.organization_id]);
+  }, [profileId, organizationId]);
 
   const fetchRiskProfile = async () => {
     try {
@@ -118,7 +118,7 @@ export default function RiskProfileView() {
           contact:contacts(first_name, last_name, email)
         `)
         .eq('id', profileId)
-        .eq('organization_id', profile?.organization_id)
+        .eq('organization_id', organizationId)
         .single();
 
       if (fetchError) throw fetchError;

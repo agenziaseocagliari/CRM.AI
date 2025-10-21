@@ -58,7 +58,7 @@ const RISKY_HOBBIES_LIST = [
 export default function RiskAssessment() {
   const navigate = useNavigate();
   const { contactId } = useParams<{ contactId: string }>();
-  const { user, profile } = useAuth();
+  const { session, organizationId } = useAuth();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,7 +161,7 @@ export default function RiskAssessment() {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(currentStep) || !profile?.organization_id || !contactId) {
+    if (!validateStep(currentStep) || !organizationId || !contactId) {
       setError('Dati mancanti o non validi');
       return;
     }
@@ -173,17 +173,18 @@ export default function RiskAssessment() {
       // Prepare data for risk scoring
       const healthFactors: HealthFactors = {
         age: formData.age,
-        bmi: formData.weight_kg / Math.pow(formData.height_cm / 100, 2),
+        height_cm: formData.height_cm,
+        weight_kg: formData.weight_kg,
         smoking_status: formData.smoking_status,
         alcohol_consumption: formData.alcohol_consumption,
-        preexisting_conditions: formData.preexisting_conditions.map(c => c.name),
+        preexisting_conditions: formData.preexisting_conditions,
         physical_activity_level: formData.physical_activity_level,
       };
 
       const financialFactors: FinancialFactors = {
-        annual_income: formData.annual_income_eur,
-        total_assets: formData.total_assets_eur,
-        total_debts: formData.total_debts_eur,
+        annual_income_eur: formData.annual_income_eur,
+        total_assets_eur: formData.total_assets_eur,
+        total_debts_eur: formData.total_debts_eur,
         employment_status: formData.employment_status,
         employment_stability_years: formData.employment_stability_years,
         homeowner: formData.homeowner,
@@ -202,8 +203,7 @@ export default function RiskAssessment() {
       const riskResult = performRiskAssessment(
         healthFactors,
         financialFactors,
-        lifestyleFactors,
-        formData.age
+        lifestyleFactors
       );
 
       // Insert into database
@@ -211,19 +211,19 @@ export default function RiskAssessment() {
         .from('insurance_risk_profiles')
         .insert({
           contact_id: contactId,
-          organization_id: profile.organization_id,
-          created_by: user?.id,
+          organization_id: organizationId,
+          created_by: session?.user?.id,
           ...formData,
           preexisting_conditions: JSON.stringify(formData.preexisting_conditions),
           medications: JSON.stringify(formData.medications),
           risky_hobbies: JSON.stringify(formData.risky_hobbies),
           high_risk_destinations: JSON.stringify(formData.high_risk_destinations),
-          health_score: riskResult.healthScore,
-          financial_score: riskResult.financialScore,
-          lifestyle_score: riskResult.lifestyleScore,
-          total_risk_score: riskResult.totalRiskScore,
-          risk_category: riskResult.riskCategory,
-          recommended_products: JSON.stringify(riskResult.recommendedProducts),
+          health_score: riskResult.scores.health_score,
+          financial_score: riskResult.scores.financial_score,
+          lifestyle_score: riskResult.scores.lifestyle_score,
+          total_risk_score: riskResult.scores.total_risk_score,
+          risk_category: riskResult.scores.risk_category,
+          recommended_products: JSON.stringify(riskResult.recommendations),
           assessment_date: new Date().toISOString(),
           valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         })

@@ -12,7 +12,8 @@ import { useOutletContext } from 'react-router-dom';
 import { useCrmData } from '../hooks/useCrmData';
 import { OpportunitiesData, Opportunity, PipelineStage } from '../types';
 
-// Chart.js imports
+// 🔧 TEMPORARY: Chart.js imports DISABLED for debugging
+/*
 import {
     ArcElement,
     BarElement,
@@ -39,13 +40,19 @@ ChartJS.register(
   PointElement,
   ArcElement
 );
+*/
+
+import { format } from 'date-fns';
+
+const REPORTS_VERSION = 'v5.0-CHARTS-DISABLED';
+console.log(`📊 [REPORTS INIT] Version: ${REPORTS_VERSION}`);
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
 export const Reports: React.FC = () => {
-  console.log('🔄 REPORTS: Component is rendering');
+  console.log(`🔄 [REPORTS MOUNT] Component rendering - ${REPORTS_VERSION}`);
   
   // Use EXACT same pattern as Opportunities.tsx - Get context data safely
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
@@ -224,7 +231,8 @@ export const Reports: React.FC = () => {
     }
   };
 
-  // Chart data using real data from context
+  // 🔧 TEMP: Chart data DISABLED for debugging
+  /* ORIGINAL CODE - RE-ENABLE AFTER FIXING CHART.JS:
   const revenueChartData = {
     labels: Object.values(PipelineStage),
     datasets: [
@@ -273,6 +281,7 @@ export const Reports: React.FC = () => {
       },
     ],
   };
+  */
 
   const tabsList = [
     { name: 'Revenue Analytics', icon: ChartBarIcon },
@@ -369,7 +378,11 @@ export const Reports: React.FC = () => {
                       Export CSV
                     </button>
                   </div>
-                  <Bar data={revenueChartData} options={{ responsive: true }} />
+                  {/* 🔧 TEMP: Chart disabled */}
+                  <div className="border-4 border-yellow-500 bg-yellow-50 p-8 rounded text-center">
+                    <div className="text-6xl mb-2">📊</div>
+                    <p className="font-bold text-yellow-900">Revenue Chart Disabled for Debugging</p>
+                  </div>
                 </div>
                 
                 <div className="bg-white p-6 rounded-lg shadow">
@@ -406,12 +419,20 @@ export const Reports: React.FC = () => {
                       Export CSV
                     </button>
                   </div>
-                  <Bar data={pipelineChartData} options={{ responsive: true }} />
+                  {/* 🔧 TEMP: Chart disabled */}
+                  <div className="border-4 border-yellow-500 bg-yellow-50 p-8 rounded text-center">
+                    <div className="text-6xl mb-2">📊</div>
+                    <p className="font-bold text-yellow-900">Pipeline Chart Disabled for Debugging</p>
+                  </div>
                 </div>
                 
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h3 className="text-lg font-medium mb-4">Conversion Funnel</h3>
-                  <Line data={conversionChartData} options={{ responsive: true }} />
+                  {/* 🔧 TEMP: Chart disabled */}
+                  <div className="border-4 border-yellow-500 bg-yellow-50 p-8 rounded text-center">
+                    <div className="text-6xl mb-2">📈</div>
+                    <p className="font-bold text-yellow-900">Conversion Chart Disabled for Debugging</p>
+                  </div>
                 </div>
               </div>
             </div>

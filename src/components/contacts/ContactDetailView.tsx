@@ -16,6 +16,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { calculateLeadScore, updateContactScore, type LeadScoringResponse } from '../../utils/leadScoring';
 import type { Contact } from '../../types';
+import DocumentUploader from '../insurance/DocumentUploader';
+import DocumentGallery from '../insurance/DocumentGallery';
+import { useAuth } from '../../contexts/useAuth';
 
 interface ExtendedContact extends Contact {
     address?: string;
@@ -30,6 +33,8 @@ interface ExtendedContact extends Contact {
 export default function ContactDetailView() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { jwtClaims } = useAuth();
+    const organizationId = jwtClaims?.organization_id;
     const [contact, setContact] = useState<ExtendedContact | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -37,6 +42,7 @@ export default function ContactDetailView() {
     const [isSaving, setIsSaving] = useState(false);
     const [isScoring, setIsScoring] = useState(false);
     const [aiScore, setAiScore] = useState<LeadScoringResponse | null>(null);
+    const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
 
     const fetchContact = useCallback(async (contactId: string) => {
         try {
@@ -518,6 +524,41 @@ export default function ContactDetailView() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* 📋 Documenti Contatto Section */}
+                        <div className="bg-white rounded-lg shadow p-6">
+                            <h3 className="font-semibold mb-2 flex items-center gap-2">
+                                📋 Documenti Contatto
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                                Carte d'identità, patenti, certificati e altri documenti del contatto
+                            </p>
+                            
+                            {organizationId && (
+                                <>
+                                    <DocumentUploader
+                                        organizationId={organizationId}
+                                        category="contact"
+                                        entityType="contact"
+                                        entityId={contact.id}
+                                        onUploadComplete={() => {
+                                            console.log('[CONTACT] Document uploaded to contact:', contact.id);
+                                            setDocumentsRefreshKey(prev => prev + 1);
+                                        }}
+                                    />
+                                    
+                                    <div className="mt-6">
+                                        <DocumentGallery
+                                            key={documentsRefreshKey}
+                                            organizationId={organizationId}
+                                            category="contact"
+                                            entityType="contact"
+                                            entityId={contact.id}
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -19,6 +19,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
+import DocumentUploader from './DocumentUploader';
+import DocumentGallery from './DocumentGallery';
 
 interface Claim {
   id: string;
@@ -63,6 +65,7 @@ export default function ClaimDetail() {
   const [claim, setClaim] = useState<Claim | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
 
   const fetchClaim = useCallback(async () => {
     try {
@@ -535,6 +538,37 @@ export default function ClaimDetail() {
                   Nessun evento registrato
                 </p>
               )}
+            </div>
+          </div>
+
+          {/* 📸 Foto e Documenti Sinistro Section */}
+          <div className="bg-white rounded-lg shadow p-6 mt-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+              📸 Foto e Documenti Sinistro
+            </h3>
+            <p className="text-gray-600 mb-4 text-sm">
+              Carica foto dei danni, preventivi, fatture di riparazione e altri documenti relativi al sinistro
+            </p>
+            
+            <DocumentUploader
+              organizationId={organizationId!}
+              category="claim"
+              entityType="claim"
+              entityId={claim.id}
+              onUploadComplete={() => {
+                console.log('[CLAIM] Document uploaded to claim:', claim.id);
+                setDocumentsRefreshKey(prev => prev + 1);
+              }}
+            />
+            
+            <div className="mt-6">
+              <DocumentGallery
+                key={documentsRefreshKey}
+                organizationId={organizationId!}
+                category="claim"
+                entityType="claim"
+                entityId={claim.id}
+              />
             </div>
           </div>
         </div>

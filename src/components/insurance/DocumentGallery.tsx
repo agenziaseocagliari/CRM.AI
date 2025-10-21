@@ -4,7 +4,7 @@
  * 
  * Features:
  * - Grid and list view modes
- * - Image lightbox preview
+ * - Image lightbox preview with zoom/pan
  * - PDF viewer (opens in new tab)
  * - Download documents
  * - Delete documents
@@ -13,9 +13,12 @@
  * 
  * @component
  * @created October 21, 2025
+ * @updated October 21, 2025 - Added yet-another-react-lightbox integration
  */
 
 import React, { useState, useEffect } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 import { storageService, DocumentMetadata } from '@/services/storageService';
 
 interface DocumentGalleryProps {
@@ -42,9 +45,12 @@ export default function DocumentGallery({
   const [documents, setDocuments] = useState<DocumentMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialViewMode);
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date');
+  
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     loadDocuments();
@@ -84,15 +90,32 @@ export default function DocumentGallery({
     }
   };
 
+  const handleImageClick = (docId: string) => {
+    const imageDocuments = documents.filter(d => d.file_type === 'image' && d.public_url);
+    const index = imageDocuments.findIndex(d => d.id === docId);
+    if (index !== -1) {
+      setCurrentImageIndex(index);
+      setLightboxOpen(true);
+    }
+  };
+
   const handlePreview = (doc: DocumentMetadata) => {
     if (doc.file_type === 'image' && doc.public_url) {
-      setLightboxImage(doc.public_url);
+      handleImageClick(doc.id);
     } else if (doc.file_type === 'pdf' && doc.public_url) {
       window.open(doc.public_url, '_blank');
     } else if (onDocumentClick) {
       onDocumentClick(doc);
     }
   };
+  
+  // Prepare lightbox slides
+  const imageDocuments = documents.filter(d => d.file_type === 'image' && d.public_url);
+  const lightboxSlides = imageDocuments.map(doc => ({
+    src: doc.public_url!,
+    alt: doc.original_filename,
+    title: doc.description || doc.original_filename
+  }));
 
   // Filter and sort documents
   const filteredDocuments = documents
@@ -205,17 +228,28 @@ export default function DocumentGallery({
           {filteredDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => handlePreview(doc)}
+              className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Preview */}
-              <div className="aspect-video bg-gray-100 flex items-center justify-center relative">
+              <div 
+                className="aspect-video bg-gray-100 flex items-center justify-center relative group cursor-pointer"
+                onClick={() => handlePreview(doc)}
+              >
                 {doc.file_type === 'image' && doc.public_url ? (
-                  <img
-                    src={doc.public_url}
-                    alt={doc.original_filename}
-                    className="w-full h-full object-cover"
-                  />
+                  <>
+                    <img
+                      src={doc.public_url}
+                      alt={doc.original_filename}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                      <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                        🔍 Clicca per ingrandire
+                      </span>
+                    </div>
+                  </>
                 ) : (
                   <div className="text-6xl">
                     {storageService.getFileIcon(doc.file_type)}
@@ -223,7 +257,7 @@ export default function DocumentGallery({
                 )}
                 
                 {/* File Type Badge */}
-                <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-0.5 rounded">
                   {doc.file_type.toUpperCase()}
                 </div>
               </div>
@@ -385,26 +419,13 @@ export default function DocumentGallery({
         </div>
       )}
 
-      {/* Lightbox for Images */}
-      {lightboxImage && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
-          onClick={() => setLightboxImage(null)}
-        >
-          <button
-            className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300"
-            onClick={() => setLightboxImage(null)}
-          >
-            ×
-          </button>
-          <img
-            src={lightboxImage}
-            alt="Preview"
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      {/* Lightbox Modal */}
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        slides={lightboxSlides}
+        index={currentImageIndex}
+      />
     </div>
   );
 }

@@ -50,8 +50,7 @@ interface RiskProfile {
   valid_until: string;
   notes?: string;
   contact: {
-    first_name: string;
-    last_name: string;
+    name: string;
     email?: string;
   };
 }
@@ -115,7 +114,7 @@ export default function RiskProfileView() {
         .from('insurance_risk_profiles')
         .select(`
           *,
-          contact:contacts(first_name, last_name, email)
+          contact:contacts(name, email)
         `)
         .eq('id', profileId)
         .eq('organization_id', organizationId)
@@ -169,7 +168,7 @@ export default function RiskProfileView() {
       
       // Client info
       doc.setFontSize(12);
-      doc.text(`Cliente: ${riskProfile?.contact.first_name} ${riskProfile?.contact.last_name}`, 20, 35);
+      doc.text(`Cliente: ${riskProfile?.contact.name}`, 20, 35);
       doc.text(`Data Valutazione: ${new Date(riskProfile?.assessment_date || '').toLocaleDateString('it-IT')}`, 20, 42);
       
       // Risk category
@@ -198,7 +197,8 @@ export default function RiskProfileView() {
       doc.text(`Generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT')}`, 20, 285);
       
       // Save
-      doc.save(`Profilo_Rischio_${riskProfile?.contact.last_name}_${new Date().toISOString().split('T')[0]}.pdf`);
+      const safeFilename = riskProfile?.contact.name.replace(/\s+/g, '_');
+      doc.save(`Profilo_Rischio_${safeFilename}_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (err) {
       console.error('Error generating PDF:', err);
       alert('Errore nella generazione del PDF');
@@ -289,7 +289,7 @@ export default function RiskProfileView() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              {riskProfile.contact.first_name} {riskProfile.contact.last_name}
+              {riskProfile.contact.name}
             </h1>
             <p className="text-gray-600">
               {riskProfile.profession} • {riskProfile.age} anni

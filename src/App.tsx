@@ -35,7 +35,7 @@ import { GoogleAuthCallback } from './components/Settings';
 // CRM Components - Riattivati
 import AutomationDiagnostic from './app/dashboard/automation/diagnostic';
 import AutomationPage from './app/dashboard/automation/page';
-import { Automations } from './components/Automations';
+import WorkflowCanvas from './components/automation/WorkflowCanvas';
 import { Calendar } from './components/Calendar';
 import { Contacts } from './components/Contacts';
 import ContactDetailView from './components/contacts/ContactDetailView';
@@ -666,8 +666,8 @@ const App: React.FC = () => {
               insuranceComponent={<FormsInsurance />}
             />
           } />
-          <Route path="automations" element={<Automations />} />
-          <Route path="automazioni" element={<Automations />} />
+          <Route path="automations" element={<WorkflowCanvas />} />
+          <Route path="automazioni" element={<WorkflowCanvas />} />
           <Route path="automation" element={<AutomationPage />} />
           <Route path="automation/diagnostic" element={<AutomationDiagnostic />} />
 

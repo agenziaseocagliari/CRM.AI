@@ -102,6 +102,7 @@ import {
 // Risk Profiling System (Phase 2)
 import RiskAssessment from './components/insurance/RiskAssessment';
 import RiskProfileView from './components/insurance/RiskProfileView';
+import RiskAssessmentList from './components/insurance/RiskAssessmentList';
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 
 
@@ -441,6 +442,15 @@ const App: React.FC = () => {
             } />
             
             {/* Risk Profiling Routes (Phase 2) */}
+            {/* Landing page - List all risk profiles */}
+            <Route path="/dashboard/assicurazioni/valutazione-rischio" element={
+              session ? (
+                <InsuranceOnlyGuard>
+                  <RiskAssessmentList />
+                </InsuranceOnlyGuard>
+              ) : <Navigate to={ROUTES.login} replace />
+            } />
+            {/* Create/Edit risk assessment for specific contact */}
             <Route path="/dashboard/assicurazioni/valutazione-rischio/:contactId" element={
               session ? (
                 <InsuranceOnlyGuard>
@@ -448,6 +458,7 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
+            {/* View risk profile details */}
             <Route path="/dashboard/assicurazioni/valutazione-rischio/view/:profileId" element={
               session ? (
                 <InsuranceOnlyGuard>

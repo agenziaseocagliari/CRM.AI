@@ -180,6 +180,14 @@ export const Sidebar: React.FC = () => {
             const safeLabel = item.label || 'Unknown';
             const safeId = item.id || 'unknown';
             
+            // ROUTING FIX: Add /dashboard prefix to relative paths from sidebar_config
+            // Database paths are like "/assicurazioni/polizze" but routes are under "/dashboard"
+            // Dashboard item uses relative ".." link, all others get /dashboard prefix
+            let fullPath = safePath;
+            if (safeId !== 'dashboard' && safePath.startsWith('/') && !safePath.startsWith('/dashboard')) {
+              fullPath = `/dashboard${safePath}`;
+            }
+            
             // Dynamically get icon component from lucide-react
             const iconName = toPascalCase(safeIcon);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,7 +199,7 @@ export const Sidebar: React.FC = () => {
                 to={
                   safeId === 'dashboard' 
                     ? '..' 
-                    : safePath
+                    : fullPath
                 }
                 icon={<IconComponent className="w-6 h-6" />}
                 label={safeLabel}

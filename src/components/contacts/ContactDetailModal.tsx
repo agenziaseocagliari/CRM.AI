@@ -22,6 +22,8 @@ import { useNavigate } from 'react-router-dom'
 import { getUserOrganization } from '../../lib/organizationContext'
 import { supabase } from '../../lib/supabaseClient'
 import { Contact, Opportunity } from '../../types'
+import DocumentUploader from '../insurance/DocumentUploader'
+import DocumentGallery from '../insurance/DocumentGallery'
 
 interface ContactNote {
   id: string
@@ -69,7 +71,7 @@ export default function ContactDetailModal({
 }: ContactDetailModalProps) {
   const navigate = useNavigate()
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'deals' | 'events'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'deals' | 'events' | 'documents'>('overview')
   const [notes, setNotes] = useState<ContactNote[]>([])
   const [deals, setDeals] = useState<Opportunity[]>([])
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -77,6 +79,7 @@ export default function ContactDetailModal({
   const [newNote, setNewNote] = useState('')
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [isCreatingDeal, setIsCreatingDeal] = useState(false)
+  const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0)
   
   // Enhanced notes functionality
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
@@ -502,17 +505,18 @@ export default function ContactDetailModal({
 
         {/* Tabs */}
         <div className="border-b px-6">
-          <div className="flex gap-6">
+          <div className="flex gap-6 overflow-x-auto">
             {[
               { id: 'overview', label: 'Panoramica', icon: Activity },
               { id: 'activity', label: 'Timeline', icon: Clock },
               { id: 'deals', label: `Opportunità (${deals.length})`, icon: TrendingUp },
-              { id: 'events', label: `Eventi (${events.length})`, icon: Calendar }
+              { id: 'events', label: `Eventi (${events.length})`, icon: Calendar },
+              { id: 'documents', label: 'Documenti', icon: FileText }
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'overview' | 'activity' | 'deals' | 'events')}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                onClick={() => setActiveTab(tab.id as 'overview' | 'activity' | 'deals' | 'events' | 'documents')}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600 font-medium'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -909,6 +913,80 @@ export default function ContactDetailModal({
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'documents' && (
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-6">📋 Documenti Contatto</h3>
+              
+              {/* DEBUG MARKER - Highly visible */}
+              <div style={{
+                background: 'linear-gradient(90deg, red, yellow, lime)',
+                padding: '20px',
+                marginBottom: '30px',
+                borderRadius: '8px',
+                border: '4px solid #000',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px black' }}>
+                  🔴 DEBUG: DOCUMENTS TAB ACTIVE 🔴
+                </p>
+                <p style={{ fontSize: '18px', color: 'white', marginTop: '10px' }}>
+                  Contact ID: {contact.id}
+                </p>
+                <p style={{ fontSize: '18px', color: 'white' }}>
+                  Organization ID: {contact.organization_id || '❌ MISSING'}
+                </p>
+              </div>
+              
+              {contact.organization_id ? (
+                <div className="space-y-6">
+                  {/* Upload Section */}
+                  <div className="bg-white border rounded-lg p-6">
+                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Carica Nuovi Documenti
+                    </h4>
+                    <DocumentUploader
+                      organizationId={contact.organization_id}
+                      category="contact"
+                      entityType="contact"
+                      entityId={contact.id}
+                      onUploadComplete={() => {
+                        console.log('[MODAL] Document uploaded to contact:', contact.id);
+                        setDocumentsRefreshKey(prev => prev + 1);
+                        toast.success('Documento caricato con successo!');
+                      }}
+                    />
+                  </div>
+
+                  {/* Gallery Section */}
+                  <div className="bg-white border rounded-lg p-6">
+                    <h4 className="font-medium text-gray-900 mb-4">Documenti Esistenti</h4>
+                    <DocumentGallery
+                      key={documentsRefreshKey}
+                      organizationId={contact.organization_id}
+                      category="contact"
+                      entityType="contact"
+                      entityId={contact.id}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-red-50 border-2 border-red-500 rounded-lg">
+                  <FileText className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                  <p className="text-red-700 font-bold text-xl mb-2">
+                    ❌ Organization ID Mancante
+                  </p>
+                  <p className="text-red-600">
+                    Impossibile caricare documenti senza Organization ID.
+                  </p>
+                  <p className="text-red-600 mt-2">
+                    Effettua nuovamente il login.
+                  </p>
                 </div>
               )}
             </div>

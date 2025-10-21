@@ -98,10 +98,20 @@ const RISK_CATEGORY_CONFIG = {
   }
 };
 
+// 🔖 VERSION MARKER - Force cache bust
+const COMPONENT_VERSION = 'v4.0-FORCE-CACHE-BUST-2025-10-21';
+console.log(`🚀 [INIT] RiskProfileView loading - VERSION: ${COMPONENT_VERSION}`);
+console.log(`🚀 [INIT] Timestamp: ${new Date().toISOString()}`);
+
 export default function RiskProfileView() {
+  console.log('🎯 [MOUNT] RiskProfileView component mounted');
+  
   const { profileId } = useParams<{ profileId: string }>();
+  console.log('📍 [PARAMS] Profile ID:', profileId);
+  
   const navigate = useNavigate();
   const { organizationId } = useAuth();
+  console.log('🏢 [AUTH] Organization ID:', organizationId);
   
   const [riskProfile, setRiskProfile] = useState<RiskProfile | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -341,6 +351,35 @@ export default function RiskProfileView() {
 
   // 🛡️ SAFE RADAR CHART COMPONENT WITH ERROR BOUNDARY
   const SafeRadarChart = () => {
+    console.log('📊 [CHART] SafeRadarChart function called');
+    console.log('📊 [CHART] radarData:', radarData);
+    console.log('📊 [CHART] radarOptions:', radarOptions);
+    
+    // 🔧 TEMPORARY: CHART DISABLED FOR DEBUGGING
+    // Show debug box instead of chart to isolate caching issues
+    return (
+      <div className="h-80 flex flex-col items-center justify-center border-4 border-yellow-500 bg-yellow-50 rounded-lg p-6">
+        <div className="text-6xl mb-4">🔧</div>
+        <h3 className="font-bold text-xl text-yellow-900 mb-4">DEBUG MODE - Chart Temporarily Disabled</h3>
+        <div className="text-left space-y-2 bg-white p-4 rounded border border-yellow-300 w-full">
+          <p className="font-semibold text-lg">📊 Score Values:</p>
+          <p>✅ Health Score: <strong className="text-green-600">{healthScore}</strong>/100</p>
+          <p>✅ Financial Score: <strong className="text-blue-600">{financialScore}</strong>/100</p>
+          <p>✅ Lifestyle Score: <strong className="text-purple-600">{lifestyleScore}</strong>/100</p>
+          <p className="text-xs text-gray-500 mt-4">If you see this, the new code IS executing!</p>
+        </div>
+        <details className="mt-4 w-full">
+          <summary className="cursor-pointer text-sm font-semibold text-yellow-800 hover:text-yellow-900">
+            Show radarData (click to expand)
+          </summary>
+          <pre className="text-xs mt-2 bg-gray-900 text-green-400 p-3 rounded overflow-auto max-h-60">
+            {JSON.stringify(radarData, null, 2)}
+          </pre>
+        </details>
+      </div>
+    );
+
+    /* ORIGINAL CODE - RE-ENABLE AFTER CACHE VERIFICATION:
     try {
       // Final validation before render
       if (!radarData || !radarData.datasets || radarData.datasets.length === 0) {
@@ -381,6 +420,7 @@ export default function RiskProfileView() {
         </div>
       );
     }
+    */
   };
 
   return (

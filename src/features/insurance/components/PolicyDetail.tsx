@@ -21,6 +21,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 
+// Document Management Components
+import DocumentUploader from '../../../components/insurance/DocumentUploader';
+import DocumentGallery from '../../../components/insurance/DocumentGallery';
+
 import { ROUTES } from '../../../config/routes';
 import { useCrmData } from '../../../hooks/useCrmData';
 import { supabase } from '../../../lib/supabaseClient';
@@ -70,6 +74,7 @@ export const PolicyDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
 
   // Fetch policy data
   const fetchPolicy = useCallback(async () => {
@@ -566,6 +571,56 @@ export const PolicyDetail: React.FC = () => {
                   <span className="font-medium">Creata da:</span>{' '}
                   {policy.profiles.full_name || 'Utente sconosciuto'}
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Documents Section */}
+        <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+              <FileText className="w-5 h-5 mr-2" />
+              Documenti Polizza
+            </h2>
+          </div>
+          
+          <div className="p-6">
+            {/* Document Uploader */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Carica Nuovi Documenti</h3>
+              {organization?.id && (
+                <DocumentUploader
+                  organizationId={organization.id}
+                  category="policy"
+                  entityType="policy"
+                  entityId={policy.id}
+                  onUploadComplete={() => {
+                    toast.success('Documento caricato con successo!');
+                    setDocumentsRefreshKey(prev => prev + 1);
+                  }}
+                  onUploadError={(error) => {
+                    toast.error(`Errore caricamento: ${error}`);
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Document Gallery */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Documenti Caricati</h3>
+              {organization?.id && (
+                <DocumentGallery
+                  key={documentsRefreshKey}
+                  organizationId={organization.id}
+                  entityType="policy"
+                  entityId={policy.id}
+                  viewMode="grid"
+                  onDocumentDelete={() => {
+                    toast.success('Documento eliminato');
+                    setDocumentsRefreshKey(prev => prev + 1);
+                  }}
+                />
               )}
             </div>
           </div>

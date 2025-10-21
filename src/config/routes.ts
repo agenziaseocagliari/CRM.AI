@@ -10,42 +10,42 @@ export const ROUTES = {
     // ==========================================
     insurance: {
         base: '/assicurazioni',
-        dashboard: '/assicurazioni/dashboard',
+        dashboard: '/dashboard/assicurazioni/dashboard',
 
         // Polizze (Policies)
-        policies: '/assicurazioni/polizze',
-        newPolicy: '/assicurazioni/polizze/nuova',
-        editPolicy: (id: string) => `/assicurazioni/polizze/${id}/modifica`,
-        policyDetail: (id: string) => `/assicurazioni/polizze/${id}`,
+        policies: '/dashboard/assicurazioni/polizze',
+        newPolicy: '/dashboard/assicurazioni/polizze/nuova',
+        editPolicy: (id: string) => `/dashboard/assicurazioni/polizze/${id}/modifica`,
+        policyDetail: (id: string) => `/dashboard/assicurazioni/polizze/${id}`,
         // Legacy naming for backward compatibility
-        policiesNew: '/assicurazioni/polizze/nuova',
-        policiesDetail: (id: string) => `/assicurazioni/polizze/${id}`,
-        policiesEdit: (id: string) => `/assicurazioni/polizze/${id}/modifica`,
+        policiesNew: '/dashboard/assicurazioni/polizze/nuova',
+        policiesDetail: (id: string) => `/dashboard/assicurazioni/polizze/${id}`,
+        policiesEdit: (id: string) => `/dashboard/assicurazioni/polizze/${id}/modifica`,
 
         // Sinistri (Claims)
-        claims: '/assicurazioni/sinistri',
-        claimsNew: '/assicurazioni/sinistri/nuovo',
-        claimsDetail: (id: string) => `/assicurazioni/sinistri/${id}`,
+        claims: '/dashboard/assicurazioni/sinistri',
+        claimsNew: '/dashboard/assicurazioni/sinistri/nuovo',
+        claimsDetail: (id: string) => `/dashboard/assicurazioni/sinistri/${id}`,
 
         // Provvigioni (Commissions)
-        commissions: '/assicurazioni/provvigioni',
+        commissions: '/dashboard/assicurazioni/provvigioni',
 
         // Scadenzario (Renewals)
-        renewals: '/assicurazioni/scadenzario',
+        renewals: '/dashboard/assicurazioni/scadenzario',
 
         // Clienti (Clients)
-        clients: '/assicurazioni/clienti',
-        clientsNew: '/assicurazioni/clienti/nuovo',
-        clientsDetail: (id: string) => `/assicurazioni/clienti/${id}`,
+        clients: '/dashboard/assicurazioni/clienti',
+        clientsNew: '/dashboard/assicurazioni/clienti/nuovo',
+        clientsDetail: (id: string) => `/dashboard/assicurazioni/clienti/${id}`,
 
         // Calendario (Calendar)
-        calendar: '/assicurazioni/calendario',
+        calendar: '/dashboard/assicurazioni/calendario',
 
         // Automazioni (Automations)
-        automations: '/assicurazioni/automazioni',
+        automations: '/dashboard/assicurazioni/automazioni',
 
         // Report
-        reports: '/assicurazioni/report',
+        reports: '/dashboard/assicurazioni/report',
     },
 
     // ==========================================
@@ -56,51 +56,51 @@ export const ROUTES = {
     dashboard: '/dashboard',
 
     // Contatti (Contacts)
-    contacts: '/contatti',
-    contactsNew: '/contatti/nuovo',
-    contactsDetail: (id: string | number) => `/contatti/${id}`,
-    contactsEdit: (id: string | number) => `/contatti/${id}/modifica`,
+    contacts: '/dashboard/contatti',
+    contactsNew: '/dashboard/contatti/nuovo',
+    contactsDetail: (id: string | number) => `/dashboard/contatti/${id}`,
+    contactsEdit: (id: string | number) => `/dashboard/contatti/${id}/modifica`,
 
     // Opportunità (Pipeline/Opportunities)
-    opportunities: '/opportunita',
-    opportunitiesNew: '/opportunita/nuova',
-    opportunitiesDetail: (id: string) => `/opportunita/${id}`,
-    opportunitiesEdit: (id: string) => `/opportunita/${id}/modifica`,
+    opportunities: '/dashboard/opportunita',
+    opportunitiesNew: '/dashboard/opportunita/nuova',
+    opportunitiesDetail: (id: string) => `/dashboard/opportunita/${id}`,
+    opportunitiesEdit: (id: string) => `/dashboard/opportunita/${id}/modifica`,
 
     // Calendario (Calendar)
-    calendar: '/calendario',
-    calendarNew: '/calendario/nuovo-evento',
+    calendar: '/dashboard/calendario',
+    calendarNew: '/dashboard/calendario/nuovo-evento',
 
     // Eventi (Events)
-    events: '/eventi',
-    eventsNew: '/eventi/nuovo',
-    eventsDetail: (id: string) => `/eventi/${id}`,
+    events: '/dashboard/eventi',
+    eventsNew: '/dashboard/eventi/nuovo',
+    eventsDetail: (id: string) => `/dashboard/eventi/${id}`,
 
     // Moduli (Forms)
-    forms: '/moduli',
-    formsNew: '/moduli/nuovo',
-    formsDetail: (id: string) => `/moduli/${id}`,
-    formsEdit: (id: string) => `/moduli/${id}/modifica`,
+    forms: '/dashboard/moduli',
+    formsNew: '/dashboard/moduli/nuovo',
+    formsDetail: (id: string) => `/dashboard/moduli/${id}`,
+    formsEdit: (id: string) => `/dashboard/moduli/${id}/modifica`,
 
     // Automazioni (Automations)
-    automations: '/automazioni',
-    automationsNew: '/automazioni/nuova',
-    automationsDetail: (id: string) => `/automazioni/${id}`,
+    automations: '/dashboard/automazioni',
+    automationsNew: '/dashboard/automazioni/nuova',
+    automationsDetail: (id: string) => `/dashboard/automazioni/${id}`,
 
     // Report
-    reports: '/report',
+    reports: '/dashboard/report',
 
     // WhatsApp (brand name - keep as is)
-    whatsapp: '/whatsapp',
+    whatsapp: '/dashboard/whatsapp',
 
     // Email Marketing (keep compound English)
-    emailMarketing: '/email-marketing',
+    emailMarketing: '/dashboard/email-marketing',
 
     // Agenti AI (AI Agents)
-    aiAgents: '/agenti-ai',
+    aiAgents: '/dashboard/agenti-ai',
 
     // Store (universal)
-    store: '/store',
+    store: '/dashboard/store',
 
     // Prezzi (Pricing)
     pricing: '/prezzi',
@@ -111,9 +111,9 @@ export const ROUTES = {
     login: '/accedi',
     signup: '/registrati',
     logout: '/esci',
-    settings: '/impostazioni',
-    profile: '/profilo',
-    organizations: '/organizzazioni',
+    settings: '/dashboard/impostazioni',
+    profile: '/dashboard/profilo',
+    organizations: '/dashboard/organizzazioni',
 
     // ==========================================
     // LANDING PAGES

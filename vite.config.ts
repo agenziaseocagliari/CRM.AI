@@ -25,7 +25,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'js',
-    sourcemap: true, // 🔧 ENABLE SOURCE MAPS FOR DEBUGGING (removed duplicate)
+    sourcemap: false, // ✅ Disabled for production (was enabled for Chart.js debugging)
     commonjsOptions: {
       include: [/jspdf/, /html2canvas/, /dompurify/, /node_modules/],
       transformMixedEsModules: true,

@@ -102,8 +102,7 @@ import {
 // Risk Profiling System (Phase 2)
 import RiskAssessment from './components/insurance/RiskAssessment';
 import RiskAssessmentList from './components/insurance/RiskAssessmentList';
-// import RiskProfileView from './components/insurance/RiskProfileView'; // 🔧 OLD component disabled
-import RiskProfileViewNew from './components/insurance/RiskProfileViewNew'; // 🎯 NEW component from scratch
+import RiskProfileView from './components/insurance/RiskProfileView'; // ✅ Production version with Recharts
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 
 
@@ -491,11 +490,11 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
-            {/* 🎯 NEW: RiskProfileView rebuilt from scratch (v7.0) */}
+            {/* ✅ RiskProfileView - Production version with Recharts */}
             <Route path="/dashboard/assicurazioni/valutazione-rischio/view/:profileId" element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <RiskProfileViewNew />
+                  <RiskProfileView />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
@@ -777,7 +776,7 @@ const App: React.FC = () => {
           }>
             <Route index element={<RiskAssessmentList />} />
             <Route path=":contactId" element={<RiskAssessment />} />
-            <Route path="view/:profileId" element={<RiskProfileViewNew />} />
+            <Route path="view/:profileId" element={<RiskProfileView />} />
           </Route>
         </Route>
 

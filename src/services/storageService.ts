@@ -148,6 +148,17 @@ export const storageService = {
 
       console.log('🔗 [UPLOAD] Public URL:', urlData.publicUrl);
 
+      // Get current user for uploaded_by field
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('❌ [AUTH ERROR] Cannot get current user:', userError);
+        throw new Error('Utente non autenticato');
+      }
+
+      console.log('👤 [UPLOAD] Current user ID:', user.id);
+      console.log('🏢 [UPLOAD] Organization ID:', options.organizationId);
+
       // Save metadata to database
       const { data: docData, error: dbError } = await supabase
         .from('insurance_documents')
@@ -166,7 +177,8 @@ export const storageService = {
           related_entity_type: options.entityType,
           related_entity_id: options.entityId,
           description: options.description,
-          tags: options.tags || []
+          tags: options.tags || [],
+          uploaded_by: user.id  // ← FIX: Add uploaded_by field
         })
         .select()
         .single();

@@ -26,6 +26,7 @@ export const ROUTES = {
         claims: '/dashboard/assicurazioni/sinistri',
         claimsNew: '/dashboard/assicurazioni/sinistri/nuovo',
         claimsDetail: (id: string) => `/dashboard/assicurazioni/sinistri/${id}`,
+        claimsEdit: (id: string) => `/dashboard/assicurazioni/sinistri/${id}/modifica`,
 
         // Provvigioni (Commissions)
         commissions: '/dashboard/assicurazioni/provvigioni',

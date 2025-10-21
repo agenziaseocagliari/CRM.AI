@@ -535,7 +535,7 @@ export default function ContactDetailView() {
                                 Carte d'identità, patenti, certificati e altri documenti del contatto
                             </p>
                             
-                            {organizationId && (
+                            {organizationId ? (
                                 <>
                                     <DocumentUploader
                                         organizationId={organizationId}
@@ -558,6 +558,10 @@ export default function ContactDetailView() {
                                         />
                                     </div>
                                 </>
+                            ) : (
+                                <div className="text-sm text-gray-500 italic">
+                                    ⚠️ Organization ID non disponibile. Effettua nuovamente il login.
+                                </div>
                             )}
                         </div>
                     </div>

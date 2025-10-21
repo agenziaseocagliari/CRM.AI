@@ -51,10 +51,56 @@ export default function DocumentGallery({
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Signed URLs for private bucket images
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadDocuments();
   }, [organizationId, category, entityType, entityId]);
+
+  // Load signed URLs for images when documents change
+  useEffect(() => {
+    async function loadSignedUrls() {
+      const urls: Record<string, string> = {};
+      
+      const imageDocuments = documents.filter(d => d.file_type === 'image');
+      
+      for (const doc of imageDocuments) {
+        try {
+          // Import supabase client
+          const { supabase } = await import('@/lib/supabaseClient');
+          
+          // Generate signed URL for private bucket (1 hour expiry)
+          const { data, error } = await supabase.storage
+            .from(doc.storage_bucket)
+            .createSignedUrl(doc.storage_path, 3600);
+          
+          if (data?.signedUrl && !error) {
+            urls[doc.id] = data.signedUrl;
+          } else {
+            // Fallback to public_url if signed URL fails
+            console.warn('[GALLERY] Signed URL failed for', doc.id, error);
+            if (doc.public_url) {
+              urls[doc.id] = doc.public_url;
+            }
+          }
+        } catch (error) {
+          console.error('[GALLERY] Error generating signed URL:', error);
+          // Fallback to public_url
+          if (doc.public_url) {
+            urls[doc.id] = doc.public_url;
+          }
+        }
+      }
+      
+      setImageUrls(urls);
+    }
+    
+    if (documents.length > 0) {
+      loadSignedUrls();
+    }
+  }, [documents]);
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -109,10 +155,10 @@ export default function DocumentGallery({
     }
   };
   
-  // Prepare lightbox slides
+  // Prepare lightbox slides with signed URLs
   const imageDocuments = documents.filter(d => d.file_type === 'image' && d.public_url);
   const lightboxSlides = imageDocuments.map(doc => ({
-    src: doc.public_url!,
+    src: imageUrls[doc.id] || doc.public_url!,
     alt: doc.original_filename,
     title: doc.description || doc.original_filename
   }));
@@ -238,7 +284,7 @@ export default function DocumentGallery({
                 {doc.file_type === 'image' && doc.public_url ? (
                   <>
                     <img
-                      src={doc.public_url}
+                      src={imageUrls[doc.id] || doc.public_url}
                       alt={doc.original_filename}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"

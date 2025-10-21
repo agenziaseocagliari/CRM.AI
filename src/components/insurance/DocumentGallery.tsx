@@ -137,35 +137,54 @@ export default function DocumentGallery({
   };
 
   const handleImageClick = (docId: string) => {
-    console.log('🔍 [LIGHTBOX] Click detected, docId:', docId);
+    console.log('═'.repeat(80));
+    console.log('🔍 [LIGHTBOX] *** FUNCTION CALLED ***');
+    console.log('🔍 [LIGHTBOX] docId:', docId);
+    console.log('🔍 [LIGHTBOX] typeof docId:', typeof docId);
+    
     const imageDocuments = documents.filter(d => d.file_type === 'image');
-    console.log('🔍 [LIGHTBOX] Total image documents:', imageDocuments.length);
+    console.log('🔍 [LIGHTBOX] Total documents:', documents.length);
+    console.log('🔍 [LIGHTBOX] Image documents count:', imageDocuments.length);
     console.log('🔍 [LIGHTBOX] Image documents:', imageDocuments.map(d => ({ id: d.id, filename: d.original_filename })));
     
     const index = imageDocuments.findIndex(d => d.id === docId);
-    console.log('🔍 [LIGHTBOX] Found index:', index);
+    console.log('🔍 [LIGHTBOX] Found at index:', index);
     
     if (index === -1) {
-      console.error('❌ [LIGHTBOX] Document not found in imageDocuments!');
+      console.error('❌ [LIGHTBOX] *** ERROR: Document not found! ***');
       console.error('❌ [LIGHTBOX] Looking for:', docId);
       console.error('❌ [LIGHTBOX] Available IDs:', imageDocuments.map(d => d.id));
+      console.log('═'.repeat(80));
       return;
     }
     
+    console.log('🔍 [LIGHTBOX] Setting currentImageIndex to:', index);
     setCurrentImageIndex(index);
-    console.log('🔍 [LIGHTBOX] Setting index to:', index);
+    
+    console.log('🔍 [LIGHTBOX] *** OPENING LIGHTBOX (setLightboxOpen(true)) ***');
     setLightboxOpen(true);
-    console.log('🔍 [LIGHTBOX] lightboxOpen set to TRUE');
+    
+    console.log('🔍 [LIGHTBOX] State update dispatched - React should re-render');
+    console.log('═'.repeat(80));
   };
 
   const handlePreview = (doc: DocumentMetadata) => {
+    console.log('🎯 [PREVIEW] Function called');
+    console.log('🎯 [PREVIEW] doc.file_type:', doc.file_type);
+    console.log('🎯 [PREVIEW] doc.id:', doc.id);
+    
     if (doc.file_type === 'image') {
+      console.log('🎯 [PREVIEW] Is image - calling handleImageClick');
       // Always try to open lightbox for images (signed URL or public URL)
       handleImageClick(doc.id);
     } else if (doc.file_type === 'pdf' && doc.public_url) {
+      console.log('🎯 [PREVIEW] Is PDF - opening in new window');
       window.open(doc.public_url, '_blank');
     } else if (onDocumentClick) {
+      console.log('🎯 [PREVIEW] Other type - calling onDocumentClick callback');
       onDocumentClick(doc);
+    } else {
+      console.log('⚠️ [PREVIEW] No action for this file type');
     }
   };
   
@@ -176,6 +195,13 @@ export default function DocumentGallery({
     alt: doc.original_filename,
     title: doc.description || doc.original_filename
   }));
+
+  // DEBUG: Log render state (runs every render)
+  console.log('📊 [GALLERY RENDER] Component rendering...');
+  console.log('📊 [GALLERY RENDER] lightboxOpen:', lightboxOpen);
+  console.log('📊 [GALLERY RENDER] currentImageIndex:', currentImageIndex);
+  console.log('📊 [GALLERY RENDER] lightboxSlides.length:', lightboxSlides.length);
+  console.log('📊 [GALLERY RENDER] imageDocuments.length:', imageDocuments.length);
 
   // Filter and sort documents
   const filteredDocuments = documents
@@ -294,8 +320,13 @@ export default function DocumentGallery({
               <div 
                 className="aspect-video bg-gray-100 flex items-center justify-center relative group cursor-pointer"
                 onClick={() => {
-                  console.log('🖱️ [GALLERY] Card clicked, docId:', doc.id, 'type:', doc.file_type);
+                  console.log('═'.repeat(80));
+                  console.log('🖱️ [GALLERY] CARD CLICKED');
+                  console.log('🖱️ [GALLERY] docId:', doc.id);
+                  console.log('🖱️ [GALLERY] file_type:', doc.file_type);
+                  console.log('🖱️ [GALLERY] Calling handlePreview...');
                   handlePreview(doc);
+                  console.log('═'.repeat(80));
                 }}
               >
                 {doc.file_type === 'image' && (imageUrls[doc.id] || doc.public_url) ? (
@@ -305,11 +336,6 @@ export default function DocumentGallery({
                       alt={doc.original_filename}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('🖱️ [IMG] Direct image click, docId:', doc.id);
-                        handleImageClick(doc.id);
-                      }}
                     />
                     {/* Hover overlay - pointer-events-none allows clicks to pass through */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center pointer-events-none">

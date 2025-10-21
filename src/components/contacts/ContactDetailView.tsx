@@ -569,27 +569,57 @@ export default function ContactDetailView() {
                 </div>
 
                 {/* 🔴 DEBUG MARKER - ALWAYS VISIBLE */}
-                <div className="mt-8 p-8 bg-red-500 text-white font-bold text-center text-2xl">
-                    🔴 DEBUG: END OF GRID - DOCUMENTS BELOW
+                <div style={{
+                    marginTop: '40px',
+                    padding: '40px',
+                    background: 'red',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    fontSize: '32px',
+                    border: '10px solid darkred'
+                }}>
+                    🔴 DEBUG: END OF GRID - DOCUMENTS BELOW (IF YOU SEE THIS, SCROLL DOWN)
                 </div>
 
                 {/* 📋 FULL-WIDTH DOCUMENTS SECTION (DEBUG VERSION) */}
-                <div className="mt-8 border-8 border-green-500 p-12 bg-green-50">
-                    <h2 className="text-4xl font-bold text-green-900 mb-6 text-center">
+                <div style={{
+                    marginTop: '40px',
+                    border: '16px solid lime',
+                    padding: '60px',
+                    background: '#90EE90'
+                }}>
+                    <h2 style={{
+                        fontSize: '48px',
+                        fontWeight: 'bold',
+                        color: 'darkgreen',
+                        marginBottom: '30px',
+                        textAlign: 'center'
+                    }}>
                         📋 DOCUMENTI CONTATTO (DEBUG GIANT BOX - FULL WIDTH)
                     </h2>
                     
+                    <div style={{
+                        background: 'yellow',
+                        padding: '20px',
+                        marginBottom: '30px',
+                        border: '4px solid orange'
+                    }}>
+                        <p style={{ fontSize: '24px', marginBottom: '10px' }}>
+                            <strong>Contact ID:</strong> {contact.id}
+                        </p>
+                        <p style={{ fontSize: '24px', marginBottom: '10px' }}>
+                            <strong>Organization ID:</strong> {organizationId || '❌ MISSING'}
+                        </p>
+                        <p style={{ fontSize: '20px', color: organizationId ? 'green' : 'red' }}>
+                            {organizationId ? '✅ ID PRESENT - Documents should work' : '❌ ID MISSING - Re-login required'}
+                        </p>
+                    </div>
+                    
                     {organizationId ? (
                         <div>
-                            <p className="mb-6 text-green-700 text-2xl font-bold text-center">
-                                ✅ Organization ID: {organizationId}
-                            </p>
-                            <p className="mb-6 text-blue-700 text-xl text-center">
-                                Contact ID: {contact.id}
-                            </p>
-                            
-                            <div className="bg-white p-6 rounded-lg shadow-xl">
-                                <h3 className="text-2xl font-bold mb-4">📤 Upload Documenti</h3>
+                            <div style={{ background: 'white', padding: '30px', borderRadius: '8px', marginBottom: '30px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                                <h3 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '20px' }}>📤 Upload Documenti</h3>
                                 <DocumentUploader
                                     organizationId={organizationId}
                                     category="contact"
@@ -602,8 +632,8 @@ export default function ContactDetailView() {
                                 />
                             </div>
                             
-                            <div className="mt-8 bg-white p-6 rounded-lg shadow-xl">
-                                <h3 className="text-2xl font-bold mb-4">📁 Galleria Documenti</h3>
+                            <div style={{ background: 'white', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                                <h3 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '20px' }}>📁 Galleria Documenti</h3>
                                 <DocumentGallery
                                     key={documentsRefreshKey}
                                     organizationId={organizationId}
@@ -614,11 +644,11 @@ export default function ContactDetailView() {
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center">
-                            <p className="text-red-600 font-bold text-3xl mb-4">
+                        <div style={{ textAlign: 'center' }}>
+                            <p style={{ color: 'red', fontWeight: 'bold', fontSize: '36px', marginBottom: '20px' }}>
                                 ❌ Organization ID MISSING
                             </p>
-                            <p className="text-gray-700 text-xl">
+                            <p style={{ color: '#333', fontSize: '20px', background: 'white', padding: '20px', borderRadius: '8px' }}>
                                 Contact data: {JSON.stringify(contact, null, 2)}
                             </p>
                         </div>

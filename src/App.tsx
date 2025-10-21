@@ -102,7 +102,8 @@ import {
 // Risk Profiling System (Phase 2)
 import RiskAssessment from './components/insurance/RiskAssessment';
 import RiskAssessmentList from './components/insurance/RiskAssessmentList';
-import RiskProfileView from './components/insurance/RiskProfileView';
+// import RiskProfileView from './components/insurance/RiskProfileView'; // 🔧 OLD component disabled
+import RiskProfileViewNew from './components/insurance/RiskProfileViewNew'; // 🎯 NEW component from scratch
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 
 
@@ -490,38 +491,11 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
-            {/* 🚨 NUCLEAR OPTION: RiskProfileView COMPLETELY DISABLED FOR DEBUGGING */}
+            {/* 🎯 NEW: RiskProfileView rebuilt from scratch (v7.0) */}
             <Route path="/dashboard/assicurazioni/valutazione-rischio/view/:profileId" element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <div className="min-h-screen flex items-center justify-center bg-gray-100 p-8">
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-12 text-center">
-                      <div className="text-9xl mb-6">⚠️</div>
-                      <h1 className="text-4xl font-bold text-amber-600 mb-4">
-                        Modulo Temporaneamente Disabilitato
-                      </h1>
-                      <p className="text-xl text-gray-700 mb-6">
-                        Questa pagina è in manutenzione per risoluzione problemi tecnici.
-                      </p>
-                      <div className="space-y-3">
-                        <button
-                          onClick={() => window.history.back()}
-                          className="w-full px-6 py-4 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 transition font-semibold"
-                        >
-                          ← Torna alla Lista Profili
-                        </button>
-                        <button
-                          onClick={() => window.location.href = '/dashboard/assicurazioni'}
-                          className="w-full px-6 py-4 bg-gray-600 text-white text-lg rounded-lg hover:bg-gray-700 transition font-semibold"
-                        >
-                          🏠 Vai alla Dashboard Assicurazioni
-                        </button>
-                      </div>
-                      <p className="mt-6 text-sm text-gray-500">
-                        Versione: v6.0-ROUTE-DISABLED
-                      </p>
-                    </div>
-                  </div>
+                  <RiskProfileViewNew />
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
@@ -803,7 +777,7 @@ const App: React.FC = () => {
           }>
             <Route index element={<RiskAssessmentList />} />
             <Route path=":contactId" element={<RiskAssessment />} />
-            <Route path="view/:profileId" element={<RiskProfileView />} />
+            <Route path="view/:profileId" element={<RiskProfileViewNew />} />
           </Route>
         </Route>
 

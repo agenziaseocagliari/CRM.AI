@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
+import { ROUTES } from '../../config/routes';
 
 interface Claim {
   id: string;
@@ -161,7 +162,7 @@ export default function ClaimsList() {
         </div>
         <div className="flex space-x-2">
           <button
-            onClick={() => navigate('/assicurazioni/sinistri/new')}
+            onClick={() => navigate(ROUTES.insurance.claimsNew)}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             <Plus className="w-5 h-5" />
@@ -249,7 +250,7 @@ export default function ClaimsList() {
             </p>
             {!searchTerm && statusFilter === 'all' && (
               <button
-                onClick={() => navigate('/assicurazioni/sinistri/new')}
+                onClick={() => navigate(ROUTES.insurance.claimsNew)}
                 className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 <Plus className="w-5 h-5" />
@@ -322,14 +323,16 @@ export default function ClaimsList() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
-                        onClick={() => navigate(`/assicurazioni/sinistri/${claim.id}`)}
+                        onClick={() => navigate(ROUTES.insurance.claimsDetail(claim.id))}
                         className="text-blue-600 hover:text-blue-900 mr-3"
+                        title="Visualizza sinistro"
                       >
                         <Eye className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => navigate(`/assicurazioni/sinistri/${claim.id}/edit`)}
+                        onClick={() => navigate(ROUTES.insurance.claimsEdit(claim.id))}
                         className="text-gray-600 hover:text-gray-900"
+                        title="Modifica sinistro"
                       >
                         <Edit2 className="w-5 h-5" />
                       </button>

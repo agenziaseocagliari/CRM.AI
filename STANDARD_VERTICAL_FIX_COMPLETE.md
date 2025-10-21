@@ -11,6 +11,7 @@
 ## 🔍 ROOT CAUSE ANALYSIS
 
 ### Problem Discovery
+
 - **Pipeline Module** (`/dashboard/opportunities`): Showed 0 opportunities for all stages
 - **Report Module** (`/dashboard/reports`): Showed €0 revenue, 0 opportunities, 0% conversion
 - **User Type**: Standard vertical users (Mario Rossi)
@@ -19,9 +20,10 @@
 ### Deep Dive Investigation
 
 **Step 1**: Identified Standard User Organization
+
 ```sql
-SELECT id, full_name, organization_id, vertical, is_active 
-FROM profiles 
+SELECT id, full_name, organization_id, vertical, is_active
+FROM profiles
 WHERE vertical = 'standard' AND is_active = true;
 
 -- Result:
@@ -30,9 +32,10 @@ WHERE vertical = 'standard' AND is_active = true;
 ```
 
 **Step 2**: Checked Opportunities Distribution
+
 ```sql
-SELECT organization_id, COUNT(*), SUM(value) 
-FROM opportunities 
+SELECT organization_id, COUNT(*), SUM(value)
+FROM opportunities
 GROUP BY organization_id;
 
 -- Result:
@@ -41,15 +44,17 @@ GROUP BY organization_id;
 ```
 
 **Step 3**: Checked Deals Distribution
+
 ```sql
-SELECT organization_id, COUNT(*), SUM(value) 
-FROM deals 
+SELECT organization_id, COUNT(*), SUM(value)
+FROM deals
 GROUP BY organization_id;
 
 -- Result: 0 rows (empty table for all orgs)
 ```
 
 **Step 4**: Verified Component Queries
+
 - ✅ `useCrmData.ts`: Already filters by `organization_id`
 - ✅ `Opportunities.tsx`: Uses context data from `useCrmData`
 - ✅ `Reports.tsx`: Uses context data from `useCrmData`
@@ -60,12 +65,14 @@ GROUP BY organization_id;
 **PROBLEM**: No demo data for Standard vertical organization
 
 **Why It Happened**:
+
 1. Phase 3b (Insurance fix) seeded data for Insurance org only
 2. Opportunities UPDATE query moved existing data to Insurance org
 3. Standard org was left with 0 opportunities and 0 deals
 4. Multi-tenant isolation working correctly - Standard users can't see Insurance data
 
 **Impact**:
+
 - Standard vertical: Pipeline empty, Report €0 ❌
 - Insurance vertical: Working perfectly (€21,700, 4 opps) ✅
 
@@ -104,6 +111,7 @@ INSERT INTO opportunities (
 ```
 
 **Execution Result**:
+
 ```
 INSERT 0 6
   table_name   | total_count | total_value
@@ -112,6 +120,7 @@ INSERT 0 6
 ```
 
 **Breakdown by Stage**:
+
 ```
      stage     | count | stage_value
 ---------------+-------+-------------
@@ -144,6 +153,7 @@ INSERT INTO deals (
 ```
 
 **Execution Result**:
+
 ```
 INSERT 0 3
  table_name | total_count | total_revenue
@@ -156,6 +166,7 @@ INSERT 0 3
 ## ✅ TESTING & VERIFICATION
 
 ### Local Build
+
 ```bash
 npm run build
 # ✅ 0 TypeScript errors
@@ -163,6 +174,7 @@ npm run build
 ```
 
 ### Git Workflow
+
 ```bash
 git add -A
 git commit --no-verify -m "FIX: Standard vertical demo data seeding..."
@@ -172,6 +184,7 @@ git push origin main
 ```
 
 ### Vercel Deployment
+
 ```bash
 npx vercel --prod
 # ✅ Deployment: CP4EVYVuJuqwadpb9M8o69RGs7Yt
@@ -179,9 +192,10 @@ npx vercel --prod
 ```
 
 ### Database Verification
+
 ```sql
 -- Final Standard org data count
-SELECT 
+SELECT
   'opportunities' as table_name,
   COUNT(*) as count,
   SUM(value)::numeric as total
@@ -189,7 +203,7 @@ FROM opportunities
 WHERE organization_id = '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353';
 -- Result: 6 opportunities, €145,000 ✅
 
-SELECT 
+SELECT
   'deals' as table_name,
   COUNT(*) as count,
   SUM(value)::numeric as total
@@ -204,6 +218,7 @@ AND status = 'won';
 ## 📈 EXPECTED RESULTS
 
 ### Before Fix (Standard Vertical)
+
 - **Pipeline Module**:
   - New Lead: 0
   - Contacted: 0
@@ -218,6 +233,7 @@ AND status = 'won';
   - Conversion Rate: 0%
 
 ### After Fix (Standard Vertical)
+
 - **Pipeline Module**:
   - New Lead: 1 (€15,000)
   - Contacted: 1 (€8,000)
@@ -232,6 +248,7 @@ AND status = 'won';
   - **Conversion Rate: 33.3%** (2 won / 6 total) ✅
 
 ### Insurance Vertical (No Regression)
+
 - **Pipeline Module**: Still shows 4 opportunities (€21,700) ✅
 - **Report Module**: Still shows correct Insurance metrics ✅
 - **Polizze Module**: Still shows 8 policies ✅
@@ -243,37 +260,37 @@ AND status = 'won';
 
 ### Multi-Tenant Data Status
 
-| Vertical | Organization ID | Opportunities | Deals | Pipeline Value | Revenue |
-|----------|----------------|---------------|-------|----------------|---------|
-| **Insurance** | dcfbec5c-... | 4 | 0 | €21,700 | €0 |
-| **Standard** | 2aab4d72-... | 6 | 3 | €145,000 | €33,000 |
+| Vertical      | Organization ID | Opportunities | Deals | Pipeline Value | Revenue |
+| ------------- | --------------- | ------------- | ----- | -------------- | ------- |
+| **Insurance** | dcfbec5c-...    | 4             | 0     | €21,700        | €0      |
+| **Standard**  | 2aab4d72-...    | 6             | 3     | €145,000       | €33,000 |
 
 ### Module Status - Standard Vertical
 
-| # | Module | Before | After | Status |
-|---|--------|--------|-------|--------|
-| 1 | Dashboard | Working | Working | ✅ |
-| 2 | Contatti | Working | Working | ✅ |
-| 3 | **Pipeline** | **0 opps** | **6 opps** | ✅ **FIXED** |
-| 4 | **Report** | **€0** | **€33k** | ✅ **FIXED** |
-| 5 | Calendario | Working | Working | ✅ |
-| 6 | Clienti | Working | Working | ✅ |
-| 7 | Form Builder | Working | Working | ✅ |
-| 8 | Email | Working | Working | ✅ |
-| 9 | Impostazioni | Working | Working | ✅ |
+| #   | Module       | Before     | After      | Status       |
+| --- | ------------ | ---------- | ---------- | ------------ |
+| 1   | Dashboard    | Working    | Working    | ✅           |
+| 2   | Contatti     | Working    | Working    | ✅           |
+| 3   | **Pipeline** | **0 opps** | **6 opps** | ✅ **FIXED** |
+| 4   | **Report**   | **€0**     | **€33k**   | ✅ **FIXED** |
+| 5   | Calendario   | Working    | Working    | ✅           |
+| 6   | Clienti      | Working    | Working    | ✅           |
+| 7   | Form Builder | Working    | Working    | ✅           |
+| 8   | Email        | Working    | Working    | ✅           |
+| 9   | Impostazioni | Working    | Working    | ✅           |
 
 ### Module Status - Insurance Vertical
 
-| # | Module | Status | Notes |
-|---|--------|--------|-------|
-| 1 | Dashboard | ✅ | Working |
-| 2 | Polizze | ✅ | 8 policies (Phase 3c fix) |
-| 3 | Valutazione Rischio | ✅ | 2 risk profiles (Phase 3b fix) |
-| 4 | Report | ✅ | €21,700 revenue |
-| 5 | Automazioni | ✅ | WorkflowCanvas (Phase 3a fix) |
-| 6 | Calendario | ✅ | Working |
-| 7 | Sinistri | ✅ | Working |
-| 8 | Provvigioni | ✅ | Working |
+| #   | Module              | Status | Notes                          |
+| --- | ------------------- | ------ | ------------------------------ |
+| 1   | Dashboard           | ✅     | Working                        |
+| 2   | Polizze             | ✅     | 8 policies (Phase 3c fix)      |
+| 3   | Valutazione Rischio | ✅     | 2 risk profiles (Phase 3b fix) |
+| 4   | Report              | ✅     | €21,700 revenue                |
+| 5   | Automazioni         | ✅     | WorkflowCanvas (Phase 3a fix)  |
+| 6   | Calendario          | ✅     | Working                        |
+| 7   | Sinistri            | ✅     | Working                        |
+| 8   | Provvigioni         | ✅     | Working                        |
 
 ---
 
@@ -282,18 +299,21 @@ AND status = 'won';
 ### Multi-Tenant Data Management
 
 **Problem Pattern Identified**:
+
 1. When fixing data for one vertical (Insurance), remember other verticals (Standard)
 2. UPDATE queries that change organization_id affect multi-tenant isolation
 3. Demo data must be seeded for ALL active verticals, not just one
 
 **Best Practices**:
 ✅ **DO**:
+
 - Seed demo data for each vertical separately
 - Verify data distribution across all organizations before/after fixes
 - Test with users from different verticals
 - Document organization_id for each vertical in codebase
 
 ❌ **DON'T**:
+
 - Assume one vertical's data fix works for all verticals
 - UPDATE organization_id without checking impact on other orgs
 - Test only with one vertical's user account
@@ -322,6 +342,7 @@ AND status = 'won';
 ### Debugging Strategy Success
 
 **Effective Process**:
+
 1. ✅ Identify user organization_id for affected vertical
 2. ✅ Check data distribution across organizations
 3. ✅ Verify component queries (already correct)
@@ -388,12 +409,14 @@ AND status = 'won';
 ## 📊 FINAL STATUS
 
 ### Incident Closure
+
 - **Start Time**: 2025-10-21 16:00 UTC
 - **End Time**: 2025-10-21 17:30 UTC
 - **Total Duration**: ~1.5 hours
 - **Resolution**: 100% complete (Standard vertical)
 
 ### Success Metrics
+
 - ✅ **Standard vertical**: 2/2 issues fixed (100%)
   - Pipeline: 0 opps → 6 opps ✅
   - Report: €0 → €33,000 ✅
@@ -402,6 +425,7 @@ AND status = 'won';
 - ✅ **Demo data**: Seeded for both verticals
 
 ### Deliverables
+
 - ✅ SQL script created (`temp_seed_standard_demo_data.sql`)
 - ✅ 6 opportunities + 3 deals seeded for Standard org
 - ✅ Build successful (0 errors)
@@ -426,6 +450,7 @@ AND status = 'won';
 **Both Verticals 100% Operational**:
 
 ### Insurance Vertical ✅
+
 - ✅ Polizze: 8 policies
 - ✅ Valutazione Rischio: 2 profiles
 - ✅ Report: €21,700 revenue
@@ -433,6 +458,7 @@ AND status = 'won';
 - ✅ All modules working
 
 ### Standard Vertical ✅
+
 - ✅ Pipeline: 6 opportunities (€145k)
 - ✅ Report: €33k revenue, 33% conversion
 - ✅ Contacts: Working
@@ -451,6 +477,7 @@ AND status = 'won';
 **Insurance Org ID**: `dcfbec5c-6049-4d4d-ba80-a1c412a5861d`
 
 **If Issues Persist**:
+
 1. Hard refresh (Ctrl + Shift + R)
 2. Check browser console (F12) for errors
 3. Verify user's organization_id matches expected

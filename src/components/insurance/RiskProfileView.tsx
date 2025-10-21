@@ -1,22 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
-import RecommendedProducts from './RecommendedProducts';
+import { supabase } from '@/lib/supabaseClient';
 import {
-  Chart as ChartJS,
-  RadialLinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-  Legend,
+    Chart as ChartJS,
+    Filler,
+    Legend,
+    LineElement,
+    PointElement,
+    RadialLinearScale,
+    Tooltip,
 } from 'chart.js';
-import { Radar } from 'react-chartjs-2';
 import {
-  Heart, DollarSign, Activity, Shield, Download,
-  TrendingUp, TrendingDown, Clock, AlertCircle, FileText
+    Activity,
+    AlertCircle,
+    Clock,
+    DollarSign,
+    Download,
+    FileText,
+    Heart,
+    Shield,
+    TrendingDown,
+    TrendingUp
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Radar } from 'react-chartjs-2';
+import { useNavigate, useParams } from 'react-router-dom';
+import RecommendedProducts from './RecommendedProducts';
 
 // Register Chart.js components
 ChartJS.register(
@@ -233,41 +241,73 @@ export default function RiskProfileView() {
     );
   }
 
-  // Chart.js configuration - AFTER riskProfile null check
+  // 🔍 COMPREHENSIVE DEBUG LOGGING
+  console.log('[DEBUG] RiskProfile loaded:', riskProfile);
+  console.log('[DEBUG] Individual scores:', {
+    health: riskProfile?.health_score,
+    financial: riskProfile?.financial_score,
+    lifestyle: riskProfile?.lifestyle_score,
+    total: riskProfile?.total_risk_score,
+    types: {
+      health: typeof riskProfile?.health_score,
+      financial: typeof riskProfile?.financial_score,
+      lifestyle: typeof riskProfile?.lifestyle_score
+    }
+  });
+
+  // 🛡️ DEFENSIVE SCORE EXTRACTION
+  const healthScore = Number(riskProfile?.health_score) || 0;
+  const financialScore = Number(riskProfile?.financial_score) || 0;
+  const lifestyleScore = Number(riskProfile?.lifestyle_score) || 0;
+
+  console.log('[DEBUG] Sanitized scores:', { healthScore, financialScore, lifestyleScore });
+
+  // 🎯 COMPLETE CHART CONFIGURATION WITH EXPLICIT COLORS
   const radarData = {
     labels: ['Salute', 'Finanziario', 'Lifestyle'],
     datasets: [{
       label: 'Punteggio Rischio (0-100)',
-      data: [
-        riskProfile.health_score || 0,
-        riskProfile.financial_score || 0,
-        riskProfile.lifestyle_score || 0
-      ],
+      data: [healthScore, financialScore, lifestyleScore],
       backgroundColor: 'rgba(59, 130, 246, 0.2)',
-      borderColor: 'rgb(59, 130, 246)',
+      borderColor: 'rgba(59, 130, 246, 1)',
       borderWidth: 2,
-      pointBackgroundColor: 'rgb(59, 130, 246)',
+      pointBackgroundColor: 'rgba(59, 130, 246, 1)',
       pointBorderColor: '#fff',
+      pointBorderWidth: 2,
       pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: 'rgb(59, 130, 246)',
+      pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
+      pointHoverBorderWidth: 2,
       pointRadius: 5,
       pointHoverRadius: 7,
+      fill: true
     }]
   };
 
   const radarOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
     scales: {
       r: {
         beginAtZero: true,
         max: 100,
+        min: 0,
         ticks: {
-          stepSize: 20
+          stepSize: 20,
+          color: '#666',
+          backdropColor: 'transparent'
         },
         grid: {
-          color: 'rgba(0, 0, 0, 0.1)'
+          color: '#e5e7eb',
+          circular: true
         },
         angleLines: {
-          color: 'rgba(0, 0, 0, 0.1)'
+          color: '#e5e7eb'
+        },
+        pointLabels: {
+          color: '#374151',
+          font: {
+            size: 12
+          }
         }
       }
     },
@@ -275,13 +315,73 @@ export default function RiskProfileView() {
       legend: {
         display: true,
         position: 'top' as const,
+        labels: {
+          color: '#374151',
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1
       }
-    },
-    responsive: true,
-    maintainAspectRatio: false
+    }
   };
 
+  console.log('[DEBUG] Full radarData:', JSON.stringify(radarData, null, 2));
+  console.log('[DEBUG] Full radarOptions:', JSON.stringify(radarOptions, null, 2));
+  console.log('[DEBUG] ChartJS registry:', ChartJS.registry);
+
   const categoryConfig = RISK_CATEGORY_CONFIG[riskProfile.risk_category];
+
+  // 🛡️ SAFE RADAR CHART COMPONENT WITH ERROR BOUNDARY
+  const SafeRadarChart = () => {
+    try {
+      // Final validation before render
+      if (!radarData || !radarData.datasets || radarData.datasets.length === 0) {
+        throw new Error('Radar data structure invalid');
+      }
+
+      if (!Array.isArray(radarData.datasets[0].data) || radarData.datasets[0].data.some(v => typeof v !== 'number')) {
+        throw new Error('Radar data contains non-numeric values');
+      }
+
+      console.log('[DEBUG] ✅ Chart validation passed, rendering...');
+      
+      return (
+        <div className="h-80 relative">
+          <Radar data={radarData} options={radarOptions} />
+        </div>
+      );
+    } catch (chartError) {
+      console.error('[CHART ERROR] ❌ Failed to render:', chartError);
+      console.error('[CHART ERROR] radarData at error:', radarData);
+      console.error('[CHART ERROR] radarOptions at error:', radarOptions);
+      
+      return (
+        <div className="h-80 flex flex-col items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <AlertCircle className="w-12 h-12 text-amber-500 mb-3" />
+          <p className="font-semibold text-gray-700 mb-2">⚠️ Grafico temporaneamente non disponibile</p>
+          <div className="text-sm text-gray-600 space-y-1 text-center">
+            <p>Punteggio Salute: <strong>{healthScore}</strong>/100</p>
+            <p>Punteggio Finanziario: <strong>{financialScore}</strong>/100</p>
+            <p>Punteggio Lifestyle: <strong>{lifestyleScore}</strong>/100</p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Ricarica pagina
+          </button>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -326,9 +426,7 @@ export default function RiskProfileView() {
             <Shield className="w-5 h-5" />
             Analisi Multidimensionale
           </h2>
-          <div className="h-80">
-            <Radar data={radarData} options={radarOptions} />
-          </div>
+          <SafeRadarChart />
         </div>
 
         {/* Score Breakdown */}

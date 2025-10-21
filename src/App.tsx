@@ -101,8 +101,8 @@ import {
 
 // Risk Profiling System (Phase 2)
 import RiskAssessment from './components/insurance/RiskAssessment';
-import RiskProfileView from './components/insurance/RiskProfileView';
 import RiskAssessmentList from './components/insurance/RiskAssessmentList';
+import RiskProfileView from './components/insurance/RiskProfileView';
 import { VerticalProvider, useVertical } from './hooks/useVertical';
 
 

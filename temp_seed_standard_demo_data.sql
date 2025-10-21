@@ -11,69 +11,70 @@ BEGIN;
 -- ========================================
 -- 6 opportunities across different stages
 
-INSERT INTO opportunities (
-  contact_name,
-  value,
-  stage,
-  organization_id,
-  created_at,
-  updated_at
-)
+INSERT INTO
+    opportunities (
+        contact_name,
+        value,
+        stage,
+        organization_id,
+        created_at,
+        updated_at
+    )
 VALUES
--- NEW LEAD (1)
-(
-  'New Client - Web Development Project',
-  15000.00,
-  'New Lead',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW(),
-  NOW()
-),
+    -- NEW LEAD (1)
+    (
+        'New Client - Web Development Project',
+        15000.00,
+        'New Lead',
+        '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+        NOW(),
+        NOW()
+    ),
 
 -- CONTACTED (1)
 (
-  'Existing Client - SEO Campaign Q4',
-  8000.00,
-  'Contacted',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '2 days',
-  NOW() - INTERVAL '2 days'
+    'Existing Client - SEO Campaign Q4',
+    8000.00,
+    'Contacted',
+    '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+    NOW() - INTERVAL '2 days',
+    NOW() - INTERVAL '2 days'
 ),
 
 -- PROPOSAL SENT (2)
 (
-  'Enterprise Deal - CRM Integration',
-  50000.00,
-  'Proposal Sent',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '5 days',
-  NOW() - INTERVAL '5 days'
+    'Enterprise Deal - CRM Integration',
+    50000.00,
+    'Proposal Sent',
+    '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+    NOW() - INTERVAL '5 days',
+    NOW() - INTERVAL '5 days'
 ),
 (
-  'Renewal - Marketing Package Annual',
-  12000.00,
-  'Proposal Sent',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '7 days',
-  NOW() - INTERVAL '7 days'
+    'Renewal - Marketing Package Annual',
+    12000.00,
+    'Proposal Sent',
+    '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+    NOW() - INTERVAL '7 days',
+    NOW() - INTERVAL '7 days'
 ),
 
 -- WON (2)
 (
-  'Won Deal - E-commerce Website Redesign',
-  25000.00,
-  'Won',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '10 days',
-  NOW() - INTERVAL '10 days'
+    'Won Deal - E-commerce Website Redesign',
+    25000.00,
+    'Won',
+    '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+    NOW() - INTERVAL '10 days',
+    NOW() - INTERVAL '10 days'
 ),
 (
-  'Won Deal - Mobile App Development',
-  35000.00,
-  'Won',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '15 days',
-  NOW() - INTERVAL '15 days'
+    'Won Deal - Mobile App Development',
+    35000.00,
+    'Won',
+    '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+    NOW() - INTERVAL '15 days',
+    NOW() - INTERVAL '15 days'
 );
 
 -- ========================================
@@ -81,47 +82,48 @@ VALUES
 -- ========================================
 -- 3 closed-won deals for revenue calculation
 
-INSERT INTO deals (
-  title,
-  value,
-  status,
-  organization_id,
-  created_at,
-  updated_at,
-  closed_at
-)
+INSERT INTO
+    deals (
+        title,
+        value,
+        status,
+        organization_id,
+        created_at,
+        updated_at,
+        closed_at
+    )
 VALUES
--- Closed Won Deal 1
-(
-  'Website Redesign Project',
-  18000.00,
-  'won',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '10 days',
-  NOW() - INTERVAL '5 days',
-  NOW() - INTERVAL '5 days'
-),
+    -- Closed Won Deal 1
+    (
+        'Website Redesign Project',
+        18000.00,
+        'won',
+        '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+        NOW() - INTERVAL '10 days',
+        NOW() - INTERVAL '5 days',
+        NOW() - INTERVAL '5 days'
+    ),
 
 -- Closed Won Deal 2
 (
-  'SEO Package Q1 2025',
-  9000.00,
-  'won',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '15 days',
-  NOW() - INTERVAL '10 days',
-  NOW() - INTERVAL '10 days'
+    'SEO Package Q1 2025',
+    9000.00,
+    'won',
+    '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+    NOW() - INTERVAL '15 days',
+    NOW() - INTERVAL '10 days',
+    NOW() - INTERVAL '10 days'
 ),
 
 -- Closed Won Deal 3
 (
-  'Consulting Services Contract',
-  6000.00,
-  'won',
-  '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
-  NOW() - INTERVAL '25 days',
-  NOW() - INTERVAL '20 days',
-  NOW() - INTERVAL '20 days'
+    'Consulting Services Contract',
+    6000.00,
+    'won',
+    '2aab4d72-ca5b-438f-93ac-b4c2fe2f8353',
+    NOW() - INTERVAL '25 days',
+    NOW() - INTERVAL '20 days',
+    NOW() - INTERVAL '20 days'
 );
 
 COMMIT;

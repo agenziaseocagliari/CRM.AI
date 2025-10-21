@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
+import { ROUTES } from '../../config/routes';
 import DocumentUploader from './DocumentUploader';
 import DocumentGallery from './DocumentGallery';
 
@@ -239,9 +240,9 @@ export default function ClaimDetail() {
     <div className="max-w-6xl mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => navigate('/assicurazioni/sinistri')}
+            onClick={() => navigate(ROUTES.insurance.claims)}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
             <ArrowLeft className="w-5 h-5" />

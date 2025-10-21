@@ -747,9 +747,9 @@ const App: React.FC = () => {
             </InsuranceOnlyGuard>
           }>
             <Route index element={<ClaimsList />} />
-            <Route path="new" element={<ClaimsForm />} />
+            <Route path="nuovo" element={<ClaimsForm />} />
             <Route path=":id" element={<ClaimDetail />} />
-            <Route path=":id/edit" element={<ClaimsForm />} />
+            <Route path=":id/modifica" element={<ClaimsForm />} />
           </Route>
 
           <Route path="assicurazioni/provvigioni" element={

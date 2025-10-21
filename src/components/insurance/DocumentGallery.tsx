@@ -137,16 +137,20 @@ export default function DocumentGallery({
   };
 
   const handleImageClick = (docId: string) => {
-    const imageDocuments = documents.filter(d => d.file_type === 'image' && d.public_url);
+    const imageDocuments = documents.filter(d => d.file_type === 'image');
     const index = imageDocuments.findIndex(d => d.id === docId);
     if (index !== -1) {
       setCurrentImageIndex(index);
       setLightboxOpen(true);
+      console.log('[GALLERY] Opening lightbox for image:', docId, 'at index:', index);
+    } else {
+      console.warn('[GALLERY] Image not found in documents:', docId);
     }
   };
 
   const handlePreview = (doc: DocumentMetadata) => {
-    if (doc.file_type === 'image' && doc.public_url) {
+    if (doc.file_type === 'image') {
+      // Always try to open lightbox for images (signed URL or public URL)
       handleImageClick(doc.id);
     } else if (doc.file_type === 'pdf' && doc.public_url) {
       window.open(doc.public_url, '_blank');
@@ -156,9 +160,9 @@ export default function DocumentGallery({
   };
   
   // Prepare lightbox slides with signed URLs
-  const imageDocuments = documents.filter(d => d.file_type === 'image' && d.public_url);
+  const imageDocuments = documents.filter(d => d.file_type === 'image');
   const lightboxSlides = imageDocuments.map(doc => ({
-    src: imageUrls[doc.id] || doc.public_url!,
+    src: imageUrls[doc.id] || doc.public_url || '',
     alt: doc.original_filename,
     title: doc.description || doc.original_filename
   }));

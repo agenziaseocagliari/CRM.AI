@@ -527,8 +527,8 @@ export default function ContactDetailView() {
                         </div>
 
                         {/* 📋 Documenti Contatto Section */}
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <div className="bg-white rounded-lg shadow p-6 border-4 border-green-500">
+                            <h3 className="font-semibold text-xl mb-2 flex items-center gap-2">
                                 📋 Documenti Contatto
                             </h3>
                             <p className="text-sm text-gray-600 mb-4">
@@ -537,6 +537,7 @@ export default function ContactDetailView() {
                             
                             {organizationId ? (
                                 <>
+                                    <p className="text-green-600 font-bold mb-4">✅ Organization ID trovato: {organizationId.substring(0, 8)}...</p>
                                     <DocumentUploader
                                         organizationId={organizationId}
                                         category="contact"

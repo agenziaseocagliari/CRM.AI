@@ -233,14 +233,15 @@ export default function RiskProfileView() {
     );
   }
 
+  // Chart.js configuration - AFTER riskProfile null check
   const radarData = {
     labels: ['Salute', 'Finanziario', 'Lifestyle'],
     datasets: [{
       label: 'Punteggio Rischio (0-100)',
       data: [
-        riskProfile.health_score,
-        riskProfile.financial_score,
-        riskProfile.lifestyle_score
+        riskProfile.health_score || 0,
+        riskProfile.financial_score || 0,
+        riskProfile.lifestyle_score || 0
       ],
       backgroundColor: 'rgba(59, 130, 246, 0.2)',
       borderColor: 'rgb(59, 130, 246)',

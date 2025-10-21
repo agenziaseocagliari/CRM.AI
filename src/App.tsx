@@ -123,6 +123,38 @@ const VerticalAwareRoute: React.FC<{
 };
 
 const App: React.FC = () => {
+  // 🚨 GLOBAL ERROR LOGGING - Capture all runtime errors
+  useEffect(() => {
+    console.log('🔧 [APP INIT] v6.0-NUCLEAR-DEBUG - Global error handlers installed');
+    
+    const handleError = (event: ErrorEvent) => {
+      console.error('🚨 [WINDOW ERROR]', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        stack: event.error?.stack,
+        timestamp: new Date().toISOString()
+      });
+    };
+
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error('🚨 [UNHANDLED REJECTION]', {
+        reason: event.reason,
+        promise: event.promise,
+        timestamp: new Date().toISOString()
+      });
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, []);
+
   const { session, userRole, loading, jwtClaims } = useAuth();
   const crmData = useCrmData();
   const navigate = useNavigate();
@@ -458,11 +490,38 @@ const App: React.FC = () => {
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />
-            {/* View risk profile details */}
+            {/* 🚨 NUCLEAR OPTION: RiskProfileView COMPLETELY DISABLED FOR DEBUGGING */}
             <Route path="/dashboard/assicurazioni/valutazione-rischio/view/:profileId" element={
               session ? (
                 <InsuranceOnlyGuard>
-                  <RiskProfileView />
+                  <div className="min-h-screen flex items-center justify-center bg-gray-100 p-8">
+                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-12 text-center">
+                      <div className="text-9xl mb-6">⚠️</div>
+                      <h1 className="text-4xl font-bold text-amber-600 mb-4">
+                        Modulo Temporaneamente Disabilitato
+                      </h1>
+                      <p className="text-xl text-gray-700 mb-6">
+                        Questa pagina è in manutenzione per risoluzione problemi tecnici.
+                      </p>
+                      <div className="space-y-3">
+                        <button
+                          onClick={() => window.history.back()}
+                          className="w-full px-6 py-4 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 transition font-semibold"
+                        >
+                          ← Torna alla Lista Profili
+                        </button>
+                        <button
+                          onClick={() => window.location.href = '/dashboard/assicurazioni'}
+                          className="w-full px-6 py-4 bg-gray-600 text-white text-lg rounded-lg hover:bg-gray-700 transition font-semibold"
+                        >
+                          🏠 Vai alla Dashboard Assicurazioni
+                        </button>
+                      </div>
+                      <p className="mt-6 text-sm text-gray-500">
+                        Versione: v6.0-ROUTE-DISABLED
+                      </p>
+                    </div>
+                  </div>
                 </InsuranceOnlyGuard>
               ) : <Navigate to={ROUTES.login} replace />
             } />

@@ -25,6 +25,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'js',
+    sourcemap: true, // 🔧 ENABLE SOURCE MAPS FOR DEBUGGING (removed duplicate)
     commonjsOptions: {
       include: [/jspdf/, /html2canvas/, /dompurify/, /node_modules/],
       transformMixedEsModules: true,
@@ -48,12 +49,11 @@ export default defineConfig({
       }
     },
     cssCodeSplit: false,
-    sourcemap: false,
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
-        drop_debugger: true,
+        drop_console: false, // 🔧 Keep console.log for debugging
+        drop_debugger: false, // 🔧 Keep debugger for debugging
       },
     },
   },

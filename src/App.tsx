@@ -683,18 +683,25 @@ const App: React.FC = () => {
           <Route path="settings/booking" element={<BookingSettings />} />
 
           {/* Insurance Routes - MOVED INSIDE /dashboard/* catch-all */}
+          {/* FIX: Direct render without nested Outlet - components get context from MainLayout */}
           <Route path="assicurazioni/polizze" element={
             <InsuranceOnlyGuard>
               <>
                 <InsurancePoliciesMeta />
-                <Outlet />
+                <InsurancePoliciesPage />
               </>
             </InsuranceOnlyGuard>
-          }>
-            <Route index element={<InsurancePoliciesPage />} />
-            <Route path=":id" element={<PolicyDetail />} />
-            <Route path=":id/modifica" element={<PolicyForm />} />
-          </Route>
+          } />
+          <Route path="assicurazioni/polizze/:id" element={
+            <InsuranceOnlyGuard>
+              <PolicyDetail />
+            </InsuranceOnlyGuard>
+          } />
+          <Route path="assicurazioni/polizze/:id/modifica" element={
+            <InsuranceOnlyGuard>
+              <PolicyForm />
+            </InsuranceOnlyGuard>
+          } />
 
           <Route path="assicurazioni/nuova-polizza" element={
             <InsuranceOnlyGuard>

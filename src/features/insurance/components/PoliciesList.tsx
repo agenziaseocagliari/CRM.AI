@@ -46,18 +46,7 @@ const ITEMS_PER_PAGE = 25;
 export const PoliciesList: React.FC = () => {
   const navigate = useNavigate();
   const contextData = useOutletContext<ReturnType<typeof useCrmData>>();
-  
-  // 🔥 EMERGENCY DEBUG - CONTEXT DATA
-  console.error('🔥 Context Data:', contextData);
-  console.error('🔥 Organization:', contextData?.organization);
-  console.error('🔥 Organization ID:', contextData?.organization?.id);
-  
   const { organization } = contextData || {};
-  
-  // 🔥 EMERGENCY DEBUG - ORGANIZATION CHECK
-  console.error('🔥 Organization extracted:', organization);
-  console.error('🔥 Organization ID check:', organization?.id);
-  console.error('🔥 Will return early?', !organization?.id);
   
   // State Management
   const [policies, setPolicies] = useState<InsurancePolicyWithContact[]>([]);
@@ -69,15 +58,10 @@ export const PoliciesList: React.FC = () => {
   
   // Fetch policies from database
   const fetchPolicies = useCallback(async () => {
-    console.error('🔥 FETCH POLICIES - Entry point');
-    console.error('🔥 Organization ID for fetch:', organization?.id);
-    
     if (!organization?.id) {
-      console.error('🔥 FETCH POLICIES - EARLY RETURN! No organization ID');
       return;
     }
-    
-    console.error('🔥 FETCH POLICIES - Proceeding with fetch');
+
     
     setLoading(true);
     try {

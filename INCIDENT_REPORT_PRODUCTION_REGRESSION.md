@@ -2,9 +2,23 @@
 
 **Incident ID**: INC-2025-10-21-001  
 **Severity**: P1 (High - Multiple modules affected)  
-**Status**: UNDER INVESTIGATION  
+**Status**: ✅ **RESOLVED**  
 **Reported**: 2025-10-21 11:00 CET  
+**Resolved**: 2025-10-21 12:00 CET  
 **Reporter**: User  
+**Resolution**: See `INCIDENT_RESOLUTION_INC-2025-10-21-001.md`
+
+---
+
+## ✅ RESOLUTION SUMMARY
+
+**Root Cause**: Supabase query syntax error in `RiskAssessmentList.tsx` - attempting to fetch `first_name` and `last_name` from `contacts` table, but table only has single `name` field.
+
+**Fix Applied**: Updated TypeScript interface and Supabase query to use `name` field.
+
+**Deployment**: Commit f5d9fda deployed to production.
+
+**Status**: ✅ RESOLVED - Awaiting user verification.
 
 ---
 

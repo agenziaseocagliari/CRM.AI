@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import toast, { Toaster } from 'react-hot-toast';
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 // Diagnostic imports
 import DiagnosticDashboard from './components/DiagnosticDashboard';
@@ -554,193 +554,29 @@ const App: React.FC = () => {
               } />
             </Route>
             
-            {/* 🔥 EMERGENCY FIX: Dashboard-prefixed insurance routes */}
-            <Route path="/dashboard/assicurazioni/polizze" element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <>
-                    <InsurancePoliciesMeta />
-                    <MainLayout crmData={crmData} />
-                  </>
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<InsurancePoliciesPage />} />
-            </Route>
-            
-            <Route path={ROUTES.insurance.policies} element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <>
-                    <InsurancePoliciesMeta />
-                    <MainLayout crmData={crmData} />
-                  </>
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<InsurancePoliciesPage />} />
-            </Route>
-            <Route path={ROUTES.insurance.newPolicy} element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <MainLayout crmData={crmData} />
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<PolicyForm />} />
-            </Route>
-            <Route path="/assicurazioni/polizze/:id" element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <MainLayout crmData={crmData} />
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<PolicyDetail />} />
-            </Route>
-            <Route path="/assicurazioni/polizze/:id/modifica" element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <MainLayout crmData={crmData} />
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<PolicyForm />} />
-            </Route>
-            <Route path={ROUTES.insurance.claims} element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <MainLayout crmData={crmData} />
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<ClaimsList />} />
-              <Route path="new" element={<ClaimsForm />} />
-              <Route path=":id" element={<ClaimDetail />} />
-              <Route path=":id/edit" element={<ClaimsForm />} />
-            </Route>
-            <Route path={ROUTES.insurance.commissions} element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <MainLayout crmData={crmData} />
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<CommissionDashboard />} />
-              <Route path="list" element={<CommissionsList />} />
-              <Route path="new" element={<CommissionCalculator />} />
-              <Route path="reports" element={<CommissionReports />} />
-            </Route>
-            <Route path={ROUTES.insurance.renewals} element={
-              session ? (
-                <InsuranceOnlyGuard>
-                  <MainLayout crmData={crmData} />
-                </InsuranceOnlyGuard>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<InsuranceRenewalsPage />} />
-            </Route>
-            
-            {/* Italian CRM Routes */}
-            <Route path={ROUTES.dashboard} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<Dashboard />} />
-            </Route>
-            
-            <Route path={ROUTES.contacts} element={
-              session ? (
-                <>
-                  <ContactsMeta />
-                  <MainLayout crmData={crmData} />
-                </>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<Contacts />} />
-            </Route>
-            <Route path={ROUTES.contactsDetail(':id')} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<ContactDetailView />} />
-            </Route>
-            
-            <Route path={ROUTES.opportunities} element={
-              session ? (
-                <>
-                  <OpportunitiesMeta />
-                  <MainLayout crmData={crmData} />
-                </>
-              ) : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<Opportunities />} />
-            </Route>
-            
-            <Route path={ROUTES.calendar} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<Calendar />} />
-            </Route>
-            
-            <Route path={ROUTES.forms} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={
-                <VerticalAwareRoute
-                  standardComponent={<Forms />}
-                  insuranceComponent={<FormsInsurance />}
-                />
-              } />
-            </Route>
-            
-            <Route path={ROUTES.automations} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<AutomationPage />} />
-            </Route>
-            
-            <Route path={ROUTES.reports} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<Reports />} />
-            </Route>
-            
-            <Route path={ROUTES.whatsapp} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<WhatsAppModule />} />
-            </Route>
-            
-            <Route path={ROUTES.emailMarketing} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<EmailMarketingModule />} />
-            </Route>
-            
-            {/* CREDITI EXTRA - Internal authenticated route for buying credits */}
-            <Route path="/crediti-extra" element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<ExtraCreditsStore />} />
-            </Route>
-
-            <Route path={ROUTES.settings} element={
-              session ? <MainLayout crmData={crmData} /> : <Navigate to={ROUTES.login} replace />
-            }>
-              <Route index element={<Settings />} />
-            </Route>
+            {/* Italian CRM Routes - REMOVED: Now handled inside /dashboard/* catch-all */}
 
             {/* ========================================== */}
             {/* ENGLISH ROUTE ALIASES FOR STANDARD CRM COMPATIBILITY */}
             {/* ========================================== */}
-            {/* Fix: Sidebar uses English paths but routes are Italian */}
-            <Route path="/automation" element={<Navigate to="/automazioni" replace />} />
-            <Route path="/opportunities" element={<Navigate to="/opportunita" replace />} />
+            {/* Fix: Redirect non-prefixed paths to /dashboard/* versions */}
+            <Route path="/automation" element={<Navigate to="/dashboard/automation" replace />} />
+            <Route path="/opportunities" element={<Navigate to="/dashboard/opportunities" replace />} />
+            <Route path="/opportunita" element={<Navigate to="/dashboard/opportunities" replace />} />
             <Route path="/universal-credits" element={<Navigate to="/dashboard/universal-credits" replace />} />
-            <Route path="/extra-credits" element={<Navigate to="/crediti-extra" replace />} />
-            <Route path="/forms" element={<Navigate to="/moduli" replace />} />
-            <Route path="/contacts" element={<Navigate to="/contatti" replace />} />
-            <Route path="/calendar" element={<Navigate to="/calendario" replace />} />
-            <Route path="/reports" element={<Navigate to="/report" replace />} />
+            <Route path="/extra-credits" element={<Navigate to="/dashboard/store" replace />} />
+            <Route path="/crediti-extra" element={<Navigate to="/dashboard/store" replace />} />
+            <Route path="/forms" element={<Navigate to="/dashboard/forms" replace />} />
+            <Route path="/moduli" element={<Navigate to="/dashboard/forms" replace />} />
+            <Route path="/contacts" element={<Navigate to="/dashboard/contacts" replace />} />
+            <Route path="/contatti" element={<Navigate to="/dashboard/contacts" replace />} />
+            <Route path="/calendar" element={<Navigate to="/dashboard/calendar" replace />} />
+            <Route path="/calendario" element={<Navigate to="/dashboard/calendar" replace />} />
+            <Route path="/reports" element={<Navigate to="/dashboard/reports" replace />} />
+            <Route path="/report" element={<Navigate to="/dashboard/reports" replace />} />
+            <Route path="/automazioni" element={<Navigate to="/dashboard/automations" replace />} />
+            <Route path="/whatsapp" element={<Navigate to="/dashboard/whatsapp" replace />} />
+            <Route path="/email-marketing" element={<Navigate to="/dashboard/email-marketing" replace />} />
 
 
             {/* ========================================== */}
@@ -792,8 +628,18 @@ const App: React.FC = () => {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="opportunities" element={<Opportunities />} />
-          <Route path="contacts" element={<Contacts />} />
+          <Route path="opportunities" element={
+            <>
+              <OpportunitiesMeta />
+              <Opportunities />
+            </>
+          } />
+          <Route path="contacts" element={
+            <>
+              <ContactsMeta />
+              <Contacts />
+            </>
+          } />
           <Route path="contacts/:id" element={<ContactDetailView />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="reports" element={<Reports />} />
@@ -818,6 +664,64 @@ const App: React.FC = () => {
           <Route path="store" element={<ExtraCreditsStore />} />
           <Route path="settings" element={<Settings />} />
           <Route path="settings/booking" element={<BookingSettings />} />
+
+          {/* Insurance Routes - MOVED INSIDE /dashboard/* catch-all */}
+          <Route path="assicurazioni/polizze" element={
+            <InsuranceOnlyGuard>
+              <>
+                <InsurancePoliciesMeta />
+                <Outlet />
+              </>
+            </InsuranceOnlyGuard>
+          }>
+            <Route index element={<InsurancePoliciesPage />} />
+            <Route path=":id" element={<PolicyDetail />} />
+            <Route path=":id/modifica" element={<PolicyForm />} />
+          </Route>
+
+          <Route path="assicurazioni/nuova-polizza" element={
+            <InsuranceOnlyGuard>
+              <PolicyForm />
+            </InsuranceOnlyGuard>
+          } />
+
+          <Route path="assicurazioni/sinistri" element={
+            <InsuranceOnlyGuard>
+              <Outlet />
+            </InsuranceOnlyGuard>
+          }>
+            <Route index element={<ClaimsList />} />
+            <Route path="new" element={<ClaimsForm />} />
+            <Route path=":id" element={<ClaimDetail />} />
+            <Route path=":id/edit" element={<ClaimsForm />} />
+          </Route>
+
+          <Route path="assicurazioni/provvigioni" element={
+            <InsuranceOnlyGuard>
+              <Outlet />
+            </InsuranceOnlyGuard>
+          }>
+            <Route index element={<CommissionDashboard />} />
+            <Route path="list" element={<CommissionsList />} />
+            <Route path="new" element={<CommissionCalculator />} />
+            <Route path="reports" element={<CommissionReports />} />
+          </Route>
+
+          <Route path="assicurazioni/scadenzario" element={
+            <InsuranceOnlyGuard>
+              <InsuranceRenewalsPage />
+            </InsuranceOnlyGuard>
+          } />
+
+          <Route path="assicurazioni/valutazione-rischio" element={
+            <InsuranceOnlyGuard>
+              <Outlet />
+            </InsuranceOnlyGuard>
+          }>
+            <Route index element={<RiskAssessmentList />} />
+            <Route path=":contactId" element={<RiskAssessment />} />
+            <Route path="view/:profileId" element={<RiskProfileView />} />
+          </Route>
         </Route>
 
         {/* Insurance routes - protected */}

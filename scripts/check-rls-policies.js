@@ -3,8 +3,8 @@
  * Diagnoses INSERT policy configuration
  */
 
-import pg from 'pg';
 import fs from 'fs';
+import pg from 'pg';
 
 const { Client } = pg;
 
@@ -14,7 +14,10 @@ async function checkRLSPolicies() {
   // Load credentials
   const creds = fs.readFileSync('.credentials_protected', 'utf8');
   const lines = creds.split('\n');
-  const dbPassword = lines.find(l => l.startsWith('DB_PASSWORD=')).split('=')[1].trim();
+  const dbPassword = lines
+    .find(l => l.startsWith('DB_PASSWORD='))
+    .split('=')[1]
+    .trim();
 
   const client = new Client({
     host: 'db.qjtaqrlpronohgpfdxsi.supabase.co',
@@ -22,7 +25,7 @@ async function checkRLSPolicies() {
     user: 'postgres',
     password: dbPassword,
     port: 5432,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
   });
 
   try {
@@ -37,7 +40,10 @@ async function checkRLSPolicies() {
       WHERE schemaname = 'public'
       AND tablename = 'insurance_documents';
     `);
-    console.log('   RLS Enabled:', rlsStatus.rows[0]?.rowsecurity ? '✅ YES' : '❌ NO');
+    console.log(
+      '   RLS Enabled:',
+      rlsStatus.rows[0]?.rowsecurity ? '✅ YES' : '❌ NO'
+    );
     console.log('');
 
     // Check INSERT policies
@@ -57,9 +63,13 @@ async function checkRLSPolicies() {
 
     if (insertPolicies.rows.length === 0) {
       console.log('   ❌ NO INSERT POLICIES FOUND!');
-      console.log('   This is the problem - no policy allows INSERT operations');
+      console.log(
+        '   This is the problem - no policy allows INSERT operations'
+      );
     } else {
-      console.log(`   Found ${insertPolicies.rows.length} INSERT policy/policies:\n`);
+      console.log(
+        `   Found ${insertPolicies.rows.length} INSERT policy/policies:\n`
+      );
       insertPolicies.rows.forEach((policy, idx) => {
         console.log(`   Policy ${idx + 1}: ${policy.policyname}`);
         console.log(`   - Command: ${policy.cmd}`);
@@ -86,17 +96,19 @@ async function checkRLSPolicies() {
       if (!byCmd[p.cmd]) byCmd[p.cmd] = [];
       byCmd[p.cmd].push(p.policyname);
     });
-    
-    Object.keys(byCmd).sort().forEach(cmd => {
-      console.log(`   - ${cmd}: ${byCmd[cmd].length} policy/policies`);
-      byCmd[cmd].forEach(name => console.log(`     • ${name}`));
-    });
+
+    Object.keys(byCmd)
+      .sort()
+      .forEach(cmd => {
+        console.log(`   - ${cmd}: ${byCmd[cmd].length} policy/policies`);
+        byCmd[cmd].forEach(name => console.log(`     • ${name}`));
+      });
     console.log('');
 
     // Check if organization_id is in JWT claims
     console.log('4️⃣  JWT CLAIMS CHECK (for test user)');
     console.log('   Testing with email: primassicurazionibari@gmail.com');
-    
+
     const jwtTest = await client.query(`
       SELECT
         id,
@@ -112,15 +124,27 @@ async function checkRLSPolicies() {
       console.log('   User found:');
       console.log('   - ID:', user.id);
       console.log('   - Email:', user.email);
-      console.log('   - user_metadata:', JSON.stringify(user.raw_user_meta_data, null, 2));
-      console.log('   - app_metadata:', JSON.stringify(user.raw_app_meta_data, null, 2));
-      
+      console.log(
+        '   - user_metadata:',
+        JSON.stringify(user.raw_user_meta_data, null, 2)
+      );
+      console.log(
+        '   - app_metadata:',
+        JSON.stringify(user.raw_app_meta_data, null, 2)
+      );
+
       const hasOrgInUserMeta = user.raw_user_meta_data?.organization_id;
       const hasOrgInAppMeta = user.raw_app_meta_data?.organization_id;
-      
+
       console.log('');
-      console.log('   organization_id in user_metadata:', hasOrgInUserMeta ? `✅ ${hasOrgInUserMeta}` : '❌ NOT FOUND');
-      console.log('   organization_id in app_metadata:', hasOrgInAppMeta ? `✅ ${hasOrgInAppMeta}` : '❌ NOT FOUND');
+      console.log(
+        '   organization_id in user_metadata:',
+        hasOrgInUserMeta ? `✅ ${hasOrgInUserMeta}` : '❌ NOT FOUND'
+      );
+      console.log(
+        '   organization_id in app_metadata:',
+        hasOrgInAppMeta ? `✅ ${hasOrgInAppMeta}` : '❌ NOT FOUND'
+      );
     } else {
       console.log('   ❌ User not found');
     }
@@ -148,7 +172,7 @@ async function checkRLSPolicies() {
     // Summary
     console.log('📊 DIAGNOSIS SUMMARY');
     console.log('═══════════════════════════════════════');
-    
+
     if (insertPolicies.rows.length === 0) {
       console.log('❌ PROBLEM IDENTIFIED:');
       console.log('   No INSERT policy exists on insurance_documents table');
@@ -163,9 +187,10 @@ async function checkRLSPolicies() {
       console.log('⚠️  CHECK:');
       console.log('   1. Verify JWT contains organization_id');
       console.log('   2. Verify storageService passes organizationId');
-      console.log('   3. Check policy WITH CHECK condition matches JWT structure');
+      console.log(
+        '   3. Check policy WITH CHECK condition matches JWT structure'
+      );
     }
-
   } catch (error) {
     console.error('❌ Error:', error.message);
     throw error;

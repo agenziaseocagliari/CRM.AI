@@ -150,7 +150,7 @@ export const storageService = {
 
       // Get current user for uploaded_by field
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+
       if (userError || !user) {
         console.error('❌ [AUTH ERROR] Cannot get current user:', userError);
         throw new Error('Utente non autenticato');

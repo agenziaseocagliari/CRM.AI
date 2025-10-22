@@ -17,11 +17,11 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
-import { ROUTES } from '../../config/routes';
-import DocumentUploader from './DocumentUploader';
 import DocumentGallery from './DocumentGallery';
+import DocumentUploader from './DocumentUploader';
 
 interface Claim {
   id: string;
@@ -92,7 +92,7 @@ export default function ClaimDetail() {
     } catch (error) {
       console.error('Error fetching claim:', error);
       alert('Errore nel caricamento del sinistro: ' + (error as Error).message);
-      navigate('/assicurazioni/sinistri');
+      navigate(ROUTES.insurance.claims);
     } finally {
       setLoading(false);
     }
@@ -225,7 +225,7 @@ export default function ClaimDetail() {
           Sinistro non trovato
         </h3>
         <button
-          onClick={() => navigate('/assicurazioni/sinistri')}
+          onClick={() => navigate(ROUTES.insurance.claims)}
           className="text-blue-600 hover:text-blue-800"
         >
           Torna alla lista
@@ -257,7 +257,7 @@ export default function ClaimDetail() {
           </div>
         </div>
         <button
-          onClick={() => navigate(`/assicurazioni/sinistri/${id}/edit`)}
+          onClick={() => navigate(ROUTES.insurance.claimsEdit(id!))}
           className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           <Edit2 className="w-4 h-4" />

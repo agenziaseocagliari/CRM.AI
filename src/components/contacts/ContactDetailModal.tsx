@@ -22,8 +22,8 @@ import { useNavigate } from 'react-router-dom'
 import { getUserOrganization } from '../../lib/organizationContext'
 import { supabase } from '../../lib/supabaseClient'
 import { Contact, Opportunity } from '../../types'
-import DocumentUploader from '../insurance/DocumentUploader'
 import DocumentGallery from '../insurance/DocumentGallery'
+import DocumentUploader from '../insurance/DocumentUploader'
 
 interface ContactNote {
   id: string

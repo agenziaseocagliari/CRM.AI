@@ -195,6 +195,7 @@
 #### Root Cause
 
 RLS Policy on `insurance_documents` requires TWO conditions:
+
 ```sql
 WITH CHECK (
   organization_id = JWT.organization_id  -- ✅ Was working
@@ -210,14 +211,17 @@ Code was not setting `uploaded_by` field → RLS blocked INSERT → Upload faile
 **File**: `src/services/storageService.ts`
 
 **Added**:
+
 ```typescript
 // Get current user
-const { data: { user } } = await supabase.auth.getUser();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
 // Include in INSERT
 await supabase.from('insurance_documents').insert({
   // ... existing fields ...
-  uploaded_by: user.id  // ← FIX
+  uploaded_by: user.id, // ← FIX
 });
 ```
 
@@ -232,6 +236,7 @@ await supabase.from('insurance_documents').insert({
 #### User Action Required
 
 **Please test**:
+
 1. Login: `https://crm-ai-agenziaseocagliari.vercel.app`
 2. Navigate to Policy Detail
 3. Upload "Assicurazione Auto Lucera.jpg"
@@ -253,6 +258,7 @@ node scripts/check-rls-policies.js
 ```
 
 **Output**:
+
 ```
 🔍 CHECKING RLS POLICIES
 ✅ RLS Enabled: YES
@@ -266,11 +272,12 @@ node scripts/check-rls-policies.js
 ## 📋 SESSION SUMMARY
 
 **Total Fixes Today**: 2 critical issues  
-**Time**: 
+**Time**:
+
 - Document Management RLS Fix: 25 minutes
 - Navigation Routes Fix: 15 minutes  
-**Total Lines**: +1,200 lines (code + documentation)  
-**Status**: ✅ **ALL SYSTEMS OPERATIONAL**
+  **Total Lines**: +1,200 lines (code + documentation)  
+  **Status**: ✅ **ALL SYSTEMS OPERATIONAL**
 
 ---
 

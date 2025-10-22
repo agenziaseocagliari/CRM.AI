@@ -107,6 +107,7 @@ node scripts/check-rls-policies.js
 ```
 
 **Output**:
+
 ```
 🔍 CHECKING RLS POLICIES ON insurance_documents
 
@@ -115,7 +116,7 @@ node scripts/check-rls-policies.js
 
 2️⃣  INSERT POLICIES
    Found 1 INSERT policy/policies:
-   
+
    Policy 1: Users can upload documents to their organization
    - Command: INSERT
    - WITH CHECK: (organization_id = JWT) AND (uploaded_by = auth.uid())
@@ -148,25 +149,25 @@ node scripts/check-rls-policies.js
 ```
 00:00 ─────► Issue Reported
               └─ "Upload fails with RLS error"
-              
+
 00:05 ─────► Diagnostic Created
               └─ scripts/check-rls-policies.js
-              
+
 00:10 ─────► Root Cause Found
               └─ uploaded_by field MISSING
-              
+
 00:15 ─────► Code Fixed
               └─ storageService.ts updated
-              
+
 00:18 ─────► Build Success
               └─ 0 TypeScript errors
-              
+
 00:22 ─────► Deployed
               └─ Commit ef0bdbc → Production
-              
+
 00:25 ─────► Documentation Complete
               └─ 3 reports created
-              
+
 🎉 TOTAL: 25 MINUTES
 ```
 
@@ -241,6 +242,7 @@ URGENT_FIX_RLS_VISUAL_DIAGNOSTIC.md (NEW)
 ---
 
 **See Also**:
+
 - Full report: `URGENT_FIX_RLS_DOCUMENT_UPLOAD.md`
 - Executive summary: `URGENT_FIX_RLS_EXECUTIVE_SUMMARY.md`
 - Diagnostic tool: `scripts/check-rls-policies.js`

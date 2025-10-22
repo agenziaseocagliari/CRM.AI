@@ -439,10 +439,10 @@ export default function RiskProfileViewNew() {
             <span>📄</span> Esporta PDF
           </button>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/dashboard/assicurazioni')}
             className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold flex items-center justify-center gap-2"
           >
-            <span>🏠</span> Dashboard
+            <span>🏠</span> Dashboard Assicurazioni
           </button>
         </div>
 

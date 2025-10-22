@@ -1,9 +1,9 @@
 import { AlertCircle, CheckCircle, Clock, Edit2, Eye, FileText, Plus, Search, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
-import { ROUTES } from '../../config/routes';
 
 interface Claim {
   id: string;

@@ -16,10 +16,10 @@
  * @updated October 21, 2025 - Added yet-another-react-lightbox integration
  */
 
-import React, { useState, useEffect } from 'react';
+import { DocumentMetadata, storageService } from '@/services/storageService';
+import { useEffect, useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
-import { storageService, DocumentMetadata } from '@/services/storageService';
 
 interface DocumentGalleryProps {
   organizationId: string;

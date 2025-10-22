@@ -36,17 +36,18 @@ WITH CHECK (
 **File**: `src/services/storageService.ts`
 
 **Added**:
+
 ```typescript
 // Get current user
-const { data: { user } } = await supabase.auth.getUser();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
 // Include in INSERT
-const { data: docData } = await supabase
-  .from('insurance_documents')
-  .insert({
-    // ... existing fields ...
-    uploaded_by: user.id  // ← FIX
-  });
+const { data: docData } = await supabase.from('insurance_documents').insert({
+  // ... existing fields ...
+  uploaded_by: user.id, // ← FIX
+});
 ```
 
 **Lines Changed**: 12 lines  
@@ -66,6 +67,7 @@ const { data: docData } = await supabase
 ## USER TESTING REQUIRED
 
 **Please test**:
+
 1. Navigate to Policy Detail
 2. Upload "Assicurazione Auto Lucera.jpg"
 3. Verify success toast appears
@@ -81,11 +83,13 @@ const { data: docData } = await supabase
 **Created**: `scripts/check-rls-policies.js`
 
 **Run**:
+
 ```bash
 node scripts/check-rls-policies.js
 ```
 
 **Output**:
+
 - RLS status
 - INSERT policy details
 - JWT claims verification

@@ -19,6 +19,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import { supabase } from "../../lib/supabaseClient";
+import { ROUTES } from "../../config/routes";
 
 // TypeScript Interfaces
 interface Commission {
@@ -510,14 +511,14 @@ const CommissionsList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => navigate(`/assicurazioni/provvigioni/${commission.id}`)}
+                              onClick={() => navigate(ROUTES.insurance.commissionsDetail(commission.id))}
                               className="text-blue-600 hover:text-blue-900 transition-colors"
                               title="Visualizza dettagli"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => navigate(`/assicurazioni/provvigioni/${commission.id}/edit`)}
+                              onClick={() => navigate(ROUTES.insurance.commissionsEdit(commission.id))}
                               className="text-gray-600 hover:text-gray-900 transition-colors"
                               title="Modifica"
                             >

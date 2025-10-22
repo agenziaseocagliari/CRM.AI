@@ -22,8 +22,8 @@ import toast from 'react-hot-toast';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 
 // Document Management Components
-import DocumentUploader from '../../../components/insurance/DocumentUploader';
 import DocumentGallery from '../../../components/insurance/DocumentGallery';
+import DocumentUploader from '../../../components/insurance/DocumentUploader';
 
 import { ROUTES } from '../../../config/routes';
 import { useCrmData } from '../../../hooks/useCrmData';

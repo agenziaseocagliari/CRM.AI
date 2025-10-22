@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
+import { ROUTES } from '../../config/routes';
 import { BulkRenewalActions } from './BulkRenewalActions';
 import { ReminderSettings } from './ReminderSettings';
 
@@ -304,8 +305,8 @@ const RenewalCalendar: React.FC = () => {
 
   const handleOpenPolicyDetail = useCallback((reminder: RenewalReminder) => {
     try {
-      // Navigate directly to policy detail page using Italian routing
-      navigate(`/assicurazioni/polizze/${reminder.policy_id}`);
+      // Navigate to policy detail page using centralized ROUTES constant
+      navigate(ROUTES.insurance.policyDetail(reminder.policy_id));
     } catch (error) {
       console.error('❌ [RenewalCalendar] Error navigating to policy detail:', error);
       toast.error('Impossibile aprire i dettagli della polizza');

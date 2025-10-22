@@ -30,6 +30,10 @@ export const ROUTES = {
 
         // Provvigioni (Commissions)
         commissions: '/dashboard/assicurazioni/provvigioni',
+        commissionsNew: '/dashboard/assicurazioni/provvigioni/nuovo',
+        commissionsDetail: (id: string) => `/dashboard/assicurazioni/provvigioni/${id}`,
+        commissionsEdit: (id: string) => `/dashboard/assicurazioni/provvigioni/${id}/modifica`,
+        commissionsReports: '/dashboard/assicurazioni/provvigioni/report',
 
         // Scadenzario (Renewals)
         renewals: '/dashboard/assicurazioni/scadenzario',

@@ -13,12 +13,12 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
-import { calculateLeadScore, updateContactScore, type LeadScoringResponse } from '../../utils/leadScoring';
-import type { Contact } from '../../types';
-import DocumentUploader from '../insurance/DocumentUploader';
-import DocumentGallery from '../insurance/DocumentGallery';
 import { useAuth } from '../../contexts/useAuth';
+import { supabase } from '../../lib/supabaseClient';
+import type { Contact } from '../../types';
+import { calculateLeadScore, updateContactScore, type LeadScoringResponse } from '../../utils/leadScoring';
+import DocumentGallery from '../insurance/DocumentGallery';
+import DocumentUploader from '../insurance/DocumentUploader';
 
 interface ExtendedContact extends Contact {
     address?: string;

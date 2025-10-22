@@ -11,6 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
+import { ROUTES } from '../../config/routes';
 
 interface ClaimFormData {
   contact_id: string;
@@ -243,7 +244,7 @@ export default function ClaimsForm() {
       // Wait a moment before redirect to ensure DB write completes
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      navigate('/assicurazioni/sinistri');
+      navigate(ROUTES.insurance.claims);
     } catch (error) {
       console.error('Error saving claim:', error);
       alert('Errore nel salvare il sinistro: ' + (error as Error).message);
@@ -281,7 +282,7 @@ export default function ClaimsForm() {
             </p>
           </div>
           <button
-            onClick={() => navigate('/assicurazioni/sinistri')}
+            onClick={() => navigate(ROUTES.insurance.claims)}
             className="text-gray-400 hover:text-gray-600"
           >
             <X className="w-6 h-6" />
@@ -504,7 +505,7 @@ export default function ClaimsForm() {
           <div className="flex items-center justify-end space-x-3 pt-4 border-t">
             <button
               type="button"
-              onClick={() => navigate('/assicurazioni/sinistri')}
+              onClick={() => navigate(ROUTES.insurance.claims)}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
               Annulla

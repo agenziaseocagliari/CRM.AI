@@ -18,6 +18,7 @@ import {
 } from 'recharts';
 import { useAuth } from "../../contexts/useAuth";
 import { supabase } from "../../lib/supabaseClient";
+import { ROUTES } from "../../config/routes";
 
 // TypeScript Interfaces
 interface KPIStats {
@@ -335,21 +336,21 @@ const CommissionDashboard: React.FC = () => {
           </div>
           <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => navigate('/assicurazioni/provvigioni/new')}
+              onClick={() => navigate(ROUTES.insurance.commissionsNew)}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
             >
               <Euro className="h-4 w-4 mr-2" />
               Calcola Nuova Provvigione
             </button>
             <button
-              onClick={() => navigate('/assicurazioni/provvigioni/list')}
+              onClick={() => navigate(ROUTES.insurance.commissions)}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <List className="h-4 w-4 mr-2" />
               Vai alla Lista Provvigioni
             </button>
             <button
-              onClick={() => navigate('/assicurazioni/provvigioni/reports')}
+              onClick={() => navigate(ROUTES.insurance.commissionsReports)}
               className="ml-4 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
             >
               Report Provvigioni

@@ -6,6 +6,7 @@ import React, { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
+import { ROUTES } from '../../config/routes';
 
 // TypeScript Interfaces
 interface CommissionForm {
@@ -227,7 +228,7 @@ const CommissionCalculator: React.FC = () => {
       
       // Navigate to list after short delay
       setTimeout(() => {
-        navigate('/assicurazioni/provvigioni/list');
+        navigate(ROUTES.insurance.commissions);
       }, 2000);
 
     } catch (error) {
@@ -534,7 +535,7 @@ const CommissionCalculator: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
             <button
               type="button"
-              onClick={() => navigate('/assicurazioni/provvigioni')}
+              onClick={() => navigate(ROUTES.insurance.commissions)}
               className="w-full sm:w-auto px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               disabled={loading}
             >

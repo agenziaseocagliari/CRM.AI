@@ -184,11 +184,16 @@ function DocumentsGrid({ organizationId, filters }: DocumentsGridProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!organizationId) return;
+  const loadFilteredDocuments = async () => {
+    if (!organizationId) {
+      console.log('❌ [DOCS GRID] No organization ID');
+      setLoading(false);
+      return;
+    }
 
-    const loadFilteredDocuments = async () => {
-    if (!organizationId) return;
+    console.log('📊 [DOCS GRID] Loading documents...');
+    console.log('📊 [DOCS GRID] Org ID:', organizationId);
+    console.log('📊 [DOCS GRID] Filters:', filters);
 
     setLoading(true);
     try {
@@ -197,18 +202,22 @@ function DocumentsGrid({ organizationId, filters }: DocumentsGridProps) {
         .select('*')
         .eq('organization_id', organizationId);
 
+      console.log('📊 [DOCS GRID] Base query created');
+
       // Apply category filter
-      if (filters.category !== 'all') {
+      if (filters.category && filters.category !== 'all') {
+        console.log('📊 [DOCS GRID] Applying category filter:', filters.category);
         query = query.eq('document_category', filters.category);
       }
 
       // Apply file type filter
-      if (filters.fileType !== 'all') {
+      if (filters.fileType && filters.fileType !== 'all') {
+        console.log('📊 [DOCS GRID] Applying file type filter:', filters.fileType);
         query = query.eq('file_type', filters.fileType);
       }
 
       // Apply date range filter
-      if (filters.dateRange !== 'all') {
+      if (filters.dateRange && filters.dateRange !== 'all') {
         const now = new Date();
         let startDate: Date;
 
@@ -229,30 +238,53 @@ function DocumentsGrid({ organizationId, filters }: DocumentsGridProps) {
             startDate = new Date(0);
         }
 
+        console.log('📊 [DOCS GRID] Applying date range filter:', filters.dateRange, 'from', startDate);
         query = query.gte('created_at', startDate.toISOString());
       }
 
       // Apply search query
-      if (filters.searchQuery) {
+      if (filters.searchQuery && filters.searchQuery.trim() !== '') {
+        console.log('📊 [DOCS GRID] Applying search filter:', filters.searchQuery);
         query = query.or(
           `file_name.ilike.%${filters.searchQuery}%,` +
           `description.ilike.%${filters.searchQuery}%`
         );
       }
 
+      console.log('📊 [DOCS GRID] Executing query...');
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('📊 [DOCS GRID] Query result:', {
+        success: !error,
+        count: data?.length || 0,
+        error: error?.message
+      });
+
+      if (error) {
+        console.error('❌ [DOCS GRID] Query error:', error);
+        throw error;
+      }
+
+      console.log('✅ [DOCS GRID] Documents loaded:', data?.length || 0);
+      if (data && data.length > 0) {
+        console.log('📄 [DOCS GRID] First document:', data[0]);
+      }
 
       setDocuments(data || []);
     } catch (error) {
-      console.error('Error loading documents:', error);
+      console.error('❌ [DOCS GRID] Exception:', error instanceof Error ? error.message : error);
+      setDocuments([]);
     } finally {
       setLoading(false);
     }
-    };
+  };
 
-    loadFilteredDocuments();
+  useEffect(() => {
+    console.log('🔄 [DOCS GRID] useEffect triggered');
+    if (organizationId) {
+      loadFilteredDocuments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId, filters]);
 
   return (

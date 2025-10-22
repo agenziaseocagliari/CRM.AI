@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
 import {
     Legend,
     PolarAngleAxis,
@@ -164,7 +165,7 @@ export default function RiskProfileViewNew() {
             </div>
             <div className="flex gap-4 justify-center">
               <button 
-                onClick={() => navigate('/dashboard/assicurazioni/valutazione-rischio')}
+                onClick={() => navigate(ROUTES.insurance.riskAssessment)}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
               >
                 ← Torna alla Lista Profili
@@ -191,7 +192,7 @@ export default function RiskProfileViewNew() {
             <div className="text-6xl mb-4">🔍</div>
             <h2 className="text-2xl font-bold text-gray-700 mb-4">Profile Not Found</h2>
             <button
-              onClick={() => navigate('/dashboard/assicurazioni/valutazione-rischio')}
+              onClick={() => navigate(ROUTES.insurance.riskAssessment)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
             >
               ← Torna alla Lista Profili
@@ -427,7 +428,7 @@ export default function RiskProfileViewNew() {
         {/* Actions */}
         <div className="flex gap-4">
           <button
-            onClick={() => navigate('/dashboard/assicurazioni/valutazione-rischio')}
+            onClick={() => navigate(ROUTES.insurance.riskAssessment)}
             className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold flex items-center justify-center gap-2"
           >
             <span>←</span> Torna alla Lista Profili
@@ -439,7 +440,7 @@ export default function RiskProfileViewNew() {
             <span>📄</span> Esporta PDF
           </button>
           <button
-            onClick={() => navigate('/dashboard/assicurazioni')}
+            onClick={() => navigate(ROUTES.insurance.dashboard)}
             className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold flex items-center justify-center gap-2"
           >
             <span>🏠</span> Dashboard Assicurazioni

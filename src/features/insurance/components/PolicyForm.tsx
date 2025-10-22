@@ -352,7 +352,7 @@ export const PolicyForm: React.FC = () => {
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigate('/contatti/nuovo')}
+                  onClick={() => navigate(ROUTES.contactsNew)}
                   className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
                 >
                   → Crea un nuovo cliente prima di creare la polizza

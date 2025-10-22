@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
 import type { Contact } from '../../types';
@@ -58,7 +59,7 @@ export default function ContactDetailView() {
             setEditedContact(data);
         } catch (error) {
             console.error('Error fetching contact:', error);
-            navigate('/contacts');
+            navigate(ROUTES.contacts);
         } finally {
             setLoading(false);
         }
@@ -106,7 +107,7 @@ export default function ContactDetailView() {
 
             if (error) throw error;
 
-            navigate('/contacts');
+            navigate(ROUTES.contacts);
         } catch (error) {
             console.error('Delete error:', error);
             alert('Errore durante l\'eliminazione');
@@ -173,7 +174,7 @@ export default function ContactDetailView() {
                     <h2 className="text-2xl font-bold text-gray-900">Contatto non trovato</h2>
                     <p className="mt-2 text-gray-600">Il contatto richiesto non esiste.</p>
                     <button
-                        onClick={() => navigate('/contacts')}
+                        onClick={() => navigate(ROUTES.contacts)}
                         className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                         Torna ai Contatti
@@ -189,7 +190,7 @@ export default function ContactDetailView() {
                 {/* Header */}
                 <div className="mb-6">
                     <button
-                        onClick={() => navigate('/contacts')}
+                        onClick={() => navigate(ROUTES.contacts)}
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
                     >
                         <ArrowLeft className="w-4 h-4" />

@@ -258,7 +258,7 @@ const CommissionCalculator: React.FC = () => {
   // Early return if organization_id is not available
   if (!organizationId) {
     console.error('❌ [CommissionCalculator] Organization ID not found - redirecting to dashboard');
-    navigate('/dashboard');
+    navigate(ROUTES.dashboard);
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="text-center">

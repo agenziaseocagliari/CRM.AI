@@ -38,6 +38,13 @@ export const ROUTES = {
         // Scadenzario (Renewals)
         renewals: '/dashboard/assicurazioni/scadenzario',
 
+        // Valutazione Rischio (Risk Assessment)
+        riskAssessment: '/dashboard/assicurazioni/valutazione-rischio',
+        riskAssessmentNew: (contactId?: string) => contactId 
+            ? `/dashboard/assicurazioni/valutazione-rischio/${contactId}`
+            : '/dashboard/assicurazioni/valutazione-rischio',
+        riskAssessmentView: (profileId: string) => `/dashboard/assicurazioni/valutazione-rischio/view/${profileId}`,
+
         // Clienti (Clients)
         clients: '/dashboard/assicurazioni/clienti',
         clientsNew: '/dashboard/assicurazioni/clienti/nuovo',

@@ -515,7 +515,14 @@ export default function ContactDetailModal({
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'overview' | 'activity' | 'deals' | 'events' | 'documents')}
+                onClick={() => {
+                  console.log('═'.repeat(80));
+                  console.log('🔵 [TAB CLICK] User clicked tab:', tab.id);
+                  console.log('🔵 [TAB CLICK] Previous activeTab:', activeTab);
+                  setActiveTab(tab.id as 'overview' | 'activity' | 'deals' | 'events' | 'documents');
+                  console.log('🔵 [TAB CLICK] New activeTab should be:', tab.id);
+                  console.log('═'.repeat(80));
+                }}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600 font-medium'
@@ -531,6 +538,10 @@ export default function ContactDetailModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          {(() => {
+            console.log('📋 [MODAL RENDER] Current activeTab:', activeTab);
+            return null;
+          })()}
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Contact Info */}
@@ -919,28 +930,35 @@ export default function ContactDetailModal({
           )}
 
           {activeTab === 'documents' && (
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-6">📋 Documenti Contatto</h3>
-              
-              {/* DEBUG MARKER - Highly visible */}
-              <div style={{
-                background: 'linear-gradient(90deg, red, yellow, lime)',
-                padding: '20px',
-                marginBottom: '30px',
-                borderRadius: '8px',
-                border: '4px solid #000',
-                textAlign: 'center'
-              }}>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px black' }}>
-                  🔴 DEBUG: DOCUMENTS TAB ACTIVE 🔴
-                </p>
-                <p style={{ fontSize: '18px', color: 'white', marginTop: '10px' }}>
-                  Contact ID: {contact.id}
-                </p>
-                <p style={{ fontSize: '18px', color: 'white' }}>
-                  Organization ID: {contact.organization_id || '❌ MISSING'}
-                </p>
-              </div>
+            <>
+              {(() => {
+                console.log('✅ [RENDER] DOCUMENTS TAB CONTENT IS RENDERING!');
+                console.log('✅ [RENDER] contact.id:', contact?.id);
+                console.log('✅ [RENDER] contact.organization_id:', contact?.organization_id);
+                return null;
+              })()}
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-6">📋 Documenti Contatto</h3>
+                
+                {/* DEBUG MARKER - Highly visible */}
+                <div style={{
+                  background: 'linear-gradient(90deg, red, yellow, lime)',
+                  padding: '20px',
+                  marginBottom: '30px',
+                  borderRadius: '8px',
+                  border: '4px solid #000',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px black' }}>
+                    🔴 DEBUG: DOCUMENTS TAB ACTIVE 🔴
+                  </p>
+                  <p style={{ fontSize: '18px', color: 'white', marginTop: '10px' }}>
+                    Contact ID: {contact.id}
+                  </p>
+                  <p style={{ fontSize: '18px', color: 'white' }}>
+                    Organization ID: {contact.organization_id || '❌ MISSING'}
+                  </p>
+                </div>
               
               {contact.organization_id ? (
                 <div className="space-y-6">
@@ -990,6 +1008,7 @@ export default function ContactDetailModal({
                 </div>
               )}
             </div>
+            </>
           )}
         </div>
       </div>

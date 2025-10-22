@@ -9,7 +9,7 @@ interface Document {
   file_type: string;
   file_size: number;
   document_category: string;
-  created_at: string;
+  updated_at: string;
 }
 
 interface DocumentStats {
@@ -239,7 +239,7 @@ function DocumentsGrid({ organizationId, filters }: DocumentsGridProps) {
         }
 
         console.log('📊 [DOCS GRID] Applying date range filter:', filters.dateRange, 'from', startDate);
-        query = query.gte('created_at', startDate.toISOString());
+        query = query.gte('updated_at', startDate.toISOString());
       }
 
       // Apply search query
@@ -252,7 +252,7 @@ function DocumentsGrid({ organizationId, filters }: DocumentsGridProps) {
       }
 
       console.log('📊 [DOCS GRID] Executing query...');
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('updated_at', { ascending: false });
 
       console.log('📊 [DOCS GRID] Query result:', {
         success: !error,
@@ -359,7 +359,7 @@ function DocumentCard({ document }: { document: Document }) {
             {document.document_category} • {formatBytes(document.file_size)}
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            {new Date(document.created_at).toLocaleDateString('it-IT', {
+            {new Date(document.updated_at).toLocaleDateString('it-IT', {
               day: '2-digit',
               month: 'short',
               year: 'numeric'
@@ -415,7 +415,7 @@ export default function DocumentsModule() {
         const totalSize = data.reduce((sum: number, doc: Document) => sum + (doc.file_size || 0), 0);
         
         const recent = [...data]
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
           .slice(0, 5);
         
         setStats({

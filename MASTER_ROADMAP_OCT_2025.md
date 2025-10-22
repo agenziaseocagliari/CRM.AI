@@ -114,6 +114,41 @@ Credits System:        ████████████████░░░
 
 ### **22 ottobre 2025** - Automated Daily Update 🤖
 
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Use updated_at instead of created_at in DocumentsModule
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Add extensive debug logging to DocumentsGrid filter logic
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- ✅ feat: Add centralized Documents Module
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- 🔄 chore: Remove debug logging from production code
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Events query 400 error - add attendees column and error handling
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Complete navigation system refactor - zero blank pages, zero hardcoded routes
+- 📚 docs: Add comprehensive verification checklist and executive summary
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Replace ALL hardcoded routes with ROUTES constants - DEFINITIVE FIX
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔄 debug: Add comprehensive tab rendering debug logging
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Add Documents tab to Contact modal (ContactDetailModal)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(FINAL): Extensive debug logging + unmissable visual markers
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+
+**Daily Metrics**:
+- Total files: 2452
+- TypeScript files: 351
+- Lines of code: ~89,813
+- Commits today: 24
+- Recent migrations: 5
+- Dependencies: 87
+
+### **22 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔧 fix: Use updated_at instead of created_at in DocumentsModule
 - 📚 docs: automated daily update 2025-10-22 [skip ci]
 - 🔧 fix: Add extensive debug logging to DocumentsGrid filter logic

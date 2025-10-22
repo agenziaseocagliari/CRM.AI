@@ -11,11 +11,9 @@
 ### The Problem
 
 ContactDetailModal.tsx was attempting to query:
+
 ```typescript
-supabase
-  .from('events')
-  .select('*')
-  .contains('attendees', [contact.email])
+supabase.from('events').select('*').contains('attendees', [contact.email]);
 ```
 
 **ERROR**: `400 Bad Request - column "attendees" does not exist`
@@ -23,6 +21,7 @@ supabase
 ### Why It Happened
 
 The events table schema uses a **relational approach** with `event_participants` table:
+
 - ✅ events table: Core event data
 - ✅ event_participants table: Who's attending (with user_id, contact_id, external_email)
 
@@ -39,11 +38,13 @@ But the **frontend code expected** a simple `attendees text[]` column for direct
 **File**: `FIX_EVENTS_ATTENDEES_COLUMN.sql`
 
 **What it does**:
+
 - Adds `attendees TEXT[]` column to events table
 - Creates GIN index for performance
 - Backwards compatible (checks if column exists first)
 
 **How to apply**:
+
 ```sql
 -- Option 1: Supabase Dashboard SQL Editor
 -- Copy/paste the entire FIX_EVENTS_ATTENDEES_COLUMN.sql file
@@ -60,12 +61,14 @@ psql -h YOUR_SUPABASE_HOST -U postgres -d YOUR_DB < FIX_EVENTS_ATTENDEES_COLUMN.
 **File**: `src/components/contacts/ContactDetailModal.tsx`
 
 **Changes**:
+
 - ✅ Added detailed error logging for events queries
 - ✅ Detects missing column error (code 42703)
 - ✅ Provides helpful migration instructions in console
 - ✅ Gracefully continues with empty events array (doesn't break UI)
 
 **Console output when column is missing**:
+
 ```
 ❌ [EVENTS] Query error: {...}
 ❌ [EVENTS] Error code: 42703
@@ -74,6 +77,7 @@ psql -h YOUR_SUPABASE_HOST -U postgres -d YOUR_DB < FIX_EVENTS_ATTENDEES_COLUMN.
 ```
 
 **Console output when working**:
+
 ```
 📅 [EVENTS] Loading for: contact@example.com
 ✅ [EVENTS] Loaded successfully: 3 events
@@ -132,6 +136,7 @@ event_participants table: event_id, external_email, ... (unchanged)
 ### Query Syntax
 
 **Correct syntax for text[] arrays**:
+
 ```typescript
 // ✅ CORRECT - Modern Supabase syntax
 .contains('attendees', [email])
@@ -146,11 +151,13 @@ event_participants table: event_id, external_email, ... (unchanged)
 ### Index Performance
 
 The GIN index allows fast containment queries:
+
 ```sql
 CREATE INDEX idx_events_attendees ON events USING GIN (attendees);
 ```
 
 **Query performance**:
+
 - Small dataset (<10k events): ~5-20ms
 - Large dataset (>100k events): ~20-100ms (with index)
 
@@ -159,33 +166,41 @@ CREATE INDEX idx_events_attendees ON events USING GIN (attendees);
 ## ALTERNATIVE APPROACHES CONSIDERED
 
 ### Option A: Use event_participants join ❌
+
 ```typescript
 // More "correct" but complex
 const { data } = await supabase
   .from('events')
-  .select(`
+  .select(
+    `
     *,
     event_participants!inner(external_email)
-  `)
-  .eq('event_participants.external_email', contact.email)
+  `
+  )
+  .eq('event_participants.external_email', contact.email);
 ```
+
 **Rejected**: Too complex, requires schema knowledge, harder to maintain
 
 ### Option B: Add computed column/view ❌
+
 ```sql
 CREATE VIEW events_with_attendees AS
-SELECT e.*, 
+SELECT e.*,
   array_agg(ep.external_email) as attendees
 FROM events e
 LEFT JOIN event_participants ep ON e.id = ep.event_id
 GROUP BY e.id
 ```
+
 **Rejected**: Views add complexity, RLS policies more difficult
 
 ### Option C: Denormalize data ✅ **CHOSEN**
+
 ```sql
 ALTER TABLE events ADD COLUMN attendees TEXT[];
 ```
+
 **Why chosen**: Simple, fast queries, backwards compatible, easy to maintain
 
 ---
@@ -193,12 +208,14 @@ ALTER TABLE events ADD COLUMN attendees TEXT[];
 ## TESTING CHECKLIST
 
 ### Unit Tests
+
 - [x] Error handling logs correct messages
 - [x] Missing column detected (error code 42703)
 - [x] Empty array returned on error (doesn't break UI)
 - [x] Success case logs event count
 
 ### Integration Tests
+
 - [ ] Create event with attendees
 - [ ] Query events by attendee email
 - [ ] Verify .contains() works correctly
@@ -206,6 +223,7 @@ ALTER TABLE events ADD COLUMN attendees TEXT[];
 - [ ] Events without attendees (null/empty array)
 
 ### Manual Testing
+
 - [x] Open contact detail modal
 - [x] Check console for errors
 - [x] Verify events section loads
@@ -225,6 +243,7 @@ DROP INDEX IF EXISTS idx_events_attendees;
 ```
 
 Then revert frontend changes:
+
 ```bash
 git revert HEAD
 git push origin main
@@ -235,6 +254,7 @@ git push origin main
 ## FUTURE IMPROVEMENTS
 
 ### 1. Sync attendees column with event_participants
+
 ```sql
 -- Trigger to keep attendees array in sync
 CREATE OR REPLACE FUNCTION sync_event_attendees()
@@ -259,18 +279,21 @@ EXECUTE FUNCTION sync_event_attendees();
 ```
 
 ### 2. Migrate to proper join queries
+
 Once the team is comfortable with joins:
+
 ```typescript
 const { data } = await supabase
   .from('events')
   .select('*, participants:event_participants(external_email)')
-  .filter('participants.external_email', 'eq', contact.email)
+  .filter('participants.external_email', 'eq', contact.email);
 ```
 
 ### 3. Add data validation
+
 ```sql
 ALTER TABLE events
-ADD CONSTRAINT valid_email_format 
+ADD CONSTRAINT valid_email_format
 CHECK (
   attendees IS NULL OR
   attendees <@ (

@@ -4,9 +4,9 @@
 import { AlertCircle, Calculator, CheckCircle, Euro, FileText } from 'lucide-react';
 import React, { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
-import { ROUTES } from '../../config/routes';
 
 // TypeScript Interfaces
 interface CommissionForm {

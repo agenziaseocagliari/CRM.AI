@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../config/routes';
 import {
     Legend,
     PolarAngleAxis,
@@ -11,6 +10,7 @@ import {
     RadarChart,
     ResponsiveContainer
 } from 'recharts';
+import { ROUTES } from '../../config/routes';
 
 const COMPONENT_VERSION = 'v3.0-PRODUCTION-READY';
 

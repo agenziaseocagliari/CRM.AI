@@ -1,4 +1,5 @@
 # PHASE 0: COMPLETE SYSTEM INVENTORY
+
 **Generated**: 2025-01-XX  
 **Purpose**: Comprehensive architectural assessment BEFORE any fixes  
 **Status**: 🔴 CRITICAL ISSUES IDENTIFIED
@@ -16,14 +17,14 @@
 
 ### Components vs Routes Mismatch
 
-| Component | routes.ts | App.tsx Route | Status |
-|-----------|-----------|---------------|--------|
-| CommissionsList | ✅ `/provvigioni` | ✅ `<Route path="list">` | 🟢 EXISTS |
-| CommissionDashboard | ✅ `/provvigioni` | ✅ `<Route index>` | 🟢 EXISTS |
-| CommissionCalculator | ✅ `/provvigioni/nuovo` | ✅ `<Route path="new">` | 🟢 EXISTS |
-| CommissionReports | ✅ `/provvigioni/report` | ✅ `<Route path="reports">` | 🟢 EXISTS |
-| CommissionDetail | ✅ `/provvigioni/:id` | ❌ **MISSING** | 🔴 **BLANK PAGE** |
-| CommissionEdit | ✅ `/provvigioni/:id/modifica` | ❌ **MISSING** | 🔴 **BLANK PAGE** |
+| Component            | routes.ts                      | App.tsx Route               | Status            |
+| -------------------- | ------------------------------ | --------------------------- | ----------------- |
+| CommissionsList      | ✅ `/provvigioni`              | ✅ `<Route path="list">`    | 🟢 EXISTS         |
+| CommissionDashboard  | ✅ `/provvigioni`              | ✅ `<Route index>`          | 🟢 EXISTS         |
+| CommissionCalculator | ✅ `/provvigioni/nuovo`        | ✅ `<Route path="new">`     | 🟢 EXISTS         |
+| CommissionReports    | ✅ `/provvigioni/report`       | ✅ `<Route path="reports">` | 🟢 EXISTS         |
+| CommissionDetail     | ✅ `/provvigioni/:id`          | ❌ **MISSING**              | 🔴 **BLANK PAGE** |
+| CommissionEdit       | ✅ `/provvigioni/:id/modifica` | ❌ **MISSING**              | 🔴 **BLANK PAGE** |
 
 ---
 
@@ -49,16 +50,22 @@ commissionsReports: '/dashboard/assicurazioni/provvigioni/report',
 ### Current Structure (Lines 755-765)
 
 ```tsx
-<Route path="assicurazioni/provvigioni" element={
-  <InsuranceOnlyGuard>
-    <Outlet />
-  </InsuranceOnlyGuard>
-}>
-  <Route index element={<CommissionDashboard />} />           {/* ✅ /dashboard/assicurazioni/provvigioni */}
-  <Route path="list" element={<CommissionsList />} />        {/* ✅ /dashboard/assicurazioni/provvigioni/list */}
-  <Route path="new" element={<CommissionCalculator />} />    {/* ✅ /dashboard/assicurazioni/provvigioni/new */}
-  <Route path="reports" element={<CommissionReports />} />   {/* ✅ /dashboard/assicurazioni/provvigioni/reports */}
-  
+<Route
+  path="assicurazioni/provvigioni"
+  element={
+    <InsuranceOnlyGuard>
+      <Outlet />
+    </InsuranceOnlyGuard>
+  }
+>
+  <Route index element={<CommissionDashboard />} />{' '}
+  {/* ✅ /dashboard/assicurazioni/provvigioni */}
+  <Route path="list" element={<CommissionsList />} />{' '}
+  {/* ✅ /dashboard/assicurazioni/provvigioni/list */}
+  <Route path="new" element={<CommissionCalculator />} />{' '}
+  {/* ✅ /dashboard/assicurazioni/provvigioni/new */}
+  <Route path="reports" element={<CommissionReports />} />{' '}
+  {/* ✅ /dashboard/assicurazioni/provvigioni/reports */}
   {/* 🔴 MISSING ROUTES: */}
   {/* <Route path=":id" element={<CommissionDetail />} /> */}
   {/* <Route path=":id/modifica" element={<CommissionEdit />} /> */}
@@ -68,12 +75,14 @@ commissionsReports: '/dashboard/assicurazioni/provvigioni/report',
 ### 🚨 ROOT CAUSE IDENTIFIED
 
 **Problem**: Navigation calls use these routes:
+
 - `ROUTES.insurance.commissionsDetail(id)` → `/dashboard/assicurazioni/provvigioni/{id}`
 - `ROUTES.insurance.commissionsEdit(id)` → `/dashboard/assicurazioni/provvigioni/{id}/modifica`
 
 **But App.tsx has NO `<Route path=":id">` definition!**
 
-**Result**: 
+**Result**:
+
 - Navigation executes without errors ✅
 - React Router has no matching route ❌
 - User sees BLANK PAGE ❌
@@ -114,27 +123,31 @@ import CommissionsList from './components/insurance/CommissionsList';
 ### Files Using Commission Navigation (Verified via grep)
 
 #### CommissionsList.tsx (Lines 514, 521)
+
 ```typescript
 // ✅ Correctly uses ROUTES
-navigate(ROUTES.insurance.commissionsDetail(commission.id))  // 🔴 Routes to blank page
-navigate(ROUTES.insurance.commissionsEdit(commission.id))    // 🔴 Routes to blank page
+navigate(ROUTES.insurance.commissionsDetail(commission.id)); // 🔴 Routes to blank page
+navigate(ROUTES.insurance.commissionsEdit(commission.id)); // 🔴 Routes to blank page
 ```
 
 #### CommissionDashboard.tsx (Lines 339, 346, 353)
+
 ```typescript
 // ✅ Correctly uses ROUTES
-navigate(ROUTES.insurance.commissionsNew)      // ✅ Works
-navigate(ROUTES.insurance.commissions)         // ✅ Works (index)
-navigate(ROUTES.insurance.commissionsReports)  // ✅ Works
+navigate(ROUTES.insurance.commissionsNew); // ✅ Works
+navigate(ROUTES.insurance.commissions); // ✅ Works (index)
+navigate(ROUTES.insurance.commissionsReports); // ✅ Works
 ```
 
 #### CommissionCalculator.tsx (Lines 231, 538)
+
 ```typescript
 // ✅ Correctly uses ROUTES
-navigate(ROUTES.insurance.commissions)  // ✅ Works (back to list)
+navigate(ROUTES.insurance.commissions); // ✅ Works (back to list)
 ```
 
-**Navigation Status**: 
+**Navigation Status**:
+
 - ✅ All components properly import and use ROUTES
 - ❌ Routes point to non-existent App.tsx definitions
 
@@ -145,30 +158,35 @@ navigate(ROUTES.insurance.commissions)  // ✅ Works (back to list)
 ### 🚨 STILL USING HARDCODED NAVIGATION
 
 #### RiskProfileView.tsx (Lines 167, 194, 430, 442)
+
 ```typescript
-navigate('/dashboard/assicurazioni/valutazione-rischio')  // 🔴 HARDCODED
-navigate('/dashboard')                                     // 🔴 HARDCODED
+navigate('/dashboard/assicurazioni/valutazione-rischio'); // 🔴 HARDCODED
+navigate('/dashboard'); // 🔴 HARDCODED
 ```
 
 #### RiskProfileViewNew.tsx (Lines 167, 194, 430, 442)
+
 ```typescript
-navigate('/dashboard/assicurazioni/valutazione-rischio')  // 🔴 HARDCODED
-navigate('/dashboard/assicurazioni')                       // 🔴 HARDCODED
+navigate('/dashboard/assicurazioni/valutazione-rischio'); // 🔴 HARDCODED
+navigate('/dashboard/assicurazioni'); // 🔴 HARDCODED
 ```
 
 #### ContactDetailView.tsx (Lines 61, 109, 176, 192)
+
 ```typescript
-navigate('/contacts')  // 🔴 HARDCODED (missing /dashboard prefix)
+navigate('/contacts'); // 🔴 HARDCODED (missing /dashboard prefix)
 ```
 
 #### PolicyForm.tsx (Line 355)
+
 ```typescript
-navigate('/contatti/nuovo')  // 🔴 HARDCODED (missing /dashboard prefix)
+navigate('/contatti/nuovo'); // 🔴 HARDCODED (missing /dashboard prefix)
 ```
 
 #### CommissionCalculator.tsx (Line 261)
+
 ```typescript
-navigate('/dashboard')  // 🔴 HARDCODED (should use ROUTES.dashboard)
+navigate('/dashboard'); // 🔴 HARDCODED (should use ROUTES.dashboard)
 ```
 
 **Total Hardcoded Routes Found**: 11 instances across 5 files
@@ -183,9 +201,9 @@ navigate('/dashboard')  // 🔴 HARDCODED (should use ROUTES.dashboard)
 const { data: eventsData } = await supabase
   .from('events')
   .select('*')
-  .contains('attendees', [contact.email])  // ✅ CORRECT SYNTAX
+  .contains('attendees', [contact.email]) // ✅ CORRECT SYNTAX
   .order('start_time', { ascending: false })
-  .limit(10)
+  .limit(10);
 ```
 
 **Status**: ✅ Query syntax is CORRECT
@@ -195,6 +213,7 @@ const { data: eventsData } = await supabase
 ### Other Query Patterns
 
 Comprehensive query audit required in Phase 1 for:
+
 - All `.contains()` usage
 - All array column filters
 - RLS policy verification
@@ -228,12 +247,14 @@ Comprehensive query audit required in Phase 1 for:
 
 **Cause**: Routes defined in routes.ts but NOT mapped in App.tsx React Router structure
 
-**Impact**: 
+**Impact**:
+
 - Navigation executes successfully (no JavaScript errors)
 - React Router has no matching route
 - User sees blank page (no component renders)
 
 **Evidence**:
+
 - `ROUTES.insurance.commissionsDetail(id)` exists ✅
 - `<Route path=":id" element={<CommissionDetail />} />` does NOT exist ❌
 
@@ -248,10 +269,12 @@ Comprehensive query audit required in Phase 1 for:
 **Impact**: Even if routes added, components must be created
 
 **Evidence**:
+
 - CommissionDetail.tsx not found in file search
 - No import in App.tsx
 
-**Fix Required**: 
+**Fix Required**:
+
 - Option A: Create new CommissionDetail.tsx component
 - Option B: Verify if CommissionCalculator handles edit mode (like ClaimsForm does)
 
@@ -261,7 +284,8 @@ Comprehensive query audit required in Phase 1 for:
 
 **Cause**: Only SOME files updated to use ROUTES constants, many still hardcoded
 
-**Impact**: 
+**Impact**:
+
 - Future maintenance confusion
 - Routes may break again when refactored
 - Mixed patterns across codebase
@@ -277,13 +301,15 @@ Comprehensive query audit required in Phase 1 for:
 **Cause**: Pre-commit hook blocked commit due to 37 failing tests, agent used --no-verify
 
 **Impact**:
+
 - Failing tests deployed to production
 - No verification that changes work
 - User discovers issues in production
 
 **Evidence**: Git commit log shows `--no-verify` flag usage
 
-**Fix Required**: 
+**Fix Required**:
+
 - Fix all 37 failing tests
 - Remove --no-verify from deployment process
 - Add pre-deployment manual testing checklist
@@ -343,7 +369,7 @@ Result: 100+ matches found
 
 # Component file search
 find src -name "Commission*.tsx"
-Result: 
+Result:
   ✅ CommissionsList.tsx
   ✅ CommissionDashboard.tsx
   ✅ CommissionCalculator.tsx
@@ -367,6 +393,7 @@ Result: Commission routes found at lines 755-765, missing :id definitions
 ### DO NOT PROCEED WITHOUT USER APPROVAL
 
 **Phase 1 Requirements**:
+
 1. ✅ Phase 0 inventory complete
 2. ⏳ User reviews findings
 3. ⏳ User approves Phase 1 execution
@@ -375,23 +402,27 @@ Result: Commission routes found at lines 755-765, missing :id definitions
 ### Proposed Phase 1 Actions (AWAITING APPROVAL)
 
 #### Priority 1: Fix Blank Pages (30 min)
+
 - Add `<Route path=":id" element={<CommissionDetail />} />` to App.tsx
 - Add `<Route path=":id/modifica" element={<CommissionEdit />} />` to App.tsx
 - Create CommissionDetail.tsx component (basic view)
 - Create CommissionEdit.tsx OR verify CommissionCalculator handles edit
 
 #### Priority 2: Eliminate Hardcoded Routes (20 min)
+
 - Add missing routes to routes.ts (riskAssessment, contacts routes)
 - Replace 11 hardcoded navigate() calls with ROUTES
 - Verify all imports
 
 #### Priority 3: Query Error Investigation (15 min)
+
 - User tests events tab live
 - Check Supabase logs for 400 errors
 - Verify RLS policies on events table
 - Check attendees column type (text[] vs jsonb)
 
 #### Priority 4: Fix Failing Tests (60 min)
+
 - Review 37 failing tests
 - Fix or skip flaky tests
 - Ensure pre-commit hook blocks failing commits
@@ -433,7 +464,7 @@ Result: Commission routes found at lines 755-765, missing :id definitions
 ✅ **Hardcoded routes found** (11 instances across 5 files)  
 ✅ **Query patterns checked** (Events query syntax correct)  
 ✅ **Root causes documented** (4 major issues identified)  
-✅ **Production state assessed** (2 blank pages confirmed)  
+✅ **Production state assessed** (2 blank pages confirmed)
 
 ---
 

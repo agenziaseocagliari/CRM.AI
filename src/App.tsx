@@ -50,6 +50,7 @@ import CommissionDashboard from './components/insurance/CommissionDashboard';
 import CommissionDetail from './components/insurance/CommissionDetail';
 import CommissionReports from './components/insurance/CommissionReports';
 import CommissionsList from './components/insurance/CommissionsList';
+import DocumentsModule from './components/documents/DocumentsModule';
 import { FormsInsurance } from './components/insurance/FormsInsurance';
 import { Opportunities } from './components/Opportunities';
 import { Reports } from './components/Reports';
@@ -765,6 +766,12 @@ const App: React.FC = () => {
             <Route path=":id" element={<CommissionDetail />} />
             <Route path=":id/modifica" element={<CommissionCalculator />} />
           </Route>
+
+          <Route path="assicurazioni/documenti" element={
+            <InsuranceOnlyGuard>
+              <DocumentsModule />
+            </InsuranceOnlyGuard>
+          } />
 
           <Route path="assicurazioni/scadenzario" element={
             <InsuranceOnlyGuard>

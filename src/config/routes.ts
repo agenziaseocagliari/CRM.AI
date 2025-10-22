@@ -38,9 +38,12 @@ export const ROUTES = {
         // Scadenzario (Renewals)
         renewals: '/dashboard/assicurazioni/scadenzario',
 
+        // Documenti (Documents)
+        documents: '/dashboard/assicurazioni/documenti',
+
         // Valutazione Rischio (Risk Assessment)
         riskAssessment: '/dashboard/assicurazioni/valutazione-rischio',
-        riskAssessmentNew: (contactId?: string) => contactId 
+        riskAssessmentNew: (contactId?: string) => contactId
             ? `/dashboard/assicurazioni/valutazione-rischio/${contactId}`
             : '/dashboard/assicurazioni/valutazione-rischio',
         riskAssessmentView: (profileId: string) => `/dashboard/assicurazioni/valutazione-rischio/view/${profileId}`,

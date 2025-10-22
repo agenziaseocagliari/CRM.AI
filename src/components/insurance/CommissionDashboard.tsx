@@ -16,9 +16,9 @@ import {
     XAxis,
     YAxis
 } from 'recharts';
+import { ROUTES } from "../../config/routes";
 import { useAuth } from "../../contexts/useAuth";
 import { supabase } from "../../lib/supabaseClient";
-import { ROUTES } from "../../config/routes";
 
 // TypeScript Interfaces
 interface KPIStats {

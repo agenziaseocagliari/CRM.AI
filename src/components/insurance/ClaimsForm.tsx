@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
 import { useAuth } from '../../contexts/useAuth';
 import { supabase } from '../../lib/supabaseClient';
-import { ROUTES } from '../../config/routes';
 
 interface ClaimFormData {
   contact_id: string;

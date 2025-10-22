@@ -126,12 +126,29 @@ export default function ContactDetailModal({
       }
 
       // Load related events
-      const { data: eventsData } = await supabase
+      console.log('📅 [EVENTS] Loading for:', contact.email)
+      const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('*')
         .contains('attendees', [contact.email])
         .order('start_time', { ascending: false })
         .limit(10)
+      
+      if (eventsError) {
+        console.error('❌ [EVENTS] Query error:', eventsError)
+        console.error('❌ [EVENTS] Error code:', eventsError.code)
+        console.error('❌ [EVENTS] Error message:', eventsError.message)
+        console.error('❌ [EVENTS] Error details:', eventsError.details)
+        
+        // Check if it's a missing column error
+        if (eventsError.code === '42703' || eventsError.message?.includes('attendees')) {
+          console.error('⚠️ [EVENTS] attendees column does not exist! Run FIX_EVENTS_ATTENDEES_COLUMN.sql')
+          console.error('⚠️ [EVENTS] SQL file location: /FIX_EVENTS_ATTENDEES_COLUMN.sql')
+        }
+        // Continue with empty events array - don't block other data
+      } else {
+        console.log('✅ [EVENTS] Loaded successfully:', eventsData?.length || 0, 'events')
+      }
 
       // Combine all activities for timeline
       const allActivities = [

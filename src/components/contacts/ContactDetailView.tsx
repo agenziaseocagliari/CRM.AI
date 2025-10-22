@@ -120,8 +120,6 @@ export default function ContactDetailView() {
         try {
             setIsScoring(true);
             
-            console.log('🤖 Starting AI scoring for:', contact.name);
-            
             const result = await calculateLeadScore(contact, {
                 useDataPizza: true,
                 fallbackToEdgeFunction: true,
@@ -142,7 +140,6 @@ export default function ContactDetailView() {
                 } : null);
                 
                 toast.success(`🎯 AI Score: ${result.score}/100 (${result.category.toUpperCase()})`);
-                console.log('✅ AI scoring completed successfully');
             } else {
                 toast.error('Score calcolato ma errore nel salvataggio');
             }
@@ -545,7 +542,6 @@ export default function ContactDetailView() {
                                         entityType="contact"
                                         entityId={contact.id}
                                         onUploadComplete={() => {
-                                            console.log('[CONTACT] Document uploaded to contact:', contact.id);
                                             setDocumentsRefreshKey(prev => prev + 1);
                                         }}
                                     />
@@ -627,7 +623,6 @@ export default function ContactDetailView() {
                                     entityType="contact"
                                     entityId={contact.id}
                                     onUploadComplete={() => {
-                                        console.log('[CONTACT-DEBUG] Document uploaded to contact:', contact.id);
                                         setDocumentsRefreshKey(prev => prev + 1);
                                     }}
                                 />

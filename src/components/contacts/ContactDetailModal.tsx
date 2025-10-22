@@ -101,12 +101,9 @@ export default function ContactDetailModal({
         if (notesError.code === '42P01') {
           console.error('⚠️ contact_notes table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
         }
-      } else {
-        console.log('✅ Notes loaded successfully:', { count: notesData?.length || 0, data: notesData })
       }
 
       // Load related opportunities (deals)
-      console.log('💼 Loading opportunities for contact:', contact.id)
       const { data: dealsData, error: dealsError } = await supabase
         .from('opportunities')
         .select(`
@@ -121,12 +118,9 @@ export default function ContactDetailModal({
         if (dealsError.code === '42P01') {
           console.error('⚠️ opportunities table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
         }
-      } else {
-        console.log('✅ Opportunities loaded successfully:', { count: dealsData?.length || 0, data: dealsData })
       }
 
       // Load related events
-      console.log('📅 [EVENTS] Loading for:', contact.email)
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('*')
@@ -146,8 +140,6 @@ export default function ContactDetailModal({
           console.error('⚠️ [EVENTS] SQL file location: /FIX_EVENTS_ATTENDEES_COLUMN.sql')
         }
         // Continue with empty events array - don't block other data
-      } else {
-        console.log('✅ [EVENTS] Loaded successfully:', eventsData?.length || 0, 'events')
       }
 
       // Combine all activities for timeline
@@ -173,18 +165,14 @@ export default function ContactDetailModal({
   }, [contact, isOpen, loadContactData])
 
   async function handleAddNote() {
-    console.log('🔵 PHASE3: handleAddNote started (multi-tenant)', { newNote: newNote.trim(), contactId: contact.id })
-    
     if (!newNote.trim()) {
-      console.log('❌ Empty note detected')
       toast.error('Nota vuota')
       return
     }
 
     setIsAddingNote(true)
     try {
-      // Step 1: Get user (simple check)
-      console.log('🔍 Step 1: Getting authenticated user...')
+      // Get authenticated user
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
       if (authError || !user) {
@@ -192,10 +180,8 @@ export default function ContactDetailModal({
         toast.error('Devi essere autenticato')
         return
       }
-      console.log('✅ User authenticated:', { userId: user.id, email: user.email })
 
-      // Step 2: Get organization context (CRITICAL for multi-tenant!)
-      console.log('🏢 Step 2: Getting organization context...')
+      // Get organization context (CRITICAL for multi-tenant!)
       const { organization_id, error: orgError } = await getUserOrganization()
       
       if (orgError || !organization_id) {
@@ -203,16 +189,14 @@ export default function ContactDetailModal({
         toast.error('Organizzazione non trovata. Contatta amministratore.')
         return
       }
-      console.log('✅ Organization found:', organization_id)
 
-      // Step 3: Multi-tenant insert with organization_id
+      // Multi-tenant insert with organization_id
       const noteData = {
         contact_id: contact.id,
         note: newNote.trim(),
         created_by: user.id,
         organization_id: organization_id  // MULTI-TENANT KEY!
       }
-      console.log('📝 Step 3: Inserting note with organization:', noteData)
 
       const { data, error } = await supabase
         .from('contact_notes')
@@ -235,9 +219,7 @@ export default function ContactDetailModal({
         return
       }
 
-      console.log('✅ Note saved successfully:', data)
-
-      // Step 3: Update UI
+      // Update UI
       setNotes([data, ...notes])
       setNewNote('')
       toast.success('✅ Nota salvata con successo!')
@@ -249,7 +231,6 @@ export default function ContactDetailModal({
       toast.error(`💥 Errore: ${errorMsg}`)
     } finally {
       setIsAddingNote(false)
-      console.log('🔵 handleAddNote completed')
     }
   }
 
@@ -324,8 +305,7 @@ export default function ContactDetailModal({
     
     setIsCreatingDeal(true)
     try {
-      // Step 1: Auth check
-      console.log('🔍 Step 1: Getting authenticated user...')
+      // Get authenticated user
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
       if (authError || !user) {
@@ -333,10 +313,8 @@ export default function ContactDetailModal({
         toast.error('Non autenticato')
         return
       }
-      console.log('✅ User authenticated:', { userId: user.id, email: user.email })
 
-      // Step 2: Get organization context (CRITICAL for multi-tenant!)
-      console.log('🏢 Step 2: Getting organization context...')
+      // Get organization context (CRITICAL for multi-tenant!)
       const { organization_id, error: orgError } = await getUserOrganization()
       
       if (orgError || !organization_id) {
@@ -344,10 +322,8 @@ export default function ContactDetailModal({
         toast.error('Organizzazione non trovata. Contatta amministratore.')
         return
       }
-      console.log('✅ Organization found:', organization_id)
 
-      // Step 3: Get New Lead stage for THIS organization
-      console.log('📊 Step 3: Finding pipeline stage for organization...')
+      // Get New Lead stage for THIS organization
       const { data: stages, error: stageError } = await supabase
         .from('pipeline_stages')
         .select('id, name')
@@ -368,10 +344,9 @@ export default function ContactDetailModal({
           toast.error('Stage "New Lead" non trovato')
           return
         }
-        console.log('⚠️ Using fallback stage:', fallbackStages[0])
       }
 
-      // Step 4: Create opportunity with organization context
+      // Create opportunity with organization context
       const opportunityData = {
         contact_name: contact.name,
         contact_id: contact.id,
@@ -384,7 +359,6 @@ export default function ContactDetailModal({
         source: 'manual',
         created_by: user.id
       }
-      console.log('💼 Step 4: Creating opportunity with organization:', opportunityData)
 
       const { data: newOpp, error: createError } = await supabase
         .from('opportunities')
@@ -409,18 +383,14 @@ export default function ContactDetailModal({
         return
       }
 
-      console.log('✅ Opportunity created successfully:', newOpp)
-
-      // Step 4: Success
+      // Success
       toast.success('✅ Opportunità creata con successo!')
       
       // Reload to show new deal
-      console.log('🔄 Reloading contact data...')
       await loadContactData()
 
       // Navigate after brief delay
       setTimeout(() => {
-        console.log('🧭 Navigating to opportunities page...')
         navigate('/dashboard/opportunities')
       }, 1500)
 
@@ -532,14 +502,7 @@ export default function ContactDetailModal({
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => {
-                  console.log('═'.repeat(80));
-                  console.log('🔵 [TAB CLICK] User clicked tab:', tab.id);
-                  console.log('🔵 [TAB CLICK] Previous activeTab:', activeTab);
-                  setActiveTab(tab.id as 'overview' | 'activity' | 'deals' | 'events' | 'documents');
-                  console.log('🔵 [TAB CLICK] New activeTab should be:', tab.id);
-                  console.log('═'.repeat(80));
-                }}
+                onClick={() => setActiveTab(tab.id as 'overview' | 'activity' | 'deals' | 'events' | 'documents')}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600 font-medium'
@@ -555,10 +518,6 @@ export default function ContactDetailModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {(() => {
-            console.log('📋 [MODAL RENDER] Current activeTab:', activeTab);
-            return null;
-          })()}
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Contact Info */}
@@ -948,34 +907,8 @@ export default function ContactDetailModal({
 
           {activeTab === 'documents' && (
             <>
-              {(() => {
-                console.log('✅ [RENDER] DOCUMENTS TAB CONTENT IS RENDERING!');
-                console.log('✅ [RENDER] contact.id:', contact?.id);
-                console.log('✅ [RENDER] contact.organization_id:', contact?.organization_id);
-                return null;
-              })()}
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-6">📋 Documenti Contatto</h3>
-                
-                {/* DEBUG MARKER - Highly visible */}
-                <div style={{
-                  background: 'linear-gradient(90deg, red, yellow, lime)',
-                  padding: '20px',
-                  marginBottom: '30px',
-                  borderRadius: '8px',
-                  border: '4px solid #000',
-                  textAlign: 'center'
-                }}>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px black' }}>
-                    🔴 DEBUG: DOCUMENTS TAB ACTIVE 🔴
-                  </p>
-                  <p style={{ fontSize: '18px', color: 'white', marginTop: '10px' }}>
-                    Contact ID: {contact.id}
-                  </p>
-                  <p style={{ fontSize: '18px', color: 'white' }}>
-                    Organization ID: {contact.organization_id || '❌ MISSING'}
-                  </p>
-                </div>
               
               {contact.organization_id ? (
                 <div className="space-y-6">

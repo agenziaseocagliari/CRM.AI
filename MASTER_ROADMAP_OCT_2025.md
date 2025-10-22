@@ -114,6 +114,94 @@ Credits System:        ████████████████░░░
 
 ### **22 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔄 debug: Add comprehensive tab rendering debug logging
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Add Documents tab to Contact modal (ContactDetailModal)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(FINAL): Extensive debug logging + unmissable visual markers
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(final): magnifying glass + contact docs with full debug logging
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: 4 verified production issues - lightbox filters, edit route, contact visibility, back navigation
+- 📚 docs: Honest forensic analysis with user verification required
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: REAL fixes - ClaimsList navigation routes + DocumentGallery click passthrough
+- 📚 docs: Update status with triple fix achievements
+- 📚 docs: Add executive summary for triple fix completion
+- 📚 docs: Add comprehensive triple fix completion report and visual diagnostic guide
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: Triple fix - signed URLs for images, complete Sinistri routes, improve Contatti visibility
+- 📚 docs: Update status with Quick Wins achievements
+- 📚 docs: Add comprehensive Quick Wins completion report
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: Add image preview lightbox + integrate documents in Claims/Contacts
+- 📚 docs: Update QUICK_REFERENCE_STATUS with RLS fix summary
+- 📚 docs: Add visual diagnostic flow for RLS fix
+- 📚 docs: Add executive summary for RLS fix
+- 📚 docs: Add comprehensive RLS fix completion report
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: Add uploaded_by field to document INSERT - fixes RLS policy violation
+- 📚 docs: Add comprehensive urgent fix report for PoliciesList navigation
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: Restore navigation in PoliciesList - enable access to Document Management
+- 📚 docs: Add Document Management System executive summary
+- ✅ feat: Storage RLS Policies - 100% Autonomous Setup Complete
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: Document Management System - Complete Setup
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: Complete Document Management System for Insurance vertical
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: Correct Dashboard button navigation in RiskProfileView
+- 📚 docs: Add comprehensive incident completion and project status reports
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: Complete RiskProfileView rebuild with Recharts - resolves Chart.js undefined.color issue
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- ✅ feat: STEPS 3&4 COMPLETE - Recharts radar chart + polished UI + risk badges + recommended products
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 REBUILD: v7.0-STEP2 - Add Supabase data fetch to RiskProfileViewNew (with loading/error states, contact info, scores display)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 REBUILD: v7.0-STEP1 - New minimal RiskProfileViewNew (no Chart.js, no complex logic)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 NUCLEAR: v6.0 - Route disabled, source maps enabled, global error logging added
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 DEBUG: v5.0 - ALL Chart.js disabled (Reports + RiskProfileView) to isolate error
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 DEBUG: Force cache bust v4.0 - chart disabled, version marker added, top-level logs
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 FIX: Chart.js comprehensive error handling + SafeRadarChart wrapper + extensive debug logging (Phase 3f-v2)
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 FIX: RiskProfileView Chart.js undefined.color error - defensive null checks (Phase 3f)
+- 🔄 Completion report - RiskProfileView fix
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 FIX: RiskProfileView contact name query - same pattern as Polizze fix
+- 🔄 Phase 3d completion report - Standard vertical fix
+- 🔧 FIX: Standard vertical demo data seeding - Pipeline & Reports
+- 🔄 Phase 3c completion report - Polizze module fix
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 CRITICAL FIX: Polizze module context routing
+- 🔄 Final summary report - 100% incident resolution complete
+- 🔄 Phase 3b: Database fixes - 100% COMPLETE
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 Phase 3: Fix Automazioni component + Database diagnostic tools
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: add Italian path routes for sidebar navigation - Phase 2
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔧 fix: resolve production routing issue - consolidate duplicate routes
+- 📚 docs: Add incident resolution report INC-2025-10-21-001
+- 📚 docs: automated daily update 2025-10-21 [skip ci]
+- 🔄 fix(critical): Correct Supabase query in RiskAssessmentList - use 'name' instead of 'first_name/last_name'
+
+**Daily Metrics**:
+- Total files: 2438
+- TypeScript files: 348
+- Lines of code: ~88,474
+- Commits today: 77
+- Recent migrations: 5
+- Dependencies: 87
+
+### **22 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔧 fix: Add Documents tab to Contact modal (ContactDetailModal)
 - 📚 docs: automated daily update 2025-10-21 [skip ci]
 - 🔄 fix(FINAL): Extensive debug logging + unmissable visual markers

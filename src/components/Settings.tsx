@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabaseClient';
 
 import { JWTViewer } from './JWTViewer';
 // import { TwoFactorSettings } from './TwoFactorAuth'; // Moved to .bak
+import CompanyKnowledge from './settings/CompanyKnowledge';
 import { CheckCircleIcon, GoogleIcon, GuardianIcon } from './ui/icons';
 import { Modal } from './ui/Modal'; // Assicurati che Modal sia importato
 import { UsageDashboard } from './usage/UsageDashboard';
@@ -123,7 +124,7 @@ export const GoogleAuthCallback: React.FC = () => {
     />;
 };
 
-type SettingsTab = 'integrations' | 'billing' | 'security' | 'debug';
+type SettingsTab = 'integrations' | 'company-knowledge' | 'billing' | 'security' | 'debug';
 
 interface DiagResult {
     status: string;
@@ -277,6 +278,7 @@ export const Settings: React.FC = () => {
                 <div className="border-b border-gray-200">
                     <nav className="flex space-x-2" aria-label="Tabs">
                         <TabButton tab="integrations" label="Integrazioni" />
+                        <TabButton tab="company-knowledge" label="🧠 Base Conoscenza" />
                         <button
                             onClick={() => window.location.href = '/dashboard/settings/booking'}
                             className="px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100 flex items-center gap-2"
@@ -337,6 +339,8 @@ export const Settings: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'company-knowledge' && <CompanyKnowledge />}
 
                 {activeTab === 'billing' && <UsageDashboard />}
 

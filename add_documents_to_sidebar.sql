@@ -2,11 +2,14 @@
 -- This adds the Documents module to the sidebar navigation
 
 -- Step 1: View current sidebar configuration
-SELECT 
+SELECT
     vertical,
-    jsonb_pretty(sidebar_config -> 'sections' -> 0 -> 'items') as insurance_menu_items
+    jsonb_pretty (
+        sidebar_config -> 'sections' -> 0 -> 'items'
+    ) as insurance_menu_items
 FROM vertical_configurations
-WHERE vertical = 'insurance';
+WHERE
+    vertical = 'insurance';
 
 -- Step 2: Add Documenti item to the Insurance section (sections[0])
 UPDATE vertical_configurations 
@@ -22,11 +25,14 @@ SET sidebar_config = jsonb_set(
 WHERE vertical = 'insurance';
 
 -- Step 3: Verify the update
-SELECT 
+SELECT
     vertical,
-    jsonb_pretty(sidebar_config -> 'sections' -> 0 -> 'items') as updated_menu_items
+    jsonb_pretty (
+        sidebar_config -> 'sections' -> 0 -> 'items'
+    ) as updated_menu_items
 FROM vertical_configurations
-WHERE vertical = 'insurance';
+WHERE
+    vertical = 'insurance';
 
 -- Expected result: "Documenti" should appear in the menu items list
 -- The sidebar will automatically render with the FileText icon

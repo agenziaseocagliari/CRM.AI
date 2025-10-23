@@ -113,6 +113,33 @@ Credits System:        ████████████████░░░
 
 ## 📝 CHANGELOG (Most Recent First)
 
+### **23 ottobre 2025** - Automated Daily Update 🤖
+
+- 🔄 chore: Merge main - resolve roadmap conflict
+- ✅ feat: Add Company Knowledge Base - AI Identity System
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Use updated_at instead of created_at in DocumentsModule
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Add extensive debug logging to DocumentsGrid filter logic
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- ✅ feat: Add centralized Documents Module
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔄 Merge branch 'main' of https://github.com/agenziaseocagliari/CRM.AI
+- 🔄 chore: Remove debug logging from production code
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+- 🔧 fix: Events query 400 error - add attendees column and error handling
+- 📚 docs: automated daily update 2025-10-22 [skip ci]
+
+**Daily Metrics**:
+- Total files: 2465
+- TypeScript files: 354
+- Lines of code: ~91,027
+- Commits today: 16
+- Recent migrations: 5
+- Dependencies: 87
+
 🚀 GUARDIAN AI CRM - ROADMAP AGGIORNATA
 Data Aggiornamento: 22 Ottobre 2025, 18:50 CEST
 Versione: 3.0.0

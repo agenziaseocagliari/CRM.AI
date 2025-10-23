@@ -85,9 +85,12 @@ export default function CompanyKnowledge() {
         .from('company_profiles')
         .select('*')
         .eq('organization_id', organizationId)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) {
+        console.error('Error loading profile:', error);
+        return;
+      }
       setCompanyProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);

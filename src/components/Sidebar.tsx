@@ -61,14 +61,6 @@ export const Sidebar: React.FC = () => {
   const { isSuperAdmin } = useAuth();
   const { config, loading, vertical } = useVertical();
 
-  console.log('🔍 [Sidebar] Render');
-  console.log('🔍 [Sidebar] Vertical:', vertical);
-  console.log('🔍 [Sidebar] Config:', config);
-  console.log('🔍 [Sidebar] Loading:', loading);
-  console.log('🔍 [Sidebar] Sidebar sections:', config?.sidebarConfig?.sections);
-  console.log('🔍 [Sidebar] Menu items count:', config?.sidebarConfig?.sections?.length);
-  console.log('🔍 [Sidebar] Is Super Admin:', isSuperAdmin);
-
   if (loading) {
     return (
       <aside className="w-64 bg-sidebar text-white flex flex-col p-4">
@@ -87,7 +79,6 @@ export const Sidebar: React.FC = () => {
 
   // Determine menu items - FIXED: Process sections.items structure correctly
   const sidebarSections = config?.sidebarConfig?.sections || [];
-  console.log('🔍 [Sidebar] Initial sections from config:', sidebarSections);
   
   // Transform sections structure to flat items list
   let menuItems: { id: string; label: string; icon: string; path: string; }[] = [];
@@ -127,21 +118,15 @@ export const Sidebar: React.FC = () => {
   // CRITICAL FIX: Remove duplicates based on path to avoid duplicate sidebar entries
   const uniqueItems = Array.from(new Map(menuItems.map(item => [item.path, item])).values());
   menuItems = uniqueItems;
-  
-  console.log('🔍 [Sidebar] Extracted menu items (before deduplication):', menuItems.length);
-  console.log('🔍 [Sidebar] Unique menu items (after deduplication):', menuItems.length);
 
   // Fallback for Standard vertical if config incomplete or missing
   if (vertical === 'standard' && menuItems.length < 8) {
-    console.log('🔍 [Sidebar] Using STANDARD_MENU_FALLBACK (items < 8)');
     menuItems = STANDARD_MENU_FALLBACK;
   }
 
   if (!menuItems || menuItems.length === 0) {
-    console.log('🔍 [Sidebar] No menu items, using STANDARD_MENU_FALLBACK');
     // For insurance vertical, show a specific message and fallback
     if (vertical === 'insurance') {
-      console.warn('🚨 [Sidebar] Insurance vertical has no menu items - using fallback');
       menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'Home', path: '/' },
         { id: 'policies', label: 'Polizze', icon: 'FileText', path: '/assicurazioni/polizze' },
@@ -155,9 +140,6 @@ export const Sidebar: React.FC = () => {
       menuItems = STANDARD_MENU_FALLBACK;
     }
   }
-
-  console.log('🔍 [Sidebar] Final menu items count:', menuItems.length);
-  console.log('🔍 [Sidebar] Final menu items:', menuItems);
 
   return (
     <aside className="w-64 bg-sidebar text-white flex flex-col p-4">

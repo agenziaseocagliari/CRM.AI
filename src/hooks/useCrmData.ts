@@ -30,8 +30,6 @@ const STAGE_MAPPING: Record<string, PipelineStage> = {
 };
 
 const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesData => {
-  console.log('🗂️ PIPELINE DEBUG: Grouping opportunities by stage, input:', opportunities)
-
   const emptyData: OpportunitiesData = {
     [PipelineStage.NewLead]: [],
     [PipelineStage.Contacted]: [],
@@ -41,29 +39,22 @@ const groupOpportunitiesByStage = (opportunities: Opportunity[]): OpportunitiesD
   };
 
   if (!opportunities || opportunities.length === 0) {
-    console.log('⚠️ PIPELINE DEBUG: No opportunities to group, returning empty data')
     return emptyData;
   }
 
   const grouped = opportunities.reduce((acc, op) => {
-    console.log(`📌 PIPELINE DEBUG: Processing opportunity "${op.contact_name}" with database stage "${op.stage}"`)
-
     // ADAPTER: Map database stage TEXT to PipelineStage enum
     const mappedStage = STAGE_MAPPING[op.stage] || STAGE_MAPPING['default'];
-    console.log(`🔄 PIPELINE DEBUG: Mapped "${op.stage}" → "${mappedStage}"`)
 
     if (acc[mappedStage]) {
       acc[mappedStage].push(op);
-      console.log(`✅ PIPELINE DEBUG: Added to stage "${mappedStage}", now has ${acc[mappedStage].length} opportunities`)
     } else {
-      console.error(`❌ PIPELINE DEBUG: Mapping failed for stage "${op.stage}" → "${mappedStage}"`)
       // Fallback to New Lead
       acc[PipelineStage.NewLead].push(op);
     }
     return acc;
   }, emptyData);
 
-  console.log('🎯 PIPELINE DEBUG: Final grouped opportunities:', grouped)
   return grouped;
 };
 
@@ -170,31 +161,14 @@ export const useCrmData = () => {
         supabase.from('organizations').select('*').eq('id', organization_id).single<Organization>(),
         supabase.from('contacts').select('*').eq('organization_id', organization_id).order('created_at', { ascending: false }),
         (async () => {
-          console.log('🔍 PIPELINE DEBUG: Loading opportunities for organization:', organization_id)
-
           // ADAPTED QUERY: Use actual database schema columns with proper ordering
           const result = await supabase
             .from('opportunities')
             .select('*')
             .eq('organization_id', organization_id)
             .order('created_at', { ascending: false })
-          console.log('📦 PIPELINE DEBUG: Raw opportunities query result:', {
-            error: result.error,
-            count: result.data?.length || 0,
-            data: result.data
-          })
 
-          if (result.error) {
-            console.error('❌ PIPELINE DEBUG: Opportunities loading error:', result.error)
-            if (result.error.code === '42P01') {
-              console.error('⚠️ PIPELINE DEBUG: opportunities table does not exist! Run PHASE1_DATABASE_SCRIPTS.sql')
-            }
-          } else if (result.data) {
-            console.log('📊 PIPELINE DEBUG: Individual opportunities details:')
-            result.data.forEach((opp, index) => {
-              console.log(`  ${index + 1}. ID: ${opp.id}, Contact: ${opp.contact_name}, Stage: "${opp.stage}", Value: €${opp.value}`)
-            })
-
+          if (result.data) {
             // ADAPTER: Transform database format to component expectations  
             const adaptedData = result.data.map(opp => ({
               ...opp,
@@ -203,7 +177,6 @@ export const useCrmData = () => {
               stage_id: opp.stage       // Use TEXT stage as identifier
             }))
 
-            console.log('🔄 PIPELINE DEBUG: Data adapted for components:', adaptedData.length, 'opportunities')
             result.data = adaptedData
           }
           return result
@@ -235,7 +208,6 @@ export const useCrmData = () => {
       setContacts(contactsResponse.data || []);
 
       const groupedOpps = groupOpportunitiesByStage(opportunitiesResponse.data || []);
-      console.log('🔥 PIPELINE DEBUG: Setting opportunities state with:', groupedOpps)
       setOpportunities(groupedOpps);
 
       setForms(formsResponse.data || []);

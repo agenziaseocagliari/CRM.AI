@@ -268,8 +268,6 @@ export function VerticalProvider({ children }: { children: React.ReactNode }) {
         enabledModules: verticalConfig.enabled_modules || [],
       };
       
-      console.log('🔍 [loadConfig] Setting config:', config);
-      console.log('🔍 [loadConfig] Sidebar sections count:', config.sidebarConfig?.sections?.length);
       setConfig(config);
     }
   }

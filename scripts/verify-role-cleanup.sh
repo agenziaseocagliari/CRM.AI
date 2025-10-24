@@ -111,7 +111,8 @@ role_in_conn=$(grep -rn "role=" supabase/functions src --include="*.ts" --includ
     grep -v "profile.role" | \
     grep -v "profiles.role" | \
     grep -v "role: " | \
-    grep -v "// role" || true)
+    grep -v "// role" | \
+    grep -v '\[role="' || true)
 if [ -z "$role_in_conn" ]; then
     echo -e "  ${GREEN}✅ PASS${NC}"
 else

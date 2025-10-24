@@ -115,6 +115,24 @@ Credits System:        ████████████████░░░
 
 ### **24 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔄 debug: Add extensive logging to diagnose Processati 0 issue
+- 🔧 fix: Simplify API endpoint for Vercel serverless (emergency fix)
+- 🔧 fix: Exclude HTML role selectors from verification
+- 📚 docs: automated daily update 2025-10-24 [skip ci]
+- 🔧 fix: Add TO public to all RLS policies (compliance)
+- 📚 docs: automated daily update 2025-10-24 [skip ci]
+- ✅ feat: PHASE 1 Text Extraction Service - AI Ingestion Pipeline
+
+**Daily Metrics**:
+- Total files: 2473
+- TypeScript files: 357
+- Lines of code: ~91,630
+- Commits today: 7
+- Recent migrations: 5
+- Dependencies: 92
+
+### **24 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔧 fix: Add TO public to all RLS policies (compliance)
 - 📚 docs: automated daily update 2025-10-24 [skip ci]
 - ✅ feat: PHASE 1 Text Extraction Service - AI Ingestion Pipeline

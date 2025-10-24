@@ -54,6 +54,7 @@ export default function CompanyKnowledge() {
   const [sources, setSources] = useState<KnowledgeSource[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   
   // Active tab
   const [activeTab, setActiveTab] = useState<'upload' | 'sources' | 'profile'>('upload');
@@ -104,6 +105,50 @@ export default function CompanyKnowledge() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
+
+  // =====================================================
+  // TRIGGER TEXT EXTRACTION PROCESSING
+  // =====================================================
+  const triggerProcessing = async () => {
+    if (!organizationId) {
+      alert('❌ Errore: Organization ID mancante');
+      return;
+    }
+
+    setProcessing(true);
+    
+    try {
+      console.log('🔄 Triggering text extraction...');
+      
+      const response = await fetch('/api/process-knowledge-sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const message = `✅ Processing completato!\n\n` +
+          `Processati: ${data.processed}\n` +
+          `Successi: ${data.succeeded}\n` +
+          `Falliti: ${data.failed}\n` +
+          `Caratteri totali: ${data.totalCharacters?.toLocaleString() || 0}`;
+        
+        alert(message);
+        
+        // Reload sources to see updated status
+        await loadSources();
+      } else {
+        alert(`❌ Errore durante il processing:\n${data.message || data.error}`);
+      }
+    } catch (error) {
+      console.error('Processing error:', error);
+      alert('❌ Errore durante il processing. Controlla la console per dettagli.');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -162,6 +207,8 @@ export default function CompanyKnowledge() {
             <UploadTab 
               organizationId={organizationId}
               onUploadComplete={loadSources}
+              onTriggerProcessing={triggerProcessing}
+              processing={processing}
             />
           )}
           
@@ -272,9 +319,11 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
 interface UploadTabProps {
   organizationId: string | null;
   onUploadComplete: () => void;
+  onTriggerProcessing: () => void;
+  processing: boolean;
 }
 
-function UploadTab({ organizationId, onUploadComplete }: UploadTabProps) {
+function UploadTab({ organizationId, onUploadComplete, onTriggerProcessing, processing }: UploadTabProps) {
   const [uploadType, setUploadType] = useState<'file' | 'url' | 'text'>('file');
   const [uploading, setUploading] = useState(false);
   
@@ -413,6 +462,37 @@ function UploadTab({ organizationId, onUploadComplete }: UploadTabProps) {
           icon={<FileText className="w-5 h-5" />}
           label="Testo Manuale"
         />
+      </div>
+
+      {/* Processing Trigger Button */}
+      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-indigo-200 rounded-lg p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-indigo-600" />
+              Estrazione Automatica Testo
+            </h3>
+            <p className="text-sm text-gray-600">
+              Processa le fonti in stato "pending" per estrarre automaticamente il testo 
+              da file (PDF, DOC), URL e documenti. Il testo estratto verrà utilizzato 
+              per generare il profilo aziendale con AI.
+            </p>
+          </div>
+          <button
+            onClick={onTriggerProcessing}
+            disabled={processing}
+            className={`
+              ml-6 flex items-center space-x-2 px-6 py-3 rounded-lg font-medium text-white
+              ${processing
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
+              }
+            `}
+          >
+            <Brain className={`w-5 h-5 ${processing ? 'animate-spin' : ''}`} />
+            <span>{processing ? 'Processing...' : 'Processa Fonti'}</span>
+          </button>
+        </div>
       </div>
       
       {/* File Upload Section */}

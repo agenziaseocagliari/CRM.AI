@@ -59,55 +59,54 @@ USING (
 DROP POLICY IF EXISTS "Users access own org knowledge" ON company_knowledge_sources;
 
 -- Create comprehensive policies (one per operation)
-CREATE POLICY "Users can select own org sources"
-ON company_knowledge_sources
-FOR SELECT
-USING (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
-);
+CREATE POLICY "Users can select own org sources" ON company_knowledge_sources FOR
+SELECT USING (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+    );
 
-CREATE POLICY "Users can insert own org sources"
-ON company_knowledge_sources
-FOR INSERT
-WITH CHECK (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
-);
+CREATE POLICY "Users can insert own org sources" ON company_knowledge_sources FOR
+INSERT
+WITH
+    CHECK (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+    );
 
-CREATE POLICY "Users can update own org sources"
-ON company_knowledge_sources
-FOR UPDATE
-USING (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
+CREATE POLICY "Users can update own org sources" ON company_knowledge_sources FOR
+UPDATE USING (
+    organization_id IN (
+        SELECT organization_id
+        FROM profiles
+        WHERE
+            id = auth.uid ()
+    )
 )
-WITH CHECK (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
-);
+WITH
+    CHECK (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+    );
 
-CREATE POLICY "Users can delete own org sources"
-ON company_knowledge_sources
-FOR DELETE
-USING (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
+CREATE POLICY "Users can delete own org sources" ON company_knowledge_sources FOR DELETE USING (
+    organization_id IN (
+        SELECT organization_id
+        FROM profiles
+        WHERE
+            id = auth.uid ()
+    )
 );
 
 -- ============================================
@@ -118,45 +117,46 @@ USING (
 DROP POLICY IF EXISTS "Users access own company profile" ON company_profiles;
 
 -- Create comprehensive policies (one per operation)
-CREATE POLICY "Users can select own company profile"
-ON company_profiles
-FOR SELECT
-USING (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
-);
+CREATE POLICY "Users can select own company profile" ON company_profiles FOR
+SELECT USING (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+    );
 
-CREATE POLICY "Users can insert own company profile"
-ON company_profiles
-FOR INSERT
-WITH CHECK (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
-);
+CREATE POLICY "Users can insert own company profile" ON company_profiles FOR
+INSERT
+WITH
+    CHECK (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+    );
 
-CREATE POLICY "Users can update own company profile"
-ON company_profiles
-FOR UPDATE
-USING (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
+CREATE POLICY "Users can update own company profile" ON company_profiles FOR
+UPDATE USING (
+    organization_id IN (
+        SELECT organization_id
+        FROM profiles
+        WHERE
+            id = auth.uid ()
+    )
 )
-WITH CHECK (
-  organization_id IN (
-    SELECT organization_id
-    FROM profiles
-    WHERE id = auth.uid()
-  )
-);
+WITH
+    CHECK (
+        organization_id IN (
+            SELECT organization_id
+            FROM profiles
+            WHERE
+                id = auth.uid ()
+        )
+    );
 
 -- ============================================
 -- VERIFICATION QUERY (run after migration)

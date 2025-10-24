@@ -16,7 +16,9 @@ VALUES (
 
 -- RLS Policy: Organization can only access their own files
 CREATE POLICY "Organization access own knowledge files"
-ON storage.objects FOR ALL
+ON storage.objects 
+FOR ALL
+TO public
 USING (
   bucket_id = 'company-knowledge'
   AND (storage.foldername(name))::text = (
@@ -108,25 +110,31 @@ ALTER TABLE company_profiles ENABLE ROW LEVEL SECURITY;
 -- Policy: Users access own org knowledge sources
 DROP POLICY IF EXISTS "Users access own org knowledge" ON company_knowledge_sources;
 
-CREATE POLICY "Users access own org knowledge" ON company_knowledge_sources FOR ALL USING (
-    organization_id IN (
-        SELECT organization_id
-        FROM profiles
-        WHERE
-            id = auth.uid ()
-    )
+CREATE POLICY "Users access own org knowledge"
+ON company_knowledge_sources
+FOR ALL
+TO public
+USING (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
 );
 
 -- Policy: Users access own company profile
 DROP POLICY IF EXISTS "Users access own company profile" ON company_profiles;
 
-CREATE POLICY "Users access own company profile" ON company_profiles FOR ALL USING (
-    organization_id IN (
-        SELECT organization_id
-        FROM profiles
-        WHERE
-            id = auth.uid ()
-    )
+CREATE POLICY "Users access own company profile"
+ON company_profiles
+FOR ALL
+TO public
+USING (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
 );
 
 -- 5. TRIGGER: Update updated_at timestamp

@@ -16,6 +16,7 @@ DROP POLICY IF EXISTS "Organization access own knowledge files" ON storage.objec
 CREATE POLICY "Users can upload to own org folder"
 ON storage.objects
 FOR INSERT
+TO public
 WITH CHECK (
   bucket_id = 'company-knowledge'
   AND (storage.foldername(name)) IN (
@@ -29,6 +30,7 @@ WITH CHECK (
 CREATE POLICY "Users can read own org files"
 ON storage.objects
 FOR SELECT
+TO public
 USING (
   bucket_id = 'company-knowledge'
   AND (storage.foldername(name)) IN (
@@ -42,6 +44,7 @@ USING (
 CREATE POLICY "Users can delete own org files"
 ON storage.objects
 FOR DELETE
+TO public
 USING (
   bucket_id = 'company-knowledge'
   AND (storage.foldername(name)) IN (
@@ -59,48 +62,54 @@ USING (
 DROP POLICY IF EXISTS "Users access own org knowledge" ON company_knowledge_sources;
 
 -- Create comprehensive policies (one per operation)
-CREATE POLICY "Users can select own org sources" ON company_knowledge_sources FOR
-SELECT USING (
-        organization_id IN (
-            SELECT organization_id
-            FROM profiles
-            WHERE
-                id = auth.uid ()
-        )
-    );
+CREATE POLICY "Users can select own org sources"
+ON company_knowledge_sources
+FOR SELECT
+TO public
+USING (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
+);
 
-CREATE POLICY "Users can insert own org sources" ON company_knowledge_sources FOR
-INSERT
-WITH
-    CHECK (
-        organization_id IN (
-            SELECT organization_id
-            FROM profiles
-            WHERE
-                id = auth.uid ()
-        )
-    );
+CREATE POLICY "Users can insert own org sources"
+ON company_knowledge_sources
+FOR INSERT
+TO public
+WITH CHECK (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
+);
 
-CREATE POLICY "Users can update own org sources" ON company_knowledge_sources FOR
-UPDATE USING (
-    organization_id IN (
-        SELECT organization_id
-        FROM profiles
-        WHERE
-            id = auth.uid ()
-    )
+CREATE POLICY "Users can update own org sources"
+ON company_knowledge_sources
+FOR UPDATE
+TO public
+USING (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
 )
-WITH
-    CHECK (
-        organization_id IN (
-            SELECT organization_id
-            FROM profiles
-            WHERE
-                id = auth.uid ()
-        )
-    );
+WITH CHECK (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
+);
 
-CREATE POLICY "Users can delete own org sources" ON company_knowledge_sources FOR DELETE USING (
+CREATE POLICY "Users can delete own org sources"
+ON company_knowledge_sources
+FOR DELETE
+TO public
+USING (
     organization_id IN (
         SELECT organization_id
         FROM profiles
@@ -117,46 +126,48 @@ CREATE POLICY "Users can delete own org sources" ON company_knowledge_sources FO
 DROP POLICY IF EXISTS "Users access own company profile" ON company_profiles;
 
 -- Create comprehensive policies (one per operation)
-CREATE POLICY "Users can select own company profile" ON company_profiles FOR
-SELECT USING (
-        organization_id IN (
-            SELECT organization_id
-            FROM profiles
-            WHERE
-                id = auth.uid ()
-        )
-    );
+CREATE POLICY "Users can select own company profile"
+ON company_profiles
+FOR SELECT
+TO public
+USING (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
+);
 
-CREATE POLICY "Users can insert own company profile" ON company_profiles FOR
-INSERT
-WITH
-    CHECK (
-        organization_id IN (
-            SELECT organization_id
-            FROM profiles
-            WHERE
-                id = auth.uid ()
-        )
-    );
+CREATE POLICY "Users can insert own company profile"
+ON company_profiles
+FOR INSERT
+TO public
+WITH CHECK (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
+);
 
-CREATE POLICY "Users can update own company profile" ON company_profiles FOR
-UPDATE USING (
-    organization_id IN (
-        SELECT organization_id
-        FROM profiles
-        WHERE
-            id = auth.uid ()
-    )
+CREATE POLICY "Users can update own company profile"
+ON company_profiles
+FOR UPDATE
+TO public
+USING (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
 )
-WITH
-    CHECK (
-        organization_id IN (
-            SELECT organization_id
-            FROM profiles
-            WHERE
-                id = auth.uid ()
-        )
-    );
+WITH CHECK (
+  organization_id IN (
+    SELECT organization_id
+    FROM profiles
+    WHERE id = auth.uid()
+  )
+);
 
 -- ============================================
 -- VERIFICATION QUERY (run after migration)

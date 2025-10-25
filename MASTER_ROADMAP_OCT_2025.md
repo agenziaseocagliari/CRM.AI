@@ -113,6 +113,20 @@ Credits System:        ████████████████░░░
 
 ## 📝 CHANGELOG (Most Recent First)
 
+### **25 ottobre 2025** - Automated Daily Update 🤖
+
+- 🔄 debug: Add extensive frontend logging to diagnose API call issue
+- 📚 docs: automated daily update 2025-10-24 [skip ci]
+- 🔄 debug: Add extensive logging to diagnose Processati 0 issue
+
+**Daily Metrics**:
+- Total files: 2473
+- TypeScript files: 357
+- Lines of code: ~91,672
+- Commits today: 3
+- Recent migrations: 5
+- Dependencies: 92
+
 ### **24 ottobre 2025** - Automated Daily Update 🤖
 
 - 🔄 debug: Add extensive logging to diagnose Processati 0 issue

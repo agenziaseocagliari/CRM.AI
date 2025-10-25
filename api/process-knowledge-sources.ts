@@ -4,8 +4,8 @@
  * Handles text sources directly, marks file/URL for future processing
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(
   req: VercelRequest,
@@ -14,7 +14,7 @@ export default async function handler(
   console.log('🔍 [API] ========== START REQUEST ==========');
   console.log('🔍 [API] Method:', req.method);
   console.log('🔍 [API] Body:', JSON.stringify(req.body, null, 2));
-  
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     console.log('🔍 [API] OPTIONS request - returning 200');
@@ -32,7 +32,7 @@ export default async function handler(
 
   try {
     const { organizationId, sourceId } = req.body;
-    console.log('🔍 [API] Extracted from body:', { organizationId, sourceId });    console.log('🔍 [API] Extracted from body:', { organizationId, sourceId });
+    console.log('🔍 [API] Extracted from body:', { organizationId, sourceId }); console.log('🔍 [API] Extracted from body:', { organizationId, sourceId });
 
     // Validate input
     if (!organizationId && !sourceId) {
@@ -130,7 +130,7 @@ export default async function handler(
     for (let i = 0; i < sources.length; i++) {
       const source = sources[i];
       console.log(`\n🔄 [API] Processing ${i + 1}/${sources.length}: ${source.source_name} (${source.source_type})`);
-      
+
       try {
         let extractedText = '';
 
@@ -156,7 +156,7 @@ export default async function handler(
         }
 
         console.log(`💾 [API] Updating database for ${source.id}...`);
-        
+
         // Update database
         const { error: updateError } = await supabase
           .from('company_knowledge_sources')
@@ -191,7 +191,7 @@ export default async function handler(
       } catch (sourceError) {
         const errorMessage = sourceError instanceof Error ? sourceError.message : 'Unknown error';
         console.error(`❌ [API] Error processing source ${source.id}:`, errorMessage);
-        
+
         // Mark as failed in database
         await supabase
           .from('company_knowledge_sources')
@@ -201,7 +201,7 @@ export default async function handler(
             last_processed_at: new Date().toISOString(),
           })
           .eq('id', source.id);
-        
+
         results.push({
           success: false,
           sourceId: source.id,
@@ -228,18 +228,18 @@ export default async function handler(
       totalCharacters: totalChars,
       results,
     });
-    
+
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
     const errorName = error instanceof Error ? error.name : 'Error';
-    
+
     console.error('❌ [API] CRITICAL ERROR:', {
       message: errorMessage,
       stack: errorStack,
       name: errorName,
     });
-    
+
     return res.status(500).json({
       success: false,
       error: 'Internal server error',

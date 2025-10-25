@@ -110,23 +110,51 @@ export default function CompanyKnowledge() {
   // TRIGGER TEXT EXTRACTION PROCESSING
   // =====================================================
   const triggerProcessing = async () => {
+    console.log('🔵 [FRONTEND] ========== triggerProcessing START ==========');
+    console.log('🔵 [FRONTEND] organizationId:', organizationId);
+    console.log('🔵 [FRONTEND] profile:', profile);
+    
     if (!organizationId) {
+      console.error('❌ [FRONTEND] Missing organizationId!');
+      console.error('❌ [FRONTEND] profile object:', profile);
       alert('❌ Errore: Organization ID mancante');
       return;
     }
 
+    console.log('🔵 [FRONTEND] setProcessing(true)');
     setProcessing(true);
     
     try {
-      console.log('🔄 Triggering text extraction...');
+      console.log('� [FRONTEND] Preparing API call...');
+      const url = '/api/process-knowledge-sources';
+      const body = { organizationId };
       
-      const response = await fetch('/api/process-knowledge-sources', {
+      console.log('🔵 [FRONTEND] URL:', url);
+      console.log('🔵 [FRONTEND] Body:', JSON.stringify(body, null, 2));
+      
+      console.log('🔵 [FRONTEND] Calling fetch...');
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ organizationId }),
+        body: JSON.stringify(body),
       });
 
+      console.log('🔵 [FRONTEND] Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries()),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [FRONTEND] Response NOT OK:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      console.log('🔵 [FRONTEND] Parsing JSON response...');
       const data = await response.json();
+      console.log('🔵 [FRONTEND] Response data:', data);
 
       if (data.success) {
         const message = `✅ Processing completato!\n\n` +
@@ -135,18 +163,28 @@ export default function CompanyKnowledge() {
           `Falliti: ${data.failed}\n` +
           `Caratteri totali: ${data.totalCharacters?.toLocaleString() || 0}`;
         
+        console.log('🔵 [FRONTEND] Success! Message:', message);
         alert(message);
         
         // Reload sources to see updated status
+        console.log('🔵 [FRONTEND] Reloading sources...');
         await loadSources();
+        console.log('🔵 [FRONTEND] Sources reloaded');
       } else {
+        console.error('❌ [FRONTEND] Processing failed:', data);
         alert(`❌ Errore durante il processing:\n${data.message || data.error}`);
       }
     } catch (error) {
-      console.error('Processing error:', error);
+      console.error('💥 [FRONTEND] ========== CATCH ERROR ==========');
+      console.error('💥 [FRONTEND] Error type:', typeof error);
+      console.error('💥 [FRONTEND] Error:', error);
+      console.error('💥 [FRONTEND] Error message:', error instanceof Error ? error.message : 'Unknown');
+      console.error('💥 [FRONTEND] Error stack:', error instanceof Error ? error.stack : 'N/A');
       alert('❌ Errore durante il processing. Controlla la console per dettagli.');
     } finally {
+      console.log('🔵 [FRONTEND] setProcessing(false)');
       setProcessing(false);
+      console.log('🔵 [FRONTEND] ========== triggerProcessing END ==========');
     }
   };
 
@@ -479,7 +517,11 @@ function UploadTab({ organizationId, onUploadComplete, onTriggerProcessing, proc
             </p>
           </div>
           <button
-            onClick={onTriggerProcessing}
+            onClick={() => {
+              console.log('🔵 [FRONTEND] Button clicked!');
+              console.log('🔵 [FRONTEND] processing state:', processing);
+              onTriggerProcessing();
+            }}
             disabled={processing}
             className={`
               ml-6 flex items-center space-x-2 px-6 py-3 rounded-lg font-medium text-white

@@ -115,6 +115,23 @@ Credits System:        ████████████████░░░
 
 ### **25 ottobre 2025** - Automated Daily Update 🤖
 
+- 🔧 fix: usa companyProfile nei log invece di profile (TypeScript build fix, skip test)
+- 📚 docs: Add SQL debug script for knowledge sources reset
+- 📚 docs: automated daily update 2025-10-25 [skip ci]
+- 🔄 debug: Add extensive frontend logging to diagnose API call issue
+- 📚 docs: automated daily update 2025-10-24 [skip ci]
+- 🔄 debug: Add extensive logging to diagnose Processati 0 issue
+
+**Daily Metrics**:
+- Total files: 2475
+- TypeScript files: 357
+- Lines of code: ~91,672
+- Commits today: 6
+- Recent migrations: 5
+- Dependencies: 92
+
+### **25 ottobre 2025** - Automated Daily Update 🤖
+
 - 🔄 debug: Add extensive frontend logging to diagnose API call issue
 - 📚 docs: automated daily update 2025-10-24 [skip ci]
 - 🔄 debug: Add extensive logging to diagnose Processati 0 issue

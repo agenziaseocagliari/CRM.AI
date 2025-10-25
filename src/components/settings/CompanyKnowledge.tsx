@@ -112,11 +112,11 @@ export default function CompanyKnowledge() {
   const triggerProcessing = async () => {
     console.log('🔵 [FRONTEND] ========== triggerProcessing START ==========');
     console.log('🔵 [FRONTEND] organizationId:', organizationId);
-    console.log('🔵 [FRONTEND] profile:', profile);
+    console.log('🔵 [FRONTEND] companyProfile:', companyProfile);
     
     if (!organizationId) {
       console.error('❌ [FRONTEND] Missing organizationId!');
-      console.error('❌ [FRONTEND] profile object:', profile);
+      console.error('❌ [FRONTEND] companyProfile object:', companyProfile);
       alert('❌ Errore: Organization ID mancante');
       return;
     }
